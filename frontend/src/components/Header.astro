@@ -1,4 +1,9 @@
 ---
+import IconSun from "../icons/IconSun.astro";
+import IconMoon from "../icons/IconMoon.astro";
+import IconMenu from "../icons/IconMenu.astro";
+import IconX from "../icons/IconX.astro";
+
 const navItems = [
   { name: "Jobs", href: "/jobs" },
   { name: "Termine", href: "/events" },
@@ -28,13 +33,18 @@ const isActive = (href: string) => pathname === href || pathname.startsWith(href
 
     <div class="navbar-end gap-2">
       <a href="#" class="btn btn-outline btn-sm hidden md:flex">Einloggen</a>
+      <button id="theme-toggle" aria-label="Dunkelmodus umschalten" class="btn btn-ghost btn-sm">
+        <IconSun id="icon-sun" class="hidden size-5" />
+        <IconMoon id="icon-moon" class="size-5" />
+      </button>
       <button
         id="menu-toggle"
         aria-label="Menü öffnen"
         aria-expanded="false"
         class="btn btn-ghost btn-sm md:hidden"
       >
-        ☰
+        <IconMenu id="icon-menu" class="size-5" />
+        <IconX id="icon-x" class="hidden size-5" />
       </button>
     </div>
   </div>
@@ -85,11 +95,34 @@ const isActive = (href: string) => pathname === href || pathname.startsWith(href
 <script>
   const toggle = document.getElementById("menu-toggle")!;
   const nav = document.getElementById("mobile-nav")!;
+  const iconMenu = document.getElementById("icon-menu")!;
+  const iconX = document.getElementById("icon-x")!;
 
   toggle.addEventListener("click", () => {
     const isOpen = !nav.hidden;
     nav.hidden = isOpen;
     toggle.setAttribute("aria-expanded", String(!isOpen));
     toggle.setAttribute("aria-label", isOpen ? "Menü öffnen" : "Menü schließen");
+    iconMenu.classList.toggle("hidden", !isOpen);
+    iconX.classList.toggle("hidden", isOpen);
+  });
+
+  const themeToggle = document.getElementById("theme-toggle")!;
+  const iconSun = document.getElementById("icon-sun")!;
+  const iconMoon = document.getElementById("icon-moon")!;
+
+  function applyTheme(theme: string) {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("theme", theme);
+    iconSun.classList.toggle("hidden", theme !== "dark");
+    iconMoon.classList.toggle("hidden", theme === "dark");
+  }
+
+  // Sync icon with current theme on load
+  applyTheme(document.documentElement.getAttribute("data-theme") ?? "light");
+
+  themeToggle.addEventListener("click", () => {
+    const current = document.documentElement.getAttribute("data-theme");
+    applyTheme(current === "dark" ? "light" : "dark");
   });
 </script>
