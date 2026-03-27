@@ -1,0 +1,228 @@
+[
+  {
+    "id": "uni-bamberg-hauptgebaeude",
+    "name": "Uni Bamberg – Hauptgebäude",
+    "position": [49.9036, 10.8703],
+    "category": "Universität"
+  },
+  {
+    "id": "uni-bamberg-feki",
+    "name": "Uni Bamberg – FEKI Campus",
+    "position": [49.8983, 10.9185],
+    "category": "Universität"
+  },
+  {
+    "id": "uni-bamberg-erba",
+    "name": "Uni Bamberg – ERBA Campus",
+    "position": [49.8924, 10.8745],
+    "category": "Universität"
+  },
+  {
+    "id": "uni-bamberg-markusplatz",
+    "name": "Uni Bamberg – Markusplatz",
+    "position": [49.8977, 10.8912],
+    "category": "Universität"
+  },
+  {
+    "id": "uni-bamberg-wiwi",
+    "name": "Uni Bamberg – WiWi (Kapuzinerstraße)",
+    "position": [49.8943, 10.8863],
+    "category": "Universität"
+  },
+  {
+    "id": "studierendensekretariat",
+    "name": "Studierendensekretariat",
+    "position": [49.903, 10.871],
+    "category": "Universität",
+    "description": "Kapuzinerstraße 25"
+  },
+
+  {
+    "id": "mensa-feki",
+    "name": "Mensa FEKI",
+    "position": [49.898, 10.9192],
+    "category": "Mensa & Cafeteria"
+  },
+  {
+    "id": "mensa-austrasse",
+    "name": "Mensa Austraße",
+    "position": [49.9012, 10.8812],
+    "category": "Mensa & Cafeteria"
+  },
+  {
+    "id": "mensa-erba",
+    "name": "Mensa ERBA",
+    "position": [49.8924, 10.8745],
+    "category": "Mensa & Cafeteria"
+  },
+  {
+    "id": "cafeteria-markusplatz",
+    "name": "Cafeteria Markusplatz",
+    "position": [49.8975, 10.8905],
+    "category": "Mensa & Cafeteria"
+  },
+
+  {
+    "id": "universitaetsbibliothek",
+    "name": "Universitätsbibliothek",
+    "position": [49.9022, 10.8706],
+    "category": "Bibliothek",
+    "description": "An der Universität 2"
+  },
+  {
+    "id": "teilbibliothek-gewi",
+    "name": "Teilbibliothek Hum/Kult (GeWi)",
+    "position": [49.8975, 10.8912],
+    "category": "Bibliothek"
+  },
+  {
+    "id": "staatsbibliothek",
+    "name": "Staatsbibliothek Bamberg",
+    "position": [49.8986, 10.8917],
+    "category": "Bibliothek",
+    "description": "Neue Residenz, Domplatz 8"
+  },
+
+  {
+    "id": "wohnheim-austrasse",
+    "name": "Wohnheim Austraße",
+    "position": [49.9008, 10.88],
+    "category": "Wohnen",
+    "description": "Studentenwerk-Wohnheim"
+  },
+  {
+    "id": "wohnheim-margaretendamm",
+    "name": "Wohnheim Margaretendamm",
+    "position": [49.8955, 10.9055],
+    "category": "Wohnen",
+    "description": "Studentenwerk-Wohnheim"
+  },
+  {
+    "id": "wohnheim-hainstrasse",
+    "name": "Wohnheim Hainstraße",
+    "position": [49.9, 10.887],
+    "category": "Wohnen",
+    "description": "Studentenwerk-Wohnheim"
+  },
+  {
+    "id": "studentenwerk",
+    "name": "Studentenwerk Bamberg",
+    "position": [49.8994, 10.8805],
+    "category": "Wohnen",
+    "description": "Beratung & Sozialleistungen"
+  },
+
+  {
+    "id": "hochschulsport",
+    "name": "Hochschulsport Bamberg",
+    "position": [49.906, 10.8648],
+    "category": "Sport",
+    "description": "Sportzentrum der Uni Bamberg"
+  },
+  {
+    "id": "sportzentrum-clavius",
+    "name": "Sportzentrum Clavius",
+    "position": [49.9072, 10.8635],
+    "category": "Sport"
+  },
+
+  {
+    "id": "cafe-mueller",
+    "name": "Café Müller",
+    "position": [49.8991, 10.895],
+    "category": "Cafés, Bars & Clubs",
+    "description": "Café"
+  },
+  {
+    "id": "cafe-abseits",
+    "name": "Café Abseits",
+    "position": [49.8963, 10.8952],
+    "category": "Cafés, Bars & Clubs",
+    "description": "Café & Bar"
+  },
+  {
+    "id": "zapfhahn",
+    "name": "Zapfhahn",
+    "position": [49.898, 10.893],
+    "category": "Cafés, Bars & Clubs",
+    "description": "Bar"
+  },
+  {
+    "id": "live-club",
+    "name": "Live-Club Bamberg",
+    "position": [49.897, 10.888],
+    "category": "Cafés, Bars & Clubs",
+    "description": "Club & Konzerte"
+  },
+  {
+    "id": "sternla",
+    "name": "Sternla",
+    "position": [49.8995, 10.894],
+    "category": "Cafés, Bars & Clubs",
+    "description": "Fränkische Gaststätte"
+  },
+  {
+    "id": "klosterbrauerei",
+    "name": "Klosterbrauerei Bamberg",
+    "position": [49.901, 10.887],
+    "category": "Cafés, Bars & Clubs",
+    "description": "Brauerei & Gaststätte"
+  },
+  {
+    "id": "spezial-keller",
+    "name": "Restaurant Spezial-Keller",
+    "position": [49.9048, 10.876],
+    "category": "Cafés, Bars & Clubs",
+    "description": "Bierkeller"
+  },
+  {
+    "id": "pizza-pasta-roma",
+    "name": "Pizza & Pasta Roma",
+    "position": [49.8985, 10.896],
+    "category": "Cafés, Bars & Clubs",
+    "description": "Restaurant"
+  },
+
+  {
+    "id": "bahnhof",
+    "name": "Bahnhof Bamberg",
+    "position": [49.8992, 10.9052],
+    "category": "Sonstiges",
+    "description": "Zug & Fernbus"
+  },
+  {
+    "id": "buergerbüro",
+    "name": "Bürgerbüro Bamberg",
+    "position": [49.8978, 10.8934],
+    "category": "Sonstiges",
+    "description": "Einwohnermeldeamt & Behörden"
+  },
+  {
+    "id": "klinikum",
+    "name": "Klinikum Bamberg",
+    "position": [49.8855, 10.8775],
+    "category": "Sonstiges",
+    "description": "Krankenhaus"
+  },
+  {
+    "id": "gesundheitsamt",
+    "name": "Gesundheitsamt Bamberg",
+    "position": [49.8962, 10.8898],
+    "category": "Sonstiges",
+    "description": "Behörde"
+  },
+  {
+    "id": "agentur-fuer-arbeit",
+    "name": "Agentur für Arbeit Bamberg",
+    "position": [49.9005, 10.9015],
+    "category": "Sonstiges",
+    "description": "Jobcenter & Beratung"
+  },
+  {
+    "id": "hauptpostamt",
+    "name": "Deutsche Post – Hauptpostamt",
+    "position": [49.899, 10.904],
+    "category": "Sonstiges",
+    "description": "Post & Pakete"
+  }
+]

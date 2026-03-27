@@ -1,5 +1,7 @@
 .PHONY: format format-write format-check format-api format-frontend install-hooks remove-hooks
 
+NVM_INIT = . ~/.nvm/nvm.sh && nvm use
+
 # Check formatting in all workspaces
 format-check: format-api-check format-frontend-check
 
@@ -8,19 +10,19 @@ format: format-api format-frontend
 
 # Format API workspace
 format-api:
-	cd api && yarn format:write
+	cd api && $(NVM_INIT) && yarn format:write
 
 # Check formatting in API
 format-api-check:
-	cd api && yarn format:check
+	cd api && $(NVM_INIT) && yarn format:check
 
 # Format frontend workspace
 format-frontend:
-	cd frontend && yarn format:write
+	cd frontend && $(NVM_INIT) && yarn format:write
 
 # Check formatting in frontend
 format-frontend-check:
-	cd frontend && yarn format:check
+	cd frontend && $(NVM_INIT) && yarn format:check
 
 # Install git hooks
 install-hooks:

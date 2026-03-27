@@ -1,0 +1,95 @@
+---
+const navItems = [
+  { name: "Jobs", href: "/jobs" },
+  { name: "Termine", href: "/events" },
+  { name: "Mensaplan", href: "/mensa" },
+  { name: "Infomap", href: "/infomap" },
+  { name: "Start ins Studium", href: "/start-ins-studium" },
+];
+
+const pathname = Astro.url.pathname;
+const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
+---
+
+<header class="border-b">
+  <div class="navbar max-w-6xl mx-auto px-4 pt-6 pb-2 md:pb-6">
+    <div class="navbar-start hidden md:flex"></div>
+
+    <div class="navbar-center flex-4 md:flex-3 flex-col items-center text-center">
+      <a
+        href="/"
+        class="text-3xl md:text-4xl font-extrabold no-underline leading-none"
+        style="font-family: 'Archivo', sans-serif;"
+      >
+        BamBase.de
+      </a>
+      <div class="text-sm text-base-content/60">dein Bamberger Online-Campus</div>
+    </div>
+
+    <div class="navbar-end gap-2">
+      <a href="#" class="btn btn-outline btn-sm hidden md:flex">Einloggen</a>
+      <button
+        id="menu-toggle"
+        aria-label="Menü öffnen"
+        aria-expanded="false"
+        class="btn btn-ghost btn-sm md:hidden"
+      >
+        ☰
+      </button>
+    </div>
+  </div>
+
+  <!-- Mobile nav drawer -->
+  <div id="mobile-nav" hidden class="border-t px-4 py-3">
+    <nav class="flex flex-col gap-1 mb-3">
+      {
+        navItems.map((item) => (
+          <a
+            href={item.href}
+            class:list={[
+              "px-3 py-2 rounded-md text-base no-underline hover:bg-base-200",
+              isActive(item.href)
+                ? "font-semibold bg-base-200 text-base-content"
+                : "font-normal text-base-content/60",
+            ]}>
+            {item.name}
+          </a>
+        ))
+      }
+    </nav>
+    <input class="input input-bordered input-sm w-full" placeholder="Suchen..." />
+  </div>
+
+  <!-- Desktop nav bar -->
+  <div class="hidden md:flex max-w-6xl mx-auto px-4 py-2 items-center justify-between">
+    <nav class="flex gap-6 text-sm text-base-content/60">
+      {
+        navItems.map((item) => (
+          <a
+            href={item.href}
+            class:list={[
+              "underline hover:text-base-content",
+              isActive(item.href)
+                ? "font-semibold text-base-content"
+                : "font-normal text-base-content/60",
+            ]}>
+            {item.name}
+          </a>
+        ))
+      }
+    </nav>
+    <input class="input input-bordered input-sm" placeholder="Suchen..." />
+  </div>
+</header>
+
+<script>
+  const toggle = document.getElementById("menu-toggle")!;
+  const nav = document.getElementById("mobile-nav")!;
+
+  toggle.addEventListener("click", () => {
+    const isOpen = !nav.hidden;
+    nav.hidden = isOpen;
+    toggle.setAttribute("aria-expanded", String(!isOpen));
+    toggle.setAttribute("aria-label", isOpen ? "Menü öffnen" : "Menü schließen");
+  });
+</script>

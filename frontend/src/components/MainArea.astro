@@ -1,0 +1,78 @@
+---
+import Sidebar from "./Sidebar.astro";
+import StudentGroup from "./StudentGroup.astro";
+import groups from "../data/groups.json";
+
+const LIMIT = 5;
+---
+
+<div id="main-grid" class="grid grid-cols-1 md:grid-cols-3 gap-8">
+  <article class="md:col-span-2">
+    <h1 class="text-xl font-bold mb-2">Aktiv in Bamberg</h1>
+    <p class="text-sm text-base-content/60 mb-6">Studentische Gruppen und Vereine in Bamberg</p>
+    <p>
+      Viele Veranstaltungen, Aktivitäten und Angebote sind nur durch das ehrenamtliche Engagement
+      von Kommilitonen möglich. Werde auch du aktiv und engagiere dich in einer der zahlreichen
+      Gruppen, Vereine oder Initiativen an der Universität Bamberg. Hier findest du eine Übersicht
+      über die verschiedenen Möglichkeiten, dich einzubringen und das Campusleben mitzugestalten.
+    </p>
+    <div class="mt-4 mb-6">
+      <select id="sort-select" class="select select-bordered select-sm w-auto">
+        <option value="random">Zufällige Reihenfolge</option>
+        <option value="name">Sortieren nach Name</option>
+      </select>
+    </div>
+  </article>
+
+  <Sidebar />
+
+  {
+    groups.map((group, i) => (
+      <div data-group data-group-name={group.name} hidden={i >= LIMIT}>
+        <StudentGroup group={group} />
+      </div>
+    ))
+  }
+</div>
+
+<div class="mt-4">
+  <button id="show-all-btn" class="btn btn-outline btn-sm">Alle Gruppen anzeigen</button>
+</div>
+
+<script define:vars={{ LIMIT }} is:inline>
+  const grid = document.getElementById("main-grid");
+  const sortSelect = document.getElementById("sort-select");
+  const showAllBtn = document.getElementById("show-all-btn");
+  let showAll = false;
+
+  function getGroups() {
+    return [...grid.querySelectorAll("[data-group]")];
+  }
+
+  function updateVisibility() {
+    getGroups().forEach((el, i) => {
+      el.hidden = !showAll && i >= LIMIT;
+    });
+  }
+
+  function sortGroups(order) {
+    const groupEls = getGroups();
+    if (order === "name") {
+      groupEls.sort((a, b) => a.dataset.groupName.localeCompare(b.dataset.groupName));
+    } else {
+      groupEls.sort(() => Math.random() - 0.5);
+    }
+    groupEls.forEach((el) => grid.appendChild(el));
+    updateVisibility();
+  }
+
+  sortSelect.addEventListener("change", (e) => sortGroups(e.target.value));
+
+  showAllBtn.addEventListener("click", () => {
+    showAll = !showAll;
+    showAllBtn.textContent = showAll ? "Weniger Gruppen anzeigen" : "Alle Gruppen anzeigen";
+    updateVisibility();
+  });
+
+  sortGroups("random");
+</script>

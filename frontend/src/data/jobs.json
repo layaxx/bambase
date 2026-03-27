@@ -1,0 +1,41 @@
+[
+  {
+    "id": "werkstudent-marketing",
+    "title": "Werkstudent (m/w/d) im Bereich Marketing",
+    "type": "Werkstudent",
+    "hoursPerWeek": 20,
+    "description": "Wir suchen einen engagierten Werkstudenten im Bereich Marketing, der unser Team bei der Planung und Umsetzung von Marketingkampagnen unterstützt. Aufgaben umfassen Social-Media-Management, Content-Erstellung und Marktanalysen.",
+    "company": {
+      "name": "Muster GmbH",
+      "address": "Luitpoldstraße 5, 96052 Bamberg",
+      "email": "jobs@muster-gmbh.de",
+      "phone": "+49 951 123456"
+    }
+  },
+  {
+    "id": "praktikum-softwareentwicklung",
+    "title": "Praktikum (m/w/d) im Bereich Softwareentwicklung",
+    "type": "Praktikum",
+    "hoursPerWeek": 40,
+    "description": "Im Rahmen des Praktikums arbeitest du aktiv an der Entwicklung von Webanwendungen mit modernen Technologien wie React und TypeScript. Du wirst von erfahrenen Entwicklern betreut und erhältst Einblick in agile Arbeitsmethoden.",
+    "company": {
+      "name": "Tech Solutions Bamberg",
+      "address": "Am Regnitzufer 12, 96047 Bamberg",
+      "email": "karriere@tech-solutions-bamberg.de",
+      "phone": "+49 951 654321"
+    }
+  },
+  {
+    "id": "teilzeitjob-gastronomie",
+    "title": "Teilzeitjob (m/w/d) in der Gastronomie",
+    "type": "Teilzeit",
+    "hoursPerWeek": 15,
+    "description": "Für unser gemütliches Café im Herzen von Bamberg suchen wir freundliche Aushilfskräfte für Bedienung und Barista-Tätigkeiten. Vorkenntnisse sind willkommen, aber keine Voraussetzung – wir schulen dich gerne ein.",
+    "company": {
+      "name": "Café am Dom",
+      "address": "Domplatz 3, 96049 Bamberg",
+      "email": "info@cafe-am-dom.de",
+      "phone": "+49 951 987654"
+    }
+  }
+]

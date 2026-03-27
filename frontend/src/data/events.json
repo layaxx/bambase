@@ -1,0 +1,109 @@
+[
+  {
+    "id": "filmvorfuehrung-im-kino",
+    "title": "Filmvorführung im Kino",
+    "date": "2026-03-22",
+    "time": "20:00",
+    "location": {
+      "name": "Kino Bamberg",
+      "address": "Obere Königstraße 1, 96052 Bamberg"
+    }
+  },
+  {
+    "id": "stadtfuehrung-durch-bamberg",
+    "title": "Stadtführung durch Bamberg",
+    "date": "2026-03-22",
+    "time": "14:00",
+    "location": {
+      "name": "Treffpunkt: Hauptwache",
+      "address": "Hauptwache, 96047 Bamberg"
+    }
+  },
+  {
+    "id": "besuch-des-bamberger-doms",
+    "title": "Besuch des Bamberger Doms",
+    "date": "2026-03-23",
+    "time": "16:00",
+    "location": {
+      "name": "Bamberger Dom",
+      "address": "Domplatz 1, 96049 Bamberg"
+    }
+  },
+  {
+    "id": "hochschulsport-volleyball",
+    "title": "Hochschulsport: Volleyball",
+    "date": "2026-03-22",
+    "time": "18:00",
+    "locationId": "hochschulsport",
+    "location": {
+      "name": "Hochschulsport Bamberg",
+      "address": "Sportzentrum der Uni Bamberg"
+    }
+  },
+  {
+    "id": "hochschulsport-yoga",
+    "title": "Hochschulsport: Yoga für Anfänger",
+    "date": "2026-03-24",
+    "time": "09:00",
+    "locationId": "hochschulsport",
+    "location": {
+      "name": "Hochschulsport Bamberg",
+      "address": "Sportzentrum der Uni Bamberg"
+    }
+  },
+  {
+    "id": "live-club-konzert",
+    "title": "Livekonzert: Indie Night",
+    "date": "2026-03-22",
+    "time": "21:00",
+    "locationId": "live-club",
+    "location": {
+      "name": "Live-Club Bamberg",
+      "address": "Bamberg"
+    }
+  },
+  {
+    "id": "uni-vortrag-ki",
+    "title": "Gastvortrag: KI im Alltag",
+    "date": "2026-03-25",
+    "time": "18:00",
+    "locationId": "uni-bamberg-hauptgebaeude",
+    "location": {
+      "name": "Uni Bamberg – Hauptgebäude",
+      "address": "An der Universität 2, 96047 Bamberg"
+    }
+  },
+  {
+    "id": "uni-ersti-party",
+    "title": "Ersti-Party",
+    "date": "2026-03-28",
+    "time": "20:00",
+    "locationId": "uni-bamberg-feki",
+    "location": {
+      "name": "Uni Bamberg – FEKI Campus",
+      "address": "Feldkirchenstraße 21, 96052 Bamberg"
+    }
+  },
+  {
+    "id": "bibliothek-fuehrung",
+    "title": "Bibliotheksführung für Erstsemester",
+    "date": "2026-03-23",
+    "time": "11:00",
+    "locationId": "universitaetsbibliothek",
+    "location": {
+      "name": "Universitätsbibliothek",
+      "address": "An der Universität 2, 96047 Bamberg"
+    }
+  },
+  {
+    "id": "studentenwerk-beratung",
+    "title": "Offene Sozialberatung",
+    "date": "2026-03-22",
+    "time": "10:00",
+    "locationId": "studentenwerk",
+    "location": {
+      "name": "Studentenwerk Bamberg",
+      "address": "Bamberg"
+    }
+  }
+]

@@ -1,0 +1,21 @@
+---
+import GenericCard from "./GenericCard.astro";
+import jobs from "../data/jobs.json";
+---
+
+<GenericCard title="Jobs in Bamberg & Umgebung" color="blue" href="/jobs">
+  <div class="p-4 pt-0">
+    <ul class="list-disc pl-4 flex flex-col gap-1 text-sm mb-3">
+      {
+        jobs.map((job) => (
+          <li>
+            <a href="#" class="hover:underline">
+              {job.title}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+    <a href="/jobs" class="text-sm text-blue-600 link link-hover">Alle Jobs anzeigen →</a>
+  </div>
+</GenericCard>

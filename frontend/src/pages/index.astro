@@ -1,11 +1,45 @@
 ---
-import Welcome from '../components/Welcome.astro';
-import Layout from '../layouts/Layout.astro';
-
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+import Header from "../components/Header.astro";
+import HeuteInBamberg from "../components/HeuteInBamberg.astro";
+import JobCard from "../components/JobCard.astro";
+import InfomapCard from "../components/InfomapCard.astro";
+import Layout from "../layouts/Layout.astro";
+import Footer from "../components/Footer.astro";
+import MainArea from "../components/MainArea.astro";
 ---
 
 <Layout>
-	<Welcome />
+  <Header />
+
+  <main class="page-main">
+    <HeuteInBamberg />
+
+    <div class="cards-grid">
+      <JobCard />
+      <InfomapCard />
+    </div>
+
+    <MainArea />
+  </main>
+
+  <Footer />
 </Layout>
+
+<style>
+  .page-main {
+    max-width: 72rem;
+    margin: 1.5rem auto 0;
+    padding: 0 1rem;
+  }
+  .cards-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  @media (max-width: 768px) {
+    .cards-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
