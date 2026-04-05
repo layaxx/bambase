@@ -16,24 +16,30 @@ const pathname = Astro.url.pathname;
 const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
 ---
 
-<header class="border-b">
+<header class="border-b border-b-base-content/30">
   <div class="navbar max-w-6xl mx-auto px-4 pt-6 pb-2 md:pb-6">
     <div class="navbar-start hidden md:flex"></div>
 
-    <div class="navbar-center flex-4 md:flex-3 flex-col items-center text-center">
+    <div
+      class="navbar-center grow flex-col items-baseline md:items-center text-left md:text-center"
+    >
       <a
         href="/"
         class="text-3xl md:text-4xl font-extrabold no-underline leading-none"
-        style="font-family: 'Archivo', sans-serif;"
+        style="font-family: 'Archivo Variable', sans-serif;"
       >
         BamBase.de
       </a>
-      <div class="text-sm text-base-content/60">dein Bamberger Online-Campus</div>
+      <div class="text-md text-base-content/60">dein Bamberger Online-Campus</div>
     </div>
 
     <div class="navbar-end gap-2">
-      <a href="#" class="btn btn-outline btn-sm hidden md:flex">Einloggen</a>
-      <button id="theme-toggle" aria-label="Dunkelmodus umschalten" class="btn btn-ghost btn-sm">
+      <a href="#" class="btn btn-sm hidden md:flex">Einloggen</a>
+      <button
+        id="theme-toggle"
+        aria-label="Dunkelmodus umschalten"
+        class="btn btn-ghost btn-sm btn-square"
+      >
         <IconSun id="icon-sun" class="hidden size-5" />
         <IconMoon id="icon-moon" class="size-5" />
       </button>
@@ -41,7 +47,7 @@ const isActive = (href: string) => pathname === href || pathname.startsWith(href
         id="menu-toggle"
         aria-label="Menü öffnen"
         aria-expanded="false"
-        class="btn btn-ghost btn-sm md:hidden"
+        class="btn btn-square btn-sm md:hidden"
       >
         <IconMenu id="icon-menu" class="size-5" />
         <IconX id="icon-x" class="hidden size-5" />
@@ -50,7 +56,7 @@ const isActive = (href: string) => pathname === href || pathname.startsWith(href
   </div>
 
   <!-- Mobile nav drawer -->
-  <div id="mobile-nav" hidden class="border-t px-4 py-3">
+  <div id="mobile-nav" hidden class="border-t p-4 py-3">
     <nav class="flex flex-col gap-1 mb-3">
       {
         navItems.map((item) => (
