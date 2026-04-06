@@ -1,0 +1,80 @@
+---
+import { fetchMensaMeals } from "../utils/api"
+import dayjs from "dayjs"
+
+const relevantDay = dayjs().add(1, "day")
+const todayFormatted = relevantDay.format("D. MMMM")
+
+const locations = [
+  { id: "feki", label: "Feki", strapiName: "Feki" },
+  { id: "austrasse", label: "Austraße", strapiName: "Austraße" },
+  { id: "erba", label: "Erba", strapiName: "Erba" },
+] as const
+
+const meals = await fetchMensaMeals(relevantDay)
+
+const mealsByLocation = Object.fromEntries(
+  locations.map((loc) => [loc.id, meals.filter((m) => m.location === loc.strapiName)])
+)
+---
+
+<div class="card bg-base-100 border border-base-300 min-w-0">
+  <div class="card-body p-4 pb-2">
+    <div class="flex items-baseline flex-col md:flex-row gap-0 md:gap-4">
+      <h2 class="card-title text-xl font-semibold">
+        <a href="#" class="hover:underline text-green-600">MENSAPLAN</a>
+      </h2>
+      <span class="text-base-content/60 text-sm font-mono">(Morgen, {todayFormatted})</span>
+    </div>
+    <div class="join mt-2">
+      {
+        locations.map((loc, i) => (
+          <button
+            data-mensa-btn
+            data-loc={loc.id}
+            class:list={["btn btn-xs join-item", i === 0 ? "btn-neutral" : "btn-ghost"]}>
+            {loc.label}
+          </button>
+        ))
+      }
+    </div>
+  </div>
+  <div class="p-4 pt-2">
+    {
+      locations.map((loc, i) => (
+        <ul id={`meals-${loc.id}`} hidden={i !== 0} class="flex flex-col gap-1 text-sm">
+          {mealsByLocation[loc.id].length === 0 ? (
+            <li class="text-base-content/60">Keine Daten verfügbar.</li>
+          ) : (
+            mealsByLocation[loc.id].map((meal) => (
+              <li class="overflow-hidden text-ellipsis whitespace-nowrap">
+                <span class="font-bold">{meal.priceStudents.toFixed(2)} €</span> {meal.name}
+              </li>
+            ))
+          )}
+        </ul>
+      ))
+    }
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll("[data-mensa-btn]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const loc = (btn as HTMLElement).dataset.loc!
+
+      document.querySelectorAll("[data-mensa-btn]").forEach((b) => {
+        b.classList.remove("btn-neutral")
+        b.classList.add("btn-ghost")
+      })
+      btn.classList.remove("btn-ghost")
+      btn.classList.add("btn-neutral")
+
+      document.querySelectorAll("[id^='meals-']").forEach((el) => {
+        ;(el as HTMLElement).hidden = true
+      })
+      const target = document.getElementById(`meals-${loc}`)
+      if (target) target.hidden = false
+    })
+  })
+</script>
