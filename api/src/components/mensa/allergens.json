@@ -1,0 +1,16 @@
+{
+  "collectionName": "components_mensa_allergens",
+  "info": {
+    "displayName": "allergens",
+    "icon": "restaurant"
+  },
+  "options": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "unique": false
+    }
+  },
+  "config": {}
+}

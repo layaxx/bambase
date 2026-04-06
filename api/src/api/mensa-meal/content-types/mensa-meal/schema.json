@@ -1,0 +1,54 @@
+{
+  "kind": "collectionType",
+  "collectionName": "mensa_meals",
+  "info": {
+    "singularName": "mensa-meal",
+    "pluralName": "mensa-meals",
+    "displayName": "Mensa meal"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "isVegan": {
+      "type": "boolean",
+      "default": false
+    },
+    "isVegetarian": {
+      "type": "boolean",
+      "default": false
+    },
+    "priceStudents": {
+      "type": "decimal",
+      "required": true,
+      "min": 0
+    },
+    "priceStaff": {
+      "type": "decimal",
+      "min": 0
+    },
+    "priceOther": {
+      "type": "decimal",
+      "min": 0
+    },
+    "date": {
+      "type": "date",
+      "required": true
+    },
+    "location": {
+      "type": "enumeration",
+      "required": true,
+      "enum": ["Feki", "Erba", "Austraße"]
+    },
+    "allergens": {
+      "type": "component",
+      "component": "mensa.allergens",
+      "repeatable": true
+    }
+  }
+}
