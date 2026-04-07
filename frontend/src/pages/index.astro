@@ -1,11 +1,12 @@
 ---
-import Header from "../components/Header.astro";
-import HeuteInBamberg from "../components/HeuteInBamberg.astro";
-import JobCard from "../components/JobCard.astro";
-import InfomapCard from "../components/InfomapCard.astro";
-import Layout from "../layouts/Layout.astro";
-import Footer from "../components/Footer.astro";
-import MainArea from "../components/MainArea.astro";
+import Header from "../components/Header.astro"
+import HeuteInBamberg from "../components/HeuteInBamberg.astro"
+import JobCard from "../components/JobCard.astro"
+import InfomapCard from "../components/InfomapCard.astro"
+import Layout from "../layouts/Layout.astro"
+import Footer from "../components/Footer.astro"
+import MainArea from "../components/MainArea.astro"
+import MensaCard from "../components/MensaCard.astro"
 ---
 
 <Layout>
@@ -13,11 +14,12 @@ import MainArea from "../components/MainArea.astro";
 
   <main class="page-main">
     <HeuteInBamberg />
+    <MensaCard />
+    <JobCard />
 
-    <div class="cards-grid">
-      <JobCard />
+    <section class="mb-12">
       <InfomapCard />
-    </div>
+    </section>
 
     <MainArea />
   </main>
@@ -27,19 +29,8 @@ import MainArea from "../components/MainArea.astro";
 
 <style>
   .page-main {
-    max-width: 72rem;
-    margin: 1.5rem auto 0;
-    padding: 0 1rem;
-  }
-  .cards-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-  }
-  @media (max-width: 768px) {
-    .cards-grid {
-      grid-template-columns: 1fr;
-    }
+    max-width: 80rem;
+    margin: 0 auto;
+    padding: 2rem 1rem;
   }
 </style>

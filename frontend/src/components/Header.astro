@@ -16,85 +16,86 @@ const pathname = Astro.url.pathname;
 const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
 ---
 
-<header class="border-b border-b-base-content/30">
-  <div class="navbar max-w-6xl mx-auto px-4 pt-6 pb-2 md:pb-6">
-    <div class="navbar-start hidden md:flex"></div>
-
-    <div
-      class="navbar-center grow flex-col items-baseline md:items-center text-left md:text-center"
-    >
+<header class="border-b border-base-300 bg-base-100">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Main header row -->
+    <div class="flex h-16 items-center justify-between gap-4">
+      <!-- Logo -->
       <a
         href="/"
-        class="text-3xl md:text-4xl font-extrabold no-underline leading-none"
+        class="text-2xl font-extrabold no-underline leading-none shrink-0"
         style="font-family: 'Archivo Variable', sans-serif;"
       >
         BamBase.de
       </a>
-      <div class="text-md text-base-content/60">dein Bamberger Online-Campus</div>
-    </div>
 
-    <div class="navbar-end gap-2">
-      <a href="#" class="btn btn-sm hidden md:flex">Einloggen</a>
-      <button
-        id="theme-toggle"
-        aria-label="Dunkelmodus umschalten"
-        class="btn btn-ghost btn-sm btn-square"
-      >
-        <IconSun id="icon-sun" class="hidden size-5" />
-        <IconMoon id="icon-moon" class="size-5" />
-      </button>
-      <button
-        id="menu-toggle"
-        aria-label="Menü öffnen"
-        aria-expanded="false"
-        class="btn btn-square btn-sm md:hidden"
-      >
-        <IconMenu id="icon-menu" class="size-5" />
-        <IconX id="icon-x" class="hidden size-5" />
-      </button>
+      <!-- Desktop nav -->
+      <nav class="hidden md:flex items-center gap-1">
+        {
+          navItems.map((item) => (
+            <a
+              href={item.href}
+              class:list={[
+                "px-3 py-1.5 rounded-md text-sm no-underline transition-colors",
+                isActive(item.href)
+                  ? "font-semibold bg-base-200 text-base-content"
+                  : "text-base-content/60 hover:text-base-content hover:bg-base-200",
+              ]}
+            >
+              {item.name}
+            </a>
+          ))
+        }
+      </nav>
+
+      <!-- Right controls -->
+      <div class="flex items-center gap-2 shrink-0">
+        <input
+          class="input input-bordered input-sm hidden md:block w-40 lg:w-56"
+          placeholder="Suchen..."
+        />
+        <a href="#" class="btn btn-sm hidden md:flex">Einloggen</a>
+        <button
+          id="theme-toggle"
+          aria-label="Dunkelmodus umschalten"
+          class="btn btn-ghost btn-sm btn-square"
+        >
+          <IconSun id="icon-sun" class="hidden size-5" />
+          <IconMoon id="icon-moon" class="size-5" />
+        </button>
+        <button
+          id="menu-toggle"
+          aria-label="Menü öffnen"
+          aria-expanded="false"
+          class="btn btn-square btn-sm md:hidden"
+        >
+          <IconMenu id="icon-menu" class="size-5" />
+          <IconX id="icon-x" class="hidden size-5" />
+        </button>
+      </div>
     </div>
   </div>
 
   <!-- Mobile nav drawer -->
-  <div id="mobile-nav" hidden class="border-t p-4 py-3">
+  <div id="mobile-nav" hidden class="border-t border-base-300 px-4 py-3">
     <nav class="flex flex-col gap-1 mb-3">
       {
         navItems.map((item) => (
           <a
             href={item.href}
             class:list={[
-              "px-3 py-2 rounded-md text-base no-underline hover:bg-base-200",
+              "px-3 py-2 rounded-md text-sm no-underline transition-colors",
               isActive(item.href)
                 ? "font-semibold bg-base-200 text-base-content"
-                : "font-normal text-base-content/60",
-            ]}>
+                : "text-base-content/60 hover:text-base-content hover:bg-base-200",
+            ]}
+          >
             {item.name}
           </a>
         ))
       }
     </nav>
     <input class="input input-bordered input-sm w-full" placeholder="Suchen..." />
-  </div>
-
-  <!-- Desktop nav bar -->
-  <div class="hidden md:flex max-w-6xl mx-auto px-4 py-2 items-center justify-between">
-    <nav class="flex gap-6 text-sm text-base-content/60">
-      {
-        navItems.map((item) => (
-          <a
-            href={item.href}
-            class:list={[
-              "underline hover:text-base-content",
-              isActive(item.href)
-                ? "font-semibold text-base-content"
-                : "font-normal text-base-content/60",
-            ]}>
-            {item.name}
-          </a>
-        ))
-      }
-    </nav>
-    <input class="input input-bordered input-sm" placeholder="Suchen..." />
   </div>
 </header>
 
@@ -124,7 +125,6 @@ const isActive = (href: string) => pathname === href || pathname.startsWith(href
     iconMoon.classList.toggle("hidden", theme === "dark");
   }
 
-  // Sync icon with current theme on load
   applyTheme(document.documentElement.getAttribute("data-theme") ?? "light");
 
   themeToggle.addEventListener("click", () => {

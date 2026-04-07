@@ -18,37 +18,89 @@ const mealsByLocation = Object.fromEntries(
 )
 ---
 
-<div class="card bg-base-100 border border-base-300 min-w-0">
-  <div class="card-body p-4 pb-2">
-    <div class="flex items-baseline flex-col md:flex-row gap-0 md:gap-4">
-      <h2 class="card-title text-xl font-semibold">
-        <a href="#" class="hover:underline text-green-600">MENSAPLAN</a>
-      </h2>
-      <span class="text-base-content/60 text-sm font-mono">(Morgen, {todayFormatted})</span>
+<section class="mb-12" id="mensa">
+  <div class="mb-6 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-100">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="h-5 w-5 text-orange-700"
+          aria-hidden="true"
+        >
+          <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" />
+          <path d="M7 2v20" />
+          <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" />
+        </svg>
+      </div>
+      <div>
+        <h2 class="text-xl font-semibold">Mensaplan</h2>
+        <p class="text-sm text-base-content/60">Morgen, {todayFormatted}</p>
+      </div>
     </div>
-    <div class="join mt-2">
+    <a href="/mensa" class="btn btn-ghost btn-sm hidden sm:flex gap-1">
+      Vollständiger Plan
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="h-4 w-4"
+        aria-hidden="true"
+      >
+        <path d="M5 12h14" />
+        <path d="m12 5 7 7-7 7" />
+      </svg>
+    </a>
+  </div>
+
+  <div class="rounded-xl border border-base-300 bg-base-100 p-4 sm:p-6">
+    <!-- Tab buttons -->
+    <div class="mb-4 flex gap-1 rounded-lg bg-base-200 p-1">
       {
         locations.map((loc, i) => (
           <button
+            type="button"
             data-mensa-btn
             data-loc={loc.id}
-            class:list={["btn btn-xs join-item", i === 0 ? "btn-neutral" : "btn-ghost"]}>
+            class:list={[
+              "flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-all",
+              i === 0
+                ? "bg-base-100 text-base-content shadow-sm"
+                : "text-base-content/60 hover:text-base-content",
+            ]}
+          >
             {loc.label}
           </button>
         ))
       }
     </div>
-  </div>
-  <div class="p-4 pt-2">
+
+    <!-- Meal lists -->
     {
       locations.map((loc, i) => (
-        <ul id={`meals-${loc.id}`} hidden={i !== 0} class="flex flex-col gap-1 text-sm">
+        <ul id={`meals-${loc.id}`} hidden={i !== 0} class="flex flex-col gap-2">
           {mealsByLocation[loc.id].length === 0 ? (
-            <li class="text-base-content/60">Keine Daten verfügbar.</li>
+            <li class="text-base-content/60 text-sm">Keine Daten verfügbar.</li>
           ) : (
             mealsByLocation[loc.id].map((meal) => (
-              <li class="overflow-hidden text-ellipsis whitespace-nowrap">
-                <span class="font-bold">{meal.priceStudents.toFixed(2)} €</span> {meal.name}
+              <li class="flex items-center justify-between gap-3 rounded-lg border border-base-300 p-3 transition-colors hover:bg-base-200">
+                <span class="text-sm text-base-content">{meal.name}</span>
+                <span class="shrink-0 font-semibold text-sm text-base-content">
+                  {meal.priceStudents.toFixed(2)} €
+                </span>
               </li>
             ))
           )}
@@ -56,7 +108,7 @@ const mealsByLocation = Object.fromEntries(
       ))
     }
   </div>
-</div>
+</section>
 
 <script>
   document.querySelectorAll("[data-mensa-btn]").forEach((btn) => {
@@ -64,11 +116,11 @@ const mealsByLocation = Object.fromEntries(
       const loc = (btn as HTMLElement).dataset.loc!
 
       document.querySelectorAll("[data-mensa-btn]").forEach((b) => {
-        b.classList.remove("btn-neutral")
-        b.classList.add("btn-ghost")
+        b.classList.remove("bg-base-100", "text-base-content", "shadow-sm")
+        b.classList.add("text-base-content/60")
       })
-      btn.classList.remove("btn-ghost")
-      btn.classList.add("btn-neutral")
+      btn.classList.remove("text-base-content/60")
+      btn.classList.add("bg-base-100", "text-base-content", "shadow-sm")
 
       document.querySelectorAll("[id^='meals-']").forEach((el) => {
         ;(el as HTMLElement).hidden = true

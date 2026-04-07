@@ -1,51 +1,116 @@
 ---
-import events from "../data/events.json";
-import MensaCard from "./MensaCard.astro";
+import events from "../data/events.json"
 
-const today = new Date();
-const todayStr = today.toISOString().split("T")[0];
-const todayFormatted = today.toLocaleDateString("de-DE", { day: "numeric", month: "long" });
-const todayEvents = events.filter((e) => e.date === todayStr);
+const today = new Date()
+const todayStr = today.toISOString().split("T")[0]
+const todayEvents = events.filter((e) => e.date === todayStr)
 ---
 
-<div class="bg-base-200 rounded-md md:rounded-lg p-3 md:p-6 mb-6">
-  <h1 class="text-2xl font-semibold mb-6">Aktuell in Bamberg</h1>
-
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    <!-- Events card -->
-    <div class="card bg-base-100 border border-base-300 min-w-0">
-      <div class="card-body p-4 pb-2">
-        <div class="flex items-baseline flex-col md:flex-row gap-0 md:gap-4">
-          <h2 class="card-title text-xl font-semibold">
-            <a href="#" class="hover:underline text-inherit">
-              <span class="text-pink-600">EVENTS</span> in Bamberg
-            </a>
-          </h2>
-          <span class="text-base-content/60 text-sm font-mono">(Heute, {todayFormatted})</span>
-        </div>
+<!-- Events Section -->
+<section class="mb-12" id="events">
+  <div class="mb-6 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="h-5 w-5 text-blue-700"
+          aria-hidden="true"
+        >
+          <path d="M8 2v4"></path>
+          <path d="M16 2v4"></path>
+          <rect width="18" height="18" x="3" y="4" rx="2"></rect>
+          <path d="M3 10h18"></path>
+        </svg>
       </div>
-      <div class="p-4 pt-2">
-        <ul class="flex flex-col gap-1 text-sm">
-          {
-            todayEvents.length === 0 && (
-              <p class="text-base-content/60 text-sm">Keine Veranstaltungen heute.</p>
-            )
-          }
-          {
-            todayEvents.map((event) => (
-              <li class="overflow-hidden text-ellipsis whitespace-nowrap">
-                <a href="#" class="hover:underline">
-                  <span class="font-bold">{event.time}</span> {event.title}{" "}
-                  <span class="text-base-content/60">({event.location.name})</span>
-                </a>
-              </li>
-            ))
-          }
-        </ul>
+      <div>
+        <h2 class="text-xl font-semibold">Heutige Veranstaltungen</h2>
+        <p class="text-sm text-base-content/60">
+          {todayEvents.length} Veranstaltung{todayEvents.length !== 1 ? "en" : ""} heute
+        </p>
       </div>
     </div>
-
-    <!-- Mensa card -->
-    <MensaCard />
+    <a href="/events" class="btn btn-ghost btn-sm hidden sm:flex gap-1">
+      Alle anzeigen
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="h-4 w-4"
+        aria-hidden="true"
+      >
+        <path d="M5 12h14"></path>
+        <path d="m12 5 7 7-7 7"></path>
+      </svg>
+    </a>
   </div>
-</div>
+
+  {
+    todayEvents.length === 0 ? (
+      <p class="text-base-content/60 rounded-xl border border-base-300 bg-base-100 p-6">
+        Keine Veranstaltungen für heute geplant.
+      </p>
+    ) : (
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {todayEvents.map((event) => (
+          <a
+            href="#"
+            class="group flex flex-col rounded-xl border border-base-300 bg-base-100 p-4 transition-all hover:shadow-md no-underline">
+            <div class="mb-3 flex items-center gap-1 text-sm text-base-content/60">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="h-3.5 w-3.5 shrink-0"
+                aria-hidden="true">
+                <path d="M12 6v6l4 2" />
+                <circle cx="12" cy="12" r="10" />
+              </svg>
+              <span>{event.time} Uhr</span>
+            </div>
+            <h3 class="mb-2 font-semibold leading-tight text-base-content group-hover:text-primary">
+              {event.title}
+            </h3>
+            <div class="mt-auto flex items-center gap-1.5 text-sm text-base-content/60">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="h-3.5 w-3.5 shrink-0"
+                aria-hidden="true">
+                <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" />
+                <circle cx="12" cy="10" r="3" />
+              </svg>
+              <span class="truncate">{event.location.name}</span>
+            </div>
+          </a>
+        ))}
+      </div>
+    )
+  }
+</section>

@@ -6,38 +6,69 @@ import groups from "../data/groups.json";
 const LIMIT = 5;
 ---
 
-<div id="main-grid" class="grid grid-cols-1 md:grid-cols-3 gap-8">
-  <article class="md:col-span-2">
-    <h1 class="text-xl font-bold mb-2">Aktiv in Bamberg</h1>
-    <p class="text-sm text-base-content/60 mb-6">Studentische Gruppen und Vereine in Bamberg</p>
-    <p>
-      Viele Veranstaltungen, Aktivitäten und Angebote sind nur durch das ehrenamtliche Engagement
-      von Kommilitonen möglich. Werde auch du aktiv und engagiere dich in einer der zahlreichen
-      Gruppen, Vereine oder Initiativen an der Universität Bamberg. Hier findest du eine Übersicht
-      über die verschiedenen Möglichkeiten, dich einzubringen und das Campusleben mitzugestalten.
-    </p>
-    <div class="mt-4 mb-6">
-      <select id="sort-select" class="select select-bordered select-sm w-auto">
-        <option value="random">Zufällige Reihenfolge</option>
-        <option value="name">Sortieren nach Name</option>
-      </select>
-    </div>
-  </article>
-
-  <Sidebar />
-
-  {
-    groups.map((group, i) => (
-      <div data-group data-group-name={group.name} hidden={i >= LIMIT}>
-        <StudentGroup group={group} />
+<section id="groups">
+  <!-- Section header -->
+  <div class="mb-6 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="h-5 w-5 text-purple-700"
+          aria-hidden="true"
+        >
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
       </div>
-    ))
-  }
-</div>
+      <div>
+        <h2 class="text-xl font-semibold">Aktiv in Bamberg</h2>
+        <p class="text-sm text-base-content/60">Studentische Gruppen und Vereine</p>
+      </div>
+    </div>
+  </div>
 
-<div class="mt-4">
-  <button id="show-all-btn" class="btn btn-soft btn-sm">Alle Gruppen anzeigen</button>
-</div>
+  <!-- Original grid: article (col-span-2) + sidebar (col-start-3, row-span-2) + groups (auto-placed) -->
+  <div id="main-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <article class="md:col-span-2">
+      <p class="text-sm text-base-content/60 mb-4">
+        Viele Veranstaltungen, Aktivitäten und Angebote sind nur durch das ehrenamtliche Engagement
+        von Kommilitonen möglich. Werde auch du aktiv und engagiere dich in einer der zahlreichen
+        Gruppen, Vereine oder Initiativen an der Universität Bamberg. Hier findest du eine Übersicht
+        über die verschiedenen Möglichkeiten, dich einzubringen und das Campus-Leben mitzugestalten.
+      </p>
+      <div>
+        <select id="sort-select" class="select select-bordered select-sm w-auto">
+          <option value="random">Zufällige Reihenfolge</option>
+          <option value="name">Sortieren nach Name</option>
+        </select>
+      </div>
+    </article>
+
+    <Sidebar />
+
+    {
+      groups.map((group, i) => (
+        <div data-group data-group-name={group.name} hidden={i >= LIMIT}>
+          <StudentGroup group={group} />
+        </div>
+      ))
+    }
+  </div>
+
+  <div class="mt-4">
+    <button id="show-all-btn" class="btn btn-soft btn-sm">Alle Gruppen anzeigen</button>
+  </div>
+</section>
 
 <script define:vars={{ LIMIT }} is:inline>
   const grid = document.getElementById("main-grid");

@@ -6,29 +6,80 @@ const sidebarLinks = [
   "FS GuK",
   "USI e.V. - Wandkalender",
   "... und viele weitere!",
-];
+]
 ---
 
-<div
-  class="card border border-base-300 overflow-hidden max-md:order-first md:row-span-2 md:col-start-3"
->
-  <div class="bg-base-200 p-4">
-    <h2 class="font-semibold italic">Über uns</h2>
-    <p class="mt-1 text-sm">
-      Unser Ziel ist es, Bamberger Studierenden eine zentrale Anlaufstelle für alle wichtigen
-      Informationen rund ums Studium zu bieten.
-    </p>
+<div class="flex flex-col gap-4 max-md:order-first md:row-span-2 md:col-start-3">
+  <div class="rounded-xl border border-base-300 bg-base-100 overflow-hidden">
+    <div class="bg-base-200 px-4 py-3">
+      <h2 class="font-semibold text-base-content">Über uns</h2>
+    </div>
+    <div class="p-4">
+      <p class="text-sm text-base-content/60">
+        Unser Ziel ist es, Bamberger Studierenden eine zentrale Anlaufstelle für alle wichtigen
+        Informationen rund ums Studium zu bieten.
+      </p>
+    </div>
   </div>
 
-  <div class="p-4">
-    <h3 class="text-sm font-semibold italic mb-1">Entwicklung/Betrieb der Plattform</h3>
-    <ul class="flex flex-col gap-2 text-sm mb-4">
-      <li><a href="#" class="link link-hover text-blue-600">Platzhalter e. V.</a></li>
+  <div class="rounded-xl border border-base-300 bg-base-100 p-4">
+    <h3 class="mb-3 text-sm font-semibold text-base-content">Entwicklung &amp; Betrieb</h3>
+    <ul class="mb-4 flex flex-col gap-2 text-sm">
+      <li>
+        <a
+          href="#"
+          class="flex items-center gap-1.5 text-base-content/60 hover:text-primary no-underline transition-colors"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="h-3.5 w-3.5 shrink-0"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
+            <path d="M2 12h20"></path>
+          </svg>
+          Platzhalter e. V.
+        </a>
+      </li>
     </ul>
 
-    <h3 class="text-sm font-semibold italic mb-1">Teilverantwortliche Gruppen</h3>
+    <h3 class="mb-3 text-sm font-semibold text-base-content">Teilverantwortliche Gruppen</h3>
     <ul class="flex flex-col gap-2 text-sm">
-      {sidebarLinks.map((name) => <li><a href="#" class="link link-hover text-blue-600">{name}</a></li>)}
+      {
+        sidebarLinks.map((name) => (
+          <li>
+            <a
+              href="#"
+              class="flex items-center gap-1.5 text-base-content/60 hover:text-primary no-underline transition-colors">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="h-3.5 w-3.5 shrink-0"
+                aria-hidden="true">
+                <path d="M5 12h14" />
+                <path d="m12 5 7 7-7 7" />
+              </svg>
+              {name}
+            </a>
+          </li>
+        ))
+      }
     </ul>
   </div>
 </div>

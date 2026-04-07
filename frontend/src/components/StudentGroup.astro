@@ -1,48 +1,84 @@
 ---
 interface Props {
   group: {
-    id: string;
-    name: string;
-    description: string;
-    links: { website?: string; email?: string };
-  };
+    id: string
+    name: string
+    description: string
+    links: { website?: string; email?: string }
+  }
 }
 
-const { group } = Astro.props;
+const { group } = Astro.props
 ---
 
-<div data-student-group>
-  <h2 class="text-xl font-semibold md:min-h-18 mb-1">
-    <a href="#" class="hover:underline">{group.name}</a>
-  </h2>
+<div
+  data-student-group
+  class="group flex flex-col rounded-xl border border-base-300 bg-base-100 p-4 transition-all hover:shadow-md h-full"
+>
+  <h3 class="mb-2 font-semibold leading-tight text-base-content group-hover:text-primary">
+    <a href="#" class="no-underline">{group.name}</a>
+  </h3>
 
   <p
     data-description
-    class="text-sm text-base-content/60"
-    style="overflow:hidden; display:-webkit-box; -webkit-line-clamp:5; -webkit-box-orient:vertical;"
+    class="mb-2 text-sm text-base-content/60"
+    style="overflow:hidden; display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical;"
   >
     {group.description}
   </p>
 
-  <button data-expand-btn class="btn btn-ghost btn-xs px-0 text-blue-600 h-auto min-h-0 my-1">
-    Komplette Beschreibung anzeigen
+  <button data-expand-btn class="btn btn-ghost btn-xs px-0 mb-3 self-start text-primary">
+    Mehr anzeigen
   </button>
 
-  <div class="flex gap-4 border-t-2 border-base-content/30 pt-2">
+  <div class="mt-auto flex gap-3 border-t border-base-300 pt-3">
     {
       group.links.website && (
         <a
           href={group.links.website}
           target="_blank"
           rel="noopener noreferrer"
-          class="link link-hover text-blue-600">
+          class="flex items-center gap-1 text-xs text-base-content/60 hover:text-primary no-underline transition-colors">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="h-3.5 w-3.5"
+            aria-hidden="true">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+            <path d="M2 12h20" />
+          </svg>
           Website
         </a>
       )
     }
     {
       group.links.email && (
-        <a href={`mailto:${group.links.email}`} class="link link-hover text-blue-600">
+        <a
+          href={`mailto:${group.links.email}`}
+          class="flex items-center gap-1 text-xs text-base-content/60 hover:text-primary no-underline transition-colors">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="h-3.5 w-3.5"
+            aria-hidden="true">
+            <rect width="20" height="16" x="2" y="4" rx="2" />
+            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+          </svg>
           E-Mail
         </a>
       )
@@ -51,20 +87,19 @@ const { group } = Astro.props;
 </div>
 
 <script>
-  // Deduplicated by Astro — runs once for all instances
   document.addEventListener("click", (e) => {
-    const btn = (e.target as HTMLElement).closest("[data-expand-btn]");
-    if (!btn) return;
-    const group = btn.closest("[data-student-group]")!;
-    const desc = group.querySelector("[data-description]") as HTMLElement;
-    const isCollapsed = !!desc.style.webkitLineClamp;
+    const btn = (e.target as HTMLElement).closest("[data-expand-btn]")
+    if (!btn) return
+    const group = btn.closest("[data-student-group]")!
+    const desc = group.querySelector("[data-description]") as HTMLElement
+    const isCollapsed = !!desc.style.webkitLineClamp
     if (isCollapsed) {
-      desc.style.cssText = "";
-      btn.textContent = "Beschreibung einklappen";
+      desc.style.cssText = ""
+      btn.textContent = "Weniger anzeigen"
     } else {
       desc.style.cssText =
-        "overflow:hidden; display:-webkit-box; -webkit-line-clamp:5; -webkit-box-orient:vertical;";
-      btn.textContent = "Komplette Beschreibung anzeigen";
+        "overflow:hidden; display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical;"
+      btn.textContent = "Mehr anzeigen"
     }
-  });
+  })
 </script>
