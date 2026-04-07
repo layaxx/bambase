@@ -385,6 +385,48 @@ export interface AdminUser extends Struct.CollectionTypeSchema {
   }
 }
 
+export interface ApiJobOfferJobOffer extends Struct.CollectionTypeSchema {
+  collectionName: "job_offers"
+  info: {
+    displayName: "Job Offer"
+    pluralName: "job-offers"
+    singularName: "job-offer"
+  }
+  options: {
+    draftAndPublish: false
+  }
+  attributes: {
+    company: Schema.Attribute.String & Schema.Attribute.Required
+    contact: Schema.Attribute.Component<"jobs.contact", false> & Schema.Attribute.Required
+    createdAt: Schema.Attribute.DateTime
+    createdBy: Schema.Attribute.Relation<"oneToOne", "admin::user"> & Schema.Attribute.Private
+    description: Schema.Attribute.Text & Schema.Attribute.Required
+    external_url: Schema.Attribute.String
+    file: Schema.Attribute.Media<"files", true>
+    locale: Schema.Attribute.String & Schema.Attribute.Private
+    localizations: Schema.Attribute.Relation<"oneToMany", "api::job-offer.job-offer"> &
+      Schema.Attribute.Private
+    location: Schema.Attribute.String & Schema.Attribute.Required
+    offline_after: Schema.Attribute.DateTime
+    online_status: Schema.Attribute.Enumeration<["submitted", "published", "expired", "rejected"]> &
+      Schema.Attribute.DefaultTo<"submitted">
+    owner: Schema.Attribute.Relation<"oneToOne", "plugin::users-permissions.user">
+    publishedAt: Schema.Attribute.DateTime
+    title: Schema.Attribute.String & Schema.Attribute.Required
+    updatedAt: Schema.Attribute.DateTime
+    updatedBy: Schema.Attribute.Relation<"oneToOne", "admin::user"> & Schema.Attribute.Private
+    uuid: Schema.Attribute.UID<"title">
+    working_hours: Schema.Attribute.Integer &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0
+        },
+        number
+      >
+  }
+}
+
 export interface ApiMensaMealMensaMeal extends Struct.CollectionTypeSchema {
   collectionName: "mensa_meals"
   info: {
@@ -865,6 +907,7 @@ declare module "@strapi/strapi" {
       "admin::transfer-token": AdminTransferToken
       "admin::transfer-token-permission": AdminTransferTokenPermission
       "admin::user": AdminUser
+      "api::job-offer.job-offer": ApiJobOfferJobOffer
       "api::mensa-meal.mensa-meal": ApiMensaMealMensaMeal
       "plugin::content-releases.release": PluginContentReleasesRelease
       "plugin::content-releases.release-action": PluginContentReleasesReleaseAction

@@ -1,0 +1,67 @@
+{
+  "kind": "collectionType",
+  "collectionName": "job_offers",
+  "info": {
+    "singularName": "job-offer",
+    "pluralName": "job-offers",
+    "displayName": "Job Offer"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "uuid": {
+      "type": "uid",
+      "targetField": "title"
+    },
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "description": {
+      "type": "text",
+      "required": true
+    },
+    "company": {
+      "type": "string",
+      "required": true
+    },
+    "location": {
+      "type": "string",
+      "required": true
+    },
+    "online_status": {
+      "type": "enumeration",
+      "default": "submitted",
+      "enum": ["submitted", "published", "expired", "rejected"]
+    },
+    "working_hours": {
+      "type": "integer",
+      "required": true,
+      "min": 0
+    },
+    "offline_after": {
+      "type": "datetime"
+    },
+    "contact": {
+      "type": "component",
+      "component": "jobs.contact",
+      "repeatable": false,
+      "required": true
+    },
+    "owner": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "external_url": {
+      "type": "string"
+    },
+    "file": {
+      "type": "media",
+      "multiple": true,
+      "allowedTypes": ["files"]
+    }
+  }
+}

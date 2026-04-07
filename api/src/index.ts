@@ -1,5 +1,3 @@
-// import type { Core } from '@strapi/strapi';
-
 import { Core } from "@strapi/strapi"
 
 export default {
