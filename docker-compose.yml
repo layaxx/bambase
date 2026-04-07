@@ -1,0 +1,47 @@
+services:
+  api:
+    build:
+      context: ./api
+    restart: unless-stopped
+    container_name: bambase_api
+    environment:
+      HOST: 0.0.0.0
+      PORT: 1337
+      APP_KEYS: ${APP_KEYS}
+      API_TOKEN_SALT: ${API_TOKEN_SALT}
+      ADMIN_JWT_SECRET: ${ADMIN_JWT_SECRET}
+      TRANSFER_TOKEN_SALT: ${TRANSFER_TOKEN_SALT}
+      JWT_SECRET: ${JWT_SECRET}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      SEED: ${SEED:-false}
+    volumes:
+      - api_data:/app/.tmp
+      - api_uploads:/app/public/uploads
+    networks:
+      - proxy
+      - internal_network
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        STRAPI_URL: http://api:1337
+        STRAPI_TOKEN: ${STRAPI_TOKEN}
+    container_name: bambase_frontend
+    restart: unless-stopped
+    depends_on:
+      - api
+    networks:
+      - proxy
+      - internal_network
+
+volumes:
+  api_data:
+  api_uploads:
+
+networks:
+  internal_network:
+    name: internal_network
+  proxy:
+    name: proxy
+    external: true

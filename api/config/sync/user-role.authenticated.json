@@ -1,0 +1,49 @@
+{
+  "documentId": "dann09jcoq9xsvo451s1ej94",
+  "name": "Authenticated",
+  "description": "Default role given to authenticated user.",
+  "type": "authenticated",
+  "locale": null,
+  "permissions": [
+    {
+      "documentId": "mzfdnzdwxol1v3gr5u4jtl11",
+      "action": "api::job-offer.job-offer.create",
+      "locale": null
+    },
+    {
+      "documentId": "qnczqg0o22uxrmp2t3lcscxg",
+      "action": "api::job-offer.job-offer.delete",
+      "locale": null
+    },
+    {
+      "documentId": "abkqwfpwey7g528jfphkdyq5",
+      "action": "api::job-offer.job-offer.find",
+      "locale": null
+    },
+    {
+      "documentId": "ikcq9i5leznd5d3izkbbyb0n",
+      "action": "api::job-offer.job-offer.findOne",
+      "locale": null
+    },
+    {
+      "documentId": "tceyvwlb4or8w71wz44lvdjk",
+      "action": "api::job-offer.job-offer.update",
+      "locale": null
+    },
+    {
+      "documentId": "eey8cmbb7ylyhmacqis5h8pe",
+      "action": "plugin::users-permissions.auth.changePassword",
+      "locale": null
+    },
+    {
+      "documentId": "cmdcgy2pb5247h29fvjphnqy",
+      "action": "plugin::users-permissions.auth.logout",
+      "locale": null
+    },
+    {
+      "documentId": "m44gr153vqtddr89z56bzayl",
+      "action": "plugin::users-permissions.user.me",
+      "locale": null
+    }
+  ]
+}
