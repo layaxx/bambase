@@ -6,6 +6,9 @@ import MensaDaySection from "../components/mensa/MensaDaySection.astro"
 import MensaWeekendSection from "../components/mensa/MensaWeekendSection.astro"
 import { fetchMensaMeals } from "../utils/api"
 import dayjs from "dayjs"
+import { useTranslations } from "../i18n/translations"
+
+const t = useTranslations(Astro.locals.locale)
 
 const today = dayjs()
 const days = Array.from({ length: 7 }, (_, i) => today.add(i, "day"))
@@ -26,10 +29,8 @@ type WeekdayEntry = {
 type WeekendEntry = { type: "weekend"; heading: string }
 type DayEntry = WeekdayEntry | WeekendEntry
 
-const longWeekdays = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"]
-
 function formatDate(d: dayjs.Dayjs) {
-  return d.toDate().toLocaleDateString("de-DE", { day: "numeric", month: "long" })
+  return d.toDate().toLocaleDateString(t.mensa.dateLocale, { day: "numeric", month: "long" })
 }
 
 const grouped: DayEntry[] = []
@@ -40,14 +41,14 @@ while (i < mealsByDay.length) {
   const nextDow = i + 1 < mealsByDay.length ? mealsByDay[i + 1].day.day() : -1
 
   if (dow === 6 && nextDow === 0) {
-    const heading = `Samstag & Sonntag, ${formatDate(day)} – ${formatDate(mealsByDay[i + 1].day)}`
+    const heading = t.mensa.weekendHeading(formatDate(day), formatDate(mealsByDay[i + 1].day))
     grouped.push({ type: "weekend", heading })
     i += 2
   } else if (dow === 0 || dow === 6) {
-    grouped.push({ type: "weekend", heading: `${longWeekdays[dow]}, ${formatDate(day)}` })
+    grouped.push({ type: "weekend", heading: `${t.mensa.weekdays[dow]}, ${formatDate(day)}` })
     i++
   } else {
-    const label = i === 0 ? "Heute" : i === 1 ? "Morgen" : longWeekdays[dow]
+    const label = i === 0 ? t.mensa.today : i === 1 ? t.mensa.tomorrow : t.mensa.weekdays[dow]
     grouped.push({ type: "weekday", heading: `${label}, ${formatDate(day)}`, meals })
     i++
   }
@@ -77,11 +78,11 @@ while (i < mealsByDay.length) {
           <path d="M7 2v20" />
           <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" />
         </svg>
-        <span class="text-sm font-medium">Bamberger Mensen</span>
+        <span class="text-sm font-medium">{t.mensa.pageLocations}</span>
       </div>
-      <h1 class="mb-2 text-3xl font-bold tracking-tight sm:text-4xl">Mensaplan</h1>
+      <h1 class="mb-2 text-3xl font-bold tracking-tight sm:text-4xl">{t.mensa.pageTitle}</h1>
       <p class="max-w-2xl text-lg text-base-content/60">
-        Speisepläne für Feki, Austraße und Erba – heute und die nächsten 6 Tage.
+        {t.mensa.pageSubtitle}
       </p>
     </section>
 

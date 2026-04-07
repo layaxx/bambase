@@ -1,5 +1,8 @@
 ---
 import jobs from "../data/jobs.json";
+import { useTranslations } from "../i18n/translations";
+
+const t = useTranslations(Astro.locals.locale);
 
 const typeColors: Record<string, string> = {
   Werkstudent: "bg-amber-100 text-amber-800",
@@ -31,12 +34,12 @@ const typeColors: Record<string, string> = {
         </svg>
       </div>
       <div>
-        <h2 class="text-xl font-semibold">Aktuelle Stellenangebote</h2>
-        <p class="text-sm text-base-content/60">Neueste Angebote für Studenten</p>
+        <h2 class="text-xl font-semibold">{t.jobs.title}</h2>
+        <p class="text-sm text-base-content/60">{t.jobs.subtitle}</p>
       </div>
     </div>
     <a href="/jobs" class="btn btn-ghost btn-sm hidden sm:flex gap-1">
-      Alle anzeigen
+      {t.jobs.showAll}
       <svg
         xmlns="http://www.w3.org/2000/svg"
         width="24"

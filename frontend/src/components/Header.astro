@@ -3,13 +3,17 @@ import IconSun from "../icons/IconSun.astro"
 import IconMoon from "../icons/IconMoon.astro"
 import IconMenu from "../icons/IconMenu.astro"
 import IconX from "../icons/IconX.astro"
+import { useTranslations } from "../i18n/translations"
+
+const locale = Astro.locals.locale
+const t = useTranslations(locale)
 
 const navItems = [
-  { name: "Jobs", href: "/jobs" },
-  { name: "Termine", href: "/events" },
-  { name: "Mensaplan", href: "/mensa" },
-  { name: "Infomap", href: "/infomap" },
-  { name: "Start ins Studium", href: "/start-ins-studium" },
+  { name: t.nav.jobs, href: "/jobs" },
+  { name: t.nav.events, href: "/events" },
+  { name: t.nav.mensa, href: "/mensa" },
+  { name: t.nav.infomap, href: "/infomap" },
+  { name: t.nav.startStudy, href: "/start-ins-studium" },
 ]
 
 const pathname = Astro.url.pathname
@@ -17,6 +21,10 @@ const isActive = (href: string) => pathname === href || pathname.startsWith(href
 
 const authUserRaw = Astro.cookies.get("auth_user")?.value
 const authUser = authUserRaw ? JSON.parse(authUserRaw) : null
+
+const switchLang = t.language.switchLang
+const switchLabel = t.language.switchLabel
+const switchUrl = `/set-locale?lang=${switchLang}&redirect=${encodeURIComponent(pathname)}`
 ---
 
 <header class="border-b border-base-300 bg-base-100">
@@ -54,24 +62,31 @@ const authUser = authUserRaw ? JSON.parse(authUserRaw) : null
       <div class="flex items-center gap-2 shrink-0">
         <input
           class="input input-bordered input-sm hidden md:block w-40 lg:w-56"
-          placeholder="Suchen..."
+          placeholder={t.nav.search}
         />
         {
           authUser ? (
             <div class="hidden md:flex">
               <a href="/account" class="btn btn-sm btn-ghost">
-                Mein Konto
+                {t.nav.myAccount}
               </a>
             </div>
           ) : (
             <a href="/login" class="btn btn-sm hidden md:flex">
-              Einloggen
+              {t.nav.login}
             </a>
           )
         }
+        <a
+          href={switchUrl}
+          class="btn btn-ghost btn-sm font-medium text-xs hidden md:flex"
+          aria-label={switchLabel}
+        >
+          {switchLabel}
+        </a>
         <button
           id="theme-toggle"
-          aria-label="Dunkelmodus umschalten"
+          aria-label={t.nav.toggleDark}
           class="btn btn-ghost btn-sm btn-square"
         >
           <IconSun id="icon-sun" class="hidden size-5" />
@@ -79,7 +94,7 @@ const authUser = authUserRaw ? JSON.parse(authUserRaw) : null
         </button>
         <button
           id="menu-toggle"
-          aria-label="Menü öffnen"
+          aria-label={t.nav.openMenu}
           aria-expanded="false"
           class="btn btn-square btn-sm md:hidden"
         >
@@ -108,43 +123,46 @@ const authUser = authUserRaw ? JSON.parse(authUserRaw) : null
         ))
       }
     </nav>
-    <input class="input input-bordered input-sm w-full" placeholder="Suchen..." />
+    <input class="input input-bordered input-sm w-full" placeholder={t.nav.search} />
     <div class="mt-3 flex flex-col gap-1">
       {
         authUser ? (
           <a href="/account" class="btn btn-sm btn-ghost w-full">
-            Mein Konto
+            {t.nav.myAccount}
           </a>
         ) : (
           <a href="/login" class="btn btn-sm btn-primary w-full">
-            Einloggen
+            {t.nav.login}
           </a>
         )
       }
+      <a href={switchUrl} class="btn btn-sm btn-ghost w-full">
+        {switchLabel}
+      </a>
     </div>
   </div>
 </header>
 
-<script>
-  const toggle = document.getElementById("menu-toggle")!
-  const nav = document.getElementById("mobile-nav")!
-  const iconMenu = document.getElementById("icon-menu")!
-  const iconX = document.getElementById("icon-x")!
+<script define:vars={{ openMenu: t.nav.openMenu, closeMenu: t.nav.closeMenu }} is:inline>
+  const toggle = document.getElementById("menu-toggle")
+  const nav = document.getElementById("mobile-nav")
+  const iconMenu = document.getElementById("icon-menu")
+  const iconX = document.getElementById("icon-x")
 
   toggle.addEventListener("click", () => {
     const isOpen = !nav.hidden
     nav.hidden = isOpen
     toggle.setAttribute("aria-expanded", String(!isOpen))
-    toggle.setAttribute("aria-label", isOpen ? "Menü öffnen" : "Menü schließen")
+    toggle.setAttribute("aria-label", isOpen ? openMenu : closeMenu)
     iconMenu.classList.toggle("hidden", !isOpen)
     iconX.classList.toggle("hidden", isOpen)
   })
 
-  const themeToggle = document.getElementById("theme-toggle")!
-  const iconSun = document.getElementById("icon-sun")!
-  const iconMoon = document.getElementById("icon-moon")!
+  const themeToggle = document.getElementById("theme-toggle")
+  const iconSun = document.getElementById("icon-sun")
+  const iconMoon = document.getElementById("icon-moon")
 
-  function applyTheme(theme: string) {
+  function applyTheme(theme) {
     document.documentElement.setAttribute("data-theme", theme)
     localStorage.setItem("theme", theme)
     iconSun.classList.toggle("hidden", theme !== "dark")

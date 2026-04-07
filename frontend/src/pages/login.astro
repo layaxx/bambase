@@ -3,6 +3,9 @@ import { actions } from "astro:actions"
 import Layout from "../layouts/Layout.astro"
 import Header from "../components/Header.astro"
 import Footer from "../components/Footer.astro"
+import { useTranslations } from "../i18n/translations"
+
+const t = useTranslations(Astro.locals.locale)
 
 const result = Astro.getActionResult(actions.auth.login)
 if (result && !result.error) {
@@ -16,9 +19,9 @@ const error = result?.error?.message
   <Header />
   <main class="flex items-center justify-center px-4 py-12">
     <div class="w-full max-w-md">
-      <h1 class="text-2xl font-extrabold mb-2">Einloggen</h1>
+      <h1 class="text-2xl font-extrabold mb-2">{t.auth.loginTitle}</h1>
       <p class="text-base-content/60 text-sm mb-6">
-        Noch kein Konto? <a href="/register" class="link link-primary">Registrieren</a>
+        {t.auth.noAccount} <a href="/register" class="link link-primary">{t.auth.registerLink}</a>
       </p>
 
       {
@@ -31,30 +34,30 @@ const error = result?.error?.message
 
       <form method="POST" action={actions.auth.login} class="flex flex-col">
         <fieldset class="fieldset">
-          <legend class="fieldset-legend">E-Mail</legend>
+          <legend class="fieldset-legend">{t.auth.emailLabel}</legend>
           <input
             type="email"
             name="identifier"
             class="input w-full"
-            placeholder="dein.name@mailprovider.de"
+            placeholder={t.auth.emailPlaceholder}
             required
             autocomplete="email"
           />
         </fieldset>
 
         <fieldset class="fieldset">
-          <legend class="fieldset-legend">Passwort</legend>
+          <legend class="fieldset-legend">{t.auth.passwordLabel}</legend>
           <input
             type="password"
             name="password"
             class="input w-full"
-            placeholder="Passwort"
+            placeholder={t.auth.passwordPlaceholder}
             required
             autocomplete="current-password"
           />
         </fieldset>
 
-        <button type="submit" class="btn btn-primary mt-6">Einloggen</button>
+        <button type="submit" class="btn btn-primary mt-6">{t.auth.loginBtn}</button>
       </form>
     </div>
   </main>

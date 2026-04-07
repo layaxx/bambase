@@ -1,5 +1,8 @@
 ---
 import events from "../data/events.json"
+import { useTranslations } from "../i18n/translations"
+
+const t = useTranslations(Astro.locals.locale)
 
 const today = new Date()
 const todayStr = today.toISOString().split("T")[0]
@@ -31,14 +34,14 @@ const todayEvents = events.filter((e) => e.date === todayStr)
         </svg>
       </div>
       <div>
-        <h2 class="text-xl font-semibold">Heutige Veranstaltungen</h2>
+        <h2 class="text-xl font-semibold">{t.events.title}</h2>
         <p class="text-sm text-base-content/60">
-          {todayEvents.length} Veranstaltung{todayEvents.length !== 1 ? "en" : ""} heute
+          {t.events.countToday(todayEvents.length)}
         </p>
       </div>
     </div>
     <a href="/events" class="btn btn-ghost btn-sm hidden sm:flex gap-1">
-      Alle anzeigen
+      {t.events.showAll}
       <svg
         xmlns="http://www.w3.org/2000/svg"
         width="24"
@@ -61,7 +64,7 @@ const todayEvents = events.filter((e) => e.date === todayStr)
   {
     todayEvents.length === 0 ? (
       <p class="text-base-content/60 rounded-xl border border-base-300 bg-base-100 p-6">
-        Keine Veranstaltungen für heute geplant.
+        {t.events.none}
       </p>
     ) : (
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -85,7 +88,7 @@ const todayEvents = events.filter((e) => e.date === todayStr)
                 <path d="M12 6v6l4 2" />
                 <circle cx="12" cy="12" r="10" />
               </svg>
-              <span>{event.time} Uhr</span>
+              <span>{event.time}{t.events.clock ? ` ${t.events.clock}` : ""}</span>
             </div>
             <h3 class="mb-2 font-semibold leading-tight text-base-content group-hover:text-primary">
               {event.title}

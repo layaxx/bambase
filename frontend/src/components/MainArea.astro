@@ -2,6 +2,9 @@
 import Sidebar from "./Sidebar.astro";
 import StudentGroup from "./StudentGroup.astro";
 import groups from "../data/groups.json";
+import { useTranslations } from "../i18n/translations";
+
+const t = useTranslations(Astro.locals.locale);
 
 const LIMIT = 5;
 ---
@@ -31,8 +34,8 @@ const LIMIT = 5;
         </svg>
       </div>
       <div>
-        <h2 class="text-xl font-semibold">Aktiv in Bamberg</h2>
-        <p class="text-sm text-base-content/60">Studentische Gruppen und Vereine</p>
+        <h2 class="text-xl font-semibold">{t.groups.title}</h2>
+        <p class="text-sm text-base-content/60">{t.groups.subtitle}</p>
       </div>
     </div>
   </div>
@@ -41,15 +44,12 @@ const LIMIT = 5;
   <div id="main-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6">
     <article class="md:col-span-2">
       <p class="text-sm text-base-content/60 mb-4">
-        Viele Veranstaltungen, Aktivitäten und Angebote sind nur durch das ehrenamtliche Engagement
-        von Kommilitonen möglich. Werde auch du aktiv und engagiere dich in einer der zahlreichen
-        Gruppen, Vereine oder Initiativen an der Universität Bamberg. Hier findest du eine Übersicht
-        über die verschiedenen Möglichkeiten, dich einzubringen und das Campus-Leben mitzugestalten.
+        {t.groups.description}
       </p>
       <div>
         <select id="sort-select" class="select select-bordered select-sm w-auto">
-          <option value="random">Zufällige Reihenfolge</option>
-          <option value="name">Sortieren nach Name</option>
+          <option value="random">{t.groups.sortRandom}</option>
+          <option value="name">{t.groups.sortByName}</option>
         </select>
       </div>
     </article>
@@ -66,11 +66,11 @@ const LIMIT = 5;
   </div>
 
   <div class="mt-4">
-    <button id="show-all-btn" class="btn btn-soft btn-sm">Alle Gruppen anzeigen</button>
+    <button id="show-all-btn" class="btn btn-soft btn-sm">{t.groups.showAll}</button>
   </div>
 </section>
 
-<script define:vars={{ LIMIT }} is:inline>
+<script define:vars={{ LIMIT, showAllText: t.groups.showAll, showLessText: t.groups.showLess }} is:inline>
   const grid = document.getElementById("main-grid");
   const sortSelect = document.getElementById("sort-select");
   const showAllBtn = document.getElementById("show-all-btn");
@@ -101,7 +101,7 @@ const LIMIT = 5;
 
   showAllBtn.addEventListener("click", () => {
     showAll = !showAll;
-    showAllBtn.textContent = showAll ? "Weniger Gruppen anzeigen" : "Alle Gruppen anzeigen";
+    showAllBtn.textContent = showAll ? showLessText : showAllText;
     updateVisibility();
   });
 

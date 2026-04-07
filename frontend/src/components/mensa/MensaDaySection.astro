@@ -1,6 +1,7 @@
 ---
 import type { MensaMeal } from "../../utils/api"
 import MensaLocationCard from "./MensaLocationCard.astro"
+import { useTranslations } from "../../i18n/translations"
 
 interface Props {
   heading: string
@@ -8,6 +9,7 @@ interface Props {
 }
 
 const { heading, meals } = Astro.props
+const t = useTranslations(Astro.locals.locale)
 
 const locations = [
   { id: "feki", label: "Feki", strapiName: "Feki" },
@@ -68,7 +70,7 @@ const mealsByLocation = Object.fromEntries(
           <circle cx="12" cy="12" r="10" />
           <path d="M8 12h8" />
         </svg>
-        <p class="text-sm">Für diesen Tag liegen noch keine Daten vor.</p>
+        <p class="text-sm">{t.mensa.noDataDay}</p>
       </div>
     ) : (
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

@@ -3,6 +3,9 @@ import { actions } from "astro:actions"
 import Layout from "../layouts/Layout.astro"
 import Header from "../components/Header.astro"
 import Footer from "../components/Footer.astro"
+import { useTranslations } from "../i18n/translations"
+
+const t = useTranslations(Astro.locals.locale)
 
 const { data: user, error } = await Astro.callAction(actions.auth.getMe, {})
 
@@ -16,20 +19,20 @@ if (error) {
 <Layout>
   <Header />
   <main class="max-w-2xl mx-auto px-4 py-12">
-    <h1 class="text-2xl font-extrabold mb-8">Mein Konto</h1>
+    <h1 class="text-2xl font-extrabold mb-8">{t.auth.accountTitle}</h1>
 
     <div class="card bg-base-100 border border-base-300">
       <div class="card-body gap-4">
         <div class="flex flex-col gap-1">
-          <span class="text-xs text-base-content/50 uppercase tracking-wide">E-Mail</span>
+          <span class="text-xs text-base-content/50 uppercase tracking-wide">{t.auth.emailFieldLabel}</span>
           <span class="font-medium">{user.email}</span>
         </div>
         <div class="divider my-0"></div>
         <div class="flex flex-col gap-1">
-          <span class="text-xs text-base-content/50 uppercase tracking-wide">Mitglied seit</span>
+          <span class="text-xs text-base-content/50 uppercase tracking-wide">{t.auth.memberSince}</span>
           <span class="font-medium">
             {
-              new Date(user.createdAt).toLocaleDateString("de-DE", {
+              new Date(user.createdAt).toLocaleDateString(t.auth.dateLocale, {
                 day: "numeric",
                 month: "long",
                 year: "numeric",
@@ -41,7 +44,7 @@ if (error) {
     </div>
 
     <div class="mt-6">
-      <a href="/logout" class="btn btn-outline btn-error btn-sm">Abmelden</a>
+      <a href="/logout" class="btn btn-outline btn-error btn-sm">{t.auth.logout}</a>
     </div>
   </main>
   <Footer />

@@ -1,9 +1,15 @@
 ---
 import { fetchMensaMeals } from "../utils/api"
 import dayjs from "dayjs"
+import { useTranslations } from "../i18n/translations"
+
+const t = useTranslations(Astro.locals.locale)
 
 const relevantDay = dayjs().add(1, "day")
-const todayFormatted = relevantDay.format("D. MMMM")
+const todayFormatted = relevantDay.toDate().toLocaleDateString(t.mensa.dateLocale, {
+  day: "numeric",
+  month: "long",
+})
 
 const locations = [
   { id: "feki", label: "Feki", strapiName: "Feki" },
@@ -41,12 +47,12 @@ const mealsByLocation = Object.fromEntries(
         </svg>
       </div>
       <div>
-        <h2 class="text-xl font-semibold">Mensaplan</h2>
-        <p class="text-sm text-base-content/60">Morgen, {todayFormatted}</p>
+        <h2 class="text-xl font-semibold">{t.mensa.cardTitle}</h2>
+        <p class="text-sm text-base-content/60">{t.mensa.cardSubtitle(todayFormatted)}</p>
       </div>
     </div>
     <a href="/mensa" class="btn btn-ghost btn-sm hidden sm:flex gap-1">
-      Vollständiger Plan
+      {t.mensa.fullPlan}
       <svg
         xmlns="http://www.w3.org/2000/svg"
         width="24"
@@ -93,7 +99,7 @@ const mealsByLocation = Object.fromEntries(
       locations.map((loc, i) => (
         <ul id={`meals-${loc.id}`} hidden={i !== 0} class="flex flex-col gap-2">
           {mealsByLocation[loc.id].length === 0 ? (
-            <li class="text-base-content/60 text-sm">Keine Daten verfügbar.</li>
+            <li class="text-base-content/60 text-sm">{t.mensa.noData}</li>
           ) : (
             mealsByLocation[loc.id].map((meal) => (
               <li class="flex items-center justify-between gap-3 rounded-lg border border-base-300 p-3 transition-colors hover:bg-base-200">
