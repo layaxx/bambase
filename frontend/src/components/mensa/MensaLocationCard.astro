@@ -1,0 +1,32 @@
+---
+import type { MensaMeal } from "../../utils/api"
+import MensaMealItem from "./MensaMealItem.astro"
+
+interface Props {
+  label: string
+  meals: MensaMeal[]
+}
+
+const { label, meals } = Astro.props
+---
+
+<div class="rounded-xl border border-base-300 bg-base-100 p-4">
+  <div class="mb-4 flex items-center justify-between">
+    <h3 class="font-semibold text-base-content">{label}</h3>
+    <span class="text-xs text-base-content/60">
+      {meals.length === 0 ? "Keine Gerichte" : `${meals.length} Gericht${meals.length !== 1 ? "e" : ""}`}
+    </span>
+  </div>
+
+  {
+    meals.length === 0 ? (
+      <p class="text-sm text-base-content/60">Keine Daten verfügbar.</p>
+    ) : (
+      <ul class="flex flex-col gap-2">
+        {meals.map((meal) => (
+          <MensaMealItem meal={meal} />
+        ))}
+      </ul>
+    )
+  }
+</div>

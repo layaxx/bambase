@@ -1,0 +1,81 @@
+---
+import type { MensaMeal } from "../../utils/api"
+import MensaLocationCard from "./MensaLocationCard.astro"
+
+interface Props {
+  heading: string
+  meals: MensaMeal[]
+}
+
+const { heading, meals } = Astro.props
+
+const locations = [
+  { id: "feki", label: "Feki", strapiName: "Feki" },
+  { id: "austrasse", label: "Austraße", strapiName: "Austraße" },
+  { id: "erba", label: "Erba", strapiName: "Erba" },
+] as const
+
+const mealsByLocation = Object.fromEntries(
+  locations.map((loc) => [
+    loc.id,
+    meals
+      .filter((m) => m.location === loc.strapiName)
+      .sort((a, b) => a.priceStudents - b.priceStudents),
+  ])
+)
+---
+
+<section>
+  <div class="mb-4 flex items-center gap-3">
+    <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-100">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="h-5 w-5 text-orange-700"
+        aria-hidden="true"
+      >
+        <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" />
+        <path d="M7 2v20" />
+        <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" />
+      </svg>
+    </div>
+    <h2 class="text-xl font-semibold text-base-content">{heading}</h2>
+  </div>
+
+  {
+    meals.length === 0 ? (
+      <div class="rounded-xl border border-base-300 bg-base-100 p-8 text-center text-base-content/60">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="mx-auto mb-3 h-8 w-8 opacity-40"
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="12" r="10" />
+          <path d="M8 12h8" />
+        </svg>
+        <p class="text-sm">Für diesen Tag liegen noch keine Daten vor.</p>
+      </div>
+    ) : (
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {locations.map((loc) => (
+          <MensaLocationCard label={loc.label} meals={mealsByLocation[loc.id]} />
+        ))}
+      </div>
+    )
+  }
+</section>

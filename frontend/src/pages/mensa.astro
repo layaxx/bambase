@@ -1,0 +1,110 @@
+---
+import Header from "../components/Header.astro"
+import Footer from "../components/Footer.astro"
+import Layout from "../layouts/Layout.astro"
+import MensaDaySection from "../components/mensa/MensaDaySection.astro"
+import MensaWeekendSection from "../components/mensa/MensaWeekendSection.astro"
+import { fetchMensaMeals } from "../utils/api"
+import dayjs from "dayjs"
+
+const today = dayjs()
+const days = Array.from({ length: 7 }, (_, i) => today.add(i, "day"))
+
+const mealsByDay = await Promise.all(
+  days.map(async (day) => ({
+    day,
+    meals: await fetchMensaMeals(day),
+  }))
+)
+
+// Group consecutive Saturday + Sunday into a single weekend entry
+type WeekdayEntry = {
+  type: "weekday"
+  heading: string
+  meals: Awaited<ReturnType<typeof fetchMensaMeals>>
+}
+type WeekendEntry = { type: "weekend"; heading: string }
+type DayEntry = WeekdayEntry | WeekendEntry
+
+const longWeekdays = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"]
+
+function formatDate(d: dayjs.Dayjs) {
+  return d.toDate().toLocaleDateString("de-DE", { day: "numeric", month: "long" })
+}
+
+const grouped: DayEntry[] = []
+let i = 0
+while (i < mealsByDay.length) {
+  const { day, meals } = mealsByDay[i]
+  const dow = day.day()
+  const nextDow = i + 1 < mealsByDay.length ? mealsByDay[i + 1].day.day() : -1
+
+  if (dow === 6 && nextDow === 0) {
+    const heading = `Samstag & Sonntag, ${formatDate(day)} – ${formatDate(mealsByDay[i + 1].day)}`
+    grouped.push({ type: "weekend", heading })
+    i += 2
+  } else if (dow === 0 || dow === 6) {
+    grouped.push({ type: "weekend", heading: `${longWeekdays[dow]}, ${formatDate(day)}` })
+    i++
+  } else {
+    const label = i === 0 ? "Heute" : i === 1 ? "Morgen" : longWeekdays[dow]
+    grouped.push({ type: "weekday", heading: `${label}, ${formatDate(day)}`, meals })
+    i++
+  }
+}
+---
+
+<Layout>
+  <Header />
+
+  <main class="page-main">
+    <section class="mb-10">
+      <div class="mb-2 flex items-center gap-2 text-base-content/60">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="h-5 w-5"
+          aria-hidden="true"
+        >
+          <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" />
+          <path d="M7 2v20" />
+          <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" />
+        </svg>
+        <span class="text-sm font-medium">Bamberger Mensen</span>
+      </div>
+      <h1 class="mb-2 text-3xl font-bold tracking-tight sm:text-4xl">Mensaplan</h1>
+      <p class="max-w-2xl text-lg text-base-content/60">
+        Speisepläne für Feki, Austraße und Erba – heute und die nächsten 6 Tage.
+      </p>
+    </section>
+
+    <div class="flex flex-col gap-10">
+      {
+        grouped.map((entry) =>
+          entry.type === "weekend" ? (
+            <MensaWeekendSection heading={entry.heading} />
+          ) : (
+            <MensaDaySection heading={entry.heading} meals={entry.meals} />
+          )
+        )
+      }
+    </div>
+  </main>
+
+  <Footer />
+</Layout>
+
+<style>
+  .page-main {
+    max-width: 80rem;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+  }
+</style>
