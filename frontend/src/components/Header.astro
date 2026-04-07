@@ -1,8 +1,8 @@
 ---
-import IconSun from "../icons/IconSun.astro";
-import IconMoon from "../icons/IconMoon.astro";
-import IconMenu from "../icons/IconMenu.astro";
-import IconX from "../icons/IconX.astro";
+import IconSun from "../icons/IconSun.astro"
+import IconMoon from "../icons/IconMoon.astro"
+import IconMenu from "../icons/IconMenu.astro"
+import IconX from "../icons/IconX.astro"
 
 const navItems = [
   { name: "Jobs", href: "/jobs" },
@@ -10,14 +10,17 @@ const navItems = [
   { name: "Mensaplan", href: "/mensa" },
   { name: "Infomap", href: "/infomap" },
   { name: "Start ins Studium", href: "/start-ins-studium" },
-];
+]
 
-const pathname = Astro.url.pathname;
-const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
+const pathname = Astro.url.pathname
+const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/")
+
+const authUserRaw = Astro.cookies.get("auth_user")?.value
+const authUser = authUserRaw ? JSON.parse(authUserRaw) : null
 ---
 
 <header class="border-b border-base-300 bg-base-100">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+  <div class="max-w-7xl mx-auto px-4">
     <!-- Main header row -->
     <div class="flex h-16 items-center justify-between gap-4">
       <!-- Logo -->
@@ -40,8 +43,7 @@ const isActive = (href: string) => pathname === href || pathname.startsWith(href
                 isActive(item.href)
                   ? "font-semibold bg-base-200 text-base-content"
                   : "text-base-content/60 hover:text-base-content hover:bg-base-200",
-              ]}
-            >
+              ]}>
               {item.name}
             </a>
           ))
@@ -54,7 +56,19 @@ const isActive = (href: string) => pathname === href || pathname.startsWith(href
           class="input input-bordered input-sm hidden md:block w-40 lg:w-56"
           placeholder="Suchen..."
         />
-        <a href="#" class="btn btn-sm hidden md:flex">Einloggen</a>
+        {
+          authUser ? (
+            <div class="hidden md:flex">
+              <a href="/account" class="btn btn-sm btn-ghost">
+                Mein Konto
+              </a>
+            </div>
+          ) : (
+            <a href="/login" class="btn btn-sm hidden md:flex">
+              Einloggen
+            </a>
+          )
+        }
         <button
           id="theme-toggle"
           aria-label="Dunkelmodus umschalten"
@@ -88,47 +102,59 @@ const isActive = (href: string) => pathname === href || pathname.startsWith(href
               isActive(item.href)
                 ? "font-semibold bg-base-200 text-base-content"
                 : "text-base-content/60 hover:text-base-content hover:bg-base-200",
-            ]}
-          >
+            ]}>
             {item.name}
           </a>
         ))
       }
     </nav>
     <input class="input input-bordered input-sm w-full" placeholder="Suchen..." />
+    <div class="mt-3 flex flex-col gap-1">
+      {
+        authUser ? (
+          <a href="/account" class="btn btn-sm btn-ghost w-full">
+            Mein Konto
+          </a>
+        ) : (
+          <a href="/login" class="btn btn-sm btn-primary w-full">
+            Einloggen
+          </a>
+        )
+      }
+    </div>
   </div>
 </header>
 
 <script>
-  const toggle = document.getElementById("menu-toggle")!;
-  const nav = document.getElementById("mobile-nav")!;
-  const iconMenu = document.getElementById("icon-menu")!;
-  const iconX = document.getElementById("icon-x")!;
+  const toggle = document.getElementById("menu-toggle")!
+  const nav = document.getElementById("mobile-nav")!
+  const iconMenu = document.getElementById("icon-menu")!
+  const iconX = document.getElementById("icon-x")!
 
   toggle.addEventListener("click", () => {
-    const isOpen = !nav.hidden;
-    nav.hidden = isOpen;
-    toggle.setAttribute("aria-expanded", String(!isOpen));
-    toggle.setAttribute("aria-label", isOpen ? "Menü öffnen" : "Menü schließen");
-    iconMenu.classList.toggle("hidden", !isOpen);
-    iconX.classList.toggle("hidden", isOpen);
-  });
+    const isOpen = !nav.hidden
+    nav.hidden = isOpen
+    toggle.setAttribute("aria-expanded", String(!isOpen))
+    toggle.setAttribute("aria-label", isOpen ? "Menü öffnen" : "Menü schließen")
+    iconMenu.classList.toggle("hidden", !isOpen)
+    iconX.classList.toggle("hidden", isOpen)
+  })
 
-  const themeToggle = document.getElementById("theme-toggle")!;
-  const iconSun = document.getElementById("icon-sun")!;
-  const iconMoon = document.getElementById("icon-moon")!;
+  const themeToggle = document.getElementById("theme-toggle")!
+  const iconSun = document.getElementById("icon-sun")!
+  const iconMoon = document.getElementById("icon-moon")!
 
   function applyTheme(theme: string) {
-    document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem("theme", theme);
-    iconSun.classList.toggle("hidden", theme !== "dark");
-    iconMoon.classList.toggle("hidden", theme === "dark");
+    document.documentElement.setAttribute("data-theme", theme)
+    localStorage.setItem("theme", theme)
+    iconSun.classList.toggle("hidden", theme !== "dark")
+    iconMoon.classList.toggle("hidden", theme === "dark")
   }
 
-  applyTheme(document.documentElement.getAttribute("data-theme") ?? "light");
+  applyTheme(document.documentElement.getAttribute("data-theme") ?? "light")
 
   themeToggle.addEventListener("click", () => {
-    const current = document.documentElement.getAttribute("data-theme");
-    applyTheme(current === "dark" ? "light" : "dark");
-  });
+    const current = document.documentElement.getAttribute("data-theme")
+    applyTheme(current === "dark" ? "light" : "dark")
+  })
 </script>

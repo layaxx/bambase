@@ -1,0 +1,74 @@
+---
+import { actions } from "astro:actions"
+import Layout from "../layouts/Layout.astro"
+import Header from "../components/Header.astro"
+import Footer from "../components/Footer.astro"
+
+const result = Astro.getActionResult(actions.auth.register)
+if (result && !result.error) {
+  return Astro.redirect("/")
+}
+
+const error = result?.error?.message
+---
+
+<Layout>
+  <Header />
+  <main class="flex items-center justify-center px-4 py-12">
+    <div class="w-full max-w-md">
+      <h1 class="text-2xl font-extrabold mb-2">Registrieren</h1>
+      <p class="text-base-content/60 text-sm mb-6">
+        Bereits registriert? <a href="/login" class="link link-primary">Einloggen</a>
+      </p>
+
+      {
+        error && (
+          <div class="alert alert-error mb-4">
+            <span>{error}</span>
+          </div>
+        )
+      }
+
+      <form method="POST" action={actions.auth.register} class="flex flex-col">
+        <fieldset class="fieldset">
+          <legend class="fieldset-legend">E-Mail</legend>
+          <input
+            type="email"
+            name="email"
+            class="input w-full"
+            placeholder="dein.name@mailprovider.de"
+            required
+            autocomplete="email"
+          />
+        </fieldset>
+
+        <fieldset class="fieldset">
+          <legend class="fieldset-legend">Passwort</legend>
+          <input
+            type="password"
+            name="password"
+            class="input w-full"
+            placeholder="Mindestens 10 Zeichen"
+            required
+            minlength="10"
+            autocomplete="new-password"
+          />
+        </fieldset>
+
+        <fieldset class="fieldset">
+          <legend class="fieldset-legend">Passwort bestätigen</legend>
+          <input
+            type="password"
+            name="passwordConfirm"
+            class="input w-full"
+            placeholder="Passwort erneut eingeben"
+            required
+          />
+        </fieldset>
+
+        <button type="submit" class="btn btn-primary mt-6">Konto erstellen</button>
+      </form>
+    </div>
+  </main>
+  <Footer />
+</Layout>
