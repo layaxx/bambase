@@ -13,14 +13,14 @@ export default factories.createCoreController("api::job-offer.job-offer", ({ str
       // Fetch published + own offers separately, then merge
       const [published, own] = await Promise.all([
         strapi.documents("api::job-offer.job-offer").findMany({
-          filters: { ...existing, online_status: { $eq: "published" } } as any,
-          populate: ctx.query.populate as any,
-          sort: ctx.query.sort as any,
+          filters: { ...existing, online_status: { $eq: "published" } },
+          populate: ctx.query.populate,
+          sort: ctx.query.sort,
         }),
         strapi.documents("api::job-offer.job-offer").findMany({
-          filters: { ...existing, owner: { id: { $eq: user.id } } } as any,
-          populate: ctx.query.populate as any,
-          sort: ctx.query.sort as any,
+          filters: { ...existing, owner: { id: { $eq: user.id } } },
+          populate: ctx.query.populate,
+          sort: ctx.query.sort,
         }),
       ])
 

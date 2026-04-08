@@ -40,10 +40,13 @@ export async function fetchJobOffers(limit = 100): Promise<JobOffer[]> {
   }
 }
 
-export async function fetchJobOffer(slug: string, token?: string): Promise<JobOffer | null> {
+export async function fetchJobOffer(
+  slug: string,
+  token = import.meta.env.STRAPI_TOKEN
+): Promise<JobOffer | null> {
   try {
     const headers: Record<string, string> = {}
-    if (token) headers["Authorization"] = `Bearer ${token}`
+    headers["Authorization"] = `Bearer ${token}`
 
     const res = await fetch(
       `${strapiUrl}/api/job-offers?filters[uuid][$eq]=${encodeURIComponent(slug)}&populate[0]=contact`,
