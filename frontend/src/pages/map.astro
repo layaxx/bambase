@@ -1,0 +1,180 @@
+---
+import PageLayout from "@/layouts/PageLayout.astro"
+import PageHeader from "@/components/PageHeader.astro"
+import locations from "@/data/infomapLocations.json"
+import { useTranslations } from "@/i18n/translations"
+
+const t = useTranslations(Astro.locals.locale)
+const categories = [...new Set(locations.map((l) => l.category))]
+---
+
+<PageLayout>
+  <PageHeader label="Bamberg" title={t.map.pageTitle} subtitle={t.map.pageSubtitle}>
+    <svg
+      slot="icon"
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      class="h-5 w-5"
+      aria-hidden="true">
+      <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" />
+      <circle cx="12" cy="10" r="3" />
+    </svg>
+  </PageHeader>
+
+  <!-- Category filters -->
+  <div class="mb-4 flex flex-wrap gap-2">
+    <button class="btn btn-primary btn-sm" data-filter="all">{t.map.allCategories}</button>
+    {
+      categories.map((cat) => (
+        <button class="btn btn-outline btn-sm" data-filter={cat}>
+          {cat}
+        </button>
+      ))
+    }
+  </div>
+
+  <!-- Map + sidebar -->
+  <div class="flex gap-4" style="height: calc(100vh - 280px); min-height: 420px;">
+    <!-- Location list -->
+    <div
+      class="hidden w-64 shrink-0 overflow-y-auto rounded-xl border border-base-300 bg-base-100 md:flex md:flex-col"
+      id="location-list">
+      {
+        locations.map((loc) => (
+          <button
+            class="cursor-pointer border-b border-base-200 px-3 py-2.5 text-left transition-colors last:border-b-0 hover:bg-base-200"
+            data-id={loc.id}
+            data-category={loc.category}>
+            <div class="text-sm font-medium leading-snug text-base-content">{loc.name}</div>
+            {loc.description && (
+              <div class="mt-0.5 text-xs text-base-content/50">{loc.description}</div>
+            )}
+            <div class="mt-1 text-xs font-medium" data-category-label={loc.category}>
+              {loc.category}
+            </div>
+          </button>
+        ))
+      }
+    </div>
+
+    <!-- Map container -->
+    <div id="map" class="min-w-0 flex-1 rounded-xl border border-base-300"></div>
+  </div>
+</PageLayout>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<script define:vars={{ locations, categories }} is:inline>
+  const categoryColors = {
+    Universität: "#2563eb",
+    "Mensa & Cafeteria": "#16a34a",
+    Bibliothek: "#9333ea",
+    Wohnen: "#ea580c",
+    Sport: "#dc2626",
+    "Cafés, Bars & Clubs": "#ca8a04",
+    Sonstiges: "#64748b",
+  }
+
+  const labelColors = {
+    Universität: "color:#2563eb",
+    "Mensa & Cafeteria": "color:#16a34a",
+    Bibliothek: "color:#9333ea",
+    Wohnen: "color:#ea580c",
+    Sport: "color:#dc2626",
+    "Cafés, Bars & Clubs": "color:#ca8a04",
+    Sonstiges: "color:#64748b",
+  }
+
+  // Apply colors to category labels in the sidebar
+  document.querySelectorAll("[data-category-label]").forEach((el) => {
+    const style = labelColors[el.dataset.categoryLabel]
+    if (style) el.style.cssText = style
+  })
+
+  const leafletScript = document.createElement("script")
+  leafletScript.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  leafletScript.onload = initMap
+  document.head.appendChild(leafletScript)
+
+  function initMap() {
+    const map = L.map("map").setView([49.899, 10.889], 14)
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19,
+    }).addTo(map)
+
+    function makeIcon(color) {
+      return L.divIcon({
+        className: "",
+        html: `<div style="width:14px;height:14px;border-radius:50%;background:${color};border:2.5px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.35)"></div>`,
+        iconSize: [14, 14],
+        iconAnchor: [7, 7],
+        popupAnchor: [0, -10],
+      })
+    }
+
+    const markerMap = {}
+
+    locations.forEach((loc) => {
+      const color = categoryColors[loc.category] || "#64748b"
+      const popup = `
+        <strong style="font-size:13px">${loc.name}</strong>
+        ${loc.description ? `<br><span style="color:#666;font-size:12px">${loc.description}</span>` : ""}
+        <br><span style="font-size:11px;${labelColors[loc.category] || ""}">${loc.category}</span>
+      `
+      const marker = L.marker(loc.position, { icon: makeIcon(color) })
+        .addTo(map)
+        .bindPopup(popup)
+
+      markerMap[loc.id] = { marker, category: loc.category }
+    })
+
+    // Filter logic
+    let activeFilter = "all"
+
+    function applyFilter(filter) {
+      activeFilter = filter
+
+      document.querySelectorAll("[data-filter]").forEach((btn) => {
+        const active = btn.dataset.filter === filter
+        btn.classList.toggle("btn-primary", active)
+        btn.classList.toggle("btn-outline", !active)
+      })
+
+      Object.entries(markerMap).forEach(([id, { marker, category }]) => {
+        const visible = filter === "all" || category === filter
+        if (visible) map.addLayer(marker)
+        else map.removeLayer(marker)
+      })
+
+      document.querySelectorAll("[data-id]").forEach((item) => {
+        const visible = filter === "all" || item.dataset.category === filter
+        item.style.display = visible ? "" : "none"
+      })
+    }
+
+    document.querySelectorAll("[data-filter]").forEach((btn) => {
+      btn.addEventListener("click", () => applyFilter(btn.dataset.filter))
+    })
+
+    // Click list item → fly to marker
+    document.querySelectorAll("[data-id]").forEach((item) => {
+      item.addEventListener("click", () => {
+        const entry = markerMap[item.dataset.id]
+        if (entry) {
+          map.flyTo(entry.marker.getLatLng(), 17, { duration: 0.8 })
+          entry.marker.openPopup()
+        }
+      })
+    })
+  }
+</script>

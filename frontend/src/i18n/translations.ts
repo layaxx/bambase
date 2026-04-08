@@ -5,7 +5,7 @@ const de = {
     jobs: "Jobs",
     events: "Termine",
     mensa: "Mensaplan",
-    infomap: "Infomap",
+    infomap: "Karte",
     search: "Suchen...",
     myAccount: "Mein Konto",
     login: "Einloggen",
@@ -99,6 +99,11 @@ const de = {
     contactSection: "Kontaktdaten",
     optionalLabel: "(optional)",
   },
+  map: {
+    pageTitle: "Karte",
+    pageSubtitle: "Wichtige Orte rund um die Universität Bamberg.",
+    allCategories: "Alle",
+  },
   groups: {
     title: "Aktiv in Bamberg",
     subtitle: "Studentische Gruppen und Vereine",
@@ -146,7 +151,7 @@ const en = {
     jobs: "Jobs",
     events: "Events",
     mensa: "Cafeteria",
-    infomap: "Infomap",
+    infomap: "Map",
     search: "Search...",
     myAccount: "My Account",
     login: "Log in",
@@ -239,6 +244,11 @@ const en = {
     submitSuccess: "Listing submitted successfully. It will be published after review.",
     contactSection: "Contact details",
     optionalLabel: "(optional)",
+  },
+  map: {
+    pageTitle: "Map",
+    pageSubtitle: "Important locations around the University of Bamberg.",
+    allCategories: "All",
   },
   groups: {
     title: "Active in Bamberg",

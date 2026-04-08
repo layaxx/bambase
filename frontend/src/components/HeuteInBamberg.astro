@@ -1,16 +1,22 @@
 ---
-import events from "@/data/events.json"
+import { fetchEvents } from "@/utils/api"
 import { useTranslations } from "@/i18n/translations"
 import IconCalendar from "./icons/IconCalendar.astro"
 import IconClock from "./icons/IconClock.astro"
-import IconMapPin from "./icons/IconMapPin.astro"
 import IconArrowRight from "./icons/IconArrowRight.astro"
 
 const t = useTranslations(Astro.locals.locale)
 
-const today = new Date()
-const todayStr = today.toISOString().split("T")[0]
-const todayEvents = events.filter((e) => e.date === todayStr)
+const todayStr = new Date().toISOString().split("T")[0]
+const allEvents = await fetchEvents()
+const todayEvents = allEvents.filter((e) => e.start.startsWith(todayStr))
+
+function formatTime(iso: string) {
+  return new Date(iso).toLocaleTimeString(t.mensa.dateLocale, {
+    hour: "2-digit",
+    minute: "2-digit",
+  })
+}
 ---
 
 <!-- Events Section -->
@@ -42,22 +48,19 @@ const todayEvents = events.filter((e) => e.date === todayStr)
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {todayEvents.map((event) => (
           <a
-            href="#"
+            href={`/event/${event.slug}`}
             class="group flex flex-col rounded-xl border border-base-300 bg-base-100 p-4 transition-all hover:shadow-md no-underline">
             <div class="mb-3 flex items-center gap-1 text-sm text-base-content/60">
               <IconClock class="h-3.5 w-3.5 shrink-0" />
               <span>
-                {event.time}
+                {formatTime(event.start)}
                 {t.events.clock ? ` ${t.events.clock}` : ""}
               </span>
             </div>
             <h3 class="mb-2 font-semibold leading-tight text-base-content group-hover:text-primary">
               {event.title}
             </h3>
-            <div class="mt-auto flex items-center gap-1.5 text-sm text-base-content/60">
-              <IconMapPin class="h-3.5 w-3.5 shrink-0" />
-              <span class="truncate">{event.location.name}</span>
-            </div>
+            <div class="mt-auto text-sm text-base-content/60 truncate">{event.organizer}</div>
           </a>
         ))}
       </div>
