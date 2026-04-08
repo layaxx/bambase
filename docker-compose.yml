@@ -1,4 +1,22 @@
 services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    container_name: bambase_db
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME:-strapi}
+      POSTGRES_USER: ${DATABASE_USERNAME:-strapi}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-strapi}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - internal_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USERNAME:-strapi}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   api:
     build:
       context: ./api
@@ -14,9 +32,17 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY}
       SEED: ${SEED:-false}
+      DATABASE_CLIENT: "postgres"
+      DATABASE_HOST: ${DATABASE_HOST:-db}
+      DATABASE_PORT: ${DATABASE_PORT:-5432}
+      DATABASE_NAME: ${DATABASE_NAME:-strapi}
+      DATABASE_USERNAME: ${DATABASE_USERNAME:-strapi}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-strapi}
     volumes:
-      - api_data:/app/.tmp
-      - api_uploads:/app/public/uploads
+      - api_uploads:/opt/app/public/uploads
+    depends_on:
+      db:
+        condition: service_healthy
     networks:
       - proxy
       - internal_network
@@ -28,6 +54,8 @@ services:
         STRAPI_URL: http://api:1337
         STRAPI_TOKEN: ${STRAPI_TOKEN}
     container_name: bambase_frontend
+    environment:
+      STRAPI_TOKEN: ${STRAPI_TOKEN}
     restart: unless-stopped
     depends_on:
       - api
@@ -36,7 +64,7 @@ services:
       - internal_network
 
 volumes:
-  api_data:
+  db_data:
   api_uploads:
 
 networks:

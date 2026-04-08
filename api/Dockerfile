@@ -1,32 +1,30 @@
-FROM node:22-alpine AS base
-RUN corepack enable && corepack prepare yarn@1.22.22 --activate
-WORKDIR /app
+# Creating multi-stage build for production
+FROM node:22-alpine AS build
+RUN apk update && apk add --no-cache build-base gcc autoconf automake zlib-dev libpng-dev vips-dev git > /dev/null 2>&1
+ARG NODE_ENV=production
+ENV NODE_ENV=${NODE_ENV}
 
-# Install dependencies
-FROM base AS deps
+WORKDIR /opt/
 COPY package.json yarn.lock ./
-RUN yarn install --frozen-lockfile --production=false
-
-# Build
-FROM deps AS builder
+RUN yarn global add node-gyp
+RUN yarn config set network-timeout 600000 -g && yarn install --production
+ENV PATH=/opt/node_modules/.bin:$PATH
+WORKDIR /opt/app
 COPY . .
 RUN yarn build
 
-# Production image
-FROM node:22-alpine AS runner
-RUN corepack enable && corepack prepare yarn@1.22.22 --activate
-WORKDIR /app
-
+# Creating final production image
+FROM node:22-alpine
+RUN apk add --no-cache vips-dev
 ENV NODE_ENV=production
+ENV NODE_ENV=${NODE_ENV}
+WORKDIR /opt/
+COPY --from=build /opt/node_modules ./node_modules
+WORKDIR /opt/app
+COPY --from=build /opt/app ./
+ENV PATH=/opt/node_modules/.bin:$PATH
 
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/favicon.png ./favicon.png
-
-# SQLite data and uploads live here
-VOLUME ["/app/.tmp", "/app/public/uploads"]
-
+RUN mkdir -p /opt/app/.tmp /opt/app/public/uploads && chown -R node:node /opt/app
+USER node
 EXPOSE 1337
-
 CMD ["yarn", "start"]
