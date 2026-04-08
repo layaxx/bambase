@@ -1,0 +1,249 @@
+# BamBase.de Roadmap
+
+## P0 Add option to archive jobs
+
+Job owners currently have no way to signal that a position has been filled. They can delete the posting (destructive, loses history) or wait for it to auto-expire via `offline_after` (misleading — implies time-out, not success). A dedicated `archived` status lets owners close a posting cleanly while preserving the record.
+
+**Current state:**
+
+The `online_status` enumeration in `api/src/api/job-offer/content-types/job-offer/schema.json` has four values: `submitted`, `published`, `expired`, `rejected`. The `expired` transition is automated (triggered by `unpublishExpired` in `api/src/api/job-offer/services/job-offer.ts` when `offline_after` is in the past). There is no owner-initiated "close" action.
+
+**Work involved:**
+
+- **API schema** — add `"archived"` to the `online_status` enum in `schema.json`. No migration needed since Strapi manages the enum at the application layer.
+- **Strapi permissions** — ensure the `update` endpoint allows an authenticated owner to set `online_status` to `"archived"` (and only to `"archived"` — owners must not be able to self-publish or un-reject). The existing controller in `api/src/api/job-offer/controllers/job-offer.ts` may need a guard.
+- **Astro action** — add an `archive` action (alongside the existing `delete` action) that calls `PATCH /api/job-offers/:documentId` with `{ online_status: "archived" }`, scoped to the authenticated owner.
+- **Job detail page** (`frontend/src/pages/job/[uuid]/index.astro`) — add an "Archive / Position filled" button in the owner action bar next to Edit and Delete. Show a confirmation dialog analogous to the delete confirm. Redirect to `/account/jobs` on success.
+- **Account jobs page** (`frontend/src/pages/account/jobs.astro`) — add `"archived"` to `statusLabel` and `statusClass` (e.g. `badge-info` or `badge-neutral`).
+- **Public listing** — `archived` jobs must not appear publicly. The existing filter `{ online_status: { $eq: "published" } }` in `fetchJobOffers` already excludes them; no change needed.
+- **i18n** — add translation keys for the new status label and the archive button/confirm text.
+
+**Open questions:**
+
+- Should `archived` be reversible (owner can re-publish), or is it a terminal state like `rejected`?
+- Should the job detail page show a public-facing banner for archived jobs (e.g. "This position has been filled") for users following a direct link?
+- Should archiving notify anyone (e.g. applicants who saved the link)? Probably out of scope for now.
+
+---
+
+## P1 Map Locations should be API-based
+
+Currently, the ~100+ university map locations (buildings, dorms, libraries, cafés, etc.) are stored as a hardcoded JSON file at `frontend/src/data/infomapLocations.json`. Moving them to the Strapi API would allow admins to add, update, or remove locations without a code deployment.
+
+**Work involved:**
+
+- Create a `MapLocation` content type in Strapi with fields: `name`, `description`, `lat`, `lng`, `category` (enum or relation), `external_url`
+- Migrate existing JSON data into Strapi (write a seed/migration script)
+- Update `frontend/src/utils/api.ts` to fetch locations from the API instead of the JSON file
+- Update the map page to use the API data; ensure category filtering still works
+
+**Open questions:**
+
+- Should `category` be a free-text field, an enum, or a separate `MapCategory` collection? An enum is simpler but a relation allows categories to carry metadata (icon, color, description). -> should be an enum.
+- Should locations be publicly editable (user-submitted) or admin-only? If user-submitted, a review/approval workflow is needed. -> admin-only!
+- Is there a canonical data source (e.g., university GIS data) we could pull from, or is manual entry the only option? -> unclear
+
+---
+
+## P2 Student Groups should be API-based
+
+Currently, 90+ student organizations are stored as a hardcoded JSON file at `frontend/src/data/groups.json`. Moving them to the API would allow student groups to manage their own entries (e.g., update links, descriptions) without requiring a developer.
+
+**Work involved:**
+
+- Create a `StudentGroup` content type in Strapi with fields: `name`, `description`, `website`, `email`, `facebook`, `instagram`, plus any additional social links
+- Migrate existing JSON data into Strapi
+- Update `frontend/src/utils/api.ts` to fetch groups from the API
+- Update all components that currently import from `groups.json` (homepage widget, dedicated group listing)
+- Consider adding owner/claim functionality so groups can update their own entry
+
+**Open questions:**
+
+- Should student groups be able to self-register and manage their profile, or is it admin-managed only?
+- If self-managed: what verification is required to confirm someone represents a group (e.g., university email domain check)?
+- Should inactive/defunct groups be archived or deleted? How do we identify them?
+- Are there additional fields worth capturing (founding year, member count, meeting times, logo/image)?
+- Should groups be linkable to events (the group is the organizer)?
+
+---
+
+## P3 Reporting functionality for Events, Jobs
+
+There is currently no way for users to flag inappropriate, outdated, or spammy events or job postings. A reporting mechanism would allow the community to surface content that needs moderator attention.
+
+**Work involved:**
+
+- Create a `Report` content type in Strapi with fields: `reason` (enum: spam/inappropriate/outdated/other), `details` (text), `reporter` (user relation, optional for anonymous), `target_type` (enum: event/job), `target_id`, `status` (enum: open/reviewed/dismissed)
+- Add a "Report" button/modal to the event detail page (`/event/[slug]`) and job detail page (`/job/[uuid]`)
+- Build a moderation view (likely in the Strapi admin panel or a dedicated admin page) where reports can be reviewed and acted upon
+- Notify the content owner when their post is reported (optional)
+
+**Open questions:**
+
+- Who are the moderators? Is there a dedicated admin role, or do site admins handle this manually via the Strapi panel?
+- Should reports be anonymous or require a logged-in user? Anonymous reports are lower friction but more prone to abuse. -> should be anonymous!
+- What actions can a moderator take (hide post, delete post, warn user, ban user)?
+- Should reported content be automatically hidden after N reports, or only after manual review?
+- Is there a notification system (email) for moderators when new reports come in?
+
+---
+
+## P4 Interdependencies (events <-> locations)
+
+Events currently have no structured connection to physical locations. Linking events to map locations would allow users to see where an event is taking place on the map, and conversely, see which events are happening at a given location.
+
+**Work involved:**
+
+- Add a `location` relation field to the `Event` content type pointing to `MapLocation` (requires P1 to be done first, or at least the `MapLocation` model to exist in the API)
+- Update event creation/editing forms to allow selecting a location (with a search/autocomplete)
+- Display the linked location on the event detail page with a mini-map or link to the full map
+- On the map page, show upcoming events as markers or popups on the relevant location pins
+- Optionally add a free-text `location_text` field as a fallback for events at locations not in the database
+
+**Open questions:**
+
+- P1 (map locations API) is a hard prerequisite — should this be blocked until P1 is complete?
+- Should `location` be a strict relation to a `MapLocation` record, or also allow free-text input (for off-campus events)?
+- How should the map display time-bounded event data — show all upcoming events, or only events happening today/this week?
+- Should events without a linked location still appear on the map (e.g., at a generic university pin)?
+
+---
+
+## P5 Categories for Events, Jobs
+
+Events and job offers currently have no category or tag system, making it hard for users to find relevant content. Adding categories would improve discoverability.
+
+**Work involved:**
+
+- Decide on a data model: a `Category` collection type (shared or separate for events vs. jobs) with `name` and `color`/`icon` fields, or a simple enum field on each content type
+- Add a `category` (or `categories`) field to `Event` and `JobOffer` schemas
+- Update creation/editing forms to allow selecting categories
+- Display category badges on event/job cards and detail pages
+- (Prerequisite for P6) Expose category as a filterable field in API queries
+
+**Open questions:**
+
+- Should events and jobs share the same category taxonomy, or have separate ones? (e.g., "Sport" makes sense for events but maybe not jobs)
+- Should categories be user-defined (free tags) or admin-curated (fixed list)? A fixed list is easier to filter on but less flexible.
+- What initial categories make sense? Examples for events: Kultur, Sport, Party, Vortrag, Workshop, Hochschulpolitik. For jobs: IT, Marketing, Gastronomie, Verwaltung, Forschung.
+- Should there be a limit on how many categories an event/job can have?
+- Should the Mensa meal categories (vegan/vegetarian) be unified with this system, or kept separate?
+
+---
+
+## P6 Filtering for Events, Jobs overview pages
+
+The `/events` and `/jobs` pages currently show all content with no way to filter by date range, category, organizer, or other attributes. Filtering would significantly improve usability as content volume grows.
+
+**Work involved:**
+
+- Add filter UI controls to `/events`: by date range, by category (requires P5), by organizer/group
+- Add filter UI controls to `/jobs`: by category (requires P5), by working hours range, by location (remote/on-site/hybrid)
+- Implement filtering server-side via Strapi query parameters (already supported by `@strapi/client`) or client-side for small datasets
+- Add a search bar (text search on title/description) for both pages
+- Persist filter state in URL query params so results are shareable/bookmarkable
+
+**Open questions:**
+
+- Should filtering be server-side (better performance, SEO) or client-side (snappier UX, simpler implementation)? Astro's SSR mode supports both.
+- P5 (categories) is a soft prerequisite for category-based filtering — should this be bundled with P5?
+- What date filter options make sense for events: "this week", "this month", custom range?
+- Should the homepage event/job widgets also respect filters, or only the dedicated listing pages?
+- Is full-text search in scope, or just filtering on structured fields?
+
+---
+
+## P7 Add data sources for events
+
+Automatically importing events from external sources would reduce the manual effort of maintaining the event calendar and provide better coverage of university life.
+
+**Planned sources:**
+
+- **UniVis** — the official university course/event system
+- **LiveClub website** — local music/nightlife venue
+- More TBD
+
+**Work involved:**
+
+- Build an importer/scraper service (could be a scheduled Strapi lifecycle hook, a cron job, or a separate script) for each source
+- Map external event fields to the `Event` schema; use `external_id` field (already present) to deduplicate and track provenance
+- Handle updates: if an imported event changes on the source, reflect the change; if deleted, mark as expired
+- Add a `source` field to `Event` to indicate origin (manual, univis, liveclub, etc.) and display it on the detail page
+- Respect rate limits and terms of service of external sources
+
+**Open questions:**
+
+- Does UniVis offer a public API or structured data feed (iCal, RSS, JSON), or does it require HTML scraping?
+- Does LiveClub publish events in a machine-readable format?
+- Who is responsible for monitoring and maintaining the importers when sources change their format?
+- Should imported events be auto-published, or should they go through a review step first?
+- How should conflicts be handled if an imported event was also manually created by a user?
+- Are there legal/ToS considerations for scraping these sites?
+- Should users be able to "claim" an imported event to add additional info or manage it?
+
+---
+
+## P8 About us page
+
+There is currently no page explaining what BamBase.de is, who runs it, or how to contribute or contact the team.
+
+**Work involved:**
+
+- Design and implement a `/about` page in Astro
+- Write content: project mission, team/contributors, how to report issues or suggest features, contact info
+- Link the page from the main navigation and/or footer
+
+**Open questions:**
+
+- Who are the people behind the project, and are they comfortable being listed by name?
+- Is there a contact email or form, or should users be directed to a GitHub repo/issue tracker?
+- Should the page include information on how to contribute (student groups submitting their own entries, contributing code)?
+- Should there be a privacy policy or imprint (Impressum) — this is likely a legal requirement for a German website?
+
+---
+
+## P9 Adjust Dark-mode colors
+
+The current dark-mode color scheme (DaisyUI 5 + Tailwind CSS 4) needs refinement for readability and visual consistency.
+
+**Work involved:**
+
+- Audit all pages in dark mode for contrast issues, unreadable text, or jarring color combinations
+- Adjust the `data-theme` DaisyUI configuration or Tailwind CSS variables for the dark theme
+- Pay particular attention to: map popups (Leaflet default styles don't adapt to dark mode), Mensa meal cards, event/job cards, and form inputs
+
+**Open questions:**
+
+- Is there a reference design or brand color palette to adhere to?
+- Should the dark-mode palette be derived from an existing DaisyUI theme, or fully custom?
+- Are there specific pages or components users have flagged as looking broken in dark mode?
+- Should we support a system-preference-based automatic toggle, or only a manual toggle (already in place)?
+
+## P10 Testing
+
+There is currently one test suite (`api/test/mensaplan.test.ts`) covering the mensa service. The rest of the application — Strapi API services, frontend utility functions, and page-level behaviour — has no automated test coverage. Adding tests would reduce regression risk as the codebase grows and make refactors (especially P1–P7) safer to land.
+
+**Current state:**
+
+- **API (Strapi):** Jest + Babel configured; `mensaplan.test.ts` is the only test file. The test runner is invoked with `yarn test` inside `api/`.
+- **Frontend (Astro):** No test framework configured. No test files exist.
+
+**Work involved:**
+
+- **API unit tests** — extend the existing Jest suite to cover other Strapi services and lifecycle hooks as they are written. Priorities: any future importers added under P7, the `Report` submission logic from P3, and any custom validation logic.
+- **Frontend utility tests** — add a test framework (Vitest is the natural fit for a Vite/Astro project) to `frontend/` and write unit tests for the functions in `frontend/src/utils/api.ts`: date helpers, filter/transform utilities, and any business logic that does not require a live Strapi instance.
+- **End-to-end tests** — use Playwright (first-class Astro integration via `@astrojs/playwright`) to cover the critical user journeys: viewing events and jobs, submitting a new job offer, submitting a new event, and the login/logout flow. These tests require a running Strapi instance and are best run in CI against a seeded test database.
+- **CI integration** — add a GitHub Actions workflow (or extend an existing one) that runs `yarn test` in `api/` and `yarn test` in `frontend/` on every pull request. E2E tests can run on a slower schedule (e.g., nightly or on merge to main) using `docker-compose` to spin up the full stack.
+
+**Suggested priority order:**
+
+1. Vitest setup in `frontend/` + unit tests for `api.ts` helpers (low effort, high value)
+2. API unit tests for each new service added alongside P1–P7 work (write tests alongside features)
+3. Playwright E2E for the job and event submission flows (highest regression risk, most user-facing)
+
+**Open questions:**
+
+- Should E2E tests run against a dedicated test Strapi instance with a seeded SQLite database, or against a Docker Compose stack mirroring production (PostgreSQL)?
+- Is there a target coverage threshold, or is the goal simply "critical paths covered"?
+- Should Playwright tests be kept in a top-level `e2e/` directory or inside `frontend/`?
+- Are snapshot/visual regression tests worth adding for dark-mode work (P9)?

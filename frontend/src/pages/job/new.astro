@@ -45,8 +45,15 @@ const generalError = result?.error && !isInputError(result.error) ? result.error
   <script>
     const STORAGE_KEY = "job-new-draft"
     const FIELDS = [
-      "title", "company", "location", "working_hours",
-      "description", "external_url", "contact_name", "contact_mail", "contact_phone",
+      "title",
+      "company",
+      "location",
+      "working_hours",
+      "description",
+      "external_url",
+      "contact_name",
+      "contact_mail",
+      "contact_phone",
     ]
 
     const form = document.querySelector<HTMLFormElement>("form")!
@@ -196,7 +203,6 @@ const generalError = result?.error && !isInputError(result.error) ? result.error
           <label class="label" for="contact_name">
             <span class="label-text font-medium">
               {t.jobs.fieldContactName}
-              <span class="text-base-content/50 font-normal"> {t.jobs.optionalLabel}</span>
             </span>
           </label>
           <input

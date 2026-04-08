@@ -161,7 +161,8 @@ const de = {
     backToTop: "Back to top",
   },
   language: {
-    switchLabel: "English",
+    switchLabel: "EN",
+    switchAccessibleLabel: "Switch to English",
     switchLang: "en" as Locale,
   },
 }
@@ -327,7 +328,8 @@ const en = {
     backToTop: "Back to top",
   },
   language: {
-    switchLabel: "Deutsch",
+    switchLabel: "DE",
+    switchAccessibleLabel: "Zu Deutsch wechseln",
     switchLang: "de" as Locale,
   },
 }

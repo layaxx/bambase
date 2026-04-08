@@ -3,6 +3,7 @@ import IconSun from "./icons/IconSun.astro"
 import IconMoon from "./icons/IconMoon.astro"
 import IconMenu from "./icons/IconMenu.astro"
 import IconX from "./icons/IconX.astro"
+import IconGitHub from "./icons/IconGitHub.astro"
 import { useTranslations } from "@/i18n/translations"
 
 const locale = Astro.locals.locale
@@ -23,6 +24,7 @@ const authUser = authUserRaw ? JSON.parse(authUserRaw) : null
 
 const switchLang = t.language.switchLang
 const switchLabel = t.language.switchLabel
+const switchAccessibleLabel = t.language.switchAccessibleLabel
 const switchUrl = `/set-locale?lang=${switchLang}&redirect=${encodeURIComponent(pathname)}`
 ---
 
@@ -59,10 +61,15 @@ const switchUrl = `/set-locale?lang=${switchLang}&redirect=${encodeURIComponent(
 
       <!-- Right controls -->
       <div class="flex items-center gap-2 shrink-0">
-        <input
-          class="input input-bordered input-sm hidden md:block w-40 lg:w-56"
-          placeholder={t.nav.search}
-        />
+        <a
+          href="https://github.com/layaxx/bambase"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="GitHub"
+          class="btn btn-ghost btn-sm btn-square hidden md:flex"
+        >
+          <IconGitHub class="size-5" />
+        </a>
         {
           authUser ? (
             <div class="hidden md:flex">
@@ -78,8 +85,8 @@ const switchUrl = `/set-locale?lang=${switchLang}&redirect=${encodeURIComponent(
         }
         <a
           href={switchUrl}
-          class="btn btn-ghost btn-sm font-medium text-xs hidden md:flex"
-          aria-label={switchLabel}
+          class="btn btn-ghost btn-sm font-medium text-xs"
+          aria-label={switchAccessibleLabel}
         >
           {switchLabel}
         </a>
@@ -122,7 +129,6 @@ const switchUrl = `/set-locale?lang=${switchLang}&redirect=${encodeURIComponent(
         ))
       }
     </nav>
-    <input class="input input-bordered input-sm w-full" placeholder={t.nav.search} />
     <div class="mt-3 flex flex-col gap-1">
       {
         authUser ? (
@@ -135,8 +141,13 @@ const switchUrl = `/set-locale?lang=${switchLang}&redirect=${encodeURIComponent(
           </a>
         )
       }
-      <a href={switchUrl} class="btn btn-sm btn-ghost w-full">
-        {switchLabel}
+      <a
+        href="https://github.com/layaxx/bambase"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="btn btn-sm btn-ghost w-full"
+      >
+        GitHub
       </a>
     </div>
   </div>
