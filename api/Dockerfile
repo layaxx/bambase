@@ -24,7 +24,7 @@ WORKDIR /opt/app
 COPY --from=build /opt/app ./
 ENV PATH=/opt/node_modules/.bin:$PATH
 
-RUN mkdir -p /opt/app/.tmp /opt/app/public/uploads && chown -R node:node /opt/app
+RUN mkdir -p /opt/app/public/uploads && chown -R node:node /opt/app
 USER node
 EXPOSE 1337
 CMD ["yarn", "start"]
