@@ -22,17 +22,24 @@ const statusLabel: Record<string, string> = {
   submitted: t.auth.statusSubmitted,
   expired: t.auth.statusExpired,
   rejected: t.auth.statusRejected,
+  archived: t.auth.statusArchived,
 }
 
 const statusAlertClass: Record<string, string> = {
   submitted: "alert-warning",
   expired: "alert-neutral",
   rejected: "alert-error",
+  archived: "alert-info",
 }
 
 const deleteResult = Astro.getActionResult(actions.jobs.delete)
 if (deleteResult?.data !== undefined && !deleteResult.error) {
   return Astro.redirect("/account/jobs")
+}
+
+const archiveResult = Astro.getActionResult(actions.jobs.archive)
+if (archiveResult?.data !== undefined && !archiveResult.error) {
+  return Astro.redirect(Astro.url.pathname)
 }
 ---
 
@@ -63,6 +70,17 @@ if (deleteResult?.data !== undefined && !deleteResult.error) {
               <a href={`/job/${job.uuid}/edit`} class="btn btn-outline btn-sm">
                 {t.jobs.editJob}
               </a>
+              {job.online_status === "published" || job.online_status === "submitted" ? (
+                <form
+                  method="POST"
+                  action={actions.jobs.archive}
+                  onsubmit={`return confirm('${t.jobs.archiveConfirm}')`}>
+                  <input type="hidden" name="documentId" value={job.documentId} />
+                  <button type="submit" class="btn btn-outline btn-sm">
+                    {t.jobs.archiveJob}
+                  </button>
+                </form>
+              ) : null}
               <form
                 method="POST"
                 action={actions.jobs.delete}
@@ -77,8 +95,12 @@ if (deleteResult?.data !== undefined && !deleteResult.error) {
         </div>
 
         {job.online_status !== "published" && (
-          <div role="alert" class={`alert ${statusAlertClass[job.online_status] ?? "alert-neutral"} mb-6`}>
-            <span>{statusLabel[job.online_status] ?? job.online_status} – {t.jobs.notPublishedHint}</span>
+          <div
+            role="alert"
+            class={`alert ${statusAlertClass[job.online_status] ?? "alert-neutral"} mb-6`}>
+            <span>
+              {statusLabel[job.online_status] ?? job.online_status} – {t.jobs.notPublishedHint}
+            </span>
           </div>
         )}
 

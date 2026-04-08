@@ -34,7 +34,7 @@
     "online_status": {
       "type": "enumeration",
       "default": "submitted",
-      "enum": ["submitted", "published", "expired", "rejected"]
+      "enum": ["submitted", "published", "expired", "rejected", "archived"]
     },
     "working_hours": {
       "type": "integer",

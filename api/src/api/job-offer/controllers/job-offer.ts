@@ -50,6 +50,12 @@ export default factories.createCoreController("api::job-offer.job-offer", ({ str
     if (!offer) return ctx.notFound()
     if (offer.owner?.id !== user.id) return ctx.forbidden()
 
+    const body = ctx.request.body as { data?: Record<string, unknown> } | undefined
+    const incomingStatus = body?.data?.online_status
+    if (incomingStatus !== undefined && incomingStatus !== "archived") {
+      return ctx.badRequest("Owners may only set online_status to 'archived'.")
+    }
+
     return super.update(ctx)
   },
 

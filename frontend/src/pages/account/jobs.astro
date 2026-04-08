@@ -22,6 +22,7 @@ const statusLabel: Record<string, string> = {
   published: t.auth.statusPublished,
   expired: t.auth.statusExpired,
   rejected: t.auth.statusRejected,
+  archived: t.auth.statusArchived,
 }
 
 const statusClass: Record<string, string> = {
@@ -29,13 +30,25 @@ const statusClass: Record<string, string> = {
   published: "badge-success",
   expired: "badge-neutral",
   rejected: "badge-error",
+  archived: "badge-info",
 }
 ---
 
 <PageLayout>
   <div class="mb-6 flex items-center gap-3">
     <a href="/account" class="btn btn-ghost btn-sm btn-square" aria-label="Back">
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg
+      >
     </a>
     <h1 class="text-2xl font-extrabold">{t.auth.myJobOffers}</h1>
   </div>
@@ -55,11 +68,14 @@ const statusClass: Record<string, string> = {
               <h2 class="font-semibold leading-snug text-base-content group-hover:text-primary">
                 {job.title}
               </h2>
-              <span class={`badge badge-sm shrink-0 ${statusClass[job.online_status] ?? "badge-neutral"}`}>
+              <span
+                class={`badge badge-sm shrink-0 ${statusClass[job.online_status] ?? "badge-neutral"}`}>
                 {statusLabel[job.online_status] ?? job.online_status}
               </span>
             </div>
-            <p class="text-sm text-base-content/60">{job.company} · {job.location}</p>
+            <p class="text-sm text-base-content/60">
+              {job.company} · {job.location}
+            </p>
             <p class="line-clamp-2 text-sm text-base-content/50">{job.description}</p>
           </a>
         ))}

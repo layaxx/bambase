@@ -92,6 +92,8 @@ const de = {
     notPublishedHint: "Dieses Angebot ist nur für dich sichtbar.",
     editTitle: "Stellenangebot bearbeiten",
     editJob: "Bearbeiten",
+    archiveJob: "Archivieren",
+    archiveConfirm: "Angebot archivieren? Das kann nicht rückgängig gemacht werden.",
     deleteJob: "Löschen",
     deleteConfirm: "Stellenangebot wirklich löschen?",
     updateJob: "Änderungen speichern",
@@ -155,6 +157,7 @@ const de = {
     statusPublished: "Veröffentlicht",
     statusExpired: "Abgelaufen",
     statusRejected: "Abgelehnt",
+    statusArchived: "Archiviert",
   },
   footer: {
     builtWith: "Built with DaisyUI",
@@ -259,6 +262,8 @@ const en = {
     notPublishedHint: "This listing is only visible to you.",
     editTitle: "Edit job listing",
     editJob: "Edit",
+    archiveJob: "Archive",
+    archiveConfirm: "Archive this job listing? This cannot be undone.",
     deleteJob: "Delete",
     deleteConfirm: "Really delete this job listing?",
     updateJob: "Save changes",
@@ -322,6 +327,7 @@ const en = {
     statusPublished: "Published",
     statusExpired: "Expired",
     statusRejected: "Rejected",
+    statusArchived: "Archived",
   },
   footer: {
     builtWith: "Built with DaisyUI",

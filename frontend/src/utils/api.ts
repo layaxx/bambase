@@ -15,7 +15,7 @@ export type JobOffer = {
   description: string
   company: string
   location: string
-  online_status: "submitted" | "published" | "expired" | "rejected"
+  online_status: "submitted" | "published" | "expired" | "rejected" | "archived"
   working_hours: number
   offline_after?: string
   external_url?: string

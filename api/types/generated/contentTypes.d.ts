@@ -439,7 +439,9 @@ export interface ApiJobOfferJobOffer extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private
     location: Schema.Attribute.String & Schema.Attribute.Required
     offline_after: Schema.Attribute.DateTime
-    online_status: Schema.Attribute.Enumeration<["submitted", "published", "expired", "rejected"]> &
+    online_status: Schema.Attribute.Enumeration<
+      ["submitted", "published", "expired", "rejected", "archived"]
+    > &
       Schema.Attribute.DefaultTo<"submitted">
     owner: Schema.Attribute.Relation<"oneToOne", "plugin::users-permissions.user">
     publishedAt: Schema.Attribute.DateTime

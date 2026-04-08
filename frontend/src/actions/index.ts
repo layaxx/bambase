@@ -174,6 +174,31 @@ export const server = {
       },
     }),
 
+    archive: defineAction({
+      accept: "form",
+      input: z.object({ documentId: z.string().min(1) }),
+      handler: async ({ documentId }, context) => {
+        const token = context.cookies.get("auth_token")?.value
+        if (!token) throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
+
+        const res = await fetch(`${strapiUrl}/api/job-offers/${documentId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ data: { online_status: "archived" } }),
+        })
+
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}))
+          throw new ActionError({
+            code: "FORBIDDEN",
+            message: data?.error?.message ?? "Archivieren fehlgeschlagen.",
+          })
+        }
+
+        return {}
+      },
+    }),
+
     update: defineAction({
       accept: "form",
       input: z.object({
