@@ -1,4 +1,7 @@
 ---
+import IconGlobe from "./icons/IconGlobe.astro"
+import IconArrowRight from "./icons/IconArrowRight.astro"
+
 const sidebarLinks = [
   "FS WIAI - Jobbörse",
   "FS SOWI - Terminkalender",
@@ -30,23 +33,7 @@ const sidebarLinks = [
           href="#"
           class="flex items-center gap-1.5 text-base-content/60 hover:text-primary no-underline transition-colors"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="h-3.5 w-3.5 shrink-0"
-            aria-hidden="true"
-          >
-            <circle cx="12" cy="12" r="10"></circle>
-            <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
-            <path d="M2 12h20"></path>
-          </svg>
+          <IconGlobe class="h-3.5 w-3.5 shrink-0" />
           Platzhalter e. V.
         </a>
       </li>
@@ -60,21 +47,7 @@ const sidebarLinks = [
             <a
               href="#"
               class="flex items-center gap-1.5 text-base-content/60 hover:text-primary no-underline transition-colors">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="h-3.5 w-3.5 shrink-0"
-                aria-hidden="true">
-                <path d="M5 12h14" />
-                <path d="m12 5 7 7-7 7" />
-              </svg>
+              <IconArrowRight class="h-3.5 w-3.5 shrink-0" />
               {name}
             </a>
           </li>

@@ -1,12 +1,13 @@
 ---
-import Sidebar from "./Sidebar.astro";
-import StudentGroup from "./StudentGroup.astro";
-import groups from "../data/groups.json";
-import { useTranslations } from "../i18n/translations";
+import Sidebar from "./Sidebar.astro"
+import StudentGroup from "./StudentGroup.astro"
+import groups from "@/data/groups.json"
+import { useTranslations } from "@/i18n/translations"
+import IconUsers from "./icons/IconUsers.astro"
 
-const t = useTranslations(Astro.locals.locale);
+const t = useTranslations(Astro.locals.locale)
 
-const LIMIT = 5;
+const LIMIT = 5
 ---
 
 <section id="groups">
@@ -14,24 +15,7 @@ const LIMIT = 5;
   <div class="mb-6 flex items-center justify-between">
     <div class="flex items-center gap-3">
       <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="h-5 w-5 text-purple-700"
-          aria-hidden="true"
-        >
-          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-          <circle cx="9" cy="7" r="4" />
-          <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-        </svg>
+        <IconUsers class="h-5 w-5 text-purple-700" />
       </div>
       <div>
         <h2 class="text-xl font-semibold">{t.groups.title}</h2>
@@ -70,40 +54,43 @@ const LIMIT = 5;
   </div>
 </section>
 
-<script define:vars={{ LIMIT, showAllText: t.groups.showAll, showLessText: t.groups.showLess }} is:inline>
-  const grid = document.getElementById("main-grid");
-  const sortSelect = document.getElementById("sort-select");
-  const showAllBtn = document.getElementById("show-all-btn");
-  let showAll = false;
+<script
+  define:vars={{ LIMIT, showAllText: t.groups.showAll, showLessText: t.groups.showLess }}
+  is:inline
+>
+  const grid = document.getElementById("main-grid")
+  const sortSelect = document.getElementById("sort-select")
+  const showAllBtn = document.getElementById("show-all-btn")
+  let showAll = false
 
   function getGroups() {
-    return [...grid.querySelectorAll("[data-group]")];
+    return [...grid.querySelectorAll("[data-group]")]
   }
 
   function updateVisibility() {
     getGroups().forEach((el, i) => {
-      el.hidden = !showAll && i >= LIMIT;
-    });
+      el.hidden = !showAll && i >= LIMIT
+    })
   }
 
   function sortGroups(order) {
-    const groupEls = getGroups();
+    const groupEls = getGroups()
     if (order === "name") {
-      groupEls.sort((a, b) => a.dataset.groupName.localeCompare(b.dataset.groupName));
+      groupEls.sort((a, b) => a.dataset.groupName.localeCompare(b.dataset.groupName))
     } else {
-      groupEls.sort(() => Math.random() - 0.5);
+      groupEls.sort(() => Math.random() - 0.5)
     }
-    groupEls.forEach((el) => grid.appendChild(el));
-    updateVisibility();
+    groupEls.forEach((el) => grid.appendChild(el))
+    updateVisibility()
   }
 
-  sortSelect.addEventListener("change", (e) => sortGroups(e.target.value));
+  sortSelect.addEventListener("change", (e) => sortGroups(e.target.value))
 
   showAllBtn.addEventListener("click", () => {
-    showAll = !showAll;
-    showAllBtn.textContent = showAll ? showLessText : showAllText;
-    updateVisibility();
-  });
+    showAll = !showAll
+    showAllBtn.textContent = showAll ? showLessText : showAllText
+    updateVisibility()
+  })
 
-  sortGroups("random");
+  sortGroups("random")
 </script>

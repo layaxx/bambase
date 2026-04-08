@@ -1,36 +1,20 @@
 ---
-import Header from "../components/Header.astro"
-import HeuteInBamberg from "../components/HeuteInBamberg.astro"
-import JobCard from "../components/JobCard.astro"
-import InfomapCard from "../components/InfomapCard.astro"
-import Layout from "../layouts/Layout.astro"
-import Footer from "../components/Footer.astro"
-import MainArea from "../components/MainArea.astro"
-import MensaCard from "../components/MensaCard.astro"
+import HeuteInBamberg from "@/components/HeuteInBamberg.astro"
+import JobCard from "@/components/JobCard.astro"
+import InfomapCard from "@/components/InfomapCard.astro"
+import PageLayout from "@/layouts/PageLayout.astro"
+import MainArea from "@/components/MainArea.astro"
+import MensaCard from "@/components/MensaCard.astro"
 ---
 
-<Layout>
-  <Header />
+<PageLayout>
+  <HeuteInBamberg />
+  <MensaCard />
+  <JobCard />
 
-  <main class="page-main">
-    <HeuteInBamberg />
-    <MensaCard />
-    <JobCard />
+  <section class="mb-12">
+    <InfomapCard />
+  </section>
 
-    <section class="mb-12">
-      <InfomapCard />
-    </section>
-
-    <MainArea />
-  </main>
-
-  <Footer />
-</Layout>
-
-<style>
-  .page-main {
-    max-width: 80rem;
-    margin: 0 auto;
-    padding: 2rem 1rem;
-  }
-</style>
+  <MainArea />
+</PageLayout>

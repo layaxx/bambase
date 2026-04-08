@@ -1,9 +1,7 @@
 ---
 import { actions } from "astro:actions"
-import Layout from "../layouts/Layout.astro"
-import Header from "../components/Header.astro"
-import Footer from "../components/Footer.astro"
-import { useTranslations } from "../i18n/translations"
+import AppLayout from "@/layouts/AppLayout.astro"
+import { useTranslations } from "@/i18n/translations"
 
 const t = useTranslations(Astro.locals.locale)
 
@@ -15,13 +13,13 @@ if (result && !result.error) {
 const error = result?.error?.message
 ---
 
-<Layout>
-  <Header />
+<AppLayout>
   <main class="flex items-center justify-center px-4 py-12">
     <div class="w-full max-w-md">
       <h1 class="text-2xl font-extrabold mb-2">{t.auth.registerTitle}</h1>
       <p class="text-base-content/60 text-sm mb-6">
-        {t.auth.alreadyRegistered} <a href="/login" class="link link-primary">{t.auth.loginLink}</a>
+        {t.auth.alreadyRegistered}
+        <a href="/login" class="link link-primary">{t.auth.loginLink}</a>
       </p>
 
       {
@@ -73,5 +71,4 @@ const error = result?.error?.message
       </form>
     </div>
   </main>
-  <Footer />
-</Layout>
+</AppLayout>

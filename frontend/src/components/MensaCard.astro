@@ -1,7 +1,9 @@
 ---
-import { fetchMensaMeals } from "../utils/api"
+import { fetchMensaMeals } from "@/utils/api"
 import dayjs from "dayjs"
-import { useTranslations } from "../i18n/translations"
+import { useTranslations } from "@/i18n/translations"
+import IconUtensils from "./icons/IconUtensils.astro"
+import IconArrowRight from "./icons/IconArrowRight.astro"
 
 const t = useTranslations(Astro.locals.locale)
 
@@ -28,23 +30,7 @@ const mealsByLocation = Object.fromEntries(
   <div class="mb-6 flex items-center justify-between">
     <div class="flex items-center gap-3">
       <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-100">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="h-5 w-5 text-orange-700"
-          aria-hidden="true"
-        >
-          <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" />
-          <path d="M7 2v20" />
-          <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" />
-        </svg>
+        <IconUtensils class="h-5 w-5 text-orange-700" />
       </div>
       <div>
         <h2 class="text-xl font-semibold">{t.mensa.cardTitle}</h2>
@@ -53,22 +39,7 @@ const mealsByLocation = Object.fromEntries(
     </div>
     <a href="/mensa" class="btn btn-ghost btn-sm hidden sm:flex gap-1">
       {t.mensa.fullPlan}
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        class="h-4 w-4"
-        aria-hidden="true"
-      >
-        <path d="M5 12h14" />
-        <path d="m12 5 7 7-7 7" />
-      </svg>
+      <IconArrowRight class="h-4 w-4" />
     </a>
   </div>
 
@@ -86,8 +57,7 @@ const mealsByLocation = Object.fromEntries(
               i === 0
                 ? "bg-base-100 text-base-content shadow-sm"
                 : "text-base-content/60 hover:text-base-content",
-            ]}
-          >
+            ]}>
             {loc.label}
           </button>
         ))

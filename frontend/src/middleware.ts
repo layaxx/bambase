@@ -1,5 +1,5 @@
 import { defineMiddleware } from "astro:middleware"
-import type { Locale } from "./i18n/translations"
+import type { Locale } from "@/i18n/translations"
 
 const SUPPORTED_LOCALES: Locale[] = ["de", "en"]
 const DEFAULT_LOCALE: Locale = "de"

@@ -1,6 +1,10 @@
 ---
-import events from "../data/events.json"
-import { useTranslations } from "../i18n/translations"
+import events from "@/data/events.json"
+import { useTranslations } from "@/i18n/translations"
+import IconCalendar from "./icons/IconCalendar.astro"
+import IconClock from "./icons/IconClock.astro"
+import IconMapPin from "./icons/IconMapPin.astro"
+import IconArrowRight from "./icons/IconArrowRight.astro"
 
 const t = useTranslations(Astro.locals.locale)
 
@@ -14,24 +18,7 @@ const todayEvents = events.filter((e) => e.date === todayStr)
   <div class="mb-6 flex items-center justify-between">
     <div class="flex items-center gap-3">
       <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="h-5 w-5 text-blue-700"
-          aria-hidden="true"
-        >
-          <path d="M8 2v4"></path>
-          <path d="M16 2v4"></path>
-          <rect width="18" height="18" x="3" y="4" rx="2"></rect>
-          <path d="M3 10h18"></path>
-        </svg>
+        <IconCalendar class="h-5 w-5 text-blue-700" />
       </div>
       <div>
         <h2 class="text-xl font-semibold">{t.events.title}</h2>
@@ -42,22 +29,7 @@ const todayEvents = events.filter((e) => e.date === todayStr)
     </div>
     <a href="/events" class="btn btn-ghost btn-sm hidden sm:flex gap-1">
       {t.events.showAll}
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        class="h-4 w-4"
-        aria-hidden="true"
-      >
-        <path d="M5 12h14"></path>
-        <path d="m12 5 7 7-7 7"></path>
-      </svg>
+      <IconArrowRight class="h-4 w-4" />
     </a>
   </div>
 
@@ -73,42 +45,17 @@ const todayEvents = events.filter((e) => e.date === todayStr)
             href="#"
             class="group flex flex-col rounded-xl border border-base-300 bg-base-100 p-4 transition-all hover:shadow-md no-underline">
             <div class="mb-3 flex items-center gap-1 text-sm text-base-content/60">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="h-3.5 w-3.5 shrink-0"
-                aria-hidden="true">
-                <path d="M12 6v6l4 2" />
-                <circle cx="12" cy="12" r="10" />
-              </svg>
-              <span>{event.time}{t.events.clock ? ` ${t.events.clock}` : ""}</span>
+              <IconClock class="h-3.5 w-3.5 shrink-0" />
+              <span>
+                {event.time}
+                {t.events.clock ? ` ${t.events.clock}` : ""}
+              </span>
             </div>
             <h3 class="mb-2 font-semibold leading-tight text-base-content group-hover:text-primary">
               {event.title}
             </h3>
             <div class="mt-auto flex items-center gap-1.5 text-sm text-base-content/60">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="h-3.5 w-3.5 shrink-0"
-                aria-hidden="true">
-                <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" />
-                <circle cx="12" cy="10" r="3" />
-              </svg>
+              <IconMapPin class="h-3.5 w-3.5 shrink-0" />
               <span class="truncate">{event.location.name}</span>
             </div>
           </a>

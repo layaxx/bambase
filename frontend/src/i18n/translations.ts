@@ -44,6 +44,11 @@ const de = {
     dateLocale: "de-DE",
   },
   jobs: {
+    notFound: {
+      headline: "Angebot nicht gefunden",
+      description:
+        "Das gesuchte Stellenangebot konnte nicht gefunden werden. Möglicherweise wurde es entfernt oder die URL ist falsch.",
+    },
     title: "Aktuelle Stellenangebote",
     subtitle: "Neueste Angebote für Studenten",
     showAll: "Alle anzeigen",
@@ -157,6 +162,11 @@ const en = {
     dateLocale: "en-US",
   },
   jobs: {
+    notFound: {
+      headline: "Offer not found",
+      description:
+        "The job offer you are looking for could not be found. It may have been removed or the URL is incorrect.",
+    },
     title: "Current Job Listings",
     subtitle: "Latest offers for students",
     showAll: "Show all",

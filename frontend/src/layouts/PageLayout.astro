@@ -1,0 +1,17 @@
+---
+import AppLayout from "@/layouts/AppLayout.astro"
+---
+
+<AppLayout>
+  <main class="page-main">
+    <slot />
+  </main>
+</AppLayout>
+
+<style>
+  .page-main {
+    max-width: 80rem;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+  }
+</style>

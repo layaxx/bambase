@@ -1,4 +1,7 @@
 ---
+import IconGlobe from "./icons/IconGlobe.astro"
+import IconMail from "./icons/IconMail.astro"
+
 interface Props {
   group: {
     id: string
@@ -39,22 +42,7 @@ const { group } = Astro.props
           target="_blank"
           rel="noopener noreferrer"
           class="flex items-center gap-1 text-xs text-base-content/60 hover:text-primary no-underline transition-colors">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="h-3.5 w-3.5"
-            aria-hidden="true">
-            <circle cx="12" cy="12" r="10" />
-            <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
-            <path d="M2 12h20" />
-          </svg>
+          <IconGlobe class="h-3.5 w-3.5" />
           Website
         </a>
       )
@@ -64,21 +52,7 @@ const { group } = Astro.props
         <a
           href={`mailto:${group.links.email}`}
           class="flex items-center gap-1 text-xs text-base-content/60 hover:text-primary no-underline transition-colors">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="h-3.5 w-3.5"
-            aria-hidden="true">
-            <rect width="20" height="16" x="2" y="4" rx="2" />
-            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-          </svg>
+          <IconMail class="h-3.5 w-3.5" />
           E-Mail
         </a>
       )

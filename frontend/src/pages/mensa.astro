@@ -1,12 +1,12 @@
 ---
-import Header from "../components/Header.astro"
-import Footer from "../components/Footer.astro"
-import Layout from "../layouts/Layout.astro"
-import MensaDaySection from "../components/mensa/MensaDaySection.astro"
-import MensaWeekendSection from "../components/mensa/MensaWeekendSection.astro"
-import { fetchMensaMeals } from "../utils/api"
+import PageLayout from "@/layouts/PageLayout.astro"
+import PageHeader from "@/components/PageHeader.astro"
+import IconUtensils from "@/components/icons/IconUtensils.astro"
+import MensaDaySection from "@/components/mensa/MensaDaySection.astro"
+import MensaWeekendSection from "@/components/mensa/MensaWeekendSection.astro"
+import { fetchMensaMeals } from "@/utils/api"
 import dayjs from "dayjs"
-import { useTranslations } from "../i18n/translations"
+import { useTranslations } from "@/i18n/translations"
 
 const t = useTranslations(Astro.locals.locale)
 
@@ -55,57 +55,24 @@ while (i < mealsByDay.length) {
 }
 ---
 
-<Layout>
-  <Header />
+<PageLayout>
+  <PageHeader
+    label={t.mensa.pageLocations}
+    title={t.mensa.pageTitle}
+    subtitle={t.mensa.pageSubtitle}
+  >
+    <IconUtensils slot="icon" class="h-5 w-5" />
+  </PageHeader>
 
-  <main class="page-main">
-    <section class="mb-10">
-      <div class="mb-2 flex items-center gap-2 text-base-content/60">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="h-5 w-5"
-          aria-hidden="true"
-        >
-          <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" />
-          <path d="M7 2v20" />
-          <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" />
-        </svg>
-        <span class="text-sm font-medium">{t.mensa.pageLocations}</span>
-      </div>
-      <h1 class="mb-2 text-3xl font-bold tracking-tight sm:text-4xl">{t.mensa.pageTitle}</h1>
-      <p class="max-w-2xl text-lg text-base-content/60">
-        {t.mensa.pageSubtitle}
-      </p>
-    </section>
-
-    <div class="flex flex-col gap-10">
-      {
-        grouped.map((entry) =>
-          entry.type === "weekend" ? (
-            <MensaWeekendSection heading={entry.heading} />
-          ) : (
-            <MensaDaySection heading={entry.heading} meals={entry.meals} />
-          )
+  <div class="flex flex-col gap-10">
+    {
+      grouped.map((entry) =>
+        entry.type === "weekend" ? (
+          <MensaWeekendSection heading={entry.heading} />
+        ) : (
+          <MensaDaySection heading={entry.heading} meals={entry.meals} />
         )
-      }
-    </div>
-  </main>
-
-  <Footer />
-</Layout>
-
-<style>
-  .page-main {
-    max-width: 80rem;
-    margin: 0 auto;
-    padding: 2rem 1rem;
-  }
-</style>
+      )
+    }
+  </div>
+</PageLayout>

@@ -1,6 +1,6 @@
 import { defineAction, ActionError } from "astro:actions"
 import { z } from "astro/zod"
-import { strapiUrl } from "../utils/api"
+import { strapiUrl } from "@/utils/api"
 
 const jobCreateSchema = z.object({
   title: z.string().min(1, "Bitte Stellenbezeichnung eingeben."),
@@ -75,8 +75,9 @@ export const server = {
       input: z.object({
         identifier: z.email("Bitte gültige E-Mail eingeben."),
         password: z.string().min(1, "Bitte Passwort eingeben."),
+        redirect: z.string().optional(),
       }),
-      handler: async ({ identifier, password }, context) => {
+      handler: async ({ identifier, password, redirect }, context) => {
         const res = await fetch(`${strapiUrl}/api/auth/local`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -99,7 +100,7 @@ export const server = {
           COOKIE_OPTS
         )
 
-        return { username: data.user.username }
+        return { username: data.user.username, redirect: redirect || "/" }
       },
     }),
 
