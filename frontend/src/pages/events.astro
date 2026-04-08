@@ -1,0 +1,85 @@
+---
+import PageLayout from "@/layouts/PageLayout.astro"
+import PageHeader from "@/components/PageHeader.astro"
+import IconCalendar from "@/components/icons/IconCalendar.astro"
+import IconClock from "@/components/icons/IconClock.astro"
+import { fetchEvents } from "@/utils/api"
+import { useTranslations } from "@/i18n/translations"
+
+const t = useTranslations(Astro.locals.locale)
+const dateLocale = t.mensa.dateLocale
+
+const events = await fetchEvents()
+
+const grouped = Map.groupBy(events, (e) =>
+  new Date(e.start).toLocaleDateString(dateLocale, {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  })
+)
+
+function formatTime(iso: string) {
+  return new Date(iso).toLocaleTimeString(dateLocale, {
+    hour: "2-digit",
+    minute: "2-digit",
+  })
+}
+---
+
+<PageLayout>
+  <PageHeader label="Bamberg" title={t.events.pageTitle} subtitle={t.events.pageSubtitle}>
+    <IconCalendar slot="icon" class="h-5 w-5" />
+    <a slot="action" href="/event/new" class="btn btn-primary btn-sm">
+      {t.events.submitEvent}
+    </a>
+  </PageHeader>
+
+  {
+    events.length === 0 ? (
+      <p class="text-base-content/60">{t.events.noEvents}</p>
+    ) : (
+      <div class="space-y-10">
+        {[...grouped.entries()].map(([day, dayEvents]) => (
+          <div>
+            <h2 class="mb-4 text-lg font-semibold capitalize">{day}</h2>
+            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {dayEvents.map((event) => (
+                <a
+                  href={`/event/${event.slug}`}
+                  class="group flex flex-col rounded-xl border border-base-300 bg-base-100 p-4 no-underline transition-all hover:shadow-md">
+                  <div class="mb-3 flex items-center gap-1 text-sm text-base-content/60">
+                    <IconClock class="h-3.5 w-3.5 shrink-0" />
+                    <span>
+                      {formatTime(event.start)}
+                      {t.events.clock ? ` ${t.events.clock}` : ""}
+                      {" "}–{" "}
+                      {formatTime(event.end)}
+                      {t.events.clock ? ` ${t.events.clock}` : ""}
+                    </span>
+                  </div>
+                  <h3 class="mb-1 font-semibold leading-tight text-base-content group-hover:text-primary">
+                    {event.title}
+                  </h3>
+                  <p class="mb-3 line-clamp-2 text-sm text-base-content/60">{event.description}</p>
+                  <div class="mt-auto flex items-center justify-between gap-2 text-sm text-base-content/60">
+                    <span class="truncate">{event.organizer}</span>
+                    {event.external_url && (
+                      <a
+                        href={event.external_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="shrink-0 text-primary hover:underline">
+                        ↗
+                      </a>
+                    )}
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+</PageLayout>

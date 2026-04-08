@@ -6,6 +6,31 @@
   "locale": null,
   "permissions": [
     {
+      "documentId": "viciyg3xvbvo700utfdukns8",
+      "action": "api::event.event.create",
+      "locale": null
+    },
+    {
+      "documentId": "iqteiklcnn2csqtkuf1nwdju",
+      "action": "api::event.event.delete",
+      "locale": null
+    },
+    {
+      "documentId": "wor4ksg0b15t4ap4n2rikqj0",
+      "action": "api::event.event.find",
+      "locale": null
+    },
+    {
+      "documentId": "q1e8bafcnomff4j2kn9p6z7a",
+      "action": "api::event.event.findOne",
+      "locale": null
+    },
+    {
+      "documentId": "vrgdx3ar2fa3f9e8nshkgt3k",
+      "action": "api::event.event.update",
+      "locale": null
+    },
+    {
       "documentId": "mzfdnzdwxol1v3gr5u4jtl11",
       "action": "api::job-offer.job-offer.create",
       "locale": null

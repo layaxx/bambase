@@ -21,7 +21,63 @@ const COOKIE_OPTS = {
   maxAge: 60 * 60 * 24 * 90, // 90 days
 } as const
 
+const eventCreateSchema = z
+  .object({
+    title: z.string().min(1, "Bitte Titel eingeben."),
+    organizer: z.string().min(1, "Bitte Veranstalter eingeben."),
+    description: z.string().min(1, "Bitte Beschreibung eingeben."),
+    start: z.string().min(1, "Bitte Startzeit eingeben."),
+    end: z.string().min(1, "Bitte Endzeit eingeben."),
+    external_url: z.string().optional(),
+  })
+  .refine((data) => new Date(data.start) < new Date(data.end), {
+    path: ["start"],
+    message: "Startzeit muss vor Endzeit liegen.",
+  })
+
 export const server = {
+  events: {
+    create: defineAction({
+      accept: "form",
+      input: eventCreateSchema,
+      handler: async (input, context) => {
+        const token = context.cookies.get("auth_token")?.value
+        if (!token) {
+          throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
+        }
+
+        const res = await fetch(`${strapiUrl}/api/events`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            data: {
+              title: input.title,
+              organizer: input.organizer,
+              description: input.description,
+              start: input.start,
+              end: input.end,
+              external_url: input.external_url || undefined,
+            },
+          }),
+        })
+
+        const data = await res.json()
+
+        if (!res.ok) {
+          throw new ActionError({
+            code: "BAD_REQUEST",
+            message: data?.error?.message ?? "Einreichung fehlgeschlagen.",
+          })
+        }
+
+        return { slug: data.data.slug }
+      },
+    }),
+  },
+
   jobs: {
     create: defineAction({
       accept: "form",

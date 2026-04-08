@@ -385,6 +385,37 @@ export interface AdminUser extends Struct.CollectionTypeSchema {
   }
 }
 
+export interface ApiEventEvent extends Struct.CollectionTypeSchema {
+  collectionName: "events"
+  info: {
+    displayName: "Event"
+    pluralName: "events"
+    singularName: "event"
+  }
+  options: {
+    draftAndPublish: false
+  }
+  attributes: {
+    createdAt: Schema.Attribute.DateTime
+    createdBy: Schema.Attribute.Relation<"oneToOne", "admin::user"> & Schema.Attribute.Private
+    description: Schema.Attribute.Text & Schema.Attribute.Required
+    end: Schema.Attribute.DateTime & Schema.Attribute.Required
+    external_id: Schema.Attribute.String
+    external_url: Schema.Attribute.String
+    locale: Schema.Attribute.String & Schema.Attribute.Private
+    localizations: Schema.Attribute.Relation<"oneToMany", "api::event.event"> &
+      Schema.Attribute.Private
+    organizer: Schema.Attribute.String & Schema.Attribute.Required
+    owner: Schema.Attribute.Relation<"oneToOne", "plugin::users-permissions.user">
+    publishedAt: Schema.Attribute.DateTime
+    slug: Schema.Attribute.UID<"title">
+    start: Schema.Attribute.DateTime & Schema.Attribute.Required
+    title: Schema.Attribute.String & Schema.Attribute.Required
+    updatedAt: Schema.Attribute.DateTime
+    updatedBy: Schema.Attribute.Relation<"oneToOne", "admin::user"> & Schema.Attribute.Private
+  }
+}
+
 export interface ApiJobOfferJobOffer extends Struct.CollectionTypeSchema {
   collectionName: "job_offers"
   info: {
@@ -907,6 +938,7 @@ declare module "@strapi/strapi" {
       "admin::transfer-token": AdminTransferToken
       "admin::transfer-token-permission": AdminTransferTokenPermission
       "admin::user": AdminUser
+      "api::event.event": ApiEventEvent
       "api::job-offer.job-offer": ApiJobOfferJobOffer
       "api::mensa-meal.mensa-meal": ApiMensaMealMensaMeal
       "plugin::content-releases.release": PluginContentReleasesRelease

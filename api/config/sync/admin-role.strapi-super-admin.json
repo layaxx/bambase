@@ -6,6 +6,87 @@
   "locale": null,
   "permissions": [
     {
+      "documentId": "y1dn3n84r4c269wagsbzmzd3",
+      "action": "plugin::content-manager.explorer.create",
+      "actionParameters": {},
+      "subject": "api::event.event",
+      "properties": {
+        "fields": [
+          "slug",
+          "title",
+          "description",
+          "start",
+          "end",
+          "organizer",
+          "external_url",
+          "owner",
+          "external_id"
+        ]
+      },
+      "conditions": [],
+      "locale": null
+    },
+    {
+      "documentId": "m0hidbjwufjpvlywiqucp1ra",
+      "action": "plugin::content-manager.explorer.delete",
+      "actionParameters": {},
+      "subject": "api::event.event",
+      "properties": {},
+      "conditions": [],
+      "locale": null
+    },
+    {
+      "documentId": "j6uoq16a1j6xkqbkhkynudkr",
+      "action": "plugin::content-manager.explorer.publish",
+      "actionParameters": {},
+      "subject": "api::event.event",
+      "properties": {},
+      "conditions": [],
+      "locale": null
+    },
+    {
+      "documentId": "i8oxy7zp24ymfylt48ur7stz",
+      "action": "plugin::content-manager.explorer.read",
+      "actionParameters": {},
+      "subject": "api::event.event",
+      "properties": {
+        "fields": [
+          "slug",
+          "title",
+          "description",
+          "start",
+          "end",
+          "organizer",
+          "external_url",
+          "owner",
+          "external_id"
+        ]
+      },
+      "conditions": [],
+      "locale": null
+    },
+    {
+      "documentId": "eyjvmreqecjqpgwcx52285b8",
+      "action": "plugin::content-manager.explorer.update",
+      "actionParameters": {},
+      "subject": "api::event.event",
+      "properties": {
+        "fields": [
+          "slug",
+          "title",
+          "description",
+          "start",
+          "end",
+          "organizer",
+          "external_url",
+          "owner",
+          "external_id"
+        ]
+      },
+      "conditions": [],
+      "locale": null
+    },
+    {
       "documentId": "g7rulbya0yg321d37fuj6plv",
       "action": "plugin::content-manager.explorer.create",
       "actionParameters": {},

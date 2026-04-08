@@ -65,6 +65,43 @@ export async function fetchJobOffer(
   }
 }
 
+export type Event = {
+  documentId: string
+  slug: string
+  title: string
+  description: string
+  start: string
+  end: string
+  organizer: string
+  external_url?: string
+}
+
+export async function fetchEvents(limit = 100): Promise<Event[]> {
+  try {
+    const result = await client.collection("events").find({
+      sort: ["start:asc"],
+      pagination: { limit },
+    })
+    return (result.data ?? []) as unknown as Event[]
+  } catch (error) {
+    console.error("Error fetching events", error)
+    return []
+  }
+}
+
+export async function fetchEvent(slug: string): Promise<Event | null> {
+  try {
+    const result = await client.collection("events").find({
+      filters: { slug: { $eq: slug } },
+      pagination: { limit: 1 },
+    })
+    return ((result.data ?? [])[0] ?? null) as unknown as Event | null
+  } catch (error) {
+    console.error("Error fetching event", error)
+    return null
+  }
+}
+
 export type MensaMeal = {
   name: string
   priceStudents: number

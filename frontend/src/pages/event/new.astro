@@ -1,0 +1,192 @@
+---
+import { actions, isInputError } from "astro:actions"
+import PageLayout from "@/layouts/PageLayout.astro"
+import { useTranslations } from "@/i18n/translations"
+import IconArrowLeft from "@/components/icons/IconArrowLeft.astro"
+
+const t = useTranslations(Astro.locals.locale)
+
+const token = Astro.cookies.get("auth_token")?.value
+if (!token) {
+  return Astro.redirect(`/login?redirect=/event/new`)
+}
+
+const result = Astro.getActionResult(actions.events.create)
+
+if (result?.data) {
+  return Astro.redirect(`/event/${result.data.slug}`)
+}
+
+const inputErrors = isInputError(result?.error) ? result.error.fields : {}
+const generalError = result?.error && !isInputError(result.error) ? result.error.message : null
+---
+
+<PageLayout>
+  <div class="mb-6">
+    <a href="/events" class="btn btn-ghost btn-sm gap-1 pl-0">
+      <IconArrowLeft class="h-4 w-4" />
+      {t.events.backToEvents}
+    </a>
+  </div>
+
+  <section class="mb-8">
+    <h1 class="mb-1 text-3xl font-bold tracking-tight sm:text-4xl">{t.events.createTitle}</h1>
+    <p class="text-base-content/60">{t.events.createSubtitle}</p>
+  </section>
+
+  {
+    generalError && (
+      <div role="alert" class="alert alert-error mb-6">
+        <span>{generalError}</span>
+      </div>
+    )
+  }
+
+  <script>
+    const STORAGE_KEY = "event-new-draft"
+    const FIELDS = ["title", "organizer", "start", "end", "description", "external_url"]
+
+    const form = document.querySelector<HTMLFormElement>("form")!
+
+    // Restore saved values on load (matters when page re-renders after a POST error)
+    const saved = sessionStorage.getItem(STORAGE_KEY)
+    if (saved) {
+      const draft = JSON.parse(saved) as Record<string, string>
+      for (const name of FIELDS) {
+        const el = form.elements.namedItem(name) as HTMLInputElement | HTMLTextAreaElement | null
+        if (el && draft[name]) el.value = draft[name]
+      }
+    }
+
+    // Track whether the page is leaving due to a form submission.
+    // pagehide fires for both form submits AND link navigation, so we need to
+    // distinguish them: only clear the draft when the user navigates away via a
+    // link (not when the browser is doing a POST round-trip).
+    let submitting = false
+
+    form.addEventListener("submit", () => {
+      submitting = true
+      const draft: Record<string, string> = {}
+      for (const name of FIELDS) {
+        const el = form.elements.namedItem(name) as HTMLInputElement | HTMLTextAreaElement | null
+        if (el) draft[name] = el.value
+      }
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(draft))
+    })
+
+    window.addEventListener("pagehide", () => {
+      if (!submitting) {
+        // User navigated away via a link/back button — clear the draft
+        sessionStorage.removeItem(STORAGE_KEY)
+      }
+    })
+  </script>
+
+  <form method="POST" action={actions.events.create} class="flex max-w-2xl flex-col gap-6">
+    <div class="flex flex-col gap-4">
+      <div class="form-control">
+        <label class="label" for="title">
+          <span class="label-text font-medium">{t.events.fieldTitle}</span>
+        </label>
+        <input
+          id="title"
+          name="title"
+          type="text"
+          required
+          class:list={["input input-bordered w-full", inputErrors.title && "input-error"]}
+        />
+        {inputErrors.title && <p class="mt-1 text-sm text-error">{inputErrors.title[0]}</p>}
+      </div>
+
+      <div class="form-control">
+        <label class="label" for="organizer">
+          <span class="label-text font-medium">{t.events.fieldOrganizer}</span>
+        </label>
+        <input
+          id="organizer"
+          name="organizer"
+          type="text"
+          required
+          class:list={["input input-bordered w-full", inputErrors.organizer && "input-error"]}
+        />
+        {inputErrors.organizer && <p class="mt-1 text-sm text-error">{inputErrors.organizer[0]}</p>}
+      </div>
+
+      <div class="grid gap-4 sm:grid-cols-2">
+        <div class="form-control">
+          <label class="label" for="start">
+            <span class="label-text font-medium">{t.events.fieldStart}</span>
+          </label>
+          <input
+            id="start"
+            name="start"
+            type="datetime-local"
+            required
+            class:list={["input input-bordered w-full", inputErrors.start && "input-error"]}
+          />
+          {inputErrors.start && <p class="mt-1 text-sm text-error">{inputErrors.start[0]}</p>}
+        </div>
+
+        <div class="form-control">
+          <label class="label" for="end">
+            <span class="label-text font-medium">{t.events.fieldEnd}</span>
+          </label>
+          <input
+            id="end"
+            name="end"
+            type="datetime-local"
+            required
+            class:list={["input input-bordered w-full", inputErrors.end && "input-error"]}
+          />
+          {inputErrors.end && <p class="mt-1 text-sm text-error">{inputErrors.end[0]}</p>}
+        </div>
+      </div>
+
+      <div class="form-control">
+        <label class="label" for="description">
+          <span class="label-text font-medium">{t.events.fieldDescription}</span>
+        </label>
+        <textarea
+          id="description"
+          name="description"
+          rows="6"
+          required
+          class:list={[
+            "textarea textarea-bordered w-full resize-y",
+            inputErrors.description && "textarea-error",
+          ]}></textarea>
+        {
+          inputErrors.description && (
+            <p class="mt-1 text-sm text-error">{inputErrors.description[0]}</p>
+          )
+        }
+      </div>
+
+      <div class="form-control">
+        <label class="label" for="external_url">
+          <span class="label-text font-medium">
+            {t.events.fieldExternalUrl}
+            <span class="font-normal text-base-content/50"> {t.events.optionalLabel}</span>
+          </span>
+        </label>
+        <input
+          id="external_url"
+          name="external_url"
+          type="url"
+          class:list={["input input-bordered w-full", inputErrors.external_url && "input-error"]}
+        />
+        {
+          inputErrors.external_url && (
+            <p class="mt-1 text-sm text-error">{inputErrors.external_url[0]}</p>
+          )
+        }
+      </div>
+    </div>
+
+    <div>
+      <button type="submit" class="btn btn-primary">
+        {t.events.submitEvent}
+      </button>
+    </div>
+  </form>
+</PageLayout>

@@ -42,6 +42,43 @@ const generalError = result?.error && !isInputError(result.error) ? result.error
     )
   }
 
+  <script>
+    const STORAGE_KEY = "job-new-draft"
+    const FIELDS = [
+      "title", "company", "location", "working_hours",
+      "description", "external_url", "contact_name", "contact_mail", "contact_phone",
+    ]
+
+    const form = document.querySelector<HTMLFormElement>("form")!
+
+    const saved = sessionStorage.getItem(STORAGE_KEY)
+    if (saved) {
+      const draft = JSON.parse(saved) as Record<string, string>
+      for (const name of FIELDS) {
+        const el = form.elements.namedItem(name) as HTMLInputElement | HTMLTextAreaElement | null
+        if (el && draft[name]) el.value = draft[name]
+      }
+    }
+
+    let submitting = false
+
+    form.addEventListener("submit", () => {
+      submitting = true
+      const draft: Record<string, string> = {}
+      for (const name of FIELDS) {
+        const el = form.elements.namedItem(name) as HTMLInputElement | HTMLTextAreaElement | null
+        if (el) draft[name] = el.value
+      }
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(draft))
+    })
+
+    window.addEventListener("pagehide", () => {
+      if (!submitting) {
+        sessionStorage.removeItem(STORAGE_KEY)
+      }
+    })
+  </script>
+
   <form method="POST" action={actions.jobs.create} class="max-w-2xl flex flex-col gap-6">
     <div class="flex flex-col gap-4">
       <div class="form-control">
