@@ -37,4 +37,34 @@ export default factories.createCoreController("api::job-offer.job-offer", ({ str
     ctx.query.filters = { ...existing, online_status: { $eq: "published" } }
     return super.find(ctx)
   },
+
+  async update(ctx) {
+    const user = ctx.state.user
+    if (!user) return ctx.unauthorized()
+
+    const { id } = ctx.params
+    const offer = await strapi
+      .documents("api::job-offer.job-offer")
+      .findOne({ documentId: id, populate: ["owner"] })
+
+    if (!offer) return ctx.notFound()
+    if (offer.owner?.id !== user.id) return ctx.forbidden()
+
+    return super.update(ctx)
+  },
+
+  async delete(ctx) {
+    const user = ctx.state.user
+    if (!user) return ctx.unauthorized()
+
+    const { id } = ctx.params
+    const offer = await strapi
+      .documents("api::job-offer.job-offer")
+      .findOne({ documentId: id, populate: ["owner"] })
+
+    if (!offer) return ctx.notFound()
+    if (offer.owner?.id !== user.id) return ctx.forbidden()
+
+    return super.delete(ctx)
+  },
 }))

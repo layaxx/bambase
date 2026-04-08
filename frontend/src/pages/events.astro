@@ -10,6 +10,7 @@ const t = useTranslations(Astro.locals.locale)
 const dateLocale = t.mensa.dateLocale
 
 const events = await fetchEvents()
+const isLoggedIn = !!Astro.cookies.get("auth_token")?.value
 
 const grouped = Map.groupBy(events, (e) =>
   new Date(e.start).toLocaleDateString(dateLocale, {
@@ -30,9 +31,12 @@ function formatTime(iso: string) {
 <PageLayout>
   <PageHeader label="Bamberg" title={t.events.pageTitle} subtitle={t.events.pageSubtitle}>
     <IconCalendar slot="icon" class="h-5 w-5" />
-    <a slot="action" href="/event/new" class="btn btn-primary btn-sm">
-      {t.events.submitEvent}
-    </a>
+    <div slot="action" class="flex items-center gap-2">
+      {isLoggedIn && (
+        <a href="/account/events" class="btn btn-outline btn-sm">{t.auth.myEvents}</a>
+      )}
+      <a href="/event/new" class="btn btn-primary btn-sm">{t.events.submitEvent}</a>
+    </div>
   </PageHeader>
 
   {

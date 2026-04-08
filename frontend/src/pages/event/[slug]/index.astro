@@ -1,4 +1,5 @@
 ---
+import { actions } from "astro:actions"
 import PageLayout from "@/layouts/PageLayout.astro"
 import { fetchEvent } from "@/utils/api"
 import { useTranslations } from "@/i18n/translations"
@@ -11,6 +12,16 @@ const dateLocale = t.mensa.dateLocale
 
 const { slug } = Astro.params
 const event = slug ? await fetchEvent(slug) : null
+
+// Check if logged-in user is the owner
+const { data: me } = await Astro.callAction(actions.auth.getMe, {})
+const isOwner = me && event?.owner?.id === me.id
+
+// Handle delete result
+const deleteResult = Astro.getActionResult(actions.events.delete)
+if (deleteResult?.data !== undefined && !deleteResult.error) {
+  return Astro.redirect("/account/events")
+}
 
 function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString(dateLocale, {
@@ -44,18 +55,35 @@ function formatTime(iso: string) {
       </div>
     ) : (
       <>
-        <div class="mb-6">
+        <div class="mb-6 flex items-center justify-between gap-4">
           <a href="/events" class="btn btn-ghost btn-sm gap-1 pl-0">
             <IconArrowLeft class="h-4 w-4" />
             {t.events.backToEvents}
           </a>
+          {isOwner && (
+            <div class="flex items-center gap-2">
+              <a href="/account/events" class="btn btn-ghost btn-sm">
+                {t.auth.myEvents}
+              </a>
+              <a href={`/event/${event.slug}/edit`} class="btn btn-outline btn-sm">
+                {t.events.editEvent}
+              </a>
+              <form
+                method="POST"
+                action={actions.events.delete}
+                onsubmit={`return confirm('${t.events.deleteConfirm}')`}>
+                <input type="hidden" name="documentId" value={event.documentId} />
+                <button type="submit" class="btn btn-outline btn-error btn-sm">
+                  {t.events.deleteEvent}
+                </button>
+              </form>
+            </div>
+          )}
         </div>
 
         <div class="grid gap-8 lg:grid-cols-3">
           <div class="lg:col-span-2">
-            <div class="mb-2 text-sm font-medium text-base-content/60">
-              {event.organizer}
-            </div>
+            <div class="mb-2 text-sm font-medium text-base-content/60">{event.organizer}</div>
             <h1 class="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">{event.title}</h1>
 
             <div class="mb-6 flex flex-wrap gap-4 text-sm text-base-content/60">

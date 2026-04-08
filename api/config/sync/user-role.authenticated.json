@@ -66,6 +66,11 @@
       "locale": null
     },
     {
+      "documentId": "snzia3o7517z9u5cunkswhmy",
+      "action": "plugin::users-permissions.user.find",
+      "locale": null
+    },
+    {
       "documentId": "m44gr153vqtddr89z56bzayl",
       "action": "plugin::users-permissions.user.me",
       "locale": null

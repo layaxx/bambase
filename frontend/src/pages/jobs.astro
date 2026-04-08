@@ -8,14 +8,18 @@ import { useTranslations } from "@/i18n/translations"
 const t = useTranslations(Astro.locals.locale)
 
 const jobs = await fetchJobOffers()
+const isLoggedIn = !!Astro.cookies.get("auth_token")?.value
 ---
 
 <PageLayout>
   <PageHeader label="Bamberg" title={t.jobs.pageTitle} subtitle={t.jobs.pageSubtitle}>
     <IconBriefcase slot="icon" class="h-5 w-5" />
-    <a slot="action" href="/job/new" class="btn btn-primary btn-sm">
-      {t.jobs.postJob}
-    </a>
+    <div slot="action" class="flex items-center gap-2">
+      {isLoggedIn && (
+        <a href="/account/jobs" class="btn btn-outline btn-sm">{t.auth.myJobOffers}</a>
+      )}
+      <a href="/job/new" class="btn btn-primary btn-sm">{t.jobs.postJob}</a>
+    </div>
   </PageHeader>
 
   {

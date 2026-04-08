@@ -1,0 +1,79 @@
+---
+import { actions } from "astro:actions"
+import PageLayout from "@/layouts/PageLayout.astro"
+import { fetchMyEvents } from "@/utils/api"
+import { useTranslations } from "@/i18n/translations"
+
+const t = useTranslations(Astro.locals.locale)
+
+const { data: user, error } = await Astro.callAction(actions.auth.getMe, {})
+
+if (error) {
+  Astro.cookies.delete("auth_token", { path: "/" })
+  Astro.cookies.delete("auth_user", { path: "/" })
+  return Astro.redirect("/login")
+}
+
+const token = Astro.cookies.get("auth_token")!.value
+const events = await fetchMyEvents(token, user.id)
+const dateLocale = t.mensa.dateLocale
+
+function formatDateTime(iso: string) {
+  return new Date(iso).toLocaleString(dateLocale, {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  })
+}
+---
+
+<PageLayout>
+  <div class="mb-6 flex items-center gap-3">
+    <a href="/account" class="btn btn-ghost btn-sm btn-square" aria-label="Back">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg
+      >
+    </a>
+    <h1 class="text-2xl font-extrabold">{t.auth.myEvents}</h1>
+  </div>
+
+  {
+    events.length === 0 ? (
+      <p class="rounded-xl border border-base-300 bg-base-100 p-6 text-base-content/60">
+        {t.auth.noMyEvents}
+      </p>
+    ) : (
+      <div class="flex flex-col gap-3">
+        {events.map((event) => (
+          <a
+            href={`/event/${event.slug}`}
+            class="group flex flex-col gap-1 rounded-xl border border-base-300 bg-base-100 p-4 no-underline transition-all hover:shadow-md">
+            <h2 class="font-semibold leading-snug text-base-content group-hover:text-primary">
+              {event.title}
+            </h2>
+            <p class="text-sm text-base-content/60">
+              {formatDateTime(event.start)} – {formatDateTime(event.end)}
+            </p>
+            <p class="text-sm text-base-content/60">{event.organizer}</p>
+            <p class="line-clamp-2 text-sm text-base-content/50">{event.description}</p>
+          </a>
+        ))}
+      </div>
+    )
+  }
+
+  <div class="mt-6">
+    <a href="/event/new" class="btn btn-primary btn-sm">{t.events.submitEvent}</a>
+  </div>
+</PageLayout>

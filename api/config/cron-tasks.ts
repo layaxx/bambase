@@ -12,4 +12,17 @@ export default {
       rule: "0 5,8,10,11,12,14,16 * * *",
     },
   },
+  unpublishExpiredJobOffers: {
+    task: async ({ strapi }) => {
+      try {
+        await strapi.service("api::job-offer.job-offer").unpublishExpired()
+      } catch (error) {
+        console.error("Error unpublishing expired job offers:", error)
+      }
+    },
+    options: {
+      // every day at 1:00
+      rule: "0 1 * * *",
+    },
+  },
 }

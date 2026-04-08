@@ -1,4 +1,5 @@
 ---
+import { actions } from "astro:actions"
 import PageLayout from "@/layouts/PageLayout.astro"
 import { fetchJobOffer } from "@/utils/api"
 import { useTranslations } from "@/i18n/translations"
@@ -13,6 +14,26 @@ const t = useTranslations(Astro.locals.locale)
 const { uuid } = Astro.params
 const token = Astro.cookies.get("auth_token")?.value
 const job = uuid ? await fetchJobOffer(uuid, token) : null
+
+const { data: me } = await Astro.callAction(actions.auth.getMe, {})
+const isOwner = me && job?.owner?.id === me.id
+
+const statusLabel: Record<string, string> = {
+  submitted: t.auth.statusSubmitted,
+  expired: t.auth.statusExpired,
+  rejected: t.auth.statusRejected,
+}
+
+const statusAlertClass: Record<string, string> = {
+  submitted: "alert-warning",
+  expired: "alert-neutral",
+  rejected: "alert-error",
+}
+
+const deleteResult = Astro.getActionResult(actions.jobs.delete)
+if (deleteResult?.data !== undefined && !deleteResult.error) {
+  return Astro.redirect("/account/jobs")
+}
 ---
 
 <PageLayout>
@@ -29,12 +50,37 @@ const job = uuid ? await fetchJobOffer(uuid, token) : null
       </div>
     ) : (
       <>
-        <div class="mb-6">
+        <div class="mb-6 flex items-center justify-between gap-4">
           <a href="/jobs" class="btn btn-ghost btn-sm gap-1 pl-0">
             <IconArrowLeft class="h-4 w-4" />
             {t.jobs.backToJobs}
           </a>
+          {isOwner && (
+            <div class="flex items-center gap-2">
+              <a href="/account/jobs" class="btn btn-ghost btn-sm">
+                {t.auth.myJobOffers}
+              </a>
+              <a href={`/job/${job.uuid}/edit`} class="btn btn-outline btn-sm">
+                {t.jobs.editJob}
+              </a>
+              <form
+                method="POST"
+                action={actions.jobs.delete}
+                onsubmit={`return confirm('${t.jobs.deleteConfirm}')`}>
+                <input type="hidden" name="documentId" value={job.documentId} />
+                <button type="submit" class="btn btn-outline btn-error btn-sm">
+                  {t.jobs.deleteJob}
+                </button>
+              </form>
+            </div>
+          )}
         </div>
+
+        {job.online_status !== "published" && (
+          <div role="alert" class={`alert ${statusAlertClass[job.online_status] ?? "alert-neutral"} mb-6`}>
+            <span>{statusLabel[job.online_status] ?? job.online_status} – {t.jobs.notPublishedHint}</span>
+          </div>
+        )}
 
         <div class="grid gap-8 lg:grid-cols-3">
           <div class="lg:col-span-2">
