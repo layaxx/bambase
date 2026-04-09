@@ -3,18 +3,23 @@ import type { MensaMeal } from "@/utils/api"
 import MensaMealItem from "@/components/mensa/MensaMealItem.astro"
 
 interface Props {
+  id: string
   label: string
   meals: MensaMeal[]
 }
 
-const { label, meals } = Astro.props
+const { id, label, meals } = Astro.props
 ---
 
-<div class="rounded-xl border border-base-300 bg-base-100 p-4">
+<div id={id} class="rounded-xl border border-base-300 bg-base-100 p-4">
   <div class="mb-4 flex items-center justify-between">
     <h3 class="font-semibold text-base-content">{label}</h3>
     <span class="text-xs text-base-content/60">
-      {meals.length === 0 ? "Keine Gerichte" : `${meals.length} Gericht${meals.length !== 1 ? "e" : ""}`}
+      {
+        meals.length === 0
+          ? "Keine Gerichte"
+          : `${meals.length} Gericht${meals.length !== 1 ? "e" : ""}`
+      }
     </span>
   </div>
 

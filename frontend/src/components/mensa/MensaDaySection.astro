@@ -2,13 +2,16 @@
 import type { MensaMeal } from "@/utils/api"
 import MensaLocationCard from "@/components/mensa/MensaLocationCard.astro"
 import { useTranslations } from "@/i18n/translations"
+import IconUtensils from "@/components/icons/IconUtensils.astro"
+import IconMinusCircle from "@/components/icons/IconMinusCircle.astro"
 
 interface Props {
+  id: string
   heading: string
   meals: MensaMeal[]
 }
 
-const { heading, meals } = Astro.props
+const { id, heading, meals } = Astro.props
 const t = useTranslations(Astro.locals.locale)
 
 const locations = [
@@ -27,26 +30,10 @@ const mealsByLocation = Object.fromEntries(
 )
 ---
 
-<section>
+<section id={id}>
   <div class="mb-4 flex items-center gap-3">
     <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-100">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        class="h-5 w-5 text-orange-700"
-        aria-hidden="true"
-      >
-        <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" />
-        <path d="M7 2v20" />
-        <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" />
-      </svg>
+      <IconUtensils class="h-5 w-5 text-orange-700" />
     </div>
     <h2 class="text-xl font-semibold text-base-content">{heading}</h2>
   </div>
@@ -54,28 +41,17 @@ const mealsByLocation = Object.fromEntries(
   {
     meals.length === 0 ? (
       <div class="rounded-xl border border-base-300 bg-base-100 p-8 text-center text-base-content/60">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="mx-auto mb-3 h-8 w-8 opacity-40"
-          aria-hidden="true"
-        >
-          <circle cx="12" cy="12" r="10" />
-          <path d="M8 12h8" />
-        </svg>
+        <IconMinusCircle class="mx-auto mb-3 h-8 w-8 opacity-40" />
         <p class="text-sm">{t.mensa.noDataDay}</p>
       </div>
     ) : (
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {locations.map((loc) => (
-          <MensaLocationCard label={loc.label} meals={mealsByLocation[loc.id]} />
+          <MensaLocationCard
+            id={`${id}-${loc.id}`}
+            label={loc.label}
+            meals={mealsByLocation[loc.id]}
+          />
         ))}
       </div>
     )

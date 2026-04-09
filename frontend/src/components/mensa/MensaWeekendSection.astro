@@ -1,52 +1,25 @@
 ---
+import IconUtensils from "@/components/icons/IconUtensils.astro"
+import IconX from "@/components/icons/IconX.astro"
+
 interface Props {
+  id: string
   heading: string
 }
 
-const { heading } = Astro.props
+const { id, heading } = Astro.props
 ---
 
-<section>
+<section id={id}>
   <div class="mb-4 flex items-center gap-3">
     <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-base-200">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        class="h-5 w-5 text-base-content/40"
-        aria-hidden="true"
-      >
-        <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" />
-        <path d="M7 2v20" />
-        <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" />
-      </svg>
+      <IconUtensils class="h-5 w-5 text-base-content/40" />
     </div>
     <h2 class="text-xl font-semibold text-base-content">{heading}</h2>
   </div>
 
   <div class="rounded-xl border border-base-300 bg-base-100 p-8 text-center text-base-content/60">
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      class="mx-auto mb-3 h-8 w-8 opacity-40"
-      aria-hidden="true"
-    >
-      <path d="M18 6 6 18" />
-      <path d="m6 6 12 12" />
-    </svg>
+    <IconX class="mx-auto mb-3 h-8 w-8 opacity-40" />
     <p class="text-sm font-medium">Am Wochenende geschlossen</p>
     <p class="mt-1 text-xs">Die Bamberger Mensen haben samstags und sonntags nicht geöffnet.</p>
   </div>

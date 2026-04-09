@@ -52,6 +52,7 @@ const de = {
   mensa: {
     cardTitle: "Mensaplan",
     cardSubtitle: (date: string) => `Morgen, ${date}`,
+    cardSubtitleToday: (date: string) => `Heute, ${date}`,
     fullPlan: "Vollständiger Plan",
     noData: "Keine Daten verfügbar.",
     noDataDay: "Für diesen Tag liegen noch keine Daten vor.",
@@ -222,6 +223,7 @@ const en = {
   mensa: {
     cardTitle: "Cafeteria",
     cardSubtitle: (date: string) => `Tomorrow, ${date}`,
+    cardSubtitleToday: (date: string) => `Today, ${date}`,
     fullPlan: "Full schedule",
     noData: "No data available.",
     noDataDay: "No data available for this day yet.",

@@ -27,13 +27,15 @@ function formatTime(iso: string) {
         <IconCalendar class="h-5 w-5 text-blue-700" />
       </div>
       <div>
-        <h2 class="text-xl font-semibold">{t.events.title}</h2>
+        <a href="/events" class="text-xl font-semibold hover:text-primary no-underline"
+          >{t.events.title}</a
+        >
         <p class="text-sm text-base-content/60">
           {t.events.countToday(todayEvents.length)}
         </p>
       </div>
     </div>
-    <a href="/events" class="btn btn-ghost btn-sm hidden sm:flex gap-1">
+    <a href="/events" class="btn btn-ghost btn-sm flex gap-1">
       {t.events.showAll}
       <IconArrowRight class="h-4 w-4" />
     </a>

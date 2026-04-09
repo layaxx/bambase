@@ -18,11 +18,13 @@ const jobs = await fetchJobOffers(3)
         <IconBriefcase class="h-5 w-5 text-green-700" />
       </div>
       <div>
-        <h2 class="text-xl font-semibold">{t.jobs.title}</h2>
+        <a href="/jobs" class="text-xl font-semibold hover:text-primary no-underline"
+          >{t.jobs.title}</a
+        >
         <p class="text-sm text-base-content/60">{t.jobs.subtitle}</p>
       </div>
     </div>
-    <a href="/jobs" class="btn btn-ghost btn-sm hidden sm:flex gap-1">
+    <a href="/jobs" class="btn btn-ghost btn-sm flex gap-1">
       {t.jobs.showAll}
       <IconArrowRight class="h-4 w-4" />
     </a>

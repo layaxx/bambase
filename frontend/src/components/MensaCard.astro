@@ -7,8 +7,30 @@ import IconArrowRight from "./icons/IconArrowRight.astro"
 
 const t = useTranslations(Astro.locals.locale)
 
-const relevantDay = dayjs().add(1, "day")
-const todayFormatted = relevantDay.toDate().toLocaleDateString(t.mensa.dateLocale, {
+const CLOSING_HOUR = 15
+const CLOSING_MINUTE = 0
+
+function getRelevantDay(): dayjs.Dayjs {
+  const now = dayjs()
+  const dow = now.day() // 0 = Sunday, 6 = Saturday
+
+  if (dow >= 1 && dow <= 5) {
+    const closed =
+      now.hour() > CLOSING_HOUR || (now.hour() === CLOSING_HOUR && now.minute() >= CLOSING_MINUTE)
+    if (!closed) return now
+    // After closing: skip to next weekday (Friday → Monday)
+    return now.add(dow === 5 ? 3 : 1, "day")
+  }
+
+  if (dow === 6) return now.add(2, "day") // Saturday → Monday
+  return now.add(1, "day") // Sunday → Monday
+}
+
+const now = dayjs()
+const relevantDay = getRelevantDay()
+const isToday = relevantDay.isSame(now, "day")
+const relevantDayId = relevantDay.format("YYYY-MM-DD")
+const relevantDayFormatted = relevantDay.toDate().toLocaleDateString(t.mensa.dateLocale, {
   day: "numeric",
   month: "long",
 })
@@ -33,11 +55,19 @@ const mealsByLocation = Object.fromEntries(
         <IconUtensils class="h-5 w-5 text-orange-700" />
       </div>
       <div>
-        <h2 class="text-xl font-semibold">{t.mensa.cardTitle}</h2>
-        <p class="text-sm text-base-content/60">{t.mensa.cardSubtitle(todayFormatted)}</p>
+        <a href="/mensa" class="text-xl font-semibold hover:text-primary no-underline"
+          >{t.mensa.cardTitle}</a
+        >
+        <p class="text-sm text-base-content/60">
+          {
+            isToday
+              ? t.mensa.cardSubtitleToday(relevantDayFormatted)
+              : t.mensa.cardSubtitle(relevantDayFormatted)
+          }
+        </p>
       </div>
     </div>
-    <a href="/mensa" class="btn btn-ghost btn-sm hidden sm:flex gap-1">
+    <a href="/mensa" class="btn btn-ghost btn-sm flex gap-1">
       {t.mensa.fullPlan}
       <IconArrowRight class="h-4 w-4" />
     </a>
@@ -72,11 +102,57 @@ const mealsByLocation = Object.fromEntries(
             <li class="text-base-content/60 text-sm">{t.mensa.noData}</li>
           ) : (
             mealsByLocation[loc.id].map((meal) => (
-              <li class="flex items-center justify-between gap-3 rounded-lg border border-base-300 p-3 transition-colors hover:bg-base-200">
-                <span class="text-sm text-base-content">{meal.name}</span>
-                <span class="shrink-0 font-semibold text-sm text-base-content">
-                  {meal.priceStudents.toFixed(2)} €
-                </span>
+              <li>
+                <a
+                  href={`/mensa#${relevantDayId}-${loc.id}`}
+                  class="flex items-center justify-between gap-3 rounded-lg border border-base-300 p-3 transition-colors hover:bg-base-200 no-underline">
+                  <div class="flex min-w-0 flex-wrap items-center gap-1.5">
+                    <span class="text-sm text-base-content">{meal.name}</span>
+                    {meal.isVegan && (
+                      <span class="inline-flex shrink-0 items-center gap-1 rounded-md bg-emerald-100 px-1.5 py-0.5 text-xs font-medium text-emerald-800">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          class="h-3 w-3"
+                          aria-hidden="true">
+                          <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
+                          <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
+                        </svg>
+                        Vegan
+                      </span>
+                    )}
+                    {!meal.isVegan && meal.isVegetarian && (
+                      <span class="inline-flex shrink-0 items-center gap-1 rounded-md bg-green-100 px-1.5 py-0.5 text-xs font-medium text-green-800">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          class="h-3 w-3"
+                          aria-hidden="true">
+                          <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
+                          <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
+                        </svg>
+                        Vegetarisch
+                      </span>
+                    )}
+                  </div>
+                  <span class="shrink-0 font-semibold text-sm text-base-content">
+                    {meal.priceStudents.toFixed(2)} €
+                  </span>
+                </a>
               </li>
             ))
           )}

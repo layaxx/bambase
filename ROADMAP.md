@@ -192,7 +192,7 @@ The current dark-mode color scheme (DaisyUI 5 + Tailwind CSS 4) needs refinement
 
 - Is there a reference design or brand color palette to adhere to?
 - Should the dark-mode palette be derived from an existing DaisyUI theme, or fully custom?
-- Are there specific pages or components users have flagged as looking broken in dark mode?
+- Are there specific pages or components users have flagged as looking broken in dark mode? -> text-primary looks bad on dark mode
 - Should we support a system-preference-based automatic toggle, or only a manual toggle (already in place)?
 
 ### P10 Testing
@@ -225,6 +225,27 @@ There is currently one test suite (`api/test/mensaplan.test.ts`) covering the me
 - Are snapshot/visual regression tests worth adding for dark-mode work (P9)?
 
 ## Done
+
+### P0.3 Correct day for mensaplan card
+
+`MensaCard.astro` now computes the relevant day dynamically: weekdays before 15:00 show today, after 15:00 show the next weekday (Friday wraps to Monday), weekends show Monday. Subtitle switches between "Heute, \<date\>" and "Morgen, \<date\>" accordingly, using new `cardSubtitleToday` i18n keys in both locales.
+
+---
+
+### P0.2 Improve Interlinking
+
+- Added `id={entry.id}` (ISO date string) to `MensaDaySection` and `MensaWeekendSection`, applied to their outermost `<section>`, enabling anchor URLs like `/mensa#2026-04-09`.
+- Wrapped each meal item in `MensaCard.astro` in an `<a href="/mensa#YYYY-MM-DD">` linking to the relevant day section.
+- Removed `hidden sm:flex` from the "full plan" / "show all" links in `MensaCard.astro`, `JobCard.astro`, and `HeuteInBamberg.astro` — they are now visible on all screen sizes.
+- Events and jobs on the homepage already linked individual cards to `/event/[slug]` and `/job/[uuid]` respectively — no changes needed there.
+
+---
+
+### P0.1 Add vegan/vegetarian badge to mensa plan on front page
+
+Added vegan/vegetarian badges inline to the meal `<li>` elements in `MensaCard.astro`. Vegan meals show only the vegan badge (emerald); vegetarian-only meals show the vegetarian badge (green). No allergen expander on the compact card. The `isVegan`/`isVegetarian` fields were already present on `MensaMeal` and needed no API changes.
+
+---
 
 ### P0 Add option to archive jobs
 

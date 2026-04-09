@@ -23,10 +23,11 @@ const mealsByDay = await Promise.all(
 // Group consecutive Saturday + Sunday into a single weekend entry
 type WeekdayEntry = {
   type: "weekday"
+  id: string
   heading: string
   meals: Awaited<ReturnType<typeof fetchMensaMeals>>
 }
-type WeekendEntry = { type: "weekend"; heading: string }
+type WeekendEntry = { type: "weekend"; id: string; heading: string }
 type DayEntry = WeekdayEntry | WeekendEntry
 
 function formatDate(d: dayjs.Dayjs) {
@@ -42,14 +43,23 @@ while (i < mealsByDay.length) {
 
   if (dow === 6 && nextDow === 0) {
     const heading = t.mensa.weekendHeading(formatDate(day), formatDate(mealsByDay[i + 1].day))
-    grouped.push({ type: "weekend", heading })
+    grouped.push({ type: "weekend", id: day.format("YYYY-MM-DD"), heading })
     i += 2
   } else if (dow === 0 || dow === 6) {
-    grouped.push({ type: "weekend", heading: `${t.mensa.weekdays[dow]}, ${formatDate(day)}` })
+    grouped.push({
+      type: "weekend",
+      id: day.format("YYYY-MM-DD"),
+      heading: `${t.mensa.weekdays[dow]}, ${formatDate(day)}`,
+    })
     i++
   } else {
     const label = i === 0 ? t.mensa.today : i === 1 ? t.mensa.tomorrow : t.mensa.weekdays[dow]
-    grouped.push({ type: "weekday", heading: `${label}, ${formatDate(day)}`, meals })
+    grouped.push({
+      type: "weekday",
+      id: day.format("YYYY-MM-DD"),
+      heading: `${label}, ${formatDate(day)}`,
+      meals,
+    })
     i++
   }
 }
@@ -68,9 +78,9 @@ while (i < mealsByDay.length) {
     {
       grouped.map((entry) =>
         entry.type === "weekend" ? (
-          <MensaWeekendSection heading={entry.heading} />
+          <MensaWeekendSection id={entry.id} heading={entry.heading} />
         ) : (
-          <MensaDaySection heading={entry.heading} meals={entry.meals} />
+          <MensaDaySection id={entry.id} heading={entry.heading} meals={entry.meals} />
         )
       )
     }
