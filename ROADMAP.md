@@ -2,27 +2,6 @@
 
 ## Upcoming
 
-### P2 Student Groups should be API-based
-
-Currently, 90+ student organizations are stored as a hardcoded JSON file at `frontend/src/data/groups.json`. Moving them to the API would allow student groups to manage their own entries (e.g., update links, descriptions) without requiring a developer.
-
-**Work involved:**
-
-- Create a `StudentGroup` content type in Strapi with fields: `name`, `description`, `website`, `email`, `facebook`, `instagram`, plus any additional social links
-- Migrate existing JSON data into Strapi
-- Update `frontend/src/utils/api.ts` to fetch groups from the API
-- Update all components that currently import from `groups.json` (homepage widget, dedicated group listing)
-- Consider adding owner/claim functionality so groups can update their own entry
-
-**Open questions:**
-
-- Should student groups be able to self-register and manage their profile, or is it admin-managed only?
-- If self-managed: what verification is required to confirm someone represents a group (e.g., university email domain check)?
-- Should inactive/defunct groups be archived or deleted? How do we identify them?
-- Are there additional fields worth capturing (founding year, member count, meeting times, logo/image)?
-- Should groups be linkable to events (the group is the organizer)?
-
----
 
 ### P3 Reporting functionality for Events, Jobs
 
@@ -252,6 +231,29 @@ div:target {
 - Weekend sections (`MensaWeekendSection`) show no meal cards; no highlight is needed there, but the anchor should still scroll correctly — worth verifying.
 
 ## Done
+
+### P2 Student Groups should be API-based
+
+Currently, student organizations are stored as a hardcoded JSON file at `frontend/src/data/groups.json`. Moving them to the API would allow student groups to manage their own entries (e.g., update links, descriptions) without requiring a developer.
+
+**Work involved:**
+
+- Create a `StudentGroup` content type in Strapi with fields: `name`, `description`, `website`, `email`, `facebook`, `instagram`, plus any additional social links
+- Migrate existing JSON data into Strapi
+- Update `frontend/src/utils/api.ts` to fetch groups from the API
+- Update all components that currently import from `groups.json` (homepage widget, dedicated group listing)
+- Consider adding owner/claim functionality so groups can update their own entry
+
+**Open questions:**
+
+- Should student groups be able to self-register and manage their profile, or is it admin-managed only? -> for now, keep it admin only
+- If self-managed: what verification is required to confirm someone represents a group (e.g., university email domain check)?
+- Should inactive/defunct groups be archived or deleted? How do we identify them? -> out of scope
+- Are there additional fields worth capturing (founding year, member count, meeting times, logo/image)? -> out of scope
+- Should groups be linkable to events (the group is the organizer)?
+
+---
+
 
 ### P1 Map Locations should be API-based
 

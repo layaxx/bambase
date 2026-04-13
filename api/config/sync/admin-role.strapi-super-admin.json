@@ -183,6 +183,93 @@
       "locale": null
     },
     {
+      "documentId": "xmdq8k5u84zgzirzs82kjhel",
+      "action": "plugin::content-manager.explorer.create",
+      "actionParameters": {},
+      "subject": "api::location.location",
+      "properties": {
+        "fields": [
+          "name",
+          "description",
+          "slug",
+          "lat",
+          "lon",
+          "category",
+          "external_url",
+          "address.street",
+          "address.streetNumber",
+          "address.city",
+          "address.zip"
+        ]
+      },
+      "conditions": [],
+      "locale": null
+    },
+    {
+      "documentId": "oy2p2uhuctyrhw5ieplnzsru",
+      "action": "plugin::content-manager.explorer.delete",
+      "actionParameters": {},
+      "subject": "api::location.location",
+      "properties": {},
+      "conditions": [],
+      "locale": null
+    },
+    {
+      "documentId": "t3sxx8h49izxyn9b7pkn3kpp",
+      "action": "plugin::content-manager.explorer.publish",
+      "actionParameters": {},
+      "subject": "api::location.location",
+      "properties": {},
+      "conditions": [],
+      "locale": null
+    },
+    {
+      "documentId": "u56yp4sq1zqyvkaz7qcsgdxe",
+      "action": "plugin::content-manager.explorer.read",
+      "actionParameters": {},
+      "subject": "api::location.location",
+      "properties": {
+        "fields": [
+          "name",
+          "description",
+          "slug",
+          "lat",
+          "lon",
+          "category",
+          "external_url",
+          "address.street",
+          "address.streetNumber",
+          "address.city",
+          "address.zip"
+        ]
+      },
+      "conditions": [],
+      "locale": null
+    },
+    {
+      "documentId": "qfg4j9b9lt274kcmonwxdgcw",
+      "action": "plugin::content-manager.explorer.update",
+      "actionParameters": {},
+      "subject": "api::location.location",
+      "properties": {
+        "fields": [
+          "name",
+          "description",
+          "slug",
+          "lat",
+          "lon",
+          "category",
+          "external_url",
+          "address.street",
+          "address.streetNumber",
+          "address.city",
+          "address.zip"
+        ]
+      },
+      "conditions": [],
+      "locale": null
+    },
+    {
       "documentId": "e8aj2tf2sice577jf7avwxtk",
       "action": "plugin::content-manager.explorer.create",
       "actionParameters": {},
@@ -258,6 +345,81 @@
           "date",
           "location",
           "allergens.name"
+        ]
+      },
+      "conditions": [],
+      "locale": null
+    },
+    {
+      "documentId": "g4ut9mg3aividv3m1dm2p554",
+      "action": "plugin::content-manager.explorer.create",
+      "actionParameters": {},
+      "subject": "api::student-group.student-group",
+      "properties": {
+        "fields": [
+          "name",
+          "slug",
+          "description",
+          "website",
+          "instagram",
+          "facebook",
+          "email"
+        ]
+      },
+      "conditions": [],
+      "locale": null
+    },
+    {
+      "documentId": "bt4xjwudy83sbytid5dv34n3",
+      "action": "plugin::content-manager.explorer.delete",
+      "actionParameters": {},
+      "subject": "api::student-group.student-group",
+      "properties": {},
+      "conditions": [],
+      "locale": null
+    },
+    {
+      "documentId": "xusqqo7si0vj314eryxqv3lz",
+      "action": "plugin::content-manager.explorer.publish",
+      "actionParameters": {},
+      "subject": "api::student-group.student-group",
+      "properties": {},
+      "conditions": [],
+      "locale": null
+    },
+    {
+      "documentId": "vv2sigrtgye1romiykg05kok",
+      "action": "plugin::content-manager.explorer.read",
+      "actionParameters": {},
+      "subject": "api::student-group.student-group",
+      "properties": {
+        "fields": [
+          "name",
+          "slug",
+          "description",
+          "website",
+          "instagram",
+          "facebook",
+          "email"
+        ]
+      },
+      "conditions": [],
+      "locale": null
+    },
+    {
+      "documentId": "i6jo89bj0rr9vatyq59v02mc",
+      "action": "plugin::content-manager.explorer.update",
+      "actionParameters": {},
+      "subject": "api::student-group.student-group",
+      "properties": {
+        "fields": [
+          "name",
+          "slug",
+          "description",
+          "website",
+          "instagram",
+          "facebook",
+          "email"
         ]
       },
       "conditions": [],

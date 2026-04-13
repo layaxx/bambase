@@ -544,6 +544,35 @@ export interface ApiMensaMealMensaMeal extends Struct.CollectionTypeSchema {
   }
 }
 
+export interface ApiStudentGroupStudentGroup extends Struct.CollectionTypeSchema {
+  collectionName: "student_groups"
+  info: {
+    displayName: "studentGroup"
+    pluralName: "student-groups"
+    singularName: "student-group"
+  }
+  options: {
+    draftAndPublish: false
+  }
+  attributes: {
+    createdAt: Schema.Attribute.DateTime
+    createdBy: Schema.Attribute.Relation<"oneToOne", "admin::user"> & Schema.Attribute.Private
+    description: Schema.Attribute.Text & Schema.Attribute.Required
+    email: Schema.Attribute.String
+    facebook: Schema.Attribute.String
+    instagram: Schema.Attribute.String
+    locale: Schema.Attribute.String & Schema.Attribute.Private
+    localizations: Schema.Attribute.Relation<"oneToMany", "api::student-group.student-group"> &
+      Schema.Attribute.Private
+    name: Schema.Attribute.String & Schema.Attribute.Required
+    publishedAt: Schema.Attribute.DateTime
+    slug: Schema.Attribute.UID<"name">
+    updatedAt: Schema.Attribute.DateTime
+    updatedBy: Schema.Attribute.Relation<"oneToOne", "admin::user"> & Schema.Attribute.Private
+    website: Schema.Attribute.String
+  }
+}
+
 export interface PluginContentReleasesRelease extends Struct.CollectionTypeSchema {
   collectionName: "strapi_releases"
   info: {
@@ -977,6 +1006,7 @@ declare module "@strapi/strapi" {
       "api::job-offer.job-offer": ApiJobOfferJobOffer
       "api::location.location": ApiLocationLocation
       "api::mensa-meal.mensa-meal": ApiMensaMealMensaMeal
+      "api::student-group.student-group": ApiStudentGroupStudentGroup
       "plugin::content-releases.release": PluginContentReleasesRelease
       "plugin::content-releases.release-action": PluginContentReleasesReleaseAction
       "plugin::i18n.locale": PluginI18NLocale

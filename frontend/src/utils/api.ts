@@ -1,5 +1,5 @@
 import { strapi } from "@strapi/client"
-import dayjs from "dayjs"
+import type { Dayjs } from "dayjs"
 
 export const strapiUrl = import.meta.env.STRAPI_URL ?? "http://localhost:1337"
 
@@ -216,6 +216,30 @@ export async function fetchLocations(): Promise<MapLocation[]> {
   }
 }
 
+export type StudentGroup = {
+  documentId: string
+  slug: string
+  name: string
+  description: string
+  website?: string
+  email?: string
+  facebook?: string
+  instagram?: string
+}
+
+export async function fetchStudentGroups(limit = 200): Promise<StudentGroup[]> {
+  try {
+    const result = await client.collection("student-groups").find({
+      sort: ["name:asc"],
+      pagination: { limit },
+    })
+    return (result.data ?? []) as unknown as StudentGroup[]
+  } catch (error) {
+    console.error("Error fetching student groups", error)
+    return []
+  }
+}
+
 export type MensaMeal = {
   name: string
   priceStudents: number
@@ -225,7 +249,7 @@ export type MensaMeal = {
   allergens?: { name: string }[]
 }
 
-export async function fetchMensaMeals(date: dayjs.Dayjs): Promise<MensaMeal[]> {
+export async function fetchMensaMeals(date: Dayjs): Promise<MensaMeal[]> {
   try {
     const result = await client.collection("mensa-meals").find({
       filters: { date: { $eq: date.toISOString().split("T")[0] } },

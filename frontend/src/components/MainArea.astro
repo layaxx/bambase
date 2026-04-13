@@ -1,11 +1,12 @@
 ---
 import Sidebar from "./Sidebar.astro"
 import StudentGroup from "./StudentGroup.astro"
-import groups from "@/data/groups.json"
+import { fetchStudentGroups } from "@/utils/api"
 import { useTranslations } from "@/i18n/translations"
 import IconUsers from "./icons/IconUsers.astro"
 
 const t = useTranslations(Astro.locals.locale)
+const groups = await fetchStudentGroups()
 
 const LIMIT = 5
 ---

@@ -2,13 +2,10 @@
 import IconGlobe from "./icons/IconGlobe.astro"
 import IconMail from "./icons/IconMail.astro"
 
+import type { StudentGroup } from "@/utils/api"
+
 interface Props {
-  group: {
-    id: string
-    name: string
-    description: string
-    links: { website?: string; email?: string }
-  }
+  group: StudentGroup
 }
 
 const { group } = Astro.props
@@ -36,9 +33,9 @@ const { group } = Astro.props
 
   <div class="mt-auto flex gap-3 border-t border-base-300 pt-3">
     {
-      group.links.website && (
+      group.website && (
         <a
-          href={group.links.website}
+          href={group.website}
           target="_blank"
           rel="noopener noreferrer"
           class="flex items-center gap-1 text-xs text-base-content/60 hover:text-primary no-underline transition-colors">
@@ -48,9 +45,9 @@ const { group } = Astro.props
       )
     }
     {
-      group.links.email && (
+      group.email && (
         <a
-          href={`mailto:${group.links.email}`}
+          href={`mailto:${group.email}`}
           class="flex items-center gap-1 text-xs text-base-content/60 hover:text-primary no-underline transition-colors">
           <IconMail class="h-3.5 w-3.5" />
           E-Mail

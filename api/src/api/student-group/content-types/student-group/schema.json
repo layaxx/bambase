@@ -1,0 +1,39 @@
+{
+  "kind": "collectionType",
+  "collectionName": "student_groups",
+  "info": {
+    "singularName": "student-group",
+    "pluralName": "student-groups",
+    "displayName": "studentGroup"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "name"
+    },
+    "description": {
+      "type": "text",
+      "required": true
+    },
+    "website": {
+      "type": "string"
+    },
+    "instagram": {
+      "type": "string"
+    },
+    "facebook": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string"
+    }
+  }
+}
