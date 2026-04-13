@@ -18,9 +18,4 @@ export default {
     event.params.data.offline_after = add(new Date(), { days: 30 })
     event.params.data.online_status = "submitted"
   },
-
-  async beforeUpdate(event) {
-    // TODO: reset to submitted, unless it is a request from the content manager
-    // event.params.data.online_status = "submitted"
-  },
 }

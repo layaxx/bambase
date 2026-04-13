@@ -2,25 +2,6 @@
 
 ## Upcoming
 
-### P1 Map Locations should be API-based
-
-Currently, the ~100+ university map locations (buildings, dorms, libraries, cafés, etc.) are stored as a hardcoded JSON file at `frontend/src/data/infomapLocations.json`. Moving them to the Strapi API would allow admins to add, update, or remove locations without a code deployment.
-
-**Work involved:**
-
-- Create a `MapLocation` content type in Strapi with fields: `name`, `description`, `lat`, `lng`, `category` (enum or relation), `external_url`
-- Migrate existing JSON data into Strapi (write a seed/migration script)
-- Update `frontend/src/utils/api.ts` to fetch locations from the API instead of the JSON file
-- Update the map page to use the API data; ensure category filtering still works
-
-**Open questions:**
-
-- Should `category` be a free-text field, an enum, or a separate `MapCategory` collection? An enum is simpler but a relation allows categories to carry metadata (icon, color, description). -> should be an enum.
-- Should locations be publicly editable (user-submitted) or admin-only? If user-submitted, a review/approval workflow is needed. -> admin-only!
-- Is there a canonical data source (e.g., university GIS data) we could pull from, or is manual entry the only option? -> unclear
-
----
-
 ### P2 Student Groups should be API-based
 
 Currently, 90+ student organizations are stored as a hardcoded JSON file at `frontend/src/data/groups.json`. Moving them to the API would allow student groups to manage their own entries (e.g., update links, descriptions) without requiring a developer.
@@ -224,7 +205,75 @@ There is currently one test suite (`api/test/mensaplan.test.ts`) covering the me
 - Should Playwright tests be kept in a top-level `e2e/` directory or inside `frontend/`?
 - Are snapshot/visual regression tests worth adding for dark-mode work (P9)?
 
+### P11 Highlight Mensa Meal on Navigation from Frontpage
+
+When a user clicks a meal on the homepage `MensaCard`, they land on `/mensa#YYYY-MM-DD-{loc}` (e.g. `/mensa#2026-04-09-feki`). The browser scrolls to the correct `MensaLocationCard` (which already carries a matching `id`), but there is no visual feedback — the card looks identical to all others, leaving the user to re-orient themselves on a page with up to 21 cards.
+
+**Goal:** Briefly or persistently highlight the targeted location card so the user instantly knows where to look.
+
+**Preferred approach — CSS `:target` pseudo-class:**
+
+The `id` on `MensaLocationCard`'s root `<div>` already matches the hash, so a pure-CSS solution requires no JavaScript and no Astro changes beyond a single rule:
+
+```css
+/* MensaLocationCard.astro or global styles */
+div:target {
+  outline: 2px solid oklch(var(--p)); /* DaisyUI primary colour */
+  outline-offset: 2px;
+  border-color: oklch(var(--p) / 0.4);
+  background-color: oklch(var(--p) / 0.04);
+}
+```
+
+A brief CSS animation (fade-out glow) is also viable if a persistent ring feels too heavy:
+
+```css
+@keyframes highlight-fade {
+  from { box-shadow: 0 0 0 4px oklch(var(--p) / 0.35); }
+  to   { box-shadow: none; }
+}
+
+div:target {
+  animation: highlight-fade 1.8s ease-out forwards;
+}
+```
+
+**Work involved:**
+
+- Add `:target` styles to `MensaLocationCard.astro` (scoped `<style>` block) or to the global stylesheet
+- Verify the anchor IDs produced by `MensaDaySection` (`${id}-${loc.id}`, e.g. `2026-04-09-feki`) match the hash format written in `MensaCard.astro` (`/mensa#${relevantDayId}-${loc.id}`)
+- Test in browser by clicking a meal on the homepage and confirming the card is highlighted on arrival
+- Ensure the highlight does not interfere with dark mode (use DaisyUI CSS variables, not raw hex)
+
+**Open questions:**
+
+- Persistent ring vs. fade-out animation — which feels more natural? A fade-out avoids a permanent visual difference but the user may miss it if the page takes a moment to load.
+- Should the `MensaDaySection` heading also scroll into view (it currently does via the native `<section id={id}>` anchor), or should the scroll target be the location card itself?
+- Weekend sections (`MensaWeekendSection`) show no meal cards; no highlight is needed there, but the anchor should still scroll correctly — worth verifying.
+
 ## Done
+
+### P1 Map Locations should be API-based
+
+Currently, the ~100+ university map locations (buildings, dorms, libraries, cafés, etc.) are stored as a hardcoded JSON file at `frontend/src/data/infomapLocations.json`. Moving them to the Strapi API would allow admins to add, update, or remove locations without a code deployment.
+
+**Work involved:**
+
+- [x] Create a `Location` content type in Strapi with fields: `name`, `description`, `lat`, `lon`, `category` (enum), `external_url`, `slug`
+- [x] Migrate existing JSON data into Strapi — location data added to `api/src/seed.ts`, seeded automatically on first run
+- [x] Update `frontend/src/utils/api.ts` to fetch locations from the API (`fetchLocations`, `MapLocation` type)
+- [x] Update the map page to use the API data; category filtering works; category labels are i18n'd
+
+**Category enum values:** `university`, `mensa`, `library`, `sport`, `venues`, `other`
+(JSON categories `Wohnen` → `other`, `Cafés, Bars & Clubs` → `venues`)
+
+**Open questions:**
+
+- Should `category` be a free-text field, an enum, or a separate `MapCategory` collection? An enum is simpler but a relation allows categories to carry metadata (icon, color, description). -> should be an enum. ✓ done
+- Should locations be publicly editable (user-submitted) or admin-only? If user-submitted, a review/workflow is needed. -> admin-only! ✓
+- Is there a canonical data source (e.g., university GIS data) we could pull from, or is manual entry the only option? -> unclear
+
+---
 
 ### P0.3 Correct day for mensaplan card
 

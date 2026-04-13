@@ -1,11 +1,26 @@
 ---
 import PageLayout from "@/layouts/PageLayout.astro"
 import PageHeader from "@/components/PageHeader.astro"
-import locations from "@/data/infomapLocations.json"
+import { fetchLocations, type MapLocation } from "@/utils/api"
 import { useTranslations } from "@/i18n/translations"
 
 const t = useTranslations(Astro.locals.locale)
-const categories = [...new Set(locations.map((l) => l.category))]
+const locations = await fetchLocations()
+
+function formatAddress(addr: MapLocation["address"]): string | null {
+  if (!addr) return null
+  const line1 = [addr.street, addr.streetNumber].filter(Boolean).join(" ")
+  const line2 = [addr.zip, addr.city].filter(Boolean).join(" ")
+  return [line1, line2].filter(Boolean).join(", ") || null
+}
+const categories: MapLocation["category"][] = [
+  "university",
+  "library",
+  "mensa",
+  "sport",
+  "venues",
+  "other",
+]
 ---
 
 <PageLayout>
@@ -22,42 +37,51 @@ const categories = [...new Set(locations.map((l) => l.category))]
       stroke-linecap="round"
       stroke-linejoin="round"
       class="h-5 w-5"
-      aria-hidden="true">
-      <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" />
-      <circle cx="12" cy="10" r="3" />
+      aria-hidden="true"
+    >
+      <path
+        d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"
+      ></path>
+      <circle cx="12" cy="10" r="3"></circle>
     </svg>
   </PageHeader>
 
   <!-- Category filters -->
   <div class="mb-4 flex flex-wrap gap-2">
-    <button class="btn btn-primary btn-sm" data-filter="all">{t.map.allCategories}</button>
     {
       categories.map((cat) => (
         <button class="btn btn-outline btn-sm" data-filter={cat}>
-          {cat}
+          {t.map.categories[cat]}
         </button>
       ))
     }
   </div>
 
   <!-- Map + sidebar -->
-  <div class="flex gap-4" style="height: calc(100vh - 280px); min-height: 420px;">
+  <div
+    class="flex flex-col gap-4 md:flex-row"
+    style="height: calc(100vh - 280px); min-height: 420px;"
+  >
     <!-- Location list -->
     <div
-      class="hidden w-64 shrink-0 overflow-y-auto rounded-xl border border-base-300 bg-base-100 md:flex md:flex-col"
-      id="location-list">
+      class="order-2 flex h-48 shrink-0 flex-col overflow-y-auto rounded-xl border border-base-300 bg-base-100 md:order-1 md:h-auto md:w-64"
+      id="location-list"
+    >
       {
         locations.map((loc) => (
           <button
             class="cursor-pointer border-b border-base-200 px-3 py-2.5 text-left transition-colors last:border-b-0 hover:bg-base-200"
-            data-id={loc.id}
+            data-id={loc.documentId}
             data-category={loc.category}>
             <div class="text-sm font-medium leading-snug text-base-content">{loc.name}</div>
             {loc.description && (
               <div class="mt-0.5 text-xs text-base-content/50">{loc.description}</div>
             )}
+            {formatAddress(loc.address) && (
+              <div class="mt-0.5 text-xs text-base-content/40">{formatAddress(loc.address)}</div>
+            )}
             <div class="mt-1 text-xs font-medium" data-category-label={loc.category}>
-              {loc.category}
+              {t.map.categories[loc.category]}
             </div>
           </button>
         ))
@@ -65,38 +89,57 @@ const categories = [...new Set(locations.map((l) => l.category))]
     </div>
 
     <!-- Map container -->
-    <div id="map" class="min-w-0 flex-1 rounded-xl border border-base-300"></div>
+    <div
+      id="map"
+      class="order-1 min-h-64 min-w-0 flex-1 rounded-xl border border-base-300 md:order-2"
+    >
+    </div>
   </div>
 </PageLayout>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
+<style is:global>
+  :root {
+    --cat-university: #2563eb;
+    --cat-mensa: #16a34a;
+    --cat-library: #9333ea;
+    --cat-sport: #dc2626;
+    --cat-venues: #ca8a04;
+    --cat-other: #64748b;
+  }
+  [data-theme="dark"] {
+    --cat-university: #60a5fa;
+    --cat-mensa: #4ade80;
+    --cat-library: #c084fc;
+    --cat-sport: #f87171;
+    --cat-venues: #fbbf24;
+    --cat-other: #94a3b8;
+  }
+  [data-category-label="university"] {
+    color: var(--cat-university);
+  }
+  [data-category-label="mensa"] {
+    color: var(--cat-mensa);
+  }
+  [data-category-label="library"] {
+    color: var(--cat-library);
+  }
+  [data-category-label="sport"] {
+    color: var(--cat-sport);
+  }
+  [data-category-label="venues"] {
+    color: var(--cat-venues);
+  }
+  [data-category-label="other"] {
+    color: var(--cat-other);
+  }
+</style>
+
 <script define:vars={{ locations, categories }} is:inline>
-  const categoryColors = {
-    Universität: "#2563eb",
-    "Mensa & Cafeteria": "#16a34a",
-    Bibliothek: "#9333ea",
-    Wohnen: "#ea580c",
-    Sport: "#dc2626",
-    "Cafés, Bars & Clubs": "#ca8a04",
-    Sonstiges: "#64748b",
+  function getCategoryColor(cat) {
+    return getComputedStyle(document.documentElement).getPropertyValue(`--cat-${cat}`).trim()
   }
-
-  const labelColors = {
-    Universität: "color:#2563eb",
-    "Mensa & Cafeteria": "color:#16a34a",
-    Bibliothek: "color:#9333ea",
-    Wohnen: "color:#ea580c",
-    Sport: "color:#dc2626",
-    "Cafés, Bars & Clubs": "color:#ca8a04",
-    Sonstiges: "color:#64748b",
-  }
-
-  // Apply colors to category labels in the sidebar
-  document.querySelectorAll("[data-category-label]").forEach((el) => {
-    const style = labelColors[el.dataset.categoryLabel]
-    if (style) el.style.cssText = style
-  })
 
   const leafletScript = document.createElement("script")
   leafletScript.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
@@ -125,25 +168,37 @@ const categories = [...new Set(locations.map((l) => l.category))]
     const markerMap = {}
 
     locations.forEach((loc) => {
-      const color = categoryColors[loc.category] || "#64748b"
+      if (loc.lat == null || loc.lon == null) return
+
+      const color = getCategoryColor(loc.category) || "#64748b"
+      const categoryLabel =
+        document.querySelector(`[data-category-label="${loc.category}"]`)?.textContent ??
+        loc.category
+      const addr = loc.address
+      const addrLine = addr
+        ? [
+            [addr.street, addr.streetNumber].filter(Boolean).join(" "),
+            [addr.zip, addr.city].filter(Boolean).join(" "),
+          ]
+            .filter(Boolean)
+            .join(", ")
+        : null
       const popup = `
         <strong style="font-size:13px">${loc.name}</strong>
         ${loc.description ? `<br><span style="color:#666;font-size:12px">${loc.description}</span>` : ""}
-        <br><span style="font-size:11px;${labelColors[loc.category] || ""}">${loc.category}</span>
+        ${addrLine ? `<br><span style="color:#888;font-size:11px">${addrLine}</span>` : ""}
+        ${loc.external_url ? `<br><a href="${loc.external_url}" target="_blank" rel="noopener noreferrer" style="font-size:11px">Website →</a>` : ""}
+        <br><span style="font-size:11px;color:${color}">${categoryLabel}</span>
       `
-      const marker = L.marker(loc.position, { icon: makeIcon(color) })
+      const marker = L.marker([loc.lat, loc.lon], { icon: makeIcon(color) })
         .addTo(map)
         .bindPopup(popup)
 
-      markerMap[loc.id] = { marker, category: loc.category }
+      markerMap[loc.documentId] = { marker, category: loc.category }
     })
 
     // Filter logic
-    let activeFilter = "all"
-
     function applyFilter(filter) {
-      activeFilter = filter
-
       document.querySelectorAll("[data-filter]").forEach((btn) => {
         const active = btn.dataset.filter === filter
         btn.classList.toggle("btn-primary", active)
@@ -151,20 +206,22 @@ const categories = [...new Set(locations.map((l) => l.category))]
       })
 
       Object.entries(markerMap).forEach(([id, { marker, category }]) => {
-        const visible = filter === "all" || category === filter
-        if (visible) map.addLayer(marker)
+        if (category === filter) map.addLayer(marker)
         else map.removeLayer(marker)
       })
 
       document.querySelectorAll("[data-id]").forEach((item) => {
-        const visible = filter === "all" || item.dataset.category === filter
-        item.style.display = visible ? "" : "none"
+        item.style.display = item.dataset.category === filter ? "" : "none"
       })
     }
 
     document.querySelectorAll("[data-filter]").forEach((btn) => {
       btn.addEventListener("click", () => applyFilter(btn.dataset.filter))
     })
+
+    // Apply filter from URL query param (e.g. /map?filter=university)
+    const urlFilter = new URLSearchParams(location.search).get("filter")
+    applyFilter(urlFilter || "university")
 
     // Click list item → fly to marker
     document.querySelectorAll("[data-id]").forEach((item) => {

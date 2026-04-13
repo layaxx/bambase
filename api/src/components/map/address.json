@@ -1,0 +1,22 @@
+{
+  "collectionName": "components_map_addresses",
+  "info": {
+    "displayName": "address"
+  },
+  "options": {},
+  "attributes": {
+    "street": {
+      "type": "string"
+    },
+    "streetNumber": {
+      "type": "string"
+    },
+    "city": {
+      "type": "string"
+    },
+    "zip": {
+      "type": "integer"
+    }
+  },
+  "config": {}
+}

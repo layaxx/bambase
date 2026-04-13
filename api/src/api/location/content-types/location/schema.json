@@ -1,0 +1,48 @@
+{
+  "kind": "collectionType",
+  "collectionName": "locations",
+  "info": {
+    "singularName": "location",
+    "pluralName": "locations",
+    "displayName": "Location"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "description": {
+      "type": "string"
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "name",
+      "required": false
+    },
+    "lat": {
+      "type": "decimal",
+      "required": true
+    },
+    "lon": {
+      "type": "decimal",
+      "required": true
+    },
+    "category": {
+      "type": "enumeration",
+      "required": true,
+      "enum": ["university", "mensa", "library", "sport", "venues", "other"]
+    },
+    "external_url": {
+      "type": "string"
+    },
+    "address": {
+      "type": "component",
+      "component": "map.address",
+      "repeatable": false
+    }
+  }
+}

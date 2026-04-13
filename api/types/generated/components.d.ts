@@ -12,6 +12,19 @@ export interface JobsContact extends Struct.ComponentSchema {
   }
 }
 
+export interface MapAddress extends Struct.ComponentSchema {
+  collectionName: "components_map_addresses"
+  info: {
+    displayName: "address"
+  }
+  attributes: {
+    city: Schema.Attribute.String
+    street: Schema.Attribute.String
+    streetNumber: Schema.Attribute.String
+    zip: Schema.Attribute.Integer
+  }
+}
+
 export interface MensaAllergens extends Struct.ComponentSchema {
   collectionName: "components_mensa_allergens"
   info: {
@@ -27,6 +40,7 @@ declare module "@strapi/strapi" {
   export module Public {
     export interface ComponentSchemas {
       "jobs.contact": JobsContact
+      "map.address": MapAddress
       "mensa.allergens": MensaAllergens
     }
   }

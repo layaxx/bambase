@@ -1,5 +1,53 @@
 ---
-import GenericCard from "./GenericCard.astro"
+import { useTranslations } from "@/i18n/translations"
+import IconMapPin from "./icons/IconMapPin.astro"
+import IconArrowRight from "./icons/IconArrowRight.astro"
+
+const t = useTranslations(Astro.locals.locale)
+
+const categories = [
+  { key: "university", color: "#2563eb" },
+  { key: "venues", color: "#ca8a04" },
+  { key: "other", color: "#64748b" },
+] as const
 ---
 
-<GenericCard title="Infomap" color="gray" backgroundImage="/map.png" href="/infomap" />
+<section class="mb-12" id="map">
+  <div class="mb-6 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
+        <IconMapPin class="h-5 w-5 text-blue-700" />
+      </div>
+      <div>
+        <a href="/map" class="text-xl font-semibold hover:text-primary no-underline">
+          {t.map.cardTitle}
+        </a>
+        <p class="text-sm text-base-content/60">{t.map.cardSubtitle}</p>
+      </div>
+    </div>
+    <a href="/map" class="btn btn-ghost btn-sm flex gap-1">
+      {t.map.showMap}
+      <IconArrowRight class="h-4 w-4" />
+    </a>
+  </div>
+
+  <div class="grid gap-3 sm:grid-cols-3">
+    {
+      categories.map(({ key, color }) => (
+        <a
+          href={`/map?filter=${key}`}
+          class="group flex items-center gap-3 rounded-xl border border-base-300 bg-base-100 p-4 transition-all hover:shadow-md no-underline">
+          <div
+            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
+            style={`background-color: ${color}22; color: ${color}`}>
+            <IconMapPin class="h-4 w-4" />
+          </div>
+          <span class="text-sm font-medium text-base-content group-hover:text-primary">
+            {t.map.categories[key]}
+          </span>
+          <IconArrowRight class="ml-auto h-4 w-4 shrink-0 text-base-content/30 group-hover:text-primary" />
+        </a>
+      ))
+    }
+  </div>
+</section>

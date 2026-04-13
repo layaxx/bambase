@@ -460,6 +460,39 @@ export interface ApiJobOfferJobOffer extends Struct.CollectionTypeSchema {
   }
 }
 
+export interface ApiLocationLocation extends Struct.CollectionTypeSchema {
+  collectionName: "locations"
+  info: {
+    displayName: "Location"
+    pluralName: "locations"
+    singularName: "location"
+  }
+  options: {
+    draftAndPublish: false
+  }
+  attributes: {
+    address: Schema.Attribute.Component<"map.address", false>
+    category: Schema.Attribute.Enumeration<
+      ["university", "mensa", "library", "sport", "venues", "other"]
+    > &
+      Schema.Attribute.Required
+    createdAt: Schema.Attribute.DateTime
+    createdBy: Schema.Attribute.Relation<"oneToOne", "admin::user"> & Schema.Attribute.Private
+    description: Schema.Attribute.String
+    external_url: Schema.Attribute.String
+    lat: Schema.Attribute.Decimal & Schema.Attribute.Required
+    locale: Schema.Attribute.String & Schema.Attribute.Private
+    localizations: Schema.Attribute.Relation<"oneToMany", "api::location.location"> &
+      Schema.Attribute.Private
+    lon: Schema.Attribute.Decimal & Schema.Attribute.Required
+    name: Schema.Attribute.String & Schema.Attribute.Required
+    publishedAt: Schema.Attribute.DateTime
+    slug: Schema.Attribute.UID<"name">
+    updatedAt: Schema.Attribute.DateTime
+    updatedBy: Schema.Attribute.Relation<"oneToOne", "admin::user"> & Schema.Attribute.Private
+  }
+}
+
 export interface ApiMensaMealMensaMeal extends Struct.CollectionTypeSchema {
   collectionName: "mensa_meals"
   info: {
@@ -942,6 +975,7 @@ declare module "@strapi/strapi" {
       "admin::user": AdminUser
       "api::event.event": ApiEventEvent
       "api::job-offer.job-offer": ApiJobOfferJobOffer
+      "api::location.location": ApiLocationLocation
       "api::mensa-meal.mensa-meal": ApiMensaMealMensaMeal
       "plugin::content-releases.release": PluginContentReleasesRelease
       "plugin::content-releases.release-action": PluginContentReleasesReleaseAction
