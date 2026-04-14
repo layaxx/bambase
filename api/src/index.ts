@@ -1,4 +1,4 @@
-import { Core } from "@strapi/strapi"
+import { type Core } from "@strapi/strapi"
 import { seed } from "./seed"
 
 export default {

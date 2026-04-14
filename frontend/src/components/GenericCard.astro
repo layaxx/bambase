@@ -1,23 +1,23 @@
 ---
 interface Props {
-  title: string;
-  color: string;
-  href?: string;
-  backgroundImage?: string;
+  title: string
+  color: string
+  href?: string
+  backgroundImage?: string
 }
 
-const { title, color, href, backgroundImage } = Astro.props;
+const { title, color, href, backgroundImage } = Astro.props
 
 const colorMap: Record<string, string> = {
   blue: "text-blue-600",
   pink: "text-pink-600",
   green: "text-green-600",
   gray: "text-gray-500",
-};
-const colorClass = colorMap[color] ?? colorMap.gray;
+}
+const colorClass = colorMap[color] ?? colorMap.gray
 
-const firstWord = title.split(" ")[0].toUpperCase();
-const rest = title.split(" ").slice(1).join(" ");
+const firstWord = title.split(" ")[0].toUpperCase()
+const rest = title.split(" ").slice(1).join(" ")
 ---
 
 <div
@@ -35,12 +35,12 @@ const rest = title.split(" ").slice(1).join(" ");
     >
       {
         href ? (
-          <a href={href} class="hover:underline text-inherit">
-            <span class={colorClass}>{firstWord}</span> {rest}
+          <a class="hover:underline text-inherit" href={href}>
+            <span class:list={colorClass}>{firstWord}</span> {rest}
           </a>
         ) : (
           <>
-            <span class={colorClass}>{firstWord}</span> {rest}
+            <span class:list={colorClass}>{firstWord}</span> {rest}
           </>
         )
       }

@@ -1,6 +1,7 @@
 ---
 import PageLayout from "@/layouts/PageLayout.astro"
 import PageHeader from "@/components/PageHeader.astro"
+import IconMapPin from "@/components/icons/IconMapPin.astro"
 import { fetchLocations, type MapLocation } from "@/utils/api"
 import { useTranslations } from "@/i18n/translations"
 
@@ -24,26 +25,8 @@ const categories: MapLocation["category"][] = [
 ---
 
 <PageLayout>
-  <PageHeader label="Bamberg" title={t.map.pageTitle} subtitle={t.map.pageSubtitle}>
-    <svg
-      slot="icon"
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      class="h-5 w-5"
-      aria-hidden="true"
-    >
-      <path
-        d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"
-      ></path>
-      <circle cx="12" cy="10" r="3"></circle>
-    </svg>
+  <PageHeader label="Bamberg" subtitle={t.map.pageSubtitle} title={t.map.pageTitle}>
+    <IconMapPin class="h-5 w-5" slot="icon" />
   </PageHeader>
 
   <!-- Category filters -->
@@ -71,8 +54,9 @@ const categories: MapLocation["category"][] = [
         locations.map((loc) => (
           <button
             class="cursor-pointer border-b border-base-200 px-3 py-2.5 text-left transition-colors last:border-b-0 hover:bg-base-200"
+            data-category={loc.category}
             data-id={loc.documentId}
-            data-category={loc.category}>
+          >
             <div class="text-sm font-medium leading-snug text-base-content">{loc.name}</div>
             {loc.description && (
               <div class="mt-0.5 text-xs text-base-content/50">{loc.description}</div>
@@ -90,14 +74,14 @@ const categories: MapLocation["category"][] = [
 
     <!-- Map container -->
     <div
-      id="map"
       class="order-1 min-h-64 min-w-0 flex-1 rounded-xl border border-base-300 md:order-2"
+      id="map"
     >
     </div>
   </div>
 </PageLayout>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet" />
 
 <style is:global>
   :root {
@@ -136,7 +120,7 @@ const categories: MapLocation["category"][] = [
   }
 </style>
 
-<script define:vars={{ locations, categories }} is:inline>
+<script define:vars={{ locations }} is:inline>
   function getCategoryColor(cat) {
     return getComputedStyle(document.documentElement).getPropertyValue(`--cat-${cat}`).trim()
   }
@@ -205,7 +189,7 @@ const categories: MapLocation["category"][] = [
         btn.classList.toggle("btn-outline", !active)
       })
 
-      Object.entries(markerMap).forEach(([id, { marker, category }]) => {
+      Object.entries(markerMap).forEach(([_id, { marker, category }]) => {
         if (category === filter) map.addLayer(marker)
         else map.removeLayer(marker)
       })

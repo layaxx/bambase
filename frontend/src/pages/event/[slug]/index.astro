@@ -48,7 +48,7 @@ function formatTime(iso: string) {
         <h1 class="mb-4 text-3xl font-bold">{t.events.notFound.headline}</h1>
         <p class="text-base-content/60">{t.events.notFound.description}</p>
         <div class="mt-6">
-          <a href="/events" class="btn btn-primary">
+          <a class="btn btn-primary" href="/events">
             {t.events.backToEvents}
           </a>
         </div>
@@ -56,24 +56,25 @@ function formatTime(iso: string) {
     ) : (
       <>
         <div class="mb-6 flex items-center justify-between gap-4">
-          <a href="/events" class="btn btn-ghost btn-sm gap-1 pl-0">
+          <a class="btn btn-ghost btn-sm gap-1 pl-0" href="/events">
             <IconArrowLeft class="h-4 w-4" />
             {t.events.backToEvents}
           </a>
           {isOwner && (
             <div class="flex items-center gap-2">
-              <a href="/account/events" class="btn btn-ghost btn-sm">
+              <a class="btn btn-ghost btn-sm" href="/account/events">
                 {t.auth.myEvents}
               </a>
-              <a href={`/event/${event.slug}/edit`} class="btn btn-outline btn-sm">
+              <a class="btn btn-outline btn-sm" href={`/event/${event.slug}/edit`}>
                 {t.events.editEvent}
               </a>
               <form
-                method="POST"
                 action={actions.events.delete}
-                onsubmit={`return confirm('${t.events.deleteConfirm}')`}>
-                <input type="hidden" name="documentId" value={event.documentId} />
-                <button type="submit" class="btn btn-outline btn-error btn-sm">
+                method="POST"
+                onsubmit={`return confirm('${t.events.deleteConfirm}')`}
+              >
+                <input name="documentId" type="hidden" value={event.documentId} />
+                <button class="btn btn-outline btn-error btn-sm" type="submit">
                   {t.events.deleteEvent}
                 </button>
               </form>
@@ -123,10 +124,11 @@ function formatTime(iso: string) {
 
             {event.external_url && (
               <a
+                class="btn btn-primary w-full"
                 href={event.external_url}
-                target="_blank"
                 rel="noopener noreferrer"
-                class="btn btn-primary w-full">
+                target="_blank"
+              >
                 {t.events.moreInfo}
                 <IconExternalLink class="h-4 w-4" />
               </a>

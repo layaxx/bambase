@@ -2,6 +2,8 @@
 import PageLayout from "@/layouts/PageLayout.astro"
 import PageHeader from "@/components/PageHeader.astro"
 import IconBriefcase from "@/components/icons/IconBriefcase.astro"
+import IconStore from "@/components/icons/IconStore.astro"
+import IconMapPin from "@/components/icons/IconMapPin.astro"
 import { fetchJobOffers } from "@/utils/api"
 import { useTranslations } from "@/i18n/translations"
 
@@ -12,13 +14,17 @@ const isLoggedIn = !!Astro.cookies.get("auth_token")?.value
 ---
 
 <PageLayout>
-  <PageHeader label="Bamberg" title={t.jobs.pageTitle} subtitle={t.jobs.pageSubtitle}>
-    <IconBriefcase slot="icon" class="h-5 w-5" />
-    <div slot="action" class="flex items-center gap-2">
-      {isLoggedIn && (
-        <a href="/account/jobs" class="btn btn-outline btn-sm">{t.auth.myJobOffers}</a>
-      )}
-      <a href="/job/new" class="btn btn-primary btn-sm">{t.jobs.postJob}</a>
+  <PageHeader label="Bamberg" subtitle={t.jobs.pageSubtitle} title={t.jobs.pageTitle}>
+    <IconBriefcase class="h-5 w-5" slot="icon" />
+    <div class="flex items-center gap-2" slot="action">
+      {
+        isLoggedIn && (
+          <a class="btn btn-outline btn-sm" href="/account/jobs">
+            {t.auth.myJobOffers}
+          </a>
+        )
+      }
+      <a class="btn btn-primary btn-sm" href="/job/new">{t.jobs.postJob}</a>
     </div>
   </PageHeader>
 
@@ -29,50 +35,20 @@ const isLoggedIn = !!Astro.cookies.get("auth_token")?.value
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {jobs.map((job) => (
           <a
+            class="group flex flex-col rounded-xl border border-base-300 bg-base-100 p-4 transition-all hover:shadow-md no-underline"
             href={`/job/${job.uuid}`}
-            class="group flex flex-col rounded-xl border border-base-300 bg-base-100 p-4 transition-all hover:shadow-md no-underline">
+          >
             <h2 class="mb-1 font-semibold leading-tight text-base-content group-hover:text-primary">
               {job.title}
             </h2>
             <div class="mb-2 flex items-center gap-1.5 text-sm text-base-content/60">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="h-3.5 w-3.5 shrink-0"
-                aria-hidden="true">
-                <path d="M10 12h4" />
-                <path d="M10 8h4" />
-                <path d="M14 21v-3a2 2 0 0 0-4 0v3" />
-                <path d="M6 10H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2" />
-                <path d="M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16" />
-              </svg>
+              <IconStore class="h-3.5 w-3.5 shrink-0" />
               <span class="truncate">{job.company}</span>
             </div>
             <p class="mb-3 line-clamp-2 text-sm text-base-content/60">{job.description}</p>
             <div class="mt-auto flex items-center justify-between gap-2 text-sm text-base-content/60">
               <div class="flex items-center gap-1.5">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  class="h-3.5 w-3.5 shrink-0"
-                  aria-hidden="true">
-                  <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" />
-                  <circle cx="12" cy="10" r="3" />
-                </svg>
+                <IconMapPin class="h-3.5 w-3.5 shrink-0" />
                 <span class="truncate">{job.location}</span>
               </div>
               <span class="shrink-0">{t.jobs.workingHours(job.working_hours)}</span>

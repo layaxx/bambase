@@ -19,13 +19,13 @@ const categories = [
         <IconMapPin class="h-5 w-5 text-blue-700" />
       </div>
       <div>
-        <a href="/map" class="text-xl font-semibold hover:text-primary no-underline">
+        <a class="text-xl font-semibold hover:text-primary no-underline" href="/map">
           {t.map.cardTitle}
         </a>
         <p class="text-sm text-base-content/60">{t.map.cardSubtitle}</p>
       </div>
     </div>
-    <a href="/map" class="btn btn-ghost btn-sm flex gap-1">
+    <a class="btn btn-ghost btn-sm flex gap-1" href="/map">
       {t.map.showMap}
       <IconArrowRight class="h-4 w-4" />
     </a>
@@ -35,11 +35,13 @@ const categories = [
     {
       categories.map(({ key, color }) => (
         <a
+          class="group flex items-center gap-3 rounded-xl border border-base-300 bg-base-100 p-4 transition-all hover:shadow-md no-underline"
           href={`/map?filter=${key}`}
-          class="group flex items-center gap-3 rounded-xl border border-base-300 bg-base-100 p-4 transition-all hover:shadow-md no-underline">
+        >
           <div
             class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
-            style={`background-color: ${color}22; color: ${color}`}>
+            style={`background-color: ${color}22; color: ${color}`}
+          >
             <IconMapPin class="h-4 w-4" />
           </div>
           <span class="text-sm font-medium text-base-content group-hover:text-primary">

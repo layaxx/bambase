@@ -1,0 +1,10 @@
+{
+  "makefile.configureOnOpen": false,
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "astro", 
+    "typescript",
+    "typescriptreact",
+  ],
+}

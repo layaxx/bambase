@@ -21,12 +21,16 @@ if (error) {
     <div class="card bg-base-100 border border-base-300">
       <div class="card-body gap-4">
         <div class="flex flex-col gap-1">
-          <span class="text-xs text-base-content/50 uppercase tracking-wide">{t.auth.emailFieldLabel}</span>
+          <span class="text-xs text-base-content/50 uppercase tracking-wide"
+            >{t.auth.emailFieldLabel}</span
+          >
           <span class="font-medium">{user.email}</span>
         </div>
         <div class="divider my-0"></div>
         <div class="flex flex-col gap-1">
-          <span class="text-xs text-base-content/50 uppercase tracking-wide">{t.auth.memberSince}</span>
+          <span class="text-xs text-base-content/50 uppercase tracking-wide"
+            >{t.auth.memberSince}</span
+          >
           <span class="font-medium">
             {
               new Date(user.createdAt).toLocaleDateString(t.auth.dateLocale, {
@@ -41,12 +45,12 @@ if (error) {
     </div>
 
     <div class="mt-6 flex flex-wrap gap-3">
-      <a href="/account/jobs" class="btn btn-outline btn-sm">{t.auth.myJobOffers}</a>
-      <a href="/account/events" class="btn btn-outline btn-sm">{t.auth.myEvents}</a>
+      <a class="btn btn-outline btn-sm" href="/account/jobs">{t.auth.myJobOffers}</a>
+      <a class="btn btn-outline btn-sm" href="/account/events">{t.auth.myEvents}</a>
     </div>
 
     <div class="mt-4">
-      <a href="/logout" class="btn btn-outline btn-error btn-sm">{t.auth.logout}</a>
+      <a class="btn btn-outline btn-error btn-sm" href="/logout">{t.auth.logout}</a>
     </div>
   </main>
 </AppLayout>

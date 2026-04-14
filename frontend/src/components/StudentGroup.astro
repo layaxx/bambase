@@ -12,22 +12,22 @@ const { group } = Astro.props
 ---
 
 <div
-  data-student-group
   class="group flex flex-col rounded-xl border border-base-300 bg-base-100 p-4 transition-all hover:shadow-md h-full"
+  data-student-group
 >
   <h3 class="mb-2 font-semibold leading-tight text-base-content group-hover:text-primary">
-    <a href="#" class="no-underline">{group.name}</a>
+    <a class="no-underline" href="#">{group.name}</a>
   </h3>
 
   <p
-    data-description
     class="mb-2 text-sm text-base-content/60"
+    data-description
     style="overflow:hidden; display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical;"
   >
     {group.description}
   </p>
 
-  <button data-expand-btn class="btn btn-ghost btn-xs px-0 mb-3 self-start text-primary">
+  <button class="btn btn-ghost btn-xs px-0 mb-3 self-start text-primary" data-expand-btn>
     Mehr anzeigen
   </button>
 
@@ -35,10 +35,11 @@ const { group } = Astro.props
     {
       group.website && (
         <a
+          class="flex items-center gap-1 text-xs text-base-content/60 hover:text-primary no-underline transition-colors"
           href={group.website}
-          target="_blank"
           rel="noopener noreferrer"
-          class="flex items-center gap-1 text-xs text-base-content/60 hover:text-primary no-underline transition-colors">
+          target="_blank"
+        >
           <IconGlobe class="h-3.5 w-3.5" />
           Website
         </a>
@@ -47,8 +48,9 @@ const { group } = Astro.props
     {
       group.email && (
         <a
+          class="flex items-center gap-1 text-xs text-base-content/60 hover:text-primary no-underline transition-colors"
           href={`mailto:${group.email}`}
-          class="flex items-center gap-1 text-xs text-base-content/60 hover:text-primary no-underline transition-colors">
+        >
           <IconMail class="h-3.5 w-3.5" />
           E-Mail
         </a>

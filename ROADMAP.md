@@ -2,7 +2,6 @@
 
 ## Upcoming
 
-
 ### P3 Reporting functionality for Events, Jobs
 
 There is currently no way for users to flag inappropriate, outdated, or spammy events or job postings. A reporting mechanism would allow the community to surface content that needs moderator attention.

@@ -1,4 +1,4 @@
-import z from "zod"
+import type z from "zod"
 import type { Modules } from "@strapi/types"
 import { SWCanteenMenuResponseSchema } from "./schema"
 

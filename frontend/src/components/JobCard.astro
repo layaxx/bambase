@@ -11,20 +11,20 @@ const t = useTranslations(Astro.locals.locale)
 const jobs = await fetchJobOffers(3)
 ---
 
-<section id="jobs" class="mb-12">
+<section class="mb-12" id="jobs">
   <div class="mb-6 flex items-center justify-between">
     <div class="flex items-center gap-3">
       <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100">
         <IconBriefcase class="h-5 w-5 text-green-700" />
       </div>
       <div>
-        <a href="/jobs" class="text-xl font-semibold hover:text-primary no-underline"
+        <a class="text-xl font-semibold hover:text-primary no-underline" href="/jobs"
           >{t.jobs.title}</a
         >
         <p class="text-sm text-base-content/60">{t.jobs.subtitle}</p>
       </div>
     </div>
-    <a href="/jobs" class="btn btn-ghost btn-sm flex gap-1">
+    <a class="btn btn-ghost btn-sm flex gap-1" href="/jobs">
       {t.jobs.showAll}
       <IconArrowRight class="h-4 w-4" />
     </a>
@@ -41,8 +41,9 @@ const jobs = await fetchJobOffers(3)
     {
       jobs.map((job) => (
         <a
+          class="group flex flex-col rounded-xl border border-base-300 bg-base-100 p-4 transition-all hover:shadow-md no-underline"
           href={`/job/${job.uuid}`}
-          class="group flex flex-col rounded-xl border border-base-300 bg-base-100 p-4 transition-all hover:shadow-md no-underline">
+        >
           <h3 class="mb-1 font-semibold leading-tight text-base-content group-hover:text-primary">
             {job.title}
           </h3>

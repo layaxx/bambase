@@ -11,7 +11,7 @@ interface Props {
 const { id, label, meals } = Astro.props
 ---
 
-<div id={id} class="rounded-xl border border-base-300 bg-base-100 p-4">
+<div class="rounded-xl border border-base-300 bg-base-100 p-4" id={id}>
   <div class="mb-4 flex items-center justify-between">
     <h3 class="font-semibold text-base-content">{label}</h3>
     <span class="text-xs text-base-content/60">

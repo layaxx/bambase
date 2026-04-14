@@ -26,13 +26,13 @@ const LIMIT = 5
   </div>
 
   <!-- Original grid: article (col-span-2) + sidebar (col-start-3, row-span-2) + groups (auto-placed) -->
-  <div id="main-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="main-grid">
     <article class="md:col-span-2">
       <p class="text-sm text-base-content/60 mb-4">
         {t.groups.description}
       </p>
       <div>
-        <select id="sort-select" class="select select-bordered select-sm w-auto">
+        <select class="select select-bordered select-sm w-auto" id="sort-select">
           <option value="random">{t.groups.sortRandom}</option>
           <option value="name">{t.groups.sortByName}</option>
         </select>
@@ -51,7 +51,7 @@ const LIMIT = 5
   </div>
 
   <div class="mt-4">
-    <button id="show-all-btn" class="btn btn-soft btn-sm">{t.groups.showAll}</button>
+    <button class="btn btn-soft btn-sm" id="show-all-btn">{t.groups.showAll}</button>
   </div>
 </section>
 

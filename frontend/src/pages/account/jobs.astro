@@ -1,6 +1,7 @@
 ---
 import { actions } from "astro:actions"
 import PageLayout from "@/layouts/PageLayout.astro"
+import IconArrowLeft from "@/components/icons/IconArrowLeft.astro"
 import { fetchMyJobOffers } from "@/utils/api"
 import { useTranslations } from "@/i18n/translations"
 
@@ -36,19 +37,8 @@ const statusClass: Record<string, string> = {
 
 <PageLayout>
   <div class="mb-6 flex items-center gap-3">
-    <a href="/account" class="btn btn-ghost btn-sm btn-square" aria-label="Back">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        aria-hidden="true"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg
-      >
+    <a aria-label="Back" class="btn btn-ghost btn-sm btn-square" href="/account">
+      <IconArrowLeft class="h-4 w-4" />
     </a>
     <h1 class="text-2xl font-extrabold">{t.auth.myJobOffers}</h1>
   </div>
@@ -62,14 +52,19 @@ const statusClass: Record<string, string> = {
       <div class="flex flex-col gap-3">
         {jobs.map((job) => (
           <a
+            class="group flex flex-col gap-1 rounded-xl border border-base-300 bg-base-100 p-4 no-underline transition-all hover:shadow-md"
             href={`/job/${job.uuid}`}
-            class="group flex flex-col gap-1 rounded-xl border border-base-300 bg-base-100 p-4 no-underline transition-all hover:shadow-md">
+          >
             <div class="flex items-start justify-between gap-2">
               <h2 class="font-semibold leading-snug text-base-content group-hover:text-primary">
                 {job.title}
               </h2>
               <span
-                class={`badge badge-sm shrink-0 ${statusClass[job.online_status] ?? "badge-neutral"}`}>
+                class:list={[
+                  `badge badge-sm shrink-0`,
+                  `${statusClass[job.online_status] ?? "badge-neutral"}`,
+                ]}
+              >
                 {statusLabel[job.online_status] ?? job.online_status}
               </span>
             </div>
@@ -84,6 +79,6 @@ const statusClass: Record<string, string> = {
   }
 
   <div class="mt-6">
-    <a href="/job/new" class="btn btn-primary btn-sm">{t.jobs.postJob}</a>
+    <a class="btn btn-primary btn-sm" href="/job/new">{t.jobs.postJob}</a>
   </div>
 </PageLayout>

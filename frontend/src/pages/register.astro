@@ -19,7 +19,7 @@ const error = result?.error?.message
       <h1 class="text-2xl font-extrabold mb-2">{t.auth.registerTitle}</h1>
       <p class="text-base-content/60 text-sm mb-6">
         {t.auth.alreadyRegistered}
-        <a href="/login" class="link link-primary">{t.auth.loginLink}</a>
+        <a class="link link-primary" href="/login">{t.auth.loginLink}</a>
       </p>
 
       {
@@ -30,44 +30,44 @@ const error = result?.error?.message
         )
       }
 
-      <form method="POST" action={actions.auth.register} class="flex flex-col">
+      <form action={actions.auth.register} class="flex flex-col" method="POST">
         <fieldset class="fieldset">
           <legend class="fieldset-legend">{t.auth.emailLabel}</legend>
           <input
-            type="email"
-            name="email"
+            autocomplete="email"
             class="input w-full"
+            name="email"
             placeholder={t.auth.emailPlaceholder}
             required
-            autocomplete="email"
+            type="email"
           />
         </fieldset>
 
         <fieldset class="fieldset">
           <legend class="fieldset-legend">{t.auth.passwordLabel}</legend>
           <input
-            type="password"
-            name="password"
+            autocomplete="new-password"
             class="input w-full"
+            minlength="10"
+            name="password"
             placeholder={t.auth.passwordMinHint}
             required
-            minlength="10"
-            autocomplete="new-password"
+            type="password"
           />
         </fieldset>
 
         <fieldset class="fieldset">
           <legend class="fieldset-legend">{t.auth.confirmPasswordLabel}</legend>
           <input
-            type="password"
-            name="passwordConfirm"
             class="input w-full"
+            name="passwordConfirm"
             placeholder={t.auth.confirmPasswordPlaceholder}
             required
+            type="password"
           />
         </fieldset>
 
-        <button type="submit" class="btn btn-primary mt-6">{t.auth.createAccountBtn}</button>
+        <button class="btn btn-primary mt-6" type="submit">{t.auth.createAccountBtn}</button>
       </form>
     </div>
   </main>

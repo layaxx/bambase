@@ -1,4 +1,4 @@
-import { Core } from "@strapi/strapi"
+import { type Core } from "@strapi/strapi"
 import { add } from "date-fns"
 import bcrypt from "bcryptjs"
 
@@ -28,7 +28,7 @@ export async function seed(strapi: Core.Strapi) {
   const settings = await pluginStore.get({ key: "advanced" })
 
   const role = await strapi.db.query("plugin::users-permissions.role").findOne({
-    where: { type: (settings as any)?.default_role ?? "authenticated" },
+    where: { type: (settings as { default_role?: string }).default_role ?? "authenticated" },
   })
 
   let user = await strapi.db.query("plugin::users-permissions.user").findOne({
@@ -58,7 +58,7 @@ export async function seed(strapi: Core.Strapi) {
           offline_after: add(new Date(), { days: 30 }),
           owner: user.id,
           contact,
-        } as any,
+        },
       })
 
       await strapi.documents("api::job-offer.job-offer").update({
@@ -78,7 +78,7 @@ export async function seed(strapi: Core.Strapi) {
         data: {
           ...event,
           owner: user.id,
-        } as any,
+        },
       })
 
       strapi.log.info(`Seed: created event "${createdEvent.title}"`)
@@ -88,7 +88,7 @@ export async function seed(strapi: Core.Strapi) {
   if (existingLocations === 0) {
     for (const location of LOCATIONS) {
       const created = await strapi.documents("api::location.location").create({
-        data: location as any,
+        data: location,
       })
       strapi.log.info(`Seed: created location "${created.name}"`)
     }
@@ -97,7 +97,7 @@ export async function seed(strapi: Core.Strapi) {
   if (existingStudentGroups === 0) {
     for (const group of STUDENT_GROUPS) {
       const created = await strapi.documents("api::student-group.student-group").create({
-        data: group as any,
+        data: group,
       })
       strapi.log.info(`Seed: created student group "${created.name}"`)
     }

@@ -17,7 +17,7 @@ const navItems = [
 ]
 
 const pathname = Astro.url.pathname
-const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/")
+const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`)
 
 const authUserRaw = Astro.cookies.get("auth_user")?.value
 const authUser = authUserRaw ? JSON.parse(authUserRaw) : null
@@ -34,8 +34,8 @@ const switchUrl = `/set-locale?lang=${switchLang}&redirect=${encodeURIComponent(
     <div class="flex h-16 items-center justify-between gap-4">
       <!-- Logo -->
       <a
-        href="/"
         class="text-2xl font-extrabold no-underline leading-none shrink-0"
+        href="/"
         style="font-family: 'Archivo Variable', sans-serif;"
       >
         BamBase.de
@@ -46,13 +46,17 @@ const switchUrl = `/set-locale?lang=${switchLang}&redirect=${encodeURIComponent(
         {
           navItems.map((item) => (
             <a
-              href={item.href}
               class:list={[
                 "px-3 py-1.5 rounded-md text-sm no-underline transition-colors",
-                isActive(item.href)
-                  ? "font-semibold bg-base-200 text-base-content"
-                  : "text-base-content/60 hover:text-base-content hover:bg-base-200",
-              ]}>
+                {
+                  "font-semibold bg-base-200 text-base-content": isActive(item.href),
+                  "text-base-content/60 hover:text-base-content hover:bg-base-200": !isActive(
+                    item.href
+                  ),
+                },
+              ]}
+              href={item.href}
+            >
               {item.name}
             </a>
           ))
@@ -62,68 +66,72 @@ const switchUrl = `/set-locale?lang=${switchLang}&redirect=${encodeURIComponent(
       <!-- Right controls -->
       <div class="flex items-center gap-2 shrink-0">
         <a
-          href="https://github.com/layaxx/bambase"
-          target="_blank"
-          rel="noopener noreferrer"
           aria-label="GitHub"
           class="btn btn-ghost btn-sm btn-square hidden md:flex"
+          href="https://github.com/layaxx/bambase"
+          rel="noopener noreferrer"
+          target="_blank"
         >
           <IconGitHub class="size-5" />
         </a>
         {
           authUser ? (
             <div class="hidden md:flex">
-              <a href="/account" class="btn btn-sm btn-ghost">
+              <a class="btn btn-sm btn-ghost" href="/account">
                 {t.nav.myAccount}
               </a>
             </div>
           ) : (
-            <a href="/login" class="btn btn-sm hidden md:flex">
+            <a class="btn btn-sm hidden md:flex" href="/login">
               {t.nav.login}
             </a>
           )
         }
         <a
-          href={switchUrl}
-          class="btn btn-ghost btn-sm font-medium text-xs"
           aria-label={switchAccessibleLabel}
+          class="btn btn-ghost btn-sm font-medium text-xs"
+          href={switchUrl}
         >
           {switchLabel}
         </a>
         <button
-          id="theme-toggle"
           aria-label={t.nav.toggleDark}
           class="btn btn-ghost btn-sm btn-square"
+          id="theme-toggle"
         >
-          <IconSun id="icon-sun" class="hidden size-5" />
-          <IconMoon id="icon-moon" class="size-5" />
+          <IconSun class="hidden size-5" id="icon-sun" />
+          <IconMoon class="size-5" id="icon-moon" />
         </button>
         <button
-          id="menu-toggle"
-          aria-label={t.nav.openMenu}
           aria-expanded="false"
+          aria-label={t.nav.openMenu}
           class="btn btn-square btn-sm md:hidden"
+          id="menu-toggle"
         >
-          <IconMenu id="icon-menu" class="size-5" />
-          <IconX id="icon-x" class="hidden size-5" />
+          <IconMenu class="size-5" id="icon-menu" />
+          <IconX class="hidden size-5" id="icon-x" />
         </button>
       </div>
     </div>
   </div>
 
   <!-- Mobile nav drawer -->
-  <div id="mobile-nav" hidden class="border-t border-base-300 px-4 py-3">
+  <div class="border-t border-base-300 px-4 py-3" hidden id="mobile-nav">
     <nav class="flex flex-col gap-1 mb-3">
       {
         navItems.map((item) => (
           <a
-            href={item.href}
             class:list={[
               "px-3 py-2 rounded-md text-sm no-underline transition-colors",
-              isActive(item.href)
-                ? "font-semibold bg-base-200 text-base-content"
-                : "text-base-content/60 hover:text-base-content hover:bg-base-200",
-            ]}>
+              {
+                "font-semibold bg-base-200 text-base-content": isActive(item.href),
+                "text-base-content/60 hover:text-base-content hover:bg-base-200": !isActive(
+                  item.href
+                ),
+              },
+            ]}
+            href={item.href}
+          >
             {item.name}
           </a>
         ))
@@ -132,20 +140,20 @@ const switchUrl = `/set-locale?lang=${switchLang}&redirect=${encodeURIComponent(
     <div class="mt-3 flex flex-col gap-1">
       {
         authUser ? (
-          <a href="/account" class="btn btn-sm btn-ghost w-full">
+          <a class="btn btn-sm btn-ghost w-full" href="/account">
             {t.nav.myAccount}
           </a>
         ) : (
-          <a href="/login" class="btn btn-sm btn-primary w-full">
+          <a class="btn btn-sm btn-primary w-full" href="/login">
             {t.nav.login}
           </a>
         )
       }
       <a
-        href="https://github.com/layaxx/bambase"
-        target="_blank"
-        rel="noopener noreferrer"
         class="btn btn-sm btn-ghost w-full"
+        href="https://github.com/layaxx/bambase"
+        rel="noopener noreferrer"
+        target="_blank"
       >
         GitHub
       </a>

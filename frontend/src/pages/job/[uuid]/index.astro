@@ -50,7 +50,7 @@ if (archiveResult?.data !== undefined && !archiveResult.error) {
         <h1 class="text-3xl font-bold mb-4">{t.jobs.notFound.headline}</h1>
         <p class="text-base-content/60">{t.jobs.notFound.description}</p>
         <div class="mt-6">
-          <a href="/jobs" class="btn btn-primary">
+          <a class="btn btn-primary" href="/jobs">
             {t.jobs.backToJobs}
           </a>
         </div>
@@ -58,35 +58,37 @@ if (archiveResult?.data !== undefined && !archiveResult.error) {
     ) : (
       <>
         <div class="mb-6 flex items-center justify-between gap-4">
-          <a href="/jobs" class="btn btn-ghost btn-sm gap-1 pl-0">
+          <a class="btn btn-ghost btn-sm gap-1 pl-0" href="/jobs">
             <IconArrowLeft class="h-4 w-4" />
             {t.jobs.backToJobs}
           </a>
           {isOwner && (
             <div class="flex items-center gap-2">
-              <a href="/account/jobs" class="btn btn-ghost btn-sm">
+              <a class="btn btn-ghost btn-sm" href="/account/jobs">
                 {t.auth.myJobOffers}
               </a>
-              <a href={`/job/${job.uuid}/edit`} class="btn btn-outline btn-sm">
+              <a class="btn btn-outline btn-sm" href={`/job/${job.uuid}/edit`}>
                 {t.jobs.editJob}
               </a>
               {job.online_status === "published" || job.online_status === "submitted" ? (
                 <form
-                  method="POST"
                   action={actions.jobs.archive}
-                  onsubmit={`return confirm('${t.jobs.archiveConfirm}')`}>
-                  <input type="hidden" name="documentId" value={job.documentId} />
-                  <button type="submit" class="btn btn-outline btn-sm">
+                  method="POST"
+                  onsubmit={`return confirm('${t.jobs.archiveConfirm}')`}
+                >
+                  <input name="documentId" type="hidden" value={job.documentId} />
+                  <button class="btn btn-outline btn-sm" type="submit">
                     {t.jobs.archiveJob}
                   </button>
                 </form>
               ) : null}
               <form
-                method="POST"
                 action={actions.jobs.delete}
-                onsubmit={`return confirm('${t.jobs.deleteConfirm}')`}>
-                <input type="hidden" name="documentId" value={job.documentId} />
-                <button type="submit" class="btn btn-outline btn-error btn-sm">
+                method="POST"
+                onsubmit={`return confirm('${t.jobs.deleteConfirm}')`}
+              >
+                <input name="documentId" type="hidden" value={job.documentId} />
+                <button class="btn btn-outline btn-error btn-sm" type="submit">
                   {t.jobs.deleteJob}
                 </button>
               </form>
@@ -96,8 +98,13 @@ if (archiveResult?.data !== undefined && !archiveResult.error) {
 
         {job.online_status !== "published" && (
           <div
+            class:list={[
+              `alert`,
+              `${statusAlertClass[job.online_status] ?? "alert-neutral"}`,
+              `mb-6`,
+            ]}
             role="alert"
-            class={`alert ${statusAlertClass[job.online_status] ?? "alert-neutral"} mb-6`}>
+          >
             <span>
               {statusLabel[job.online_status] ?? job.online_status} – {t.jobs.notPublishedHint}
             </span>
@@ -142,7 +149,7 @@ if (archiveResult?.data !== undefined && !archiveResult.error) {
                   <div>
                     <dt class="text-base-content/60">E-Mail</dt>
                     <dd>
-                      <a href={`mailto:${job.contact.mail}`} class="link link-primary break-all">
+                      <a class="link link-primary break-all" href={`mailto:${job.contact.mail}`}>
                         {job.contact.mail}
                       </a>
                     </dd>
@@ -152,7 +159,7 @@ if (archiveResult?.data !== undefined && !archiveResult.error) {
                   <div>
                     <dt class="text-base-content/60">Tel.</dt>
                     <dd>
-                      <a href={`tel:${job.contact.phone}`} class="link link-primary">
+                      <a class="link link-primary" href={`tel:${job.contact.phone}`}>
                         {job.contact.phone}
                       </a>
                     </dd>
@@ -163,10 +170,11 @@ if (archiveResult?.data !== undefined && !archiveResult.error) {
 
             {job.external_url && (
               <a
+                class="btn btn-primary w-full"
                 href={job.external_url}
-                target="_blank"
                 rel="noopener noreferrer"
-                class="btn btn-primary w-full">
+                target="_blank"
+              >
                 {t.jobs.applyExternal}
                 <IconExternalLink class="h-4 w-4" />
               </a>

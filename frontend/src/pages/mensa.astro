@@ -68,19 +68,19 @@ while (i < mealsByDay.length) {
 <PageLayout>
   <PageHeader
     label={t.mensa.pageLocations}
-    title={t.mensa.pageTitle}
     subtitle={t.mensa.pageSubtitle}
+    title={t.mensa.pageTitle}
   >
-    <IconUtensils slot="icon" class="h-5 w-5" />
+    <IconUtensils class="h-5 w-5" slot="icon" />
   </PageHeader>
 
   <div class="flex flex-col gap-10">
     {
       grouped.map((entry) =>
         entry.type === "weekend" ? (
-          <MensaWeekendSection id={entry.id} heading={entry.heading} />
+          <MensaWeekendSection heading={entry.heading} id={entry.id} />
         ) : (
-          <MensaDaySection id={entry.id} heading={entry.heading} meals={entry.meals} />
+          <MensaDaySection heading={entry.heading} id={entry.id} meals={entry.meals} />
         )
       )
     }

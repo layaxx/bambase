@@ -19,7 +19,7 @@ const error = result?.error?.message
       <h1 class="text-2xl font-extrabold mb-2">{t.auth.loginTitle}</h1>
       <p class="text-base-content/60 text-sm mb-6">
         {t.auth.noAccount}
-        <a href="/register" class="link link-primary">{t.auth.registerLink}</a>
+        <a class="link link-primary" href="/register">{t.auth.registerLink}</a>
       </p>
 
       {
@@ -30,37 +30,37 @@ const error = result?.error?.message
         )
       }
 
-      <form method="POST" action={actions.auth.login} class="flex flex-col">
+      <form action={actions.auth.login} class="flex flex-col" method="POST">
         <input
-          type="hidden"
           name="redirect"
+          type="hidden"
           value={Astro.url.searchParams.get("redirect") || "/"}
         />
         <fieldset class="fieldset">
           <legend class="fieldset-legend">{t.auth.emailLabel}</legend>
           <input
-            type="email"
-            name="identifier"
+            autocomplete="email"
             class="input w-full"
+            name="identifier"
             placeholder={t.auth.emailPlaceholder}
             required
-            autocomplete="email"
+            type="email"
           />
         </fieldset>
 
         <fieldset class="fieldset">
           <legend class="fieldset-legend">{t.auth.passwordLabel}</legend>
           <input
-            type="password"
-            name="password"
+            autocomplete="current-password"
             class="input w-full"
+            name="password"
             placeholder={t.auth.passwordPlaceholder}
             required
-            autocomplete="current-password"
+            type="password"
           />
         </fieldset>
 
-        <button type="submit" class="btn btn-primary mt-6">{t.auth.loginBtn}</button>
+        <button class="btn btn-primary mt-6" type="submit">{t.auth.loginBtn}</button>
       </form>
     </div>
   </main>

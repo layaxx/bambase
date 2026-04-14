@@ -27,7 +27,7 @@ function formatTime(iso: string) {
         <IconCalendar class="h-5 w-5 text-blue-700" />
       </div>
       <div>
-        <a href="/events" class="text-xl font-semibold hover:text-primary no-underline"
+        <a class="text-xl font-semibold hover:text-primary no-underline" href="/events"
           >{t.events.title}</a
         >
         <p class="text-sm text-base-content/60">
@@ -35,7 +35,7 @@ function formatTime(iso: string) {
         </p>
       </div>
     </div>
-    <a href="/events" class="btn btn-ghost btn-sm flex gap-1">
+    <a class="btn btn-ghost btn-sm flex gap-1" href="/events">
       {t.events.showAll}
       <IconArrowRight class="h-4 w-4" />
     </a>
@@ -50,8 +50,9 @@ function formatTime(iso: string) {
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {todayEvents.map((event) => (
           <a
+            class="group flex flex-col rounded-xl border border-base-300 bg-base-100 p-4 transition-all hover:shadow-md no-underline"
             href={`/event/${event.slug}`}
-            class="group flex flex-col rounded-xl border border-base-300 bg-base-100 p-4 transition-all hover:shadow-md no-underline">
+          >
             <div class="mb-3 flex items-center gap-1 text-sm text-base-content/60">
               <IconClock class="h-3.5 w-3.5 shrink-0" />
               <span>

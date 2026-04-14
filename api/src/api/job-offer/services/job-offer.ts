@@ -25,7 +25,7 @@ export default factories.createCoreService("api::job-offer.job-offer", {
 
     // log the number of successfully unpublished offers
     const unpublishedCount = result.filter((r) => r.status === "fulfilled").length
-    console.log(`Unpublished ${unpublishedCount} expired job offers.`)
+    strapi.log.info(`Unpublished ${unpublishedCount} expired job offers.`)
 
     // log any errors
     result

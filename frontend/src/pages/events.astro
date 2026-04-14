@@ -29,13 +29,17 @@ function formatTime(iso: string) {
 ---
 
 <PageLayout>
-  <PageHeader label="Bamberg" title={t.events.pageTitle} subtitle={t.events.pageSubtitle}>
-    <IconCalendar slot="icon" class="h-5 w-5" />
-    <div slot="action" class="flex items-center gap-2">
-      {isLoggedIn && (
-        <a href="/account/events" class="btn btn-outline btn-sm">{t.auth.myEvents}</a>
-      )}
-      <a href="/event/new" class="btn btn-primary btn-sm">{t.events.submitEvent}</a>
+  <PageHeader label="Bamberg" subtitle={t.events.pageSubtitle} title={t.events.pageTitle}>
+    <IconCalendar class="h-5 w-5" slot="icon" />
+    <div class="flex items-center gap-2" slot="action">
+      {
+        isLoggedIn && (
+          <a class="btn btn-outline btn-sm" href="/account/events">
+            {t.auth.myEvents}
+          </a>
+        )
+      }
+      <a class="btn btn-primary btn-sm" href="/event/new">{t.events.submitEvent}</a>
     </div>
   </PageHeader>
 
@@ -50,15 +54,14 @@ function formatTime(iso: string) {
             <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {dayEvents.map((event) => (
                 <a
+                  class="group flex flex-col rounded-xl border border-base-300 bg-base-100 p-4 no-underline transition-all hover:shadow-md"
                   href={`/event/${event.slug}`}
-                  class="group flex flex-col rounded-xl border border-base-300 bg-base-100 p-4 no-underline transition-all hover:shadow-md">
+                >
                   <div class="mb-3 flex items-center gap-1 text-sm text-base-content/60">
                     <IconClock class="h-3.5 w-3.5 shrink-0" />
                     <span>
                       {formatTime(event.start)}
-                      {t.events.clock ? ` ${t.events.clock}` : ""}
-                      {" "}–{" "}
-                      {formatTime(event.end)}
+                      {t.events.clock ? ` ${t.events.clock}` : ""} – {formatTime(event.end)}
                       {t.events.clock ? ` ${t.events.clock}` : ""}
                     </span>
                   </div>
@@ -70,10 +73,11 @@ function formatTime(iso: string) {
                     <span class="truncate">{event.organizer}</span>
                     {event.external_url && (
                       <a
+                        class="shrink-0 text-primary hover:underline"
                         href={event.external_url}
-                        target="_blank"
                         rel="noopener noreferrer"
-                        class="shrink-0 text-primary hover:underline">
+                        target="_blank"
+                      >
                         ↗
                       </a>
                     )}

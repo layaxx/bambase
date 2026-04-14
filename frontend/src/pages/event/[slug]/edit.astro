@@ -35,7 +35,7 @@ function toLocalInput(iso: string) {
 
 <PageLayout>
   <div class="mb-6">
-    <a href={`/event/${slug}`} class="btn btn-ghost btn-sm gap-1 pl-0">
+    <a class="btn btn-ghost btn-sm gap-1 pl-0" href={`/event/${slug}`}>
       <IconArrowLeft class="h-4 w-4" />
       {t.events.backToEvents}
     </a>
@@ -47,14 +47,14 @@ function toLocalInput(iso: string) {
 
   {
     generalError && (
-      <div role="alert" class="alert alert-error mb-6">
+      <div class="alert alert-error mb-6" role="alert">
         <span>{generalError}</span>
       </div>
     )
   }
 
-  <form method="POST" action={actions.events.update} class="flex max-w-2xl flex-col gap-6">
-    <input type="hidden" name="documentId" value={event.documentId} />
+  <form action={actions.events.update} class="flex max-w-2xl flex-col gap-6" method="POST">
+    <input name="documentId" type="hidden" value={event.documentId} />
 
     <div class="flex flex-col gap-4">
       <div class="form-control">
@@ -62,12 +62,12 @@ function toLocalInput(iso: string) {
           <span class="label-text font-medium">{t.events.fieldTitle}</span>
         </label>
         <input
+          class:list={["input input-bordered w-full", inputErrors.title && "input-error"]}
           id="title"
           name="title"
-          type="text"
           required
+          type="text"
           value={event.title}
-          class:list={["input input-bordered w-full", inputErrors.title && "input-error"]}
         />
         {inputErrors.title && <p class="mt-1 text-sm text-error">{inputErrors.title[0]}</p>}
       </div>
@@ -77,12 +77,12 @@ function toLocalInput(iso: string) {
           <span class="label-text font-medium">{t.events.fieldOrganizer}</span>
         </label>
         <input
+          class:list={["input input-bordered w-full", inputErrors.organizer && "input-error"]}
           id="organizer"
           name="organizer"
-          type="text"
           required
+          type="text"
           value={event.organizer}
-          class:list={["input input-bordered w-full", inputErrors.organizer && "input-error"]}
         />
         {inputErrors.organizer && <p class="mt-1 text-sm text-error">{inputErrors.organizer[0]}</p>}
       </div>
@@ -93,12 +93,12 @@ function toLocalInput(iso: string) {
             <span class="label-text font-medium">{t.events.fieldStart}</span>
           </label>
           <input
+            class:list={["input input-bordered w-full", inputErrors.start && "input-error"]}
             id="start"
             name="start"
-            type="datetime-local"
             required
+            type="datetime-local"
             value={toLocalInput(event.start)}
-            class:list={["input input-bordered w-full", inputErrors.start && "input-error"]}
           />
           {inputErrors.start && <p class="mt-1 text-sm text-error">{inputErrors.start[0]}</p>}
         </div>
@@ -108,12 +108,12 @@ function toLocalInput(iso: string) {
             <span class="label-text font-medium">{t.events.fieldEnd}</span>
           </label>
           <input
+            class:list={["input input-bordered w-full", inputErrors.end && "input-error"]}
             id="end"
             name="end"
-            type="datetime-local"
             required
+            type="datetime-local"
             value={toLocalInput(event.end)}
-            class:list={["input input-bordered w-full", inputErrors.end && "input-error"]}
           />
           {inputErrors.end && <p class="mt-1 text-sm text-error">{inputErrors.end[0]}</p>}
         </div>
@@ -124,14 +124,15 @@ function toLocalInput(iso: string) {
           <span class="label-text font-medium">{t.events.fieldDescription}</span>
         </label>
         <textarea
-          id="description"
-          name="description"
-          rows="6"
-          required
           class:list={[
             "textarea textarea-bordered w-full resize-y",
             inputErrors.description && "textarea-error",
-          ]}>{event.description}</textarea>
+          ]}
+          id="description"
+          name="description"
+          required
+          rows="6">{event.description}</textarea
+        >
         {
           inputErrors.description && (
             <p class="mt-1 text-sm text-error">{inputErrors.description[0]}</p>
@@ -147,11 +148,11 @@ function toLocalInput(iso: string) {
           </span>
         </label>
         <input
+          class:list={["input input-bordered w-full", inputErrors.external_url && "input-error"]}
           id="external_url"
           name="external_url"
           type="url"
           value={event.external_url ?? ""}
-          class:list={["input input-bordered w-full", inputErrors.external_url && "input-error"]}
         />
         {
           inputErrors.external_url && (
@@ -162,7 +163,7 @@ function toLocalInput(iso: string) {
     </div>
 
     <div>
-      <button type="submit" class="btn btn-primary">
+      <button class="btn btn-primary" type="submit">
         {t.events.updateEvent}
       </button>
     </div>

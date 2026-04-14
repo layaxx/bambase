@@ -23,7 +23,7 @@ const generalError = result?.error && !isInputError(result.error) ? result.error
 
 <PageLayout>
   <div class="mb-6">
-    <a href="/events" class="btn btn-ghost btn-sm gap-1 pl-0">
+    <a class="btn btn-ghost btn-sm gap-1 pl-0" href="/events">
       <IconArrowLeft class="h-4 w-4" />
       {t.events.backToEvents}
     </a>
@@ -36,7 +36,7 @@ const generalError = result?.error && !isInputError(result.error) ? result.error
 
   {
     generalError && (
-      <div role="alert" class="alert alert-error mb-6">
+      <div class="alert alert-error mb-6" role="alert">
         <span>{generalError}</span>
       </div>
     )
@@ -82,18 +82,18 @@ const generalError = result?.error && !isInputError(result.error) ? result.error
     })
   </script>
 
-  <form method="POST" action={actions.events.create} class="flex max-w-2xl flex-col gap-6">
+  <form action={actions.events.create} class="flex max-w-2xl flex-col gap-6" method="POST">
     <div class="flex flex-col gap-4">
       <div class="form-control">
         <label class="label" for="title">
           <span class="label-text font-medium">{t.events.fieldTitle}</span>
         </label>
         <input
+          class:list={["input input-bordered w-full", inputErrors.title && "input-error"]}
           id="title"
           name="title"
-          type="text"
           required
-          class:list={["input input-bordered w-full", inputErrors.title && "input-error"]}
+          type="text"
         />
         {inputErrors.title && <p class="mt-1 text-sm text-error">{inputErrors.title[0]}</p>}
       </div>
@@ -103,11 +103,11 @@ const generalError = result?.error && !isInputError(result.error) ? result.error
           <span class="label-text font-medium">{t.events.fieldOrganizer}</span>
         </label>
         <input
+          class:list={["input input-bordered w-full", inputErrors.organizer && "input-error"]}
           id="organizer"
           name="organizer"
-          type="text"
           required
-          class:list={["input input-bordered w-full", inputErrors.organizer && "input-error"]}
+          type="text"
         />
         {inputErrors.organizer && <p class="mt-1 text-sm text-error">{inputErrors.organizer[0]}</p>}
       </div>
@@ -118,11 +118,11 @@ const generalError = result?.error && !isInputError(result.error) ? result.error
             <span class="label-text font-medium">{t.events.fieldStart}</span>
           </label>
           <input
+            class:list={["input input-bordered w-full", inputErrors.start && "input-error"]}
             id="start"
             name="start"
-            type="datetime-local"
             required
-            class:list={["input input-bordered w-full", inputErrors.start && "input-error"]}
+            type="datetime-local"
           />
           {inputErrors.start && <p class="mt-1 text-sm text-error">{inputErrors.start[0]}</p>}
         </div>
@@ -132,11 +132,11 @@ const generalError = result?.error && !isInputError(result.error) ? result.error
             <span class="label-text font-medium">{t.events.fieldEnd}</span>
           </label>
           <input
+            class:list={["input input-bordered w-full", inputErrors.end && "input-error"]}
             id="end"
             name="end"
-            type="datetime-local"
             required
-            class:list={["input input-bordered w-full", inputErrors.end && "input-error"]}
+            type="datetime-local"
           />
           {inputErrors.end && <p class="mt-1 text-sm text-error">{inputErrors.end[0]}</p>}
         </div>
@@ -147,14 +147,14 @@ const generalError = result?.error && !isInputError(result.error) ? result.error
           <span class="label-text font-medium">{t.events.fieldDescription}</span>
         </label>
         <textarea
-          id="description"
-          name="description"
-          rows="6"
-          required
           class:list={[
             "textarea textarea-bordered w-full resize-y",
             inputErrors.description && "textarea-error",
-          ]}></textarea>
+          ]}
+          id="description"
+          name="description"
+          required
+          rows="6"></textarea>
         {
           inputErrors.description && (
             <p class="mt-1 text-sm text-error">{inputErrors.description[0]}</p>
@@ -170,10 +170,10 @@ const generalError = result?.error && !isInputError(result.error) ? result.error
           </span>
         </label>
         <input
+          class:list={["input input-bordered w-full", inputErrors.external_url && "input-error"]}
           id="external_url"
           name="external_url"
           type="url"
-          class:list={["input input-bordered w-full", inputErrors.external_url && "input-error"]}
         />
         {
           inputErrors.external_url && (
@@ -184,7 +184,7 @@ const generalError = result?.error && !isInputError(result.error) ? result.error
     </div>
 
     <div>
-      <button type="submit" class="btn btn-primary">
+      <button class="btn btn-primary" type="submit">
         {t.events.submitEvent}
       </button>
     </div>

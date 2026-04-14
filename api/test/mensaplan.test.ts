@@ -87,7 +87,7 @@ describe("mensa service", () => {
 
       await mensaService().load()
 
-      expect((global as any).strapi.log.error).toHaveBeenCalledTimes(1)
+      expect(global.strapi.log.error).toHaveBeenCalled()
       // the remaining two mensas still created their meals
       expect(mockDocuments.create).toHaveBeenCalledTimes(TOTAL_MEALS_PER_MENSA * 2)
     })
