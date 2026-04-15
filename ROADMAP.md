@@ -2,27 +2,6 @@
 
 ## Upcoming
 
-### P3 Reporting functionality for Events, Jobs
-
-There is currently no way for users to flag inappropriate, outdated, or spammy events or job postings. A reporting mechanism would allow the community to surface content that needs moderator attention.
-
-**Work involved:**
-
-- Create a `Report` content type in Strapi with fields: `reason` (enum: spam/inappropriate/outdated/other), `details` (text), `reporter` (user relation, optional for anonymous), `target_type` (enum: event/job), `target_id`, `status` (enum: open/reviewed/dismissed)
-- Add a "Report" button/modal to the event detail page (`/event/[slug]`) and job detail page (`/job/[uuid]`)
-- Build a moderation view (likely in the Strapi admin panel or a dedicated admin page) where reports can be reviewed and acted upon
-- Notify the content owner when their post is reported (optional)
-
-**Open questions:**
-
-- Who are the moderators? Is there a dedicated admin role, or do site admins handle this manually via the Strapi panel?
-- Should reports be anonymous or require a logged-in user? Anonymous reports are lower friction but more prone to abuse. -> should be anonymous!
-- What actions can a moderator take (hide post, delete post, warn user, ban user)?
-- Should reported content be automatically hidden after N reports, or only after manual review?
-- Is there a notification system (email) for moderators when new reports come in?
-
----
-
 ### P4 Interdependencies (events <-> locations)
 
 Events currently have no structured connection to physical locations. Linking events to map locations would allow users to see where an event is taking place on the map, and conversely, see which events are happening at a given location.
@@ -230,6 +209,24 @@ div:target {
 - Weekend sections (`MensaWeekendSection`) show no meal cards; no highlight is needed there, but the anchor should still scroll correctly — worth verifying.
 
 ## Done
+
+### P3 Reporting functionality for Events, Jobs
+
+Anonymous reporting for events and job postings. Reports are reviewed by admins via the Strapi admin panel. Reported content shows a warning badge on the detail page.
+
+**Implemented:**
+
+- `Report` content type in Strapi: `reason` (enum: spam/inappropriate/outdated/other), `details` (text), `target_type` (enum: event/job), `target_id`, `status` (enum: open/reviewed/dismissed)
+- Public POST `/api/reports` route — no authentication required (anonymous)
+- Public GET `/api/reports/count` route — returns report count for a target, used for the warning badge
+- `ReportModal.astro` component with DaisyUI dialog, rendered server-side with i18n
+- Report button on job detail pages (`/job/[uuid]`) — visible to non-owners
+- Report button + event disclaimer on event detail pages (`/event/[slug]`) — visible to non-owners
+- Warning badge shown when a job or event has open/reviewed reports
+- Success alert shown after submitting a report
+- Moderation via the Strapi admin panel (review and update `status` field per report)
+
+---
 
 ### P2 Student Groups should be API-based
 

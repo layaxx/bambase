@@ -17,6 +17,7 @@ export type JobOffer = {
     phone?: string
   }
   owner?: { id: number }
+  reports?: { documentId: string }[]
 }
 
 export async function fetchJobOffers(limit = 100): Promise<JobOffer[]> {
@@ -42,7 +43,7 @@ export async function fetchJobOffer(
     headers["Authorization"] = `Bearer ${token}`
 
     const res = await fetch(
-      `${strapiUrl}/api/job-offers?filters[uuid][$eq]=${encodeURIComponent(slug)}&populate[0]=contact&populate[1]=owner`,
+      `${strapiUrl}/api/job-offers?filters[uuid][$eq]=${encodeURIComponent(slug)}&populate[contact]=true&populate[owner]=true&populate[reports][filters][review_status][$ne]=dismissed`,
       {
         headers,
       }

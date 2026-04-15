@@ -62,6 +62,12 @@
       "type": "media",
       "multiple": true,
       "allowedTypes": ["files"]
+    },
+    "reports": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::report.report",
+      "mappedBy": "job_offer"
     }
   }
 }

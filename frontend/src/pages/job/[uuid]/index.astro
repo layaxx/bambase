@@ -1,22 +1,35 @@
 ---
 import { actions } from "astro:actions"
 import PageLayout from "@/layouts/PageLayout.astro"
-import { fetchJobOffer } from "@/utils/api"
+import { fetchJobOffer, REPORT_WARNING_THRESHOLD } from "@/utils/api"
 import { useTranslations } from "@/i18n/translations"
 import IconArrowLeft from "@/components/icons/IconArrowLeft.astro"
 import IconStore from "@/components/icons/IconStore.astro"
 import IconMapPin from "@/components/icons/IconMapPin.astro"
 import IconClock from "@/components/icons/IconClock.astro"
 import IconExternalLink from "@/components/icons/IconExternalLink.astro"
+import ReportModal from "@/components/ReportModal.astro"
 
 const t = useTranslations(Astro.locals.locale)
 
 const { uuid } = Astro.params
 const token = Astro.cookies.get("auth_token")?.value
-const job = uuid ? await fetchJobOffer(uuid, token) : null
-
-const { data: me } = await Astro.callAction(actions.auth.getMe, {})
+const [job, { data: me }] = await Promise.all([
+  uuid ? fetchJobOffer(uuid, token) : Promise.resolve(null),
+  Astro.callAction(actions.auth.getMe, {}),
+])
 const isOwner = me && job?.owner?.id === me.id
+
+const hasReports = (job?.reports?.length ?? 0) >= REPORT_WARNING_THRESHOLD
+
+const reportResult = Astro.getActionResult(actions.reports.submit)
+if (reportResult) {
+  return Astro.redirect(
+    `${Astro.url.pathname}?reported=${reportResult.error ? "error" : "success"}`
+  )
+}
+
+const reported = Astro.url.searchParams.get("reported")
 
 const statusLabel: Record<string, string> = {
   submitted: t.auth.statusSubmitted,
@@ -111,6 +124,24 @@ if (archiveResult?.data !== undefined && !archiveResult.error) {
           </div>
         )}
 
+        {hasReports && (
+          <div class="alert alert-warning alert-outline mb-6" role="alert">
+            <span>{t.reports.warningHint}</span>
+          </div>
+        )}
+
+        {reported === "success" && (
+          <div class="alert alert-success mb-6" role="alert">
+            <span>{t.reports.successMessage}</span>
+          </div>
+        )}
+
+        {reported === "error" && (
+          <div class="alert alert-error mb-6" role="alert">
+            <span>{t.reports.errorMessage}</span>
+          </div>
+        )}
+
         <div class="grid gap-8 lg:grid-cols-3">
           <div class="lg:col-span-2">
             <div class="mb-2 flex items-center gap-2 text-base-content/60">
@@ -178,6 +209,12 @@ if (archiveResult?.data !== undefined && !archiveResult.error) {
                 {t.jobs.applyExternal}
                 <IconExternalLink class="h-4 w-4" />
               </a>
+            )}
+
+            {!isOwner && !reported && (
+              <div class="flex justify-end">
+                <ReportModal targetId={job.documentId} targetType="job" />
+              </div>
             )}
           </aside>
         </div>

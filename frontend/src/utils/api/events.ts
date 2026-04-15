@@ -10,6 +10,7 @@ export type Event = {
   organizer: string
   external_url?: string
   owner?: { id: number }
+  reports?: { documentId: string }[]
 }
 
 export async function fetchEvents(limit = 100): Promise<Event[]> {
@@ -29,7 +30,13 @@ export async function fetchEvent(slug: string): Promise<Event | null> {
   try {
     const result = await client.collection("events").find({
       filters: { slug: { $eq: slug } },
-      populate: ["owner"],
+      populate: {
+        owner: true,
+        reports: {
+          filters: { review_status: { $ne: "dismissed" } },
+          fields: [],
+        },
+      },
       pagination: { limit: 1 },
     })
     return ((result.data ?? [])[0] ?? null) as unknown as Event | null

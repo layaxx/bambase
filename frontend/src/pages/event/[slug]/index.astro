@@ -1,27 +1,38 @@
 ---
 import { actions } from "astro:actions"
 import PageLayout from "@/layouts/PageLayout.astro"
-import { fetchEvent } from "@/utils/api"
+import { fetchEvent, REPORT_WARNING_THRESHOLD } from "@/utils/api"
 import { useTranslations } from "@/i18n/translations"
 import IconArrowLeft from "@/components/icons/IconArrowLeft.astro"
 import IconClock from "@/components/icons/IconClock.astro"
 import IconExternalLink from "@/components/icons/IconExternalLink.astro"
+import ReportModal from "@/components/ReportModal.astro"
 
 const t = useTranslations(Astro.locals.locale)
 const dateLocale = t.mensa.dateLocale
 
 const { slug } = Astro.params
-const event = slug ? await fetchEvent(slug) : null
-
-// Check if logged-in user is the owner
-const { data: me } = await Astro.callAction(actions.auth.getMe, {})
+const [event, { data: me }] = await Promise.all([
+  slug ? fetchEvent(slug) : Promise.resolve(null),
+  Astro.callAction(actions.auth.getMe, {}),
+])
 const isOwner = me && event?.owner?.id === me.id
 
-// Handle delete result
 const deleteResult = Astro.getActionResult(actions.events.delete)
 if (deleteResult?.data !== undefined && !deleteResult.error) {
   return Astro.redirect("/account/events")
 }
+
+const hasReports = (event?.reports?.length ?? 0) >= REPORT_WARNING_THRESHOLD
+
+const reportResult = Astro.getActionResult(actions.reports.submit)
+if (reportResult) {
+  return Astro.redirect(
+    `${Astro.url.pathname}?reported=${reportResult.error ? "error" : "success"}`
+  )
+}
+
+const reported = Astro.url.searchParams.get("reported")
 
 function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString(dateLocale, {
@@ -82,6 +93,24 @@ function formatTime(iso: string) {
           )}
         </div>
 
+        {hasReports && (
+          <div class="alert alert-warning alert-outline mb-6" role="alert">
+            <span>{t.reports.warningHint}</span>
+          </div>
+        )}
+
+        {reported === "success" && (
+          <div class="alert alert-success mb-6" role="alert">
+            <span>{t.reports.successMessage}</span>
+          </div>
+        )}
+
+        {reported === "error" && (
+          <div class="alert alert-error mb-6" role="alert">
+            <span>{t.reports.errorMessage}</span>
+          </div>
+        )}
+
         <div class="grid gap-8 lg:grid-cols-3">
           <div class="lg:col-span-2">
             <div class="mb-2 text-sm font-medium text-base-content/60">{event.organizer}</div>
@@ -133,6 +162,15 @@ function formatTime(iso: string) {
                 <IconExternalLink class="h-4 w-4" />
               </a>
             )}
+
+            <div class="rounded-xl border border-base-300 bg-base-100 p-4 text-sm text-base-content/60">
+              <p>{t.reports.eventDisclaimer}</p>
+              {!isOwner && !reported && (
+                <div class="mt-2 flex justify-end">
+                  <ReportModal targetId={event.documentId} targetType="event" />
+                </div>
+              )}
+            </div>
           </aside>
         </div>
       </>

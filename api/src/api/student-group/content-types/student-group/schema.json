@@ -4,7 +4,7 @@
   "info": {
     "singularName": "student-group",
     "pluralName": "student-groups",
-    "displayName": "studentGroup"
+    "displayName": "Student Group"
   },
   "options": {
     "draftAndPublish": false

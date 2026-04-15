@@ -1,0 +1,40 @@
+{
+  "kind": "collectionType",
+  "collectionName": "reports",
+  "info": {
+    "singularName": "report",
+    "pluralName": "reports",
+    "displayName": "Report"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "reason": {
+      "type": "enumeration",
+      "required": true,
+      "enum": ["spam", "inappropriate", "outdated", "other"]
+    },
+    "details": {
+      "type": "text"
+    },
+    "review_status": {
+      "type": "enumeration",
+      "default": "open",
+      "enum": ["open", "dismissed"]
+    },
+    "event": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::event.event",
+      "inversedBy": "reports"
+    },
+    "job_offer": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::job-offer.job-offer",
+      "inversedBy": "reports"
+    }
+  }
+}

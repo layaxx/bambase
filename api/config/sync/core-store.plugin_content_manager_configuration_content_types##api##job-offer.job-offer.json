@@ -189,6 +189,21 @@
           "sortable": false
         }
       },
+      "reports": {
+        "edit": {
+          "label": "reports",
+          "description": "",
+          "placeholder": "",
+          "visible": true,
+          "editable": true,
+          "mainField": "documentId"
+        },
+        "list": {
+          "label": "reports",
+          "searchable": false,
+          "sortable": false
+        }
+      },
       "createdAt": {
         "edit": {
           "label": "createdAt",
@@ -257,7 +272,12 @@
       }
     },
     "layouts": {
-      "list": ["id", "uuid", "title", "description"],
+      "list": [
+        "id",
+        "uuid",
+        "title",
+        "description"
+      ],
       "edit": [
         [
           {
@@ -318,6 +338,10 @@
         [
           {
             "name": "file",
+            "size": 6
+          },
+          {
+            "name": "reports",
             "size": 6
           }
         ]

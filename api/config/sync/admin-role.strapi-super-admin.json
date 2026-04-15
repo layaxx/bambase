@@ -6,7 +6,7 @@
   "locale": null,
   "permissions": [
     {
-      "documentId": "y1dn3n84r4c269wagsbzmzd3",
+      "documentId": "kjymtu6oldeu0ny89akq3sos",
       "action": "plugin::content-manager.explorer.create",
       "actionParameters": {},
       "subject": "api::event.event",
@@ -20,7 +20,8 @@
           "organizer",
           "external_url",
           "owner",
-          "external_id"
+          "external_id",
+          "reports"
         ]
       },
       "conditions": [],
@@ -45,7 +46,7 @@
       "locale": null
     },
     {
-      "documentId": "i8oxy7zp24ymfylt48ur7stz",
+      "documentId": "xpta0ec1joeo2vt2xhomyak0",
       "action": "plugin::content-manager.explorer.read",
       "actionParameters": {},
       "subject": "api::event.event",
@@ -59,14 +60,15 @@
           "organizer",
           "external_url",
           "owner",
-          "external_id"
+          "external_id",
+          "reports"
         ]
       },
       "conditions": [],
       "locale": null
     },
     {
-      "documentId": "eyjvmreqecjqpgwcx52285b8",
+      "documentId": "nxnhap7jgae5d4upu4b54hfp",
       "action": "plugin::content-manager.explorer.update",
       "actionParameters": {},
       "subject": "api::event.event",
@@ -80,14 +82,15 @@
           "organizer",
           "external_url",
           "owner",
-          "external_id"
+          "external_id",
+          "reports"
         ]
       },
       "conditions": [],
       "locale": null
     },
     {
-      "documentId": "g7rulbya0yg321d37fuj6plv",
+      "documentId": "hlgmf145me7psfhkl0xwbelk",
       "action": "plugin::content-manager.explorer.create",
       "actionParameters": {},
       "subject": "api::job-offer.job-offer",
@@ -106,7 +109,8 @@
           "contact.phone",
           "owner",
           "external_url",
-          "file"
+          "file",
+          "reports"
         ]
       },
       "conditions": [],
@@ -131,7 +135,7 @@
       "locale": null
     },
     {
-      "documentId": "omnq4px1v8fytnlxn4svhvc8",
+      "documentId": "i4j6b3gqbdft51430rqszub0",
       "action": "plugin::content-manager.explorer.read",
       "actionParameters": {},
       "subject": "api::job-offer.job-offer",
@@ -150,14 +154,15 @@
           "contact.phone",
           "owner",
           "external_url",
-          "file"
+          "file",
+          "reports"
         ]
       },
       "conditions": [],
       "locale": null
     },
     {
-      "documentId": "az3t2xwx1hkshbcln4luc5wj",
+      "documentId": "s259ftna87c7qabhdv0wmxjd",
       "action": "plugin::content-manager.explorer.update",
       "actionParameters": {},
       "subject": "api::job-offer.job-offer",
@@ -176,7 +181,8 @@
           "contact.phone",
           "owner",
           "external_url",
-          "file"
+          "file",
+          "reports"
         ]
       },
       "conditions": [],
@@ -345,6 +351,75 @@
           "date",
           "location",
           "allergens.name"
+        ]
+      },
+      "conditions": [],
+      "locale": null
+    },
+    {
+      "documentId": "qtlx0lbeideuigigxnnceof0",
+      "action": "plugin::content-manager.explorer.create",
+      "actionParameters": {},
+      "subject": "api::report.report",
+      "properties": {
+        "fields": [
+          "reason",
+          "details",
+          "review_status",
+          "event",
+          "job_offer"
+        ]
+      },
+      "conditions": [],
+      "locale": null
+    },
+    {
+      "documentId": "t82g9060y97vsgdzz2sazzxc",
+      "action": "plugin::content-manager.explorer.delete",
+      "actionParameters": {},
+      "subject": "api::report.report",
+      "properties": {},
+      "conditions": [],
+      "locale": null
+    },
+    {
+      "documentId": "oz4i9oj0kw85vf90d0x2yyzr",
+      "action": "plugin::content-manager.explorer.publish",
+      "actionParameters": {},
+      "subject": "api::report.report",
+      "properties": {},
+      "conditions": [],
+      "locale": null
+    },
+    {
+      "documentId": "z2l6c2w8lfo6wq89oou0eig4",
+      "action": "plugin::content-manager.explorer.read",
+      "actionParameters": {},
+      "subject": "api::report.report",
+      "properties": {
+        "fields": [
+          "reason",
+          "details",
+          "review_status",
+          "event",
+          "job_offer"
+        ]
+      },
+      "conditions": [],
+      "locale": null
+    },
+    {
+      "documentId": "u9rbha1puxkirvnwj6azbrys",
+      "action": "plugin::content-manager.explorer.update",
+      "actionParameters": {},
+      "subject": "api::report.report",
+      "properties": {
+        "fields": [
+          "reason",
+          "details",
+          "review_status",
+          "event",
+          "job_offer"
         ]
       },
       "conditions": [],

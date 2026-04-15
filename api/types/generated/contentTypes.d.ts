@@ -408,6 +408,7 @@ export interface ApiEventEvent extends Struct.CollectionTypeSchema {
     organizer: Schema.Attribute.String & Schema.Attribute.Required
     owner: Schema.Attribute.Relation<"oneToOne", "plugin::users-permissions.user">
     publishedAt: Schema.Attribute.DateTime
+    reports: Schema.Attribute.Relation<"oneToMany", "api::report.report">
     slug: Schema.Attribute.UID<"title">
     start: Schema.Attribute.DateTime & Schema.Attribute.Required
     title: Schema.Attribute.String & Schema.Attribute.Required
@@ -445,6 +446,7 @@ export interface ApiJobOfferJobOffer extends Struct.CollectionTypeSchema {
       Schema.Attribute.DefaultTo<"submitted">
     owner: Schema.Attribute.Relation<"oneToOne", "plugin::users-permissions.user">
     publishedAt: Schema.Attribute.DateTime
+    reports: Schema.Attribute.Relation<"oneToMany", "api::report.report">
     title: Schema.Attribute.String & Schema.Attribute.Required
     updatedAt: Schema.Attribute.DateTime
     updatedBy: Schema.Attribute.Relation<"oneToOne", "admin::user"> & Schema.Attribute.Private
@@ -544,10 +546,39 @@ export interface ApiMensaMealMensaMeal extends Struct.CollectionTypeSchema {
   }
 }
 
+export interface ApiReportReport extends Struct.CollectionTypeSchema {
+  collectionName: "reports"
+  info: {
+    displayName: "Report"
+    pluralName: "reports"
+    singularName: "report"
+  }
+  options: {
+    draftAndPublish: false
+  }
+  attributes: {
+    createdAt: Schema.Attribute.DateTime
+    createdBy: Schema.Attribute.Relation<"oneToOne", "admin::user"> & Schema.Attribute.Private
+    details: Schema.Attribute.Text
+    event: Schema.Attribute.Relation<"manyToOne", "api::event.event">
+    job_offer: Schema.Attribute.Relation<"manyToOne", "api::job-offer.job-offer">
+    locale: Schema.Attribute.String & Schema.Attribute.Private
+    localizations: Schema.Attribute.Relation<"oneToMany", "api::report.report"> &
+      Schema.Attribute.Private
+    publishedAt: Schema.Attribute.DateTime
+    reason: Schema.Attribute.Enumeration<["spam", "inappropriate", "outdated", "other"]> &
+      Schema.Attribute.Required
+    review_status: Schema.Attribute.Enumeration<["open", "dismissed"]> &
+      Schema.Attribute.DefaultTo<"open">
+    updatedAt: Schema.Attribute.DateTime
+    updatedBy: Schema.Attribute.Relation<"oneToOne", "admin::user"> & Schema.Attribute.Private
+  }
+}
+
 export interface ApiStudentGroupStudentGroup extends Struct.CollectionTypeSchema {
   collectionName: "student_groups"
   info: {
-    displayName: "studentGroup"
+    displayName: "Student Group"
     pluralName: "student-groups"
     singularName: "student-group"
   }
@@ -992,7 +1023,7 @@ export interface PluginUsersPermissionsUser extends Struct.CollectionTypeSchema 
 }
 
 declare module "@strapi/strapi" {
-  export namespace Public {
+  export module Public {
     export interface ContentTypeSchemas {
       "admin::api-token": AdminApiToken
       "admin::api-token-permission": AdminApiTokenPermission
@@ -1006,6 +1037,7 @@ declare module "@strapi/strapi" {
       "api::job-offer.job-offer": ApiJobOfferJobOffer
       "api::location.location": ApiLocationLocation
       "api::mensa-meal.mensa-meal": ApiMensaMealMensaMeal
+      "api::report.report": ApiReportReport
       "api::student-group.student-group": ApiStudentGroupStudentGroup
       "plugin::content-releases.release": PluginContentReleasesRelease
       "plugin::content-releases.release-action": PluginContentReleasesReleaseAction

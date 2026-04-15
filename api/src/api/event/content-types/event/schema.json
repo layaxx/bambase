@@ -46,6 +46,12 @@
     },
     "external_id": {
       "type": "string"
+    },
+    "reports": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::report.report",
+      "mappedBy": "event"
     }
   }
 }
