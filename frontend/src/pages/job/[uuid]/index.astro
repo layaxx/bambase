@@ -2,6 +2,7 @@
 import { actions } from "astro:actions"
 import PageLayout from "@/layouts/PageLayout.astro"
 import { fetchJobOffer, REPORT_WARNING_THRESHOLD } from "@/utils/api"
+import { JOB_STATUS_ALERT_CLASS } from "@/utils/job-status"
 import { useTranslations } from "@/i18n/translations"
 import IconArrowLeft from "@/components/icons/IconArrowLeft.astro"
 import IconStore from "@/components/icons/IconStore.astro"
@@ -36,13 +37,6 @@ const statusLabel: Record<string, string> = {
   expired: t.auth.statusExpired,
   rejected: t.auth.statusRejected,
   archived: t.auth.statusArchived,
-}
-
-const statusAlertClass: Record<string, string> = {
-  submitted: "alert-warning",
-  expired: "alert-neutral",
-  rejected: "alert-error",
-  archived: "alert-info",
 }
 
 const deleteResult = Astro.getActionResult(actions.jobs.delete)
@@ -113,7 +107,7 @@ if (archiveResult?.data !== undefined && !archiveResult.error) {
           <div
             class:list={[
               `alert`,
-              `${statusAlertClass[job.online_status] ?? "alert-neutral"}`,
+              `${JOB_STATUS_ALERT_CLASS[job.online_status] ?? "alert-neutral"}`,
               `mb-6`,
             ]}
             role="alert"

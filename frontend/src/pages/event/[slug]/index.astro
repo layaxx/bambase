@@ -2,6 +2,7 @@
 import { actions } from "astro:actions"
 import PageLayout from "@/layouts/PageLayout.astro"
 import { fetchEvent, REPORT_WARNING_THRESHOLD } from "@/utils/api"
+import { formatDateTime, formatTime } from "@/utils/event-formatting"
 import { useTranslations } from "@/i18n/translations"
 import IconArrowLeft from "@/components/icons/IconArrowLeft.astro"
 import IconClock from "@/components/icons/IconClock.astro"
@@ -33,23 +34,7 @@ if (reportResult) {
 }
 
 const reported = Astro.url.searchParams.get("reported")
-
-function formatDateTime(iso: string) {
-  return new Date(iso).toLocaleString(dateLocale, {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    hour: "2-digit",
-    minute: "2-digit",
-  })
-}
-
-function formatTime(iso: string) {
-  return new Date(iso).toLocaleTimeString(dateLocale, {
-    hour: "2-digit",
-    minute: "2-digit",
-  })
-}
+const formattedEventStart = event ? formatDateTime(event.start, dateLocale) : null
 ---
 
 <PageLayout>
@@ -120,9 +105,9 @@ function formatTime(iso: string) {
               <div class="flex items-center gap-1.5">
                 <IconClock class="h-4 w-4 shrink-0" />
                 <span>
-                  {formatDateTime(event.start)}
+                  {formattedEventStart}
                   {" – "}
-                  {formatTime(event.end)}
+                  {formatTime(event.end, dateLocale)}
                   {t.events.clock ? ` ${t.events.clock}` : ""}
                 </span>
               </div>
@@ -142,9 +127,9 @@ function formatTime(iso: string) {
                 </div>
                 <div>
                   <dt class="mb-1 text-base-content/60">{t.events.until}</dt>
-                  <dd class="font-medium">{formatDateTime(event.start)}</dd>
+                  <dd class="font-medium">{formattedEventStart}</dd>
                   <dd class="text-base-content/60">
-                    – {formatTime(event.end)}
+                    – {formatTime(event.end, dateLocale)}
                     {t.events.clock ? ` ${t.events.clock}` : ""}
                   </dd>
                 </div>

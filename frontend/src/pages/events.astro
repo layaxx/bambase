@@ -4,6 +4,7 @@ import PageHeader from "@/components/PageHeader.astro"
 import IconCalendar from "@/components/icons/IconCalendar.astro"
 import IconClock from "@/components/icons/IconClock.astro"
 import { fetchEvents } from "@/utils/api"
+import { formatTime } from "@/utils/event-formatting"
 import { useTranslations } from "@/i18n/translations"
 
 const t = useTranslations(Astro.locals.locale)
@@ -19,13 +20,6 @@ const grouped = Map.groupBy(events, (e) =>
     month: "long",
   })
 )
-
-function formatTime(iso: string) {
-  return new Date(iso).toLocaleTimeString(dateLocale, {
-    hour: "2-digit",
-    minute: "2-digit",
-  })
-}
 ---
 
 <PageLayout>
@@ -60,8 +54,9 @@ function formatTime(iso: string) {
                   <div class="mb-3 flex items-center gap-1 text-sm text-base-content/60">
                     <IconClock class="h-3.5 w-3.5 shrink-0" />
                     <span>
-                      {formatTime(event.start)}
-                      {t.events.clock ? ` ${t.events.clock}` : ""} – {formatTime(event.end)}
+                      {formatTime(event.start, dateLocale)}
+                      {t.events.clock ? ` ${t.events.clock}` : ""} –{" "}
+                      {formatTime(event.end, dateLocale)}
                       {t.events.clock ? ` ${t.events.clock}` : ""}
                     </span>
                   </div>

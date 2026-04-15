@@ -3,6 +3,7 @@ import { actions } from "astro:actions"
 import PageLayout from "@/layouts/PageLayout.astro"
 import IconArrowLeft from "@/components/icons/IconArrowLeft.astro"
 import { fetchMyJobOffers } from "@/utils/api"
+import { JOB_STATUS_BADGE_CLASS } from "@/utils/job-status"
 import { useTranslations } from "@/i18n/translations"
 
 const t = useTranslations(Astro.locals.locale)
@@ -24,14 +25,6 @@ const statusLabel: Record<string, string> = {
   expired: t.auth.statusExpired,
   rejected: t.auth.statusRejected,
   archived: t.auth.statusArchived,
-}
-
-const statusClass: Record<string, string> = {
-  submitted: "badge-warning",
-  published: "badge-success",
-  expired: "badge-neutral",
-  rejected: "badge-error",
-  archived: "badge-info",
 }
 ---
 
@@ -62,7 +55,7 @@ const statusClass: Record<string, string> = {
               <span
                 class:list={[
                   `badge badge-sm shrink-0`,
-                  `${statusClass[job.online_status] ?? "badge-neutral"}`,
+                  `${JOB_STATUS_BADGE_CLASS[job.online_status] ?? "badge-neutral"}`,
                 ]}
               >
                 {statusLabel[job.online_status] ?? job.online_status}

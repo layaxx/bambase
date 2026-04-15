@@ -1,22 +1,17 @@
 ---
 import { fetchEvents } from "@/utils/api"
+import { formatTime } from "@/utils/event-formatting"
 import { useTranslations } from "@/i18n/translations"
 import IconCalendar from "./icons/IconCalendar.astro"
 import IconClock from "./icons/IconClock.astro"
 import IconArrowRight from "./icons/IconArrowRight.astro"
 
 const t = useTranslations(Astro.locals.locale)
+const dateLocale = t.mensa.dateLocale
 
 const todayStr = new Date().toISOString().split("T")[0]
 const allEvents = await fetchEvents()
 const todayEvents = allEvents.filter((e) => e.start.startsWith(todayStr))
-
-function formatTime(iso: string) {
-  return new Date(iso).toLocaleTimeString(t.mensa.dateLocale, {
-    hour: "2-digit",
-    minute: "2-digit",
-  })
-}
 ---
 
 <!-- Events Section -->
@@ -56,7 +51,7 @@ function formatTime(iso: string) {
             <div class="mb-3 flex items-center gap-1 text-sm text-base-content/60">
               <IconClock class="h-3.5 w-3.5 shrink-0" />
               <span>
-                {formatTime(event.start)}
+                {formatTime(event.start, dateLocale)}
                 {t.events.clock ? ` ${t.events.clock}` : ""}
               </span>
             </div>

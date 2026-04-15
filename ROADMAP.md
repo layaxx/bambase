@@ -135,32 +135,31 @@ The current dark-mode color scheme (DaisyUI 5 + Tailwind CSS 4) needs refinement
 
 ### P10 Testing
 
-There is currently one test suite (`api/test/mensaplan.test.ts`) covering the mensa service. The rest of the application — Strapi API services, frontend utility functions, and page-level behaviour — has no automated test coverage. Adding tests would reduce regression risk as the codebase grows and make refactors (especially P1–P7) safer to land.
-
 **Current state:**
 
 - **API (Strapi):** Jest + Babel configured; `mensaplan.test.ts` is the only test file. The test runner is invoked with `yarn test` inside `api/`.
-- **Frontend (Astro):** No test framework configured. No test files exist.
+- **Frontend (Astro):** Vitest configured (`vitest.config.ts`, `yarn test`). 142 tests across 13 files covering all API utility modules, pure utility functions, and key Astro components.
 
-**Work involved:**
+**Done:**
 
-- **API unit tests** — extend the existing Jest suite to cover other Strapi services and lifecycle hooks as they are written. Priorities: any future importers added under P7, the `Report` submission logic from P3, and any custom validation logic.
-- **Frontend utility tests** — add a test framework (Vitest is the natural fit for a Vite/Astro project) to `frontend/` and write unit tests for the functions in `frontend/src/utils/api.ts`: date helpers, filter/transform utilities, and any business logic that does not require a live Strapi instance.
-- **End-to-end tests** — use Playwright (first-class Astro integration via `@astrojs/playwright`) to cover the critical user journeys: viewing events and jobs, submitting a new job offer, submitting a new event, and the login/logout flow. These tests require a running Strapi instance and are best run in CI against a seeded test database.
-- **CI integration** — add a GitHub Actions workflow (or extend an existing one) that runs `yarn test` in `api/` and `yarn test` in `frontend/` on every pull request. E2E tests can run on a slower schedule (e.g., nightly or on merge to main) using `docker-compose` to spin up the full stack.
+- [x] Vitest setup in `frontend/` — `vitest.config.ts`, `yarn test` / `yarn test:watch` scripts
+- [x] Unit tests for all frontend API utility modules (`events`, `job-offers`, `mensa`, `locations`, `student-groups`, `index`): query parameters, pagination limits, populate shapes, request bodies, auth headers, URL encoding, error fallbacks, and `console.error` messages
+- [x] Unit tests for pure utility modules: `event-formatting` (`formatDateTime`, `formatTime`), `mensa` (`getRelevantDay`, `groupMealsByDay`), `job-status` (`JOB_STATUS_ALERT_CLASS`, `JOB_STATUS_BADGE_CLASS`)
+- [x] Component tests using `experimental_AstroContainer`: `MensaLocationCard`, `MensaMealItem`, `MensaDaySection`, `ReportModal` — rendered HTML checked for correct output, edge cases (empty meals, allergens, vegan/vegetarian badges, hidden form inputs)
 
-**Suggested priority order:**
+**Still to do:**
 
-1. Vitest setup in `frontend/` + unit tests for `api.ts` helpers (low effort, high value)
-2. API unit tests for each new service added alongside P1–P7 work (write tests alongside features)
-3. Playwright E2E for the job and event submission flows (highest regression risk, most user-facing)
+- **API unit tests** — extend the existing Jest suite as new Strapi services are written. Priorities: any importers added under P7, the `Report` submission logic from P3, and any custom validation or lifecycle hooks.
+- **End-to-end tests** — use Playwright to cover the critical user journeys: viewing events and jobs, submitting a new job offer, submitting a new event, and the login/logout flow. These require a running Strapi instance and are best run in CI against a seeded test database.
+- **CI integration** — add a GitHub Actions workflow that runs `yarn test` in both `api/` and `frontend/` on every pull request. E2E tests can run on a slower schedule (nightly or on merge to main) using `docker-compose` to spin up the full stack.
 
 **Open questions:**
 
 - Should E2E tests run against a dedicated test Strapi instance with a seeded SQLite database, or against a Docker Compose stack mirroring production (PostgreSQL)?
-- Is there a target coverage threshold, or is the goal simply "critical paths covered"?
 - Should Playwright tests be kept in a top-level `e2e/` directory or inside `frontend/`?
 - Are snapshot/visual regression tests worth adding for dark-mode work (P9)?
+
+## Done
 
 ### P11 Highlight Mensa Meal on Navigation from Frontpage
 
@@ -207,8 +206,6 @@ div:target {
 - Persistent ring vs. fade-out animation — which feels more natural? A fade-out avoids a permanent visual difference but the user may miss it if the page takes a moment to load.
 - Should the `MensaDaySection` heading also scroll into view (it currently does via the native `<section id={id}>` anchor), or should the scroll target be the location card itself?
 - Weekend sections (`MensaWeekendSection`) show no meal cards; no highlight is needed there, but the anchor should still scroll correctly — worth verifying.
-
-## Done
 
 ### P3 Reporting functionality for Events, Jobs
 

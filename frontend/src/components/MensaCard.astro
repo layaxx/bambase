@@ -1,5 +1,6 @@
 ---
 import { fetchMensaMeals } from "@/utils/api"
+import { getRelevantDay } from "@/utils/mensa"
 import dayjs from "dayjs"
 import { useTranslations } from "@/i18n/translations"
 import IconUtensils from "./icons/IconUtensils.astro"
@@ -8,27 +9,8 @@ import IconLeaf from "./icons/IconLeaf.astro"
 
 const t = useTranslations(Astro.locals.locale)
 
-const CLOSING_HOUR = 15
-const CLOSING_MINUTE = 0
-
-function getRelevantDay(): dayjs.Dayjs {
-  const now = dayjs()
-  const dow = now.day() // 0 = Sunday, 6 = Saturday
-
-  if (dow >= 1 && dow <= 5) {
-    const closed =
-      now.hour() > CLOSING_HOUR || (now.hour() === CLOSING_HOUR && now.minute() >= CLOSING_MINUTE)
-    if (!closed) return now
-    // After closing: skip to next weekday (Friday → Monday)
-    return now.add(dow === 5 ? 3 : 1, "day")
-  }
-
-  if (dow === 6) return now.add(2, "day") // Saturday → Monday
-  return now.add(1, "day") // Sunday → Monday
-}
-
 const now = dayjs()
-const relevantDay = getRelevantDay()
+const relevantDay = getRelevantDay(now)
 const isToday = relevantDay.isSame(now, "day")
 const relevantDayId = relevantDay.format("YYYY-MM-DD")
 const relevantDayFormatted = relevantDay.toDate().toLocaleDateString(t.mensa.dateLocale, {
@@ -75,7 +57,6 @@ const mealsByLocation = Object.fromEntries(
   </div>
 
   <div class="rounded-xl border border-base-300 bg-base-100 p-4 sm:p-6">
-    <!-- Tab buttons -->
     <div class="mb-4 flex gap-1 rounded-lg bg-base-200 p-1">
       {
         locations.map((loc, i) => (
@@ -97,7 +78,6 @@ const mealsByLocation = Object.fromEntries(
       }
     </div>
 
-    <!-- Meal lists -->
     {
       locations.map((loc, i) => (
         <ul class="flex flex-col gap-2" hidden={i !== 0} id={`meals-${loc.id}`}>
