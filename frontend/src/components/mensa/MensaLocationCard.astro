@@ -29,7 +29,7 @@ const { id, label, meals } = Astro.props
     ) : (
       <ul class="flex flex-col gap-2">
         {meals.map((meal) => (
-          <MensaMealItem meal={meal} />
+          <MensaMealItem id={`${id}-${meal.id}`} meal={meal} />
         ))}
       </ul>
     )

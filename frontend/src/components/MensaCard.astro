@@ -108,7 +108,7 @@ const mealsByLocation = Object.fromEntries(
               <li>
                 <a
                   class="flex items-center justify-between gap-3 rounded-lg border border-base-300 p-3 transition-colors hover:bg-base-200 no-underline"
-                  href={`/mensa#${relevantDayId}-${loc.id}`}
+                  href={`/mensa#${relevantDayId}-${loc.id}-${meal.id}`}
                 >
                   <div class="flex min-w-0 flex-wrap items-center gap-1.5">
                     <span class="text-sm text-base-content">{meal.name}</span>

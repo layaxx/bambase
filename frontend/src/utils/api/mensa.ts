@@ -8,12 +8,13 @@ export type MensaMeal = {
   isVegan: boolean
   isVegetarian: boolean
   allergens?: { name: string }[]
+  id: string
 }
 
 export async function fetchMensaMeals(date: Dayjs): Promise<MensaMeal[]> {
   try {
     const result = await client.collection("mensa-meals").find({
-      filters: { date: { $eq: date.toISOString().split("T")[0] } },
+      filters: { date: { $eq: date.format("YYYY-MM-DD") } },
       populate: ["allergens"],
       pagination: { limit: 100 },
     })
