@@ -49,7 +49,13 @@ export async function fetchJobOffer(
       }
     )
 
-    if (!res.ok) return null
+    if (!res.ok) {
+      if (res.status === 401 && token !== import.meta.env.STRAPI_TOKEN) {
+        console.warn("Unauthorized access with provided token, retrying with public token...")
+        return fetchJobOffer(slug, import.meta.env.STRAPI_TOKEN)
+      }
+      return null
+    }
     const result = await res.json()
 
     return (result?.data?.[0] ?? null) as unknown as JobOffer | null

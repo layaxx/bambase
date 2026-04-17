@@ -1,5 +1,4 @@
 import { type Core } from "@strapi/strapi"
-import { add } from "date-fns"
 import bcrypt from "bcryptjs"
 
 import { STUDENT_GROUPS } from "./seed/student-groups"
@@ -51,12 +50,11 @@ export async function seed(strapi: Core.Strapi) {
 
   if (existingOffers === 0) {
     for (const offer of JOB_OFFERS) {
-      const { contact, ...rest } = offer
+      const { contact, isOwned, ...rest } = offer
       const createdOffer = await strapi.documents("api::job-offer.job-offer").create({
         data: {
           ...rest,
-          offline_after: add(new Date(), { days: 30 }),
-          owner: user.id,
+          owner: isOwned ? user.id : undefined,
           contact,
         },
       })
@@ -73,11 +71,11 @@ export async function seed(strapi: Core.Strapi) {
   }
 
   if (existingEvents === 0) {
-    for (const event of EVENTS) {
+    for (const { isOwned, ...event } of EVENTS) {
       const createdEvent = await strapi.documents("api::event.event").create({
         data: {
           ...event,
-          owner: user.id,
+          owner: isOwned ? user.id : undefined,
         },
       })
 

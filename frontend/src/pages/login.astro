@@ -6,11 +6,12 @@ import { useTranslations } from "@/i18n/translations"
 const t = useTranslations(Astro.locals.locale)
 
 const result = Astro.getActionResult(actions.auth.login)
-if (result && !result.error) {
+if (result?.data?.success) {
   return Astro.redirect(result.data.redirect || "/")
 }
 
-const error = result?.error?.message
+const error =
+  result?.data?.success === false ? t.auth.validation.loginFailed : result?.error?.message || null
 ---
 
 <AppLayout>
@@ -45,6 +46,7 @@ const error = result?.error?.message
             placeholder={t.auth.emailPlaceholder}
             required
             type="email"
+            value={result?.data?.username || ""}
           />
         </fieldset>
 

@@ -2,6 +2,7 @@
 import { actions } from "astro:actions"
 import AppLayout from "@/layouts/AppLayout.astro"
 import { useTranslations } from "@/i18n/translations"
+import { isInputError } from "astro:actions"
 
 const t = useTranslations(Astro.locals.locale)
 
@@ -10,7 +11,19 @@ if (result && !result.error) {
   return Astro.redirect("/")
 }
 
-const error = result?.error?.message
+let error: string | null = null
+if (isInputError(result?.error)) {
+  if (result.error.fields.email) {
+    error = t.auth.validation.emailInvalid
+  } else if (result.error.fields.password) {
+    error = t.auth.validation.passwordRequired
+  } else if (result.error.fields.passwordConfirm) {
+    error = t.auth.validation.passwordMismatch
+  }
+}
+if (!error && result?.error.code === "BAD_REQUEST") {
+  error = t.auth.validation.registerFailed
+}
 ---
 
 <AppLayout>
@@ -31,6 +44,7 @@ const error = result?.error?.message
       }
 
       <form action={actions.auth.register} class="flex flex-col" method="POST">
+        <input name="locale" type="hidden" value={Astro.locals.locale} />
         <fieldset class="fieldset">
           <legend class="fieldset-legend">{t.auth.emailLabel}</legend>
           <input

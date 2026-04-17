@@ -191,6 +191,16 @@ const de = {
     statusExpired: "Abgelaufen",
     statusRejected: "Abgelehnt",
     statusArchived: "Archiviert",
+    validation: {
+      emailInvalid: "Bitte gültige E-Mail eingeben.",
+      passwordRequired: "Bitte Passwort eingeben.",
+      passwordTooShort: "Passwort muss mindestens 10 Zeichen haben.",
+      passwordMismatch: "Die Passwörter stimmen nicht überein.",
+      loginFailed: "Anmeldung fehlgeschlagen.",
+      registerFailed: "Registrierung fehlgeschlagen.",
+      notLoggedIn: "Nicht angemeldet.",
+      sessionExpired: "Sitzung abgelaufen.",
+    },
   },
   footer: {
     builtWith: "Built with DaisyUI",
@@ -394,6 +404,16 @@ const en = {
     statusExpired: "Expired",
     statusRejected: "Rejected",
     statusArchived: "Archived",
+    validation: {
+      emailInvalid: "Please enter a valid email address.",
+      passwordRequired: "Please enter your password.",
+      passwordTooShort: "Password must be at least 10 characters.",
+      passwordMismatch: "Passwords do not match.",
+      loginFailed: "Login failed.",
+      registerFailed: "Registration failed.",
+      notLoggedIn: "Not logged in.",
+      sessionExpired: "Session expired.",
+    },
   },
   footer: {
     builtWith: "Built with DaisyUI",

@@ -67,6 +67,11 @@ async function updateStrapi(date: string, meals: MensaMealInput[], location: Loc
   let deleted = 0
 
   for (const meal of meals) {
+    if (!meal.name || meal.name.trim() === "-") {
+      strapi.log.warn(`Skipping meal with empty name on ${date} at ${location}`)
+      continue
+    }
+
     const match = existingMap.get(meal.name)
 
     if (match) {

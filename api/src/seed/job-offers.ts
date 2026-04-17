@@ -1,6 +1,6 @@
 export const JOB_OFFERS = [
   {
-    title: "Frontend Developer",
+    title: "Frontend Developer (owned by seed user)",
     company: "TechCorp GmbH",
     location: "Bamberg",
     working_hours: 40,
@@ -8,6 +8,7 @@ export const JOB_OFFERS = [
     online_status: "published",
     external_url: "https://example.com/apply/frontend",
     contact: { name: "Anna Müller", mail: "anna@techcorp.de", phone: "+49 951 123456" },
+    isOwned: true,
   },
   {
     title: "Backend Engineer",
@@ -17,6 +18,7 @@ export const JOB_OFFERS = [
     description: "Join our backend team and help build scalable APIs.",
     online_status: "published",
     contact: { name: "Max Schmidt", mail: "max@datasystems.de" },
+    isOwned: false,
   },
   {
     title: "UX Designer",
@@ -26,6 +28,7 @@ export const JOB_OFFERS = [
     description: "Part-time UX Designer for a creative agency in Bamberg.",
     online_status: "submitted",
     contact: { name: "John Doe", mail: "jobs@kreativstudio.de" },
+    isOwned: false,
   },
   {
     title: "DevOps Engineer",
@@ -35,6 +38,7 @@ export const JOB_OFFERS = [
     description: "Maintain and improve our cloud infrastructure.",
     online_status: "expired",
     contact: { name: "Lisa Weber", mail: "lisa@cloudops.de" },
+    isOwned: false,
   },
   {
     title: "Full Stack Developer",
@@ -46,6 +50,7 @@ export const JOB_OFFERS = [
     online_status: "published",
     external_url: "https://example.com/apply/fullstack",
     contact: { name: "Tom Bauer", mail: "tom@startuphub.de", phone: "+49 951 654321" },
+    isOwned: false,
   },
   {
     title: "Werkstudent Marketing",
@@ -56,5 +61,6 @@ export const JOB_OFFERS = [
       "Unterstütze unser Marketingteam bei der Erstellung von Content und der Pflege unserer Social-Media-Kanäle.",
     online_status: "published",
     contact: { name: "Sara König", mail: "sara@regiomedia.de" },
+    isOwned: false,
   },
 ] as const

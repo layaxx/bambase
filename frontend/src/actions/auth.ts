@@ -6,7 +6,7 @@ const COOKIE_OPTS = {
   path: "/",
   httpOnly: false,
   sameSite: "strict",
-  maxAge: 60 * 60 * 24 * 90, // 90 days
+  maxAge: 60 * 60 * 24 * 7, // 7 days
 } as const
 
 export const auth = {
@@ -27,10 +27,11 @@ export const auth = {
       const data = await res.json()
 
       if (!res.ok) {
-        throw new ActionError({
-          code: "UNAUTHORIZED",
-          message: data?.error?.message ?? "Anmeldung fehlgeschlagen.",
-        })
+        return {
+          success: false,
+          username: identifier,
+          redirect: null,
+        }
       }
 
       context.cookies.set("auth_token", data.jwt, { ...COOKIE_OPTS, httpOnly: true })
@@ -40,7 +41,7 @@ export const auth = {
         COOKIE_OPTS
       )
 
-      return { username: data.user.username, redirect: redirect || "/" }
+      return { success: true, username: data.user.username, redirect: redirect || "/" }
     },
   }),
 
