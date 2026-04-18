@@ -1,13 +1,11 @@
 ---
-import { formatTime } from "@/utils/event-formatting"
 import { useTranslations } from "@/i18n/translations"
 import IconCalendar from "./icons/IconCalendar.astro"
-import IconClock from "./icons/IconClock.astro"
 import IconArrowRight from "./icons/IconArrowRight.astro"
 import { fetchOngoingOrUpcomingEvents } from "@/utils/api/events"
+import EventCard from "./EventCard.astro"
 
 const t = useTranslations(Astro.locals.locale)
-const dateLocale = t.mensa.dateLocale
 
 const upcomingOrOngoingEvents = await fetchOngoingOrUpcomingEvents(4)
 ---
@@ -42,25 +40,7 @@ const upcomingOrOngoingEvents = await fetchOngoingOrUpcomingEvents(4)
     ) : (
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {upcomingOrOngoingEvents.map((event) => (
-          <a
-            class="group flex flex-col rounded-xl border border-base-300 bg-base-100 p-4 transition-all hover:shadow-md no-underline"
-            href={`/event/${event.slug}`}
-          >
-            <div class="flex flex-row-reverse justify-between mb-3">
-              <span class="badge badge-soft badge-sm">{t.events.categories[event.category]}</span>
-              <div class=" flex items-center gap-1 text-sm text-base-content/60">
-                <IconClock class="h-3.5 w-3.5 shrink-0" />
-                <span>
-                  {formatTime(event.start, dateLocale)}
-                  {t.events.clock ? ` ${t.events.clock}` : ""}
-                </span>
-              </div>
-            </div>
-            <h3 class="mb-2 font-semibold leading-tight text-base-content group-hover:text-primary">
-              {event.title}
-            </h3>
-            <div class="mt-auto text-sm text-base-content/60 truncate">{event.organizer}</div>
-          </a>
+          <EventCard event={event} short />
         ))}
       </div>
     )

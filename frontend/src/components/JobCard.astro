@@ -2,9 +2,8 @@
 import { fetchJobOffers } from "@/utils/api"
 import { useTranslations } from "@/i18n/translations"
 import IconBriefcase from "./icons/IconBriefcase.astro"
-import IconStore from "./icons/IconStore.astro"
-import IconMapPin from "./icons/IconMapPin.astro"
 import IconArrowRight from "./icons/IconArrowRight.astro"
+import JobOfferCard from "./JobOfferCard.astro"
 
 const t = useTranslations(Astro.locals.locale)
 
@@ -38,29 +37,6 @@ const jobs = await fetchJobOffers(3)
         </p>
       )
     }
-    {
-      jobs.map((job) => (
-        <a
-          class="group flex flex-col rounded-xl border border-base-300 bg-base-100 p-4 transition-all hover:shadow-md no-underline"
-          href={`/job/${job.uuid}`}
-        >
-          <h3 class="mb-1 font-semibold leading-tight text-base-content group-hover:text-primary">
-            {job.title}
-          </h3>
-          <div class="mb-2 flex flex-row-reverse justify-between">
-            <span class="badge badge-soft badge-sm">{t.jobs.jobTypes[job.job_type]}</span>
-            <div class="flex items-center gap-1.5 text-sm text-base-content/60">
-              <IconStore class="h-3.5 w-3.5 shrink-0" />
-              <span class="truncate">{job.company}</span>
-            </div>
-          </div>
-          <p class="mb-3 line-clamp-2 text-sm text-base-content/60">{job.description}</p>
-          <div class="mt-auto flex items-center gap-1.5 text-sm text-base-content/60">
-            <IconMapPin class="h-3.5 w-3.5 shrink-0" />
-            <span class="truncate">{job.location}</span>
-          </div>
-        </a>
-      ))
-    }
+    {jobs.map((job) => <JobOfferCard job={job} />)}
   </div>
 </section>
