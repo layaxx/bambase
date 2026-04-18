@@ -62,6 +62,20 @@
           "sortable": true
         }
       },
+      "category": {
+        "edit": {
+          "label": "category",
+          "description": "",
+          "placeholder": "",
+          "visible": true,
+          "editable": true
+        },
+        "list": {
+          "label": "category",
+          "searchable": true,
+          "sortable": true
+        }
+      },
       "start": {
         "edit": {
           "label": "start",
@@ -284,6 +298,12 @@
           },
           {
             "name": "reports",
+            "size": 6
+          }
+        ],
+        [
+          {
+            "name": "category",
             "size": 6
           }
         ]

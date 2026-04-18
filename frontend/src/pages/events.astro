@@ -51,15 +51,20 @@ const grouped = Map.groupBy(events, (e) =>
                   class="group flex flex-col rounded-xl border border-base-300 bg-base-100 p-4 no-underline transition-all hover:shadow-md"
                   href={`/event/${event.slug}`}
                 >
-                  <div class="mb-3 flex items-center gap-1 text-sm text-base-content/60">
-                    <IconClock class="h-3.5 w-3.5 shrink-0" />
-                    <span>
-                      {formatTime(event.start, dateLocale)}
-                      {t.events.clock ? ` ${t.events.clock}` : ""} –{" "}
-                      {formatTime(event.end, dateLocale)}
-                      {t.events.clock ? ` ${t.events.clock}` : ""}
+                  <span class="mb-3 flex flex-row-reverse justify-between">
+                    <span class="badge badge-soft badge-sm">
+                      {t.events.categories[event.category]}
                     </span>
-                  </div>
+                    <div class="flex items-center gap-1 text-sm text-base-content/60">
+                      <IconClock class="h-3.5 w-3.5 shrink-0" />
+                      <span>
+                        {formatTime(event.start, dateLocale)}
+                        {t.events.clock ? ` ${t.events.clock}` : ""} –{" "}
+                        {formatTime(event.end, dateLocale)}
+                        {t.events.clock ? ` ${t.events.clock}` : ""}
+                      </span>
+                    </div>
+                  </span>
                   <h3 class="mb-1 font-semibold leading-tight text-base-content group-hover:text-primary">
                     {event.title}
                   </h3>

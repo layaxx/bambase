@@ -24,6 +24,12 @@
       "type": "text",
       "required": true
     },
+    "category": {
+      "type": "enumeration",
+      "required": true,
+      "default": "other",
+      "enum": ["university", "sport", "party", "culture", "social", "other"]
+    },
     "start": {
       "type": "datetime",
       "required": true

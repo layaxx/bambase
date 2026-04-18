@@ -1,20 +1,16 @@
 ---
-import HeuteInBamberg from "@/components/HeuteInBamberg.astro"
+import EventsCard from "@/components/EventsTodayCard.astro"
 import JobCard from "@/components/JobCard.astro"
 import InfomapCard from "@/components/InfomapCard.astro"
 import PageLayout from "@/layouts/PageLayout.astro"
-import MainArea from "@/components/MainArea.astro"
 import MensaCard from "@/components/MensaCard.astro"
+import StudentGroupsCard from "@/components/StudentGroupsCard.astro"
 ---
 
 <PageLayout>
-  <HeuteInBamberg />
+  <EventsCard />
   <MensaCard />
   <JobCard />
-
-  <section class="mb-12">
-    <InfomapCard />
-  </section>
-
-  <MainArea />
+  <InfomapCard />
+  <StudentGroupsCard />
 </PageLayout>

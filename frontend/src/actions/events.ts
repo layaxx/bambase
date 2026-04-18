@@ -1,6 +1,7 @@
 import { defineAction, ActionError } from "astro:actions"
 import { z } from "astro/zod"
 import { strapiUrl } from "@/utils/api"
+import { EVENT_CATEGORIES } from "@/utils/api/events"
 
 const eventCreateSchema = z
   .object({
@@ -9,6 +10,7 @@ const eventCreateSchema = z
     description: z.string().min(1, "Bitte Beschreibung eingeben."),
     start: z.string().min(1, "Bitte Startzeit eingeben."),
     end: z.string().min(1, "Bitte Endzeit eingeben."),
+    category: z.enum(EVENT_CATEGORIES).default("other"),
     external_url: z.string().optional(),
   })
   .refine((data) => new Date(data.start) < new Date(data.end), {
@@ -51,6 +53,7 @@ export const events = {
         description: z.string().min(1, "Bitte Beschreibung eingeben."),
         start: z.string().min(1, "Bitte Startzeit eingeben."),
         end: z.string().min(1, "Bitte Endzeit eingeben."),
+        category: z.enum(EVENT_CATEGORIES).default("other"),
         external_url: z.string().optional(),
       })
       .refine((data) => new Date(data.start) < new Date(data.end), {
@@ -71,6 +74,7 @@ export const events = {
             description: fields.description,
             start: fields.start,
             end: fields.end,
+            category: fields.category,
             external_url: fields.external_url || undefined,
           },
         }),
@@ -110,6 +114,7 @@ export const events = {
             description: input.description,
             start: input.start,
             end: input.end,
+            category: input.category,
             external_url: input.external_url || undefined,
           },
         }),

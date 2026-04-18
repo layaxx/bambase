@@ -1,17 +1,15 @@
 ---
-import { fetchEvents } from "@/utils/api"
 import { formatTime } from "@/utils/event-formatting"
 import { useTranslations } from "@/i18n/translations"
 import IconCalendar from "./icons/IconCalendar.astro"
 import IconClock from "./icons/IconClock.astro"
 import IconArrowRight from "./icons/IconArrowRight.astro"
+import { fetchOngoingOrUpcomingEvents } from "@/utils/api/events"
 
 const t = useTranslations(Astro.locals.locale)
 const dateLocale = t.mensa.dateLocale
 
-const todayStr = new Date().toISOString().split("T")[0]
-const allEvents = await fetchEvents()
-const todayEvents = allEvents.filter((e) => e.start.startsWith(todayStr))
+const upcomingOrOngoingEvents = await fetchOngoingOrUpcomingEvents(4)
 ---
 
 <!-- Events Section -->
@@ -26,7 +24,7 @@ const todayEvents = allEvents.filter((e) => e.start.startsWith(todayStr))
           >{t.events.title}</a
         >
         <p class="text-sm text-base-content/60">
-          {t.events.countToday(todayEvents.length)}
+          {t.events.countToday(upcomingOrOngoingEvents.length)}
         </p>
       </div>
     </div>
@@ -37,23 +35,26 @@ const todayEvents = allEvents.filter((e) => e.start.startsWith(todayStr))
   </div>
 
   {
-    todayEvents.length === 0 ? (
+    upcomingOrOngoingEvents.length === 0 ? (
       <p class="text-base-content/60 rounded-xl border border-base-300 bg-base-100 p-6">
         {t.events.none}
       </p>
     ) : (
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {todayEvents.map((event) => (
+        {upcomingOrOngoingEvents.map((event) => (
           <a
             class="group flex flex-col rounded-xl border border-base-300 bg-base-100 p-4 transition-all hover:shadow-md no-underline"
             href={`/event/${event.slug}`}
           >
-            <div class="mb-3 flex items-center gap-1 text-sm text-base-content/60">
-              <IconClock class="h-3.5 w-3.5 shrink-0" />
-              <span>
-                {formatTime(event.start, dateLocale)}
-                {t.events.clock ? ` ${t.events.clock}` : ""}
-              </span>
+            <div class="flex flex-row-reverse justify-between mb-3">
+              <span class="badge badge-soft badge-sm">{t.events.categories[event.category]}</span>
+              <div class=" flex items-center gap-1 text-sm text-base-content/60">
+                <IconClock class="h-3.5 w-3.5 shrink-0" />
+                <span>
+                  {formatTime(event.start, dateLocale)}
+                  {t.events.clock ? ` ${t.events.clock}` : ""}
+                </span>
+              </div>
             </div>
             <h3 class="mb-2 font-semibold leading-tight text-base-content group-hover:text-primary">
               {event.title}

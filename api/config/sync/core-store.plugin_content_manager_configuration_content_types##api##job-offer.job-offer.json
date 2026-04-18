@@ -204,6 +204,34 @@
           "sortable": false
         }
       },
+      "job_type": {
+        "edit": {
+          "label": "job_type",
+          "description": "",
+          "placeholder": "",
+          "visible": true,
+          "editable": true
+        },
+        "list": {
+          "label": "job_type",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "field": {
+        "edit": {
+          "label": "field",
+          "description": "",
+          "placeholder": "",
+          "visible": true,
+          "editable": true
+        },
+        "list": {
+          "label": "field",
+          "searchable": true,
+          "sortable": true
+        }
+      },
       "createdAt": {
         "edit": {
           "label": "createdAt",
@@ -342,6 +370,16 @@
           },
           {
             "name": "reports",
+            "size": 6
+          }
+        ],
+        [
+          {
+            "name": "job_type",
+            "size": 6
+          },
+          {
+            "name": "field",
             "size": 6
           }
         ]

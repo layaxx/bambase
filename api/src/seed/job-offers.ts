@@ -8,6 +8,8 @@ export const JOB_OFFERS = [
     online_status: "published",
     external_url: "https://example.com/apply/frontend",
     contact: { name: "Anna Müller", mail: "anna@techcorp.de", phone: "+49 951 123456" },
+    job_type: "working_student",
+    field: "it",
     isOwned: true,
   },
   {
@@ -18,6 +20,8 @@ export const JOB_OFFERS = [
     description: "Join our backend team and help build scalable APIs.",
     online_status: "published",
     contact: { name: "Max Schmidt", mail: "max@datasystems.de" },
+    job_type: "working_student",
+    field: "it",
     isOwned: false,
   },
   {
@@ -28,6 +32,8 @@ export const JOB_OFFERS = [
     description: "Part-time UX Designer for a creative agency in Bamberg.",
     online_status: "submitted",
     contact: { name: "John Doe", mail: "jobs@kreativstudio.de" },
+    job_type: "part_time",
+    field: "it",
     isOwned: false,
   },
   {
@@ -38,6 +44,8 @@ export const JOB_OFFERS = [
     description: "Maintain and improve our cloud infrastructure.",
     online_status: "expired",
     contact: { name: "Lisa Weber", mail: "lisa@cloudops.de" },
+    job_type: "working_student",
+    field: "it",
     isOwned: false,
   },
   {
@@ -50,6 +58,8 @@ export const JOB_OFFERS = [
     online_status: "published",
     external_url: "https://example.com/apply/fullstack",
     contact: { name: "Tom Bauer", mail: "tom@startuphub.de", phone: "+49 951 654321" },
+    job_type: "internship",
+    field: "it",
     isOwned: false,
   },
   {
@@ -61,6 +71,8 @@ export const JOB_OFFERS = [
       "Unterstütze unser Marketingteam bei der Erstellung von Content und der Pflege unserer Social-Media-Kanäle.",
     online_status: "published",
     contact: { name: "Sara König", mail: "sara@regiomedia.de" },
+    job_type: "working_student",
+    field: "marketing",
     isOwned: false,
   },
 ] as const

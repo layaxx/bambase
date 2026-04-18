@@ -101,6 +101,8 @@ const formattedEventStart = event ? formatDateTime(event.start, dateLocale) : nu
             <div class="mb-2 text-sm font-medium text-base-content/60">{event.organizer}</div>
             <h1 class="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">{event.title}</h1>
 
+            <span class="badge badge-soft mb-4">{t.events.categories[event.category]}</span>
+
             <div class="mb-6 flex flex-wrap gap-4 text-sm text-base-content/60">
               <div class="flex items-center gap-1.5">
                 <IconClock class="h-4 w-4 shrink-0" />

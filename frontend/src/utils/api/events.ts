@@ -1,5 +1,16 @@
 import { client, strapiUrl } from "./client"
 
+export const EVENT_CATEGORIES = [
+  "university",
+  "sport",
+  "party",
+  "culture",
+  "social",
+  "other",
+] as const
+
+export type EventCategory = (typeof EVENT_CATEGORIES)[number]
+
 export type Event = {
   documentId: string
   slug: string
@@ -8,6 +19,7 @@ export type Event = {
   start: string
   end: string
   organizer: string
+  category: EventCategory
   external_url?: string
   owner?: { id: number }
   reports?: { documentId: string }[]
@@ -17,6 +29,33 @@ export async function fetchEvents(limit = 100): Promise<Event[]> {
   try {
     const result = await client.collection("events").find({
       sort: ["start:asc"],
+      pagination: { limit },
+    })
+    return (result.data ?? []) as unknown as Event[]
+  } catch (error) {
+    console.error("Error fetching events", error)
+    return []
+  }
+}
+
+export async function fetchOngoingOrUpcomingEvents(limit = 100): Promise<Event[]> {
+  try {
+    const result = await client.collection("events").find({
+      sort: ["start:asc"],
+      filters: {
+        $or: [
+          {
+            start: {
+              $gte: new Date().toISOString(),
+              $lte: new Date(new Date().setHours(23, 59, 59, 999)).toISOString(),
+            },
+          },
+          {
+            start: { $lte: new Date().toISOString() },
+            end: { $gte: new Date().toISOString() },
+          },
+        ],
+      },
       pagination: { limit },
     })
     return (result.data ?? []) as unknown as Event[]

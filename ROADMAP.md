@@ -23,28 +23,6 @@ Events currently have no structured connection to physical locations. Linking ev
 
 ---
 
-### P5 Categories for Events, Jobs
-
-Events and job offers currently have no category or tag system, making it hard for users to find relevant content. Adding categories would improve discoverability.
-
-**Work involved:**
-
-- Decide on a data model: a `Category` collection type (shared or separate for events vs. jobs) with `name` and `color`/`icon` fields, or a simple enum field on each content type
-- Add a `category` (or `categories`) field to `Event` and `JobOffer` schemas
-- Update creation/editing forms to allow selecting categories
-- Display category badges on event/job cards and detail pages
-- (Prerequisite for P6) Expose category as a filterable field in API queries
-
-**Open questions:**
-
-- Should events and jobs share the same category taxonomy, or have separate ones? (e.g., "Sport" makes sense for events but maybe not jobs)
-- Should categories be user-defined (free tags) or admin-curated (fixed list)? A fixed list is easier to filter on but less flexible.
-- What initial categories make sense? Examples for events: Kultur, Sport, Party, Vortrag, Workshop, Hochschulpolitik. For jobs: IT, Marketing, Gastronomie, Verwaltung, Forschung.
-- Should there be a limit on how many categories an event/job can have?
-- Should the Mensa meal categories (vegan/vegetarian) be unified with this system, or kept separate?
-
----
-
 ### P6 Filtering for Events, Jobs overview pages
 
 The `/events` and `/jobs` pages currently show all content with no way to filter by date range, category, organizer, or other attributes. Filtering would significantly improve usability as content volume grows.
@@ -133,6 +111,39 @@ The current dark-mode color scheme (DaisyUI 5 + Tailwind CSS 4) needs refinement
 - Are there specific pages or components users have flagged as looking broken in dark mode? -> text-primary looks bad on dark mode
 - Should we support a system-preference-based automatic toggle, or only a manual toggle (already in place)?
 
+## Done
+
+### P5 Categories for Events, Jobs
+
+Events and job offers currently have no category or tag system, making it hard for users to find relevant content. Adding categories would improve discoverability.
+
+**Decisions made:**
+
+- Data model: enum fields directly on each content type (no separate `Category` collection)
+- Jobs use two orthogonal fields: `job_type` (what kind of engagement) and `field` (industry/domain)
+- Categories are admin-curated fixed enums — simpler to filter on, no free-text tagging
+- Events and jobs have separate taxonomies (different concepts apply)
+- Mensa meal categories (vegan/vegetarian) remain separate — unrelated system
+
+**Job `job_type` enum:** `part_time`, `internship`, `working_student`, `research_assistant`, `thesis`, `volunteer`, `other`
+
+**Job `field` enum:** `it`, `marketing`, `administration`, `research`, `gastronomy`, `retail`, `education`, `other`
+
+**Work involved:**
+
+- [x] Add `job_type` and `field` enum fields to `JobOffer` schema (`api/src/api/job-offer/content-types/job-offer/schema.json`)
+- [x] Update job seed data with realistic `job_type` and `field` values (`api/src/seed/job-offers.ts`)
+- [x] Add `category` enum field to `Event` schema: `university`, `sport`, `party`, `culture`, `social`, `other`
+- [x] Update job creation/editing forms to include `job_type` and `field` selectors (`frontend/src/pages/job/new.astro`, `edit.astro`)
+- [x] Update event creation/editing form to include `category` selector (`frontend/src/pages/event/new.astro`, `edit.astro`)
+- [x] Display `job_type` badge on job cards and both `job_type`+`field` on job detail; `category` badge on event cards and detail
+- [x] Add i18n keys for all enum values in both `de` and `en` locales (`frontend/src/i18n/translations.ts`)
+- [ ] Expose `job_type`, `field`, and event category as filterable fields in API queries (prerequisite for P6)
+
+**Open questions:** none
+
+---
+
 ### P10 Testing
 
 **Current state:**
@@ -147,19 +158,16 @@ The current dark-mode color scheme (DaisyUI 5 + Tailwind CSS 4) needs refinement
 - [x] Unit tests for pure utility modules: `event-formatting` (`formatDateTime`, `formatTime`), `mensa` (`getRelevantDay`, `groupMealsByDay`), `job-status` (`JOB_STATUS_ALERT_CLASS`, `JOB_STATUS_BADGE_CLASS`)
 - [x] Component tests using `experimental_AstroContainer`: `MensaLocationCard`, `MensaMealItem`, `MensaDaySection`, `ReportModal` — rendered HTML checked for correct output, edge cases (empty meals, allergens, vegan/vegetarian badges, hidden form inputs)
 
+- [x] End-to-end tests with Playwright in `frontend/tests/e2e/`: `public-pages.spec.ts`, `auth.spec.ts`, `account.spec.ts`, `events.spec.ts`, `jobs.spec.ts`, `reports.spec.ts` — run against a full Docker Compose stack with a seeded database (`SEED=true docker-compose up`). Auth state is saved once via `auth.setup.ts` and reused by authenticated specs. Run with `yarn test:e2e` inside `frontend/`.
+
 **Still to do:**
 
 - **API unit tests** — extend the existing Jest suite as new Strapi services are written. Priorities: any importers added under P7, the `Report` submission logic from P3, and any custom validation or lifecycle hooks.
-- **End-to-end tests** — use Playwright to cover the critical user journeys: viewing events and jobs, submitting a new job offer, submitting a new event, and the login/logout flow. These require a running Strapi instance and are best run in CI against a seeded test database.
 - **CI integration** — add a GitHub Actions workflow that runs `yarn test` in both `api/` and `frontend/` on every pull request. E2E tests can run on a slower schedule (nightly or on merge to main) using `docker-compose` to spin up the full stack.
 
-**Open questions:**
+**Open questions:** none
 
-- Should E2E tests run against a dedicated test Strapi instance with a seeded SQLite database, or against a Docker Compose stack mirroring production (PostgreSQL)?
-- Should Playwright tests be kept in a top-level `e2e/` directory or inside `frontend/`?
-- Are snapshot/visual regression tests worth adding for dark-mode work (P9)?
-
-## Done
+---
 
 ### P11 Highlight Mensa Meal on Navigation from Frontpage
 

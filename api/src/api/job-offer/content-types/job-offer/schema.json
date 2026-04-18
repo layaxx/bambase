@@ -23,6 +23,35 @@
       "type": "text",
       "required": true
     },
+    "job_type": {
+      "type": "enumeration",
+      "required": true,
+      "default": "other",
+      "enum": [
+        "part_time",
+        "internship",
+        "working_student",
+        "research_assistant",
+        "thesis",
+        "volunteer",
+        "other"
+      ]
+    },
+    "field": {
+      "type": "enumeration",
+      "required": false,
+      "default": "other",
+      "enum": [
+        "it",
+        "marketing",
+        "administration",
+        "research",
+        "gastronomy",
+        "retail",
+        "education",
+        "other"
+      ]
+    },
     "company": {
       "type": "string",
       "required": true

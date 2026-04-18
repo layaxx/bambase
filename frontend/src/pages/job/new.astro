@@ -50,6 +50,8 @@ const generalError = result?.error && !isInputError(result.error) ? result.error
       "location",
       "working_hours",
       "description",
+      "job_type",
+      "field",
       "external_url",
       "contact_name",
       "contact_mail",
@@ -62,7 +64,11 @@ const generalError = result?.error && !isInputError(result.error) ? result.error
     if (saved) {
       const draft = JSON.parse(saved) as Record<string, string>
       for (const name of FIELDS) {
-        const el = form.elements.namedItem(name) as HTMLInputElement | HTMLTextAreaElement | null
+        const el = form.elements.namedItem(name) as
+          | HTMLInputElement
+          | HTMLTextAreaElement
+          | HTMLSelectElement
+          | null
         if (el && draft[name]) el.value = draft[name]
       }
     }
@@ -73,7 +79,11 @@ const generalError = result?.error && !isInputError(result.error) ? result.error
       submitting = true
       const draft: Record<string, string> = {}
       for (const name of FIELDS) {
-        const el = form.elements.namedItem(name) as HTMLInputElement | HTMLTextAreaElement | null
+        const el = form.elements.namedItem(name) as
+          | HTMLInputElement
+          | HTMLTextAreaElement
+          | HTMLSelectElement
+          | null
         if (el) draft[name] = el.value
       }
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify(draft))
@@ -153,6 +163,34 @@ const generalError = result?.error && !isInputError(result.error) ? result.error
             <p class="mt-1 text-sm text-error">{inputErrors.working_hours[0]}</p>
           )
         }
+      </div>
+
+      <div class="grid gap-4 sm:grid-cols-2">
+        <div class="form-control">
+          <label class="label" for="job_type">
+            <span class="label-text font-medium">{t.jobs.fieldJobType}</span>
+          </label>
+          <select class="select select-bordered w-full" id="job_type" name="job_type" required>
+            {
+              Object.entries(t.jobs.jobTypes).map(([value, label]) => (
+                <option value={value}>{label}</option>
+              ))
+            }
+          </select>
+        </div>
+
+        <div class="form-control">
+          <label class="label" for="field">
+            <span class="label-text font-medium">{t.jobs.fieldField}</span>
+          </label>
+          <select class="select select-bordered w-full" id="field" name="field">
+            {
+              Object.entries(t.jobs.jobFields).map(([value, label]) => (
+                <option value={value}>{label}</option>
+              ))
+            }
+          </select>
+        </div>
       </div>
 
       <div class="form-control">

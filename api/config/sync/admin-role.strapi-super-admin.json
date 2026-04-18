@@ -6,7 +6,7 @@
   "locale": null,
   "permissions": [
     {
-      "documentId": "kjymtu6oldeu0ny89akq3sos",
+      "documentId": "v04hvfmctor8ltamq6la2onb",
       "action": "plugin::content-manager.explorer.create",
       "actionParameters": {},
       "subject": "api::event.event",
@@ -15,6 +15,7 @@
           "slug",
           "title",
           "description",
+          "category",
           "start",
           "end",
           "organizer",
@@ -46,7 +47,7 @@
       "locale": null
     },
     {
-      "documentId": "xpta0ec1joeo2vt2xhomyak0",
+      "documentId": "qt7nbie7wic3e259frwxcmp7",
       "action": "plugin::content-manager.explorer.read",
       "actionParameters": {},
       "subject": "api::event.event",
@@ -55,6 +56,7 @@
           "slug",
           "title",
           "description",
+          "category",
           "start",
           "end",
           "organizer",
@@ -68,7 +70,7 @@
       "locale": null
     },
     {
-      "documentId": "nxnhap7jgae5d4upu4b54hfp",
+      "documentId": "c6fjhqykgemduhq98xm4xywa",
       "action": "plugin::content-manager.explorer.update",
       "actionParameters": {},
       "subject": "api::event.event",
@@ -77,6 +79,7 @@
           "slug",
           "title",
           "description",
+          "category",
           "start",
           "end",
           "organizer",
@@ -90,7 +93,7 @@
       "locale": null
     },
     {
-      "documentId": "hlgmf145me7psfhkl0xwbelk",
+      "documentId": "qaq9fen1mz3pds2dr0s9mh29",
       "action": "plugin::content-manager.explorer.create",
       "actionParameters": {},
       "subject": "api::job-offer.job-offer",
@@ -99,6 +102,8 @@
           "uuid",
           "title",
           "description",
+          "job_type",
+          "field",
           "company",
           "location",
           "online_status",
@@ -135,7 +140,7 @@
       "locale": null
     },
     {
-      "documentId": "i4j6b3gqbdft51430rqszub0",
+      "documentId": "f4rc2zealgodgprtvzmp20kc",
       "action": "plugin::content-manager.explorer.read",
       "actionParameters": {},
       "subject": "api::job-offer.job-offer",
@@ -144,6 +149,8 @@
           "uuid",
           "title",
           "description",
+          "job_type",
+          "field",
           "company",
           "location",
           "online_status",
@@ -162,7 +169,7 @@
       "locale": null
     },
     {
-      "documentId": "s259ftna87c7qabhdv0wmxjd",
+      "documentId": "mtcp6cxdg0eorxm6x76ib1uu",
       "action": "plugin::content-manager.explorer.update",
       "actionParameters": {},
       "subject": "api::job-offer.job-offer",
@@ -171,6 +178,8 @@
           "uuid",
           "title",
           "description",
+          "job_type",
+          "field",
           "company",
           "location",
           "online_status",

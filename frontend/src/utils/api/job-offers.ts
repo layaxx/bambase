@@ -1,5 +1,30 @@
 import { client, strapiUrl } from "./client"
 
+export const JOB_TYPES = [
+  "part_time",
+  "internship",
+  "working_student",
+  "research_assistant",
+  "thesis",
+  "volunteer",
+  "other",
+] as const
+
+export type JobType = (typeof JOB_TYPES)[number]
+
+export const JOB_FIELDS = [
+  "it",
+  "marketing",
+  "administration",
+  "research",
+  "gastronomy",
+  "retail",
+  "education",
+  "other",
+] as const
+
+export type JobField = (typeof JOB_FIELDS)[number]
+
 export type JobOffer = {
   documentId: string
   uuid: string
@@ -11,6 +36,8 @@ export type JobOffer = {
   working_hours: number
   offline_after?: string
   external_url?: string
+  job_type: JobType
+  field: JobField
   contact: {
     name?: string
     mail?: string

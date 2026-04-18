@@ -9,6 +9,7 @@ export const EVENTS = [
     start: add(new Date(), { days: 1, hours: 20 }),
     end: add(new Date(), { days: 1, hours: 22 }),
     external_id: "filmvorfuehrung-im-kino",
+    category: "culture",
     isOwned: true,
   },
   {
@@ -19,6 +20,7 @@ export const EVENTS = [
     start: add(new Date(), { days: 2, hours: 14 }),
     end: add(new Date(), { days: 2, hours: 16 }),
     external_id: "stadtfuehrung-durch-bamberg",
+    category: "other",
     isOwned: false,
   },
   {
@@ -29,6 +31,7 @@ export const EVENTS = [
     start: add(new Date(), { days: 3, hours: 16 }),
     end: add(new Date(), { days: 3, hours: 18 }),
     external_id: "besuch-des-bamberger-doms",
+    category: "other",
     isOwned: false,
   },
   {
@@ -39,6 +42,7 @@ export const EVENTS = [
     start: add(new Date(), { days: 1, hours: 18 }),
     end: add(new Date(), { days: 1, hours: 20 }),
     external_id: "hochschulsport-volleyball",
+    category: "sport",
     isOwned: false,
   },
   {
@@ -48,6 +52,7 @@ export const EVENTS = [
     start: add(new Date(), { days: 4, hours: 9 }),
     end: add(new Date(), { days: 4, hours: 10, minutes: 30 }),
     external_id: "hochschulsport-yoga",
+    category: "sport",
     isOwned: false,
   },
   {
@@ -58,6 +63,7 @@ export const EVENTS = [
     start: add(new Date(), { days: 1, hours: 21 }),
     end: add(new Date(), { days: 1, hours: 24 }),
     external_id: "live-club-konzert",
+    category: "culture",
     isOwned: false,
   },
   {
@@ -68,6 +74,7 @@ export const EVENTS = [
     start: add(new Date(), { days: 5, hours: 18 }),
     end: add(new Date(), { days: 5, hours: 20 }),
     external_id: "uni-vortrag-ki",
+    category: "university",
     isOwned: false,
   },
   {
@@ -78,6 +85,7 @@ export const EVENTS = [
     start: add(new Date(), { days: 7, hours: 20 }),
     end: add(new Date(), { days: 8, hours: 2 }),
     external_id: "uni-ersti-party",
+    category: "party",
     isOwned: false,
   },
   {
@@ -88,6 +96,7 @@ export const EVENTS = [
     start: add(new Date(), { days: 3, hours: 11 }),
     end: add(new Date(), { days: 3, hours: 12 }),
     external_id: "bibliothek-fuehrung",
+    category: "university",
     isOwned: false,
   },
   {
@@ -98,6 +107,7 @@ export const EVENTS = [
     start: add(new Date(), { days: 1, hours: 10 }),
     end: add(new Date(), { days: 1, hours: 12 }),
     external_id: "studentenwerk-beratung",
+    category: "social",
     isOwned: false,
   },
 ] as const

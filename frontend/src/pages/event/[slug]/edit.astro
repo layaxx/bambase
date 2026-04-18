@@ -120,6 +120,21 @@ function toLocalInput(iso: string) {
       </div>
 
       <div class="form-control">
+        <label class="label" for="category">
+          <span class="label-text font-medium">{t.events.fieldCategory}</span>
+        </label>
+        <select class="select select-bordered w-full" id="category" name="category" required>
+          {
+            Object.entries(t.events.categories).map(([value, label]) => (
+              <option selected={event.category === value} value={value}>
+                {label}
+              </option>
+            ))
+          }
+        </select>
+      </div>
+
+      <div class="form-control">
         <label class="label" for="description">
           <span class="label-text font-medium">{t.events.fieldDescription}</span>
         </label>

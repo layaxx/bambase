@@ -44,7 +44,7 @@ const generalError = result?.error && !isInputError(result.error) ? result.error
 
   <script>
     const STORAGE_KEY = "event-new-draft"
-    const FIELDS = ["title", "organizer", "start", "end", "description", "external_url"]
+    const FIELDS = ["title", "organizer", "start", "end", "description", "category", "external_url"]
 
     const form = document.querySelector<HTMLFormElement>("form")!
 
@@ -53,7 +53,11 @@ const generalError = result?.error && !isInputError(result.error) ? result.error
     if (saved) {
       const draft = JSON.parse(saved) as Record<string, string>
       for (const name of FIELDS) {
-        const el = form.elements.namedItem(name) as HTMLInputElement | HTMLTextAreaElement | null
+        const el = form.elements.namedItem(name) as
+          | HTMLInputElement
+          | HTMLTextAreaElement
+          | HTMLSelectElement
+          | null
         if (el && draft[name]) el.value = draft[name]
       }
     }
@@ -68,7 +72,11 @@ const generalError = result?.error && !isInputError(result.error) ? result.error
       submitting = true
       const draft: Record<string, string> = {}
       for (const name of FIELDS) {
-        const el = form.elements.namedItem(name) as HTMLInputElement | HTMLTextAreaElement | null
+        const el = form.elements.namedItem(name) as
+          | HTMLInputElement
+          | HTMLTextAreaElement
+          | HTMLSelectElement
+          | null
         if (el) draft[name] = el.value
       }
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify(draft))
@@ -140,6 +148,19 @@ const generalError = result?.error && !isInputError(result.error) ? result.error
           />
           {inputErrors.end && <p class="mt-1 text-sm text-error">{inputErrors.end[0]}</p>}
         </div>
+      </div>
+
+      <div class="form-control">
+        <label class="label" for="category">
+          <span class="label-text font-medium">{t.events.fieldCategory}</span>
+        </label>
+        <select class="select select-bordered w-full" id="category" name="category" required>
+          {
+            Object.entries(t.events.categories).map(([value, label]) => (
+              <option value={value}>{label}</option>
+            ))
+          }
+        </select>
       </div>
 
       <div class="form-control">

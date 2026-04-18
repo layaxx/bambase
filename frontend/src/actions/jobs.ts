@@ -1,6 +1,7 @@
 import { defineAction, ActionError } from "astro:actions"
 import { z } from "astro/zod"
 import { strapiUrl } from "@/utils/api"
+import { JOB_TYPES, JOB_FIELDS } from "@/utils/api/job-offers"
 
 const jobCreateSchema = z.object({
   title: z.string().min(1, "Bitte Stellenbezeichnung eingeben."),
@@ -8,6 +9,8 @@ const jobCreateSchema = z.object({
   location: z.string().min(1, "Bitte Ort eingeben."),
   working_hours: z.coerce.number().int().min(0, "Bitte gültige Stundenzahl eingeben."),
   description: z.string().min(1, "Bitte Beschreibung eingeben."),
+  job_type: z.enum(JOB_TYPES).default("other"),
+  field: z.enum(JOB_FIELDS).default("other"),
   contact_name: z.string().optional(),
   contact_mail: z.string().optional(),
   contact_phone: z.string().optional(),
@@ -73,6 +76,8 @@ export const jobs = {
       location: z.string().min(1, "Bitte Ort eingeben."),
       working_hours: z.coerce.number().int().min(0, "Bitte gültige Stundenzahl eingeben."),
       description: z.string().min(1, "Bitte Beschreibung eingeben."),
+      job_type: z.enum(JOB_TYPES).default("other"),
+      field: z.enum(JOB_FIELDS).default("other"),
       contact_name: z.string().optional(),
       contact_mail: z.string().optional(),
       contact_phone: z.string().optional(),
@@ -92,6 +97,8 @@ export const jobs = {
             location: fields.location,
             working_hours: fields.working_hours,
             description: fields.description,
+            job_type: fields.job_type,
+            field: fields.field,
             external_url: fields.external_url || undefined,
             contact: {
               name: fields.contact_name || undefined,
@@ -136,6 +143,8 @@ export const jobs = {
             location: input.location,
             working_hours: input.working_hours,
             description: input.description,
+            job_type: input.job_type,
+            field: input.field,
             external_url: input.external_url || undefined,
             contact: {
               name: input.contact_name || undefined,

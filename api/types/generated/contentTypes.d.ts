@@ -396,6 +396,11 @@ export interface ApiEventEvent extends Struct.CollectionTypeSchema {
     draftAndPublish: false
   }
   attributes: {
+    category: Schema.Attribute.Enumeration<
+      ["university", "sport", "party", "culture", "social", "other"]
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<"other">
     createdAt: Schema.Attribute.DateTime
     createdBy: Schema.Attribute.Relation<"oneToOne", "admin::user"> & Schema.Attribute.Private
     description: Schema.Attribute.Text & Schema.Attribute.Required
@@ -434,7 +439,33 @@ export interface ApiJobOfferJobOffer extends Struct.CollectionTypeSchema {
     createdBy: Schema.Attribute.Relation<"oneToOne", "admin::user"> & Schema.Attribute.Private
     description: Schema.Attribute.Text & Schema.Attribute.Required
     external_url: Schema.Attribute.String
+    field: Schema.Attribute.Enumeration<
+      [
+        "it",
+        "marketing",
+        "administration",
+        "research",
+        "gastronomy",
+        "retail",
+        "education",
+        "other",
+      ]
+    > &
+      Schema.Attribute.DefaultTo<"other">
     file: Schema.Attribute.Media<"files", true>
+    job_type: Schema.Attribute.Enumeration<
+      [
+        "part_time",
+        "internship",
+        "working_student",
+        "research_assistant",
+        "thesis",
+        "volunteer",
+        "other",
+      ]
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<"other">
     locale: Schema.Attribute.String & Schema.Attribute.Private
     localizations: Schema.Attribute.Relation<"oneToMany", "api::job-offer.job-offer"> &
       Schema.Attribute.Private
