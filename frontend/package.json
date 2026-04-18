@@ -1,9 +1,14 @@
 {
-  "name": "frontend",
+  "name": "bambase-frontend",
+  "license": "AGPL-3.0-only",
   "type": "module",
   "version": "0.0.1",
   "engines": {
     "node": ">=22.12.0"
+  },
+  "author": {
+    "name": "Yannick Lang",
+    "email": "bambase@y-lang.eu"
   },
   "scripts": {
     "dev": "astro dev",
