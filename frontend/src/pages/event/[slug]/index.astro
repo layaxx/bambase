@@ -8,6 +8,7 @@ import IconArrowLeft from "@/components/icons/IconArrowLeft.astro"
 import IconClock from "@/components/icons/IconClock.astro"
 import IconExternalLink from "@/components/icons/IconExternalLink.astro"
 import ReportModal from "@/components/ReportModal.astro"
+import EventLocation from "@/components/events/EventLocation.astro"
 
 const t = useTranslations(Astro.locals.locale)
 const dateLocale = t.mensa.dateLocale
@@ -35,6 +36,8 @@ if (reportResult) {
 
 const reported = Astro.url.searchParams.get("reported")
 const formattedEventStart = event ? formatDateTime(event.start, dateLocale) : null
+
+const location = event?.map_location ?? event?.custom_location
 ---
 
 <PageLayout>
@@ -137,6 +140,8 @@ const formattedEventStart = event ? formatDateTime(event.start, dateLocale) : nu
                 </div>
               </dl>
             </div>
+
+            {location ? <EventLocation location={location} /> : null}
 
             {event.external_url && (
               <a

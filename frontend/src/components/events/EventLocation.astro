@@ -1,0 +1,43 @@
+---
+import { formatAddress } from "@/utils/map"
+
+import { useTranslations } from "@/i18n/translations"
+import IconMapPin from "@/components/icons/IconMapPin.astro"
+import type { EventMapLocation, EventCustomLocation } from "@/utils/api"
+
+interface Props {
+  location: EventMapLocation | EventCustomLocation
+}
+
+const { location } = Astro.props
+const t = useTranslations(Astro.locals.locale)
+---
+
+<div class="rounded-xl border border-base-300 bg-base-100 p-5">
+  <dt class="mb-2 text-sm text-base-content/60">{t.events.locationLabel}</dt>
+  <div class="flex items-start gap-2">
+    <IconMapPin class="mt-0.5 h-4 w-4 shrink-0 text-base-content/50" />
+    <div class="min-w-0">
+      <p class="text-sm font-medium leading-snug">{location.name}</p>
+
+      <p class="mt-0.5 text-xs text-base-content/60">
+        {
+          location.address &&
+            typeof location.address === "object" &&
+            formatAddress(location.address)
+        }
+        {location.address && typeof location.address === "string" && location.address}
+      </p>
+      {
+        "category" in location && location.category && (
+          <a
+            class="mt-1 inline-flex items-center gap-1 text-xs text-primary hover:underline"
+            href={`/map?filter=${location.category}`}
+          >
+            {t.events.viewOnMap}
+          </a>
+        )
+      }
+    </div>
+  </div>
+</div>

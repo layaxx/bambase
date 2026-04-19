@@ -1,6 +1,19 @@
 import { add } from "date-fns"
 
-export const EVENTS = [
+type EventSeed = {
+  title: string
+  description: string
+  organizer: string
+  start: Date
+  end: Date
+  external_id: string
+  category: "university" | "sport" | "party" | "culture" | "social" | "other"
+  isOwned: boolean
+  map_location_name?: string
+  custom_location?: { name: string; address?: string; city?: string }
+}
+
+export const EVENTS: EventSeed[] = [
   {
     title: "Filmvorführung im Kino",
     description:
@@ -11,6 +24,7 @@ export const EVENTS = [
     external_id: "filmvorfuehrung-im-kino",
     category: "culture",
     isOwned: true,
+    custom_location: { name: "Kino Bamberg", address: "Hautpwachstraße 6", city: "Bamberg" },
   },
   {
     title: "Stadtführung durch Bamberg",
@@ -22,6 +36,7 @@ export const EVENTS = [
     external_id: "stadtfuehrung-durch-bamberg",
     category: "other",
     isOwned: false,
+    custom_location: { name: "Altes Rathaus", address: "Obere Brücke 1", city: "Bamberg" },
   },
   {
     title: "Besuch des Bamberger Doms",
@@ -33,6 +48,7 @@ export const EVENTS = [
     external_id: "besuch-des-bamberger-doms",
     category: "other",
     isOwned: false,
+    custom_location: { name: "Bamberger Dom", address: "Domplatz 5", city: "Bamberg" },
   },
   {
     title: "Hochschulsport: Volleyball",
@@ -44,6 +60,7 @@ export const EVENTS = [
     external_id: "hochschulsport-volleyball",
     category: "sport",
     isOwned: false,
+    map_location_name: "Hochschulsport (FEKI)",
   },
   {
     title: "Hochschulsport: Yoga für Anfänger",
@@ -54,6 +71,7 @@ export const EVENTS = [
     external_id: "hochschulsport-yoga",
     category: "sport",
     isOwned: false,
+    map_location_name: "Hochschulsport (FEKI)",
   },
   {
     title: "Livekonzert: Indie Night",
@@ -65,6 +83,7 @@ export const EVENTS = [
     external_id: "live-club-konzert",
     category: "culture",
     isOwned: false,
+    map_location_name: "Live-Club Bamberg",
   },
   {
     title: "Gastvortrag: KI im Alltag",
@@ -76,6 +95,7 @@ export const EVENTS = [
     external_id: "uni-vortrag-ki",
     category: "university",
     isOwned: false,
+    map_location_name: "WE5 (ERBA) – An der Weberei 5",
   },
   {
     title: "Ersti-Party",
@@ -87,6 +107,7 @@ export const EVENTS = [
     external_id: "uni-ersti-party",
     category: "party",
     isOwned: false,
+    map_location_name: "DO2A/AULA – Aula/Dominikanerbau",
   },
   {
     title: "Bibliotheksführung für Erstsemester",
@@ -98,6 +119,7 @@ export const EVENTS = [
     external_id: "bibliothek-fuehrung",
     category: "university",
     isOwned: false,
+    map_location_name: "Teilbibliothek 3 (SOWi) / Zentralbibliothek",
   },
   {
     title: "Offene Sozialberatung",
@@ -109,5 +131,6 @@ export const EVENTS = [
     external_id: "studentenwerk-beratung",
     category: "social",
     isOwned: false,
+    map_location_name: "SWerk Würzburg – Außenstelle Bamberg",
   },
-] as const
+]

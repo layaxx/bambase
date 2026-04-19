@@ -43,6 +43,12 @@
       "type": "component",
       "component": "map.address",
       "repeatable": false
+    },
+    "events": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::event.event",
+      "mappedBy": "map_location"
     }
   }
 }

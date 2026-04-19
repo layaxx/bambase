@@ -1,0 +1,339 @@
+---
+import type { actions } from "astro:actions"
+import type { MapLocation } from "@/utils/api"
+import { useTranslations } from "@/i18n/translations"
+
+interface Props {
+  action: typeof actions.events.create | typeof actions.events.update
+  submitLabel: string
+  allLocations: MapLocation[]
+  inputErrors: Record<string, string[] | undefined>
+  documentId?: string
+  enableDraft?: boolean
+  initialValues?: {
+    title?: string
+    organizer?: string
+    start?: string
+    end?: string
+    category?: string
+    description?: string
+    external_url?: string
+    locationType?: "linked" | "custom" | "none"
+    map_location_documentId?: string
+    custom_location_name?: string
+    custom_location_address?: string
+    custom_location_city?: string
+  }
+}
+
+const {
+  action,
+  submitLabel,
+  allLocations,
+  inputErrors,
+  documentId,
+  enableDraft = false,
+  initialValues = {},
+} = Astro.props
+
+const t = useTranslations(Astro.locals.locale)
+
+const initialLocationType = initialValues.locationType ?? "none"
+---
+
+<form
+  action={action}
+  class="flex max-w-2xl flex-col gap-6"
+  data-draft-key={enableDraft ? "event-new-draft" : undefined}
+  method="POST"
+>
+  {documentId && <input name="documentId" type="hidden" value={documentId} />}
+
+  <div class="flex flex-col gap-4">
+    <div class="form-control">
+      <label class="label" for="title">
+        <span class="label-text font-medium">{t.events.fieldTitle}</span>
+      </label>
+      <input
+        class:list={["input input-bordered w-full", inputErrors.title && "input-error"]}
+        id="title"
+        name="title"
+        required
+        type="text"
+        value={initialValues.title}
+      />
+      {inputErrors.title && <p class="mt-1 text-sm text-error">{inputErrors.title[0]}</p>}
+    </div>
+
+    <div class="form-control">
+      <label class="label" for="organizer">
+        <span class="label-text font-medium">{t.events.fieldOrganizer}</span>
+      </label>
+      <input
+        class:list={["input input-bordered w-full", inputErrors.organizer && "input-error"]}
+        id="organizer"
+        name="organizer"
+        required
+        type="text"
+        value={initialValues.organizer}
+      />
+      {inputErrors.organizer && <p class="mt-1 text-sm text-error">{inputErrors.organizer[0]}</p>}
+    </div>
+
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div class="form-control">
+        <label class="label" for="start">
+          <span class="label-text font-medium">{t.events.fieldStart}</span>
+        </label>
+        <input
+          class:list={["input input-bordered w-full", inputErrors.start && "input-error"]}
+          id="start"
+          name="start"
+          required
+          type="datetime-local"
+          value={initialValues.start}
+        />
+        {inputErrors.start && <p class="mt-1 text-sm text-error">{inputErrors.start[0]}</p>}
+      </div>
+
+      <div class="form-control">
+        <label class="label" for="end">
+          <span class="label-text font-medium">{t.events.fieldEnd}</span>
+        </label>
+        <input
+          class:list={["input input-bordered w-full", inputErrors.end && "input-error"]}
+          id="end"
+          name="end"
+          required
+          type="datetime-local"
+          value={initialValues.end}
+        />
+        {inputErrors.end && <p class="mt-1 text-sm text-error">{inputErrors.end[0]}</p>}
+      </div>
+    </div>
+
+    <div class="form-control">
+      <label class="label" for="category">
+        <span class="label-text font-medium">{t.events.fieldCategory}</span>
+      </label>
+      <select class="select select-bordered w-full" id="category" name="category" required>
+        {
+          Object.entries(t.events.categories).map(([value, label]) => (
+            <option selected={initialValues.category === value} value={value}>
+              {label}
+            </option>
+          ))
+        }
+      </select>
+    </div>
+
+    <div class="form-control">
+      <label class="label" for="description">
+        <span class="label-text font-medium">{t.events.fieldDescription}</span>
+      </label>
+      <textarea
+        class:list={[
+          "textarea textarea-bordered w-full resize-y",
+          inputErrors.description && "textarea-error",
+        ]}
+        id="description"
+        name="description"
+        required
+        rows="6">{initialValues.description}</textarea
+      >
+      {
+        inputErrors.description && (
+          <p class="mt-1 text-sm text-error">{inputErrors.description[0]}</p>
+        )
+      }
+    </div>
+
+    <div class="form-control">
+      <label class="label" for="external_url">
+        <span class="label-text font-medium">
+          {t.events.fieldExternalUrl}
+          <span class="font-normal text-base-content/50"> {t.events.optionalLabel}</span>
+        </span>
+      </label>
+      <input
+        class:list={["input input-bordered w-full", inputErrors.external_url && "input-error"]}
+        id="external_url"
+        name="external_url"
+        type="url"
+        value={initialValues.external_url ?? ""}
+      />
+      {
+        inputErrors.external_url && (
+          <p class="mt-1 text-sm text-error">{inputErrors.external_url[0]}</p>
+        )
+      }
+    </div>
+
+    <div class="form-control">
+      <span class="label-text mb-2 font-medium">
+        {t.events.fieldLocation}
+        <span class="font-normal text-base-content/50"> {t.events.optionalLabel}</span>
+      </span>
+      <div class="flex flex-wrap gap-4">
+        <label class="flex cursor-pointer items-center gap-2">
+          <input
+            checked={initialLocationType === "none"}
+            class="radio radio-sm"
+            name="location_type"
+            type="radio"
+            value="none"
+          />
+          <span class="text-sm">{t.events.locationTypeNone}</span>
+        </label>
+        <label class="flex cursor-pointer items-center gap-2">
+          <input
+            checked={initialLocationType === "linked"}
+            class="radio radio-sm"
+            name="location_type"
+            type="radio"
+            value="linked"
+          />
+          <span class="text-sm">{t.events.locationTypeLinked}</span>
+        </label>
+        <label class="flex cursor-pointer items-center gap-2">
+          <input
+            checked={initialLocationType === "custom"}
+            class="radio radio-sm"
+            name="location_type"
+            type="radio"
+            value="custom"
+          />
+          <span class="text-sm">{t.events.locationTypeCustom}</span>
+        </label>
+      </div>
+
+      <div
+        class:list={["mt-3", initialLocationType !== "linked" && "hidden"]}
+        id="linked-location-section"
+      >
+        <select class="select select-bordered w-full" name="map_location_id">
+          <option value="">— {t.events.locationTypeLinked} —</option>
+          {
+            allLocations.map((loc) => (
+              <option
+                selected={initialValues.map_location_documentId === loc.documentId}
+                value={loc.documentId}
+              >
+                {loc.name}
+                {loc.address?.city ? ` · ${loc.address.city}` : ""}
+              </option>
+            ))
+          }
+        </select>
+      </div>
+
+      <div
+        class:list={["mt-3 flex-col gap-3", initialLocationType !== "custom" && "hidden"]}
+        id="custom-location-section"
+      >
+        <input
+          class="input input-bordered w-full"
+          name="custom_location_name"
+          placeholder={t.events.fieldLocationName}
+          type="text"
+          value={initialValues.custom_location_name ?? ""}
+        />
+        <input
+          class="input input-bordered w-full"
+          name="custom_location_address"
+          placeholder={`${t.events.fieldLocationAddress} ${t.events.optionalLabel}`}
+          type="text"
+          value={initialValues.custom_location_address ?? ""}
+        />
+        <input
+          class="input input-bordered w-full"
+          name="custom_location_city"
+          placeholder={`${t.events.fieldLocationCity} ${t.events.optionalLabel}`}
+          type="text"
+          value={initialValues.custom_location_city ?? ""}
+        />
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <button class="btn btn-primary" type="submit">
+      {submitLabel}
+    </button>
+  </div>
+</form>
+
+<script>
+  const FIELDS = [
+    "title",
+    "organizer",
+    "start",
+    "end",
+    "description",
+    "category",
+    "external_url",
+    "location_type",
+    "map_location_id",
+    "custom_location_name",
+    "custom_location_address",
+    "custom_location_city",
+  ]
+
+  const form = document.querySelector<HTMLFormElement>("form")!
+  const draftKey = form.dataset.draftKey
+
+  function updateLocationVisibility() {
+    const locationType = (form.elements.namedItem("location_type") as RadioNodeList)?.value
+    const linkedSection = document.getElementById("linked-location-section")!
+    const customSection = document.getElementById("custom-location-section")!
+    linkedSection.classList.toggle("hidden", locationType !== "linked")
+    customSection.classList.toggle("hidden", locationType !== "custom")
+  }
+
+  if (draftKey) {
+    const saved = sessionStorage.getItem(draftKey)
+    if (saved) {
+      const draft = JSON.parse(saved) as Record<string, string>
+      for (const name of FIELDS) {
+        const el = form.elements.namedItem(name) as
+          | HTMLInputElement
+          | HTMLTextAreaElement
+          | HTMLSelectElement
+          | RadioNodeList
+          | null
+        if (el && draft[name]) (el as HTMLInputElement).value = draft[name]
+      }
+    }
+  }
+
+  updateLocationVisibility()
+
+  document.querySelectorAll('[name="location_type"]').forEach((radio) => {
+    radio.addEventListener("change", updateLocationVisibility)
+  })
+
+  if (draftKey) {
+    let submitting = false
+
+    form.addEventListener("submit", () => {
+      submitting = true
+      const draft: Record<string, string> = {}
+      for (const name of FIELDS) {
+        const el = form.elements.namedItem(name) as
+          | HTMLInputElement
+          | HTMLTextAreaElement
+          | HTMLSelectElement
+          | RadioNodeList
+          | null
+        if (el) draft[name] = (el as HTMLInputElement).value
+      }
+      sessionStorage.setItem(draftKey, JSON.stringify(draft))
+    })
+
+    window.addEventListener("pagehide", () => {
+      if (!submitting) {
+        sessionStorage.removeItem(draftKey)
+      }
+    })
+  }
+</script>

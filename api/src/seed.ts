@@ -70,25 +70,49 @@ export async function seed(strapi: Core.Strapi) {
     }
   }
 
-  if (existingEvents === 0) {
-    for (const { isOwned, ...event } of EVENTS) {
-      const createdEvent = await strapi.documents("api::event.event").create({
-        data: {
-          ...event,
-          owner: isOwned ? user.id : undefined,
-        },
-      })
-
-      strapi.log.info(`Seed: created event "${createdEvent.title}"`)
-    }
-  }
+  // Build a name → documentId map for locations (needed for event associations).
+  // Locations are seeded before events so the map is available when creating events.
+  const locationMap = new Map<string, string>()
 
   if (existingLocations === 0) {
     for (const location of LOCATIONS) {
       const created = await strapi.documents("api::location.location").create({
         data: location,
       })
+      locationMap.set(created.name, created.documentId)
       strapi.log.info(`Seed: created location "${created.name}"`)
+    }
+  } else {
+    // Locations already exist — populate the map from the database so events can
+    // still be linked when only the event table is empty.
+    const existing = (await strapi.db.query("api::location.location").findMany({})) as Array<{
+      name: string
+      documentId: string
+    }>
+    for (const loc of existing) {
+      locationMap.set(loc.name, loc.documentId)
+    }
+  }
+
+  if (existingEvents === 0) {
+    for (const { isOwned, map_location_name, custom_location, ...event } of EVENTS) {
+      const mapLocationId = map_location_name ? locationMap.get(map_location_name) : undefined
+      if (map_location_name && !mapLocationId) {
+        strapi.log.warn(
+          `Seed: location "${map_location_name}" not found for event "${event.title}"`
+        )
+      }
+
+      const createdEvent = await strapi.documents("api::event.event").create({
+        data: {
+          ...event,
+          owner: isOwned ? user.id : undefined,
+          ...(mapLocationId ? { map_location: mapLocationId } : {}),
+          ...(custom_location ? { custom_location } : {}),
+        },
+      })
+
+      strapi.log.info(`Seed: created event "${createdEvent.title}"`)
     }
   }
 

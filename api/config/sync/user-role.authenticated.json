@@ -56,6 +56,16 @@
       "locale": null
     },
     {
+      "documentId": "zl6nyd1inzambdabceqa343i",
+      "action": "api::location.location.find",
+      "locale": null
+    },
+    {
+      "documentId": "b108z9n5pqhp9pnwno9r2wh6",
+      "action": "api::location.location.findOne",
+      "locale": null
+    },
+    {
       "documentId": "eey8cmbb7ylyhmacqis5h8pe",
       "action": "plugin::users-permissions.auth.changePassword",
       "locale": null

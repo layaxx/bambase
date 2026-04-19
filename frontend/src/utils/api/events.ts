@@ -1,4 +1,5 @@
 import { client, strapiUrl } from "./client"
+import type { MapLocation } from "./locations"
 
 export const EVENT_CATEGORIES = [
   "university",
@@ -10,6 +11,19 @@ export const EVENT_CATEGORIES = [
 ] as const
 
 export type EventCategory = (typeof EVENT_CATEGORIES)[number]
+
+export type EventMapLocation = Pick<
+  MapLocation,
+  "documentId" | "slug" | "name" | "lat" | "lon" | "category"
+> & {
+  address?: MapLocation["address"]
+}
+
+export type EventCustomLocation = {
+  name: string
+  address?: string
+  city?: string
+}
 
 export type Event = {
   documentId: string
@@ -23,6 +37,8 @@ export type Event = {
   external_url?: string
   owner?: { id: number }
   reports?: { documentId: string }[]
+  map_location?: EventMapLocation
+  custom_location?: EventCustomLocation
 }
 
 export async function fetchEvents(limit = 100): Promise<Event[]> {
@@ -65,6 +81,22 @@ export async function fetchOngoingOrUpcomingEvents(limit = 100): Promise<Event[]
   }
 }
 
+/** Fetch all future events with their map_location populated (used by the map page). */
+export async function fetchUpcomingMapEvents(limit = 200): Promise<Event[]> {
+  try {
+    const result = await client.collection("events").find({
+      sort: ["start:asc"],
+      filters: { end: { $gte: new Date().toISOString() }, map_location: { $ne: null } },
+      populate: { map_location: true },
+      pagination: { limit },
+    })
+    return (result.data ?? []) as unknown as Event[]
+  } catch (error) {
+    console.error("Error fetching upcoming events", error)
+    return []
+  }
+}
+
 export async function fetchEvent(slug: string): Promise<Event | null> {
   try {
     const result = await client.collection("events").find({
@@ -75,6 +107,8 @@ export async function fetchEvent(slug: string): Promise<Event | null> {
           filters: { review_status: { $ne: "dismissed" } },
           fields: [],
         },
+        map_location: { populate: ["address"] },
+        custom_location: true,
       },
       pagination: { limit: 1 },
     })
@@ -82,53 +116,6 @@ export async function fetchEvent(slug: string): Promise<Event | null> {
   } catch (error) {
     console.error("Error fetching event", error)
     return null
-  }
-}
-
-export async function updateEvent(
-  documentId: string,
-  token: string,
-  data: {
-    title: string
-    organizer: string
-    description: string
-    start: string
-    end: string
-    external_url?: string
-  }
-): Promise<{ slug: string } | null> {
-  try {
-    const res = await fetch(`${strapiUrl}/api/events/${documentId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ data }),
-    })
-    if (!res.ok) return null
-    const result = await res.json()
-    return { slug: result?.data?.slug ?? null }
-  } catch (error) {
-    console.error("Error updating event", error)
-    return null
-  }
-}
-
-export async function deleteEvent(documentId: string, token: string): Promise<boolean> {
-  try {
-    const res = await fetch(`${strapiUrl}/api/events/${documentId}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    })
-
-    if (!res.ok) {
-      const errorText = await res.text()
-      console.warn("Failed to delete event:", errorText)
-      return false
-    }
-
-    return res.ok
-  } catch (error) {
-    console.error("Error deleting event", error)
-    return false
   }
 }
 

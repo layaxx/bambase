@@ -132,6 +132,21 @@
           "sortable": false
         }
       },
+      "events": {
+        "edit": {
+          "label": "events",
+          "description": "",
+          "placeholder": "",
+          "visible": true,
+          "editable": true,
+          "mainField": "title"
+        },
+        "list": {
+          "label": "events",
+          "searchable": false,
+          "sortable": false
+        }
+      },
       "createdAt": {
         "edit": {
           "label": "createdAt",
@@ -242,6 +257,12 @@
           {
             "name": "address",
             "size": 12
+          }
+        ],
+        [
+          {
+            "name": "events",
+            "size": 6
           }
         ]
       ]

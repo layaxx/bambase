@@ -403,6 +403,7 @@ export interface ApiEventEvent extends Struct.CollectionTypeSchema {
       Schema.Attribute.DefaultTo<"other">
     createdAt: Schema.Attribute.DateTime
     createdBy: Schema.Attribute.Relation<"oneToOne", "admin::user"> & Schema.Attribute.Private
+    custom_location: Schema.Attribute.Component<"events.event-location", false>
     description: Schema.Attribute.Text & Schema.Attribute.Required
     end: Schema.Attribute.DateTime & Schema.Attribute.Required
     external_id: Schema.Attribute.String
@@ -410,6 +411,7 @@ export interface ApiEventEvent extends Struct.CollectionTypeSchema {
     locale: Schema.Attribute.String & Schema.Attribute.Private
     localizations: Schema.Attribute.Relation<"oneToMany", "api::event.event"> &
       Schema.Attribute.Private
+    map_location: Schema.Attribute.Relation<"manyToOne", "api::location.location">
     organizer: Schema.Attribute.String & Schema.Attribute.Required
     owner: Schema.Attribute.Relation<"oneToOne", "plugin::users-permissions.user">
     publishedAt: Schema.Attribute.DateTime
@@ -512,6 +514,7 @@ export interface ApiLocationLocation extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime
     createdBy: Schema.Attribute.Relation<"oneToOne", "admin::user"> & Schema.Attribute.Private
     description: Schema.Attribute.String
+    events: Schema.Attribute.Relation<"oneToMany", "api::event.event">
     external_url: Schema.Attribute.String
     lat: Schema.Attribute.Decimal & Schema.Attribute.Required
     locale: Schema.Attribute.String & Schema.Attribute.Private

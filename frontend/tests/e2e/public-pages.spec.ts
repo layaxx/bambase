@@ -61,7 +61,7 @@ test.describe("Events listing (/events)", () => {
 test.describe("Mensa (/mensa)", () => {
   test("page loads without errors", async ({ page }) => {
     await page.goto("/mensa")
-    await expect(page.getByText("Am Wochenende geschlossen")).toBeVisible()
+    await expect(page.getByText("Am Wochenende geschlossen").first()).toBeVisible()
   })
 })
 

@@ -176,6 +176,35 @@
           "sortable": false
         }
       },
+      "map_location": {
+        "edit": {
+          "label": "map_location",
+          "description": "",
+          "placeholder": "",
+          "visible": true,
+          "editable": true,
+          "mainField": "name"
+        },
+        "list": {
+          "label": "map_location",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "custom_location": {
+        "edit": {
+          "label": "custom_location",
+          "description": "",
+          "placeholder": "",
+          "visible": true,
+          "editable": true
+        },
+        "list": {
+          "label": "custom_location",
+          "searchable": false,
+          "sortable": false
+        }
+      },
       "createdAt": {
         "edit": {
           "label": "createdAt",
@@ -244,12 +273,7 @@
       }
     },
     "layouts": {
-      "list": [
-        "id",
-        "slug",
-        "title",
-        "description"
-      ],
+      "list": ["id", "slug", "title", "description"],
       "edit": [
         [
           {
@@ -304,6 +328,18 @@
         [
           {
             "name": "category",
+            "size": 6
+          }
+        ],
+        [
+          {
+            "name": "custom_location",
+            "size": 12
+          }
+        ],
+        [
+          {
+            "name": "map_location",
             "size": 6
           }
         ]

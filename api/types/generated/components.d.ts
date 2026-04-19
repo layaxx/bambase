@@ -1,5 +1,17 @@
 import type { Schema, Struct } from "@strapi/strapi"
 
+export interface EventsEventLocation extends Struct.ComponentSchema {
+  collectionName: "components_events_event_locations"
+  info: {
+    displayName: "EventLocation"
+  }
+  attributes: {
+    address: Schema.Attribute.String
+    city: Schema.Attribute.String
+    name: Schema.Attribute.String & Schema.Attribute.Required
+  }
+}
+
 export interface JobsContact extends Struct.ComponentSchema {
   collectionName: "components_jobs_contacts"
   info: {
@@ -39,6 +51,7 @@ export interface MensaAllergens extends Struct.ComponentSchema {
 declare module "@strapi/strapi" {
   export module Public {
     export interface ComponentSchemas {
+      "events.event-location": EventsEventLocation
       "jobs.contact": JobsContact
       "map.address": MapAddress
       "mensa.allergens": MensaAllergens

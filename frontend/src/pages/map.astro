@@ -2,18 +2,22 @@
 import PageLayout from "@/layouts/PageLayout.astro"
 import PageHeader from "@/components/PageHeader.astro"
 import IconMapPin from "@/components/icons/IconMapPin.astro"
-import { fetchLocations, type MapLocation } from "@/utils/api"
+import { fetchLocations, fetchUpcomingMapEvents, type MapLocation } from "@/utils/api"
+import { formatAddress, type MapEvent } from "@/utils/map"
 import { useTranslations } from "@/i18n/translations"
 
 const t = useTranslations(Astro.locals.locale)
-const locations = await fetchLocations()
+const [locations, upcomingEvents] = await Promise.all([fetchLocations(), fetchUpcomingMapEvents()])
 
-function formatAddress(addr: MapLocation["address"]): string | null {
-  if (!addr) return null
-  const line1 = [addr.street, addr.streetNumber].filter(Boolean).join(" ")
-  const line2 = [addr.zip, addr.city].filter(Boolean).join(" ")
-  return [line1, line2].filter(Boolean).join(", ") || null
-}
+const mapEvents: MapEvent[] = upcomingEvents
+  .filter((ev) => ev.map_location)
+  .map((ev) => ({
+    title: ev.title,
+    slug: ev.slug,
+    start: ev.start,
+    locationId: ev.map_location!.documentId,
+  }))
+
 const categories: MapLocation["category"][] = [
   "university",
   "library",
@@ -22,6 +26,15 @@ const categories: MapLocation["category"][] = [
   "venues",
   "other",
 ]
+
+const timeFilters = [
+  { key: "today", label: t.map.eventFilterToday },
+  { key: "week", label: t.map.eventFilterWeek },
+  { key: "month", label: t.map.eventFilterMonth },
+  { key: "all", label: t.map.eventFilterAll },
+] as const
+
+const upcomingEventsLabel = t.map.upcomingEvents
 ---
 
 <PageLayout>
@@ -29,8 +42,7 @@ const categories: MapLocation["category"][] = [
     <IconMapPin class="h-5 w-5" slot="icon" />
   </PageHeader>
 
-  <!-- Category filters -->
-  <div class="mb-4 flex flex-wrap gap-2">
+  <div class="mb-2 flex flex-wrap gap-2">
     {
       categories.map((cat) => (
         <button class="btn btn-outline btn-sm" data-filter={cat}>
@@ -40,39 +52,58 @@ const categories: MapLocation["category"][] = [
     }
   </div>
 
-  <!-- Map + sidebar -->
+  <div class="mb-4 flex items-center gap-2">
+    <label class="text-sm text-base-content/50" for="event-time-filter">
+      {t.map.eventFilterLabel}:
+    </label>
+    <select class="select select-bordered select-xs" id="event-time-filter">
+      {
+        timeFilters.map(({ key, label }) => (
+          <option selected={key === "week"} value={key}>
+            {label}
+          </option>
+        ))
+      }
+    </select>
+  </div>
+
   <div
     class="flex flex-col gap-4 md:flex-row"
     style="height: calc(100vh - 280px); min-height: 420px;"
   >
-    <!-- Location list -->
     <div
       class="order-2 flex h-48 shrink-0 flex-col overflow-y-auto rounded-xl border border-base-300 bg-base-100 md:order-1 md:h-auto md:w-64"
       id="location-list"
     >
       {
-        locations.map((loc) => (
-          <button
-            class="cursor-pointer border-b border-base-200 px-3 py-2.5 text-left transition-colors last:border-b-0 hover:bg-base-200"
-            data-category={loc.category}
-            data-id={loc.documentId}
-          >
-            <div class="text-sm font-medium leading-snug text-base-content">{loc.name}</div>
-            {loc.description && (
-              <div class="mt-0.5 text-xs text-base-content/50">{loc.description}</div>
-            )}
-            {formatAddress(loc.address) && (
-              <div class="mt-0.5 text-xs text-base-content/40">{formatAddress(loc.address)}</div>
-            )}
-            <div class="mt-1 text-xs font-medium" data-category-label={loc.category}>
-              {t.map.categories[loc.category]}
-            </div>
-          </button>
-        ))
+        locations.map((loc) => {
+          const addr = formatAddress(loc.address)
+          return (
+            <button
+              class="cursor-pointer border-b border-base-200 px-3 py-2.5 text-left transition-colors last:border-b-0 hover:bg-base-200"
+              data-category={loc.category}
+              data-id={loc.documentId}
+            >
+              <div class="flex items-center justify-between gap-2">
+                <div class="text-sm font-medium leading-snug text-base-content">{loc.name}</div>
+                <span
+                  class="badge badge-sm badge-primary hidden shrink-0"
+                  data-event-badge={loc.documentId}
+                />
+              </div>
+              {loc.description && (
+                <div class="mt-0.5 text-xs text-base-content/50">{loc.description}</div>
+              )}
+              {addr && <div class="mt-0.5 text-xs text-base-content/40">{addr}</div>}
+              <div class="mt-1 text-xs font-medium" data-category-label={loc.category}>
+                {t.map.categories[loc.category]}
+              </div>
+            </button>
+          )
+        })
       }
     </div>
 
-    <!-- Map container -->
     <div
       class="order-1 min-h-64 min-w-0 flex-1 rounded-xl border border-base-300 md:order-2"
       id="map"
@@ -120,10 +151,100 @@ const categories: MapLocation["category"][] = [
   }
 </style>
 
-<script define:vars={{ locations }} is:inline>
-  function getCategoryColor(cat) {
+<!--
+  Bridge: define:vars only works on is:inline scripts, so we hoist the
+  server-rendered data into a window property that the module script reads below.
+-->
+<script define:vars={{ locations, mapEvents, upcomingEventsLabel }} is:inline>
+  window.__mapLocations = locations
+  window.__mapEvents = mapEvents
+  window.__upcomingEventsLabel = upcomingEventsLabel
+</script>
+
+<script>
+  import type { MapLocation } from "@/utils/api"
+  import {
+    filterEventsByTime,
+    formatAddress,
+    formatEventDate,
+    groupByLocation,
+    type MapEvent,
+  } from "@/utils/map"
+
+  // Leaflet is loaded from CDN via a dynamically created <script> tag below.
+  declare const L: any
+
+  const locations = (window as unknown as { __mapLocations: MapLocation[] }).__mapLocations
+  const mapEvents = (window as unknown as { __mapEvents: MapEvent[] }).__mapEvents as MapEvent[]
+  const upcomingEventsLabel = (window as unknown as { __upcomingEventsLabel: string })
+    .__upcomingEventsLabel as string
+
+  const categoryLabels: Record<string, string> = {}
+  document.querySelectorAll<HTMLElement>("[data-category-label]").forEach((el) => {
+    categoryLabels[el.dataset.categoryLabel!] = el.textContent ?? ""
+  })
+
+  function getCategoryColor(cat: string): string {
     return getComputedStyle(document.documentElement).getPropertyValue(`--cat-${cat}`).trim()
   }
+
+  function getParam(key: string, fallback: string): string {
+    return new URLSearchParams(location.search).get(key) ?? fallback
+  }
+
+  function setParam(key: string, value: string): void {
+    const params = new URLSearchParams(location.search)
+    params.set(key, value)
+    history.replaceState(null, "", `?${params}`)
+  }
+
+  function makeIcon(color: string, eventCount: number) {
+    const dot = `<div style="width:14px;height:14px;border-radius:50%;background:${color};border:2.5px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.35)"></div>`
+    const badge =
+      eventCount > 0
+        ? `<div style="position:absolute;top:-5px;right:-5px;min-width:14px;height:14px;border-radius:7px;background:#ef4444;color:white;font-size:8px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 2px;box-shadow:0 1px 2px rgba(0,0,0,0.3)">${Math.min(eventCount, 9)}</div>`
+        : ""
+    return L.divIcon({
+      className: "",
+      html: `<div style="position:relative;width:14px;height:14px">${dot}${badge}</div>`,
+      iconSize: [14, 14],
+      iconAnchor: [7, 7],
+      popupAnchor: [0, -10],
+    })
+  }
+
+  function buildPopupHtml(loc: MapLocation, locEvents: MapEvent[]): string {
+    const color = getCategoryColor(loc.category) || "#64748b"
+    const categoryLabel = categoryLabels[loc.category] ?? loc.category
+    const addrLine = formatAddress(loc.address)
+
+    const eventsHtml =
+      locEvents.length > 0
+        ? `<div style="margin-top:8px;padding-top:6px;border-top:1px solid #e5e7eb">
+             <strong style="font-size:11px;color:#555">${upcomingEventsLabel}:</strong>
+             ${locEvents
+               .map(
+                 (ev) =>
+                   `<div style="margin-top:4px">
+                      <a href="/event/${ev.slug}" style="font-size:11px;color:#2563eb;text-decoration:none;font-weight:500">${ev.title}</a>
+                      <span style="font-size:10px;color:#888;display:block">${formatEventDate(ev.start, navigator.language)}</span>
+                    </div>`
+               )
+               .join("")}
+           </div>`
+        : ""
+
+    return `
+      <strong style="font-size:13px">${loc.name}</strong>
+      ${loc.description ? `<br><span style="color:#666;font-size:12px">${loc.description}</span>` : ""}
+      ${addrLine ? `<br><span style="color:#888;font-size:11px">${addrLine}</span>` : ""}
+      ${loc.external_url ? `<br><a href="${loc.external_url}" target="_blank" rel="noopener noreferrer" style="font-size:11px">Website →</a>` : ""}
+      <br><span style="font-size:11px;color:${color}">${categoryLabel}</span>
+      ${eventsHtml}
+    `
+  }
+
+  // ── Map setup ───────────────────────────────────────────────────────────────
 
   const leafletScript = document.createElement("script")
   leafletScript.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
@@ -139,51 +260,53 @@ const categories: MapLocation["category"][] = [
       maxZoom: 19,
     }).addTo(map)
 
-    function makeIcon(color) {
-      return L.divIcon({
-        className: "",
-        html: `<div style="width:14px;height:14px;border-radius:50%;background:${color};border:2.5px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.35)"></div>`,
-        iconSize: [14, 14],
-        iconAnchor: [7, 7],
-        popupAnchor: [0, -10],
-      })
-    }
-
-    const markerMap = {}
+    type MarkerEntry = { marker: any; category: string; loc: MapLocation; color: string }
+    const markerMap: Record<string, MarkerEntry> = {}
 
     locations.forEach((loc) => {
       if (loc.lat == null || loc.lon == null) return
-
       const color = getCategoryColor(loc.category) || "#64748b"
-      const categoryLabel =
-        document.querySelector(`[data-category-label="${loc.category}"]`)?.textContent ??
-        loc.category
-      const addr = loc.address
-      const addrLine = addr
-        ? [
-            [addr.street, addr.streetNumber].filter(Boolean).join(" "),
-            [addr.zip, addr.city].filter(Boolean).join(" "),
-          ]
-            .filter(Boolean)
-            .join(", ")
-        : null
-      const popup = `
-        <strong style="font-size:13px">${loc.name}</strong>
-        ${loc.description ? `<br><span style="color:#666;font-size:12px">${loc.description}</span>` : ""}
-        ${addrLine ? `<br><span style="color:#888;font-size:11px">${addrLine}</span>` : ""}
-        ${loc.external_url ? `<br><a href="${loc.external_url}" target="_blank" rel="noopener noreferrer" style="font-size:11px">Website →</a>` : ""}
-        <br><span style="font-size:11px;color:${color}">${categoryLabel}</span>
-      `
-      const marker = L.marker([loc.lat, loc.lon], { icon: makeIcon(color) })
+      const marker = L.marker([loc.lat, loc.lon], { icon: makeIcon(color, 0) })
         .addTo(map)
-        .bindPopup(popup)
-
-      markerMap[loc.documentId] = { marker, category: loc.category }
+        .bindPopup("")
+      markerMap[loc.documentId] = { marker, category: loc.category, loc, color }
     })
 
-    // Filter logic
-    function applyFilter(filter) {
-      document.querySelectorAll("[data-filter]").forEach((btn) => {
+    // ── time-filter ───────────────────────────────────────────────────────────
+
+    function applyTimeFilter(key: string) {
+      if (!["today", "week", "month", "all"].includes(key)) {
+        key = "week"
+        console.warn(`Invalid time filter key: ${key}, defaulting to "week"`)
+      }
+
+      const byLoc = groupByLocation(
+        filterEventsByTime(mapEvents, key as "today" | "week" | "month" | "all")
+      )
+
+      Object.entries(markerMap).forEach(([locId, { marker, loc, color }]) => {
+        const locEvents = byLoc[locId] ?? []
+        marker.setIcon(makeIcon(color, locEvents.length))
+        marker.setPopupContent(buildPopupHtml(loc, locEvents))
+      })
+
+      document.querySelectorAll<HTMLElement>("[data-event-badge]").forEach((el) => {
+        const count = byLoc[el.dataset.eventBadge!]?.length ?? 0
+        el.textContent = String(count)
+        el.classList.toggle("hidden", count === 0)
+      })
+      ;(document.getElementById("event-time-filter") as HTMLSelectElement).value = key
+      setParam("events", key)
+    }
+
+    document.getElementById("event-time-filter")!.addEventListener("change", (e) => {
+      applyTimeFilter((e.target as HTMLSelectElement).value)
+    })
+
+    // ── category-filter ───────────────────────────────────────────────────────
+
+    function applyFilter(filter: string) {
+      document.querySelectorAll<HTMLElement>("[data-filter]").forEach((btn) => {
         const active = btn.dataset.filter === filter
         btn.classList.toggle("btn-primary", active)
         btn.classList.toggle("btn-outline", !active)
@@ -194,28 +317,32 @@ const categories: MapLocation["category"][] = [
         else map.removeLayer(marker)
       })
 
-      document.querySelectorAll("[data-id]").forEach((item) => {
+      document.querySelectorAll<HTMLElement>("[data-id]").forEach((item) => {
         item.style.display = item.dataset.category === filter ? "" : "none"
       })
+
+      setParam("filter", filter)
     }
 
-    document.querySelectorAll("[data-filter]").forEach((btn) => {
-      btn.addEventListener("click", () => applyFilter(btn.dataset.filter))
+    document.querySelectorAll<HTMLElement>("[data-filter]").forEach((btn) => {
+      btn.addEventListener("click", () => applyFilter(btn.dataset.filter!))
     })
 
-    // Apply filter from URL query param (e.g. /map?filter=university)
-    const urlFilter = new URLSearchParams(location.search).get("filter")
-    applyFilter(urlFilter || "university")
+    // ── click list item → fly to marker ──────────────────────────────────────
 
-    // Click list item → fly to marker
-    document.querySelectorAll("[data-id]").forEach((item) => {
+    document.querySelectorAll<HTMLElement>("[data-id]").forEach((item) => {
       item.addEventListener("click", () => {
-        const entry = markerMap[item.dataset.id]
+        const entry = markerMap[item.dataset.id!]
         if (entry) {
           map.flyTo(entry.marker.getLatLng(), 17, { duration: 0.8 })
           entry.marker.openPopup()
         }
       })
     })
+
+    // ── initialise from URL params ────────────────────────────────────────────
+
+    applyTimeFilter(getParam("events", "week"))
+    applyFilter(getParam("filter", "university"))
   }
 </script>

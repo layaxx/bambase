@@ -2,27 +2,6 @@
 
 ## Upcoming
 
-### P4 Interdependencies (events <-> locations)
-
-Events currently have no structured connection to physical locations. Linking events to map locations would allow users to see where an event is taking place on the map, and conversely, see which events are happening at a given location.
-
-**Work involved:**
-
-- Add a `location` relation field to the `Event` content type pointing to `MapLocation` (requires P1 to be done first, or at least the `MapLocation` model to exist in the API)
-- Update event creation/editing forms to allow selecting a location (with a search/autocomplete)
-- Display the linked location on the event detail page with a mini-map or link to the full map
-- On the map page, show upcoming events as markers or popups on the relevant location pins
-- Optionally add a free-text `location_text` field as a fallback for events at locations not in the database
-
-**Open questions:**
-
-- P1 (map locations API) is a hard prerequisite — should this be blocked until P1 is complete?
-- Should `location` be a strict relation to a `MapLocation` record, or also allow free-text input (for off-campus events)?
-- How should the map display time-bounded event data — show all upcoming events, or only events happening today/this week?
-- Should events without a linked location still appear on the map (e.g., at a generic university pin)?
-
----
-
 ### P6 Filtering for Events, Jobs overview pages
 
 The `/events` and `/jobs` pages currently show all content with no way to filter by date range, category, organizer, or other attributes. Filtering would significantly improve usability as content volume grows.
@@ -112,6 +91,33 @@ The current dark-mode color scheme (DaisyUI 5 + Tailwind CSS 4) needs refinement
 - Should we support a system-preference-based automatic toggle, or only a manual toggle (already in place)?
 
 ## Done
+
+### P4 Interdependencies (events <-> locations)
+
+Events now have a structured connection to physical locations.
+
+**Decisions made:**
+
+- Events can link to a map location (manyToOne relation to `Location`) OR have a free-text `custom_location` component (name, address, city) as a fallback
+- Events without a linked map location do not appear on the map
+- All upcoming events (end ≥ now) with a linked location are shown in the location popup on the map page
+- Location markers show a red badge with the count of upcoming events
+
+**Work involved:**
+
+- [x] Added `map_location` (manyToOne → `api::location.location`) and `custom_location` (component `events.event-location`) to the `Event` schema
+- [x] Added `events` (oneToMany, mappedBy `map_location`) to the `Location` schema
+- [x] Created `api/src/components/events/event-location.json` component with `name`, `address`, `city` fields
+- [x] Updated seed data: locations are seeded first; 7 of 10 seed events are linked to map locations, 3 have custom locations
+- [x] Extended `Event` type and `fetchEvent` to populate `map_location` (with address) and `custom_location`
+- [x] Added `fetchUpcomingMapEvents` for the map page (fetches future events where `end ≥ now` and `map_location` is set)
+- [x] Updated event create/update Astro Actions to accept `location_type` (none/linked/custom) + associated fields
+- [x] Added location section to event create and edit forms via shared `EventForm.astro` component (radio toggle + location select or free-text fields)
+- [x] Created `EventLocation.astro` component for location card display (map pin, name, address, "View on map" link)
+- [x] Event detail page sidebar shows location card with name, address, and "View on map" link
+- [x] Map page fetches upcoming events and displays them in location popups; markers show event count badge
+
+---
 
 ### P5 Categories for Events, Jobs
 

@@ -6,7 +6,7 @@
   "locale": null,
   "permissions": [
     {
-      "documentId": "v04hvfmctor8ltamq6la2onb",
+      "documentId": "xdsg3n5k84vmz9gek0bqftwx",
       "action": "plugin::content-manager.explorer.create",
       "actionParameters": {},
       "subject": "api::event.event",
@@ -22,7 +22,11 @@
           "external_url",
           "owner",
           "external_id",
-          "reports"
+          "reports",
+          "map_location",
+          "custom_location.name",
+          "custom_location.address",
+          "custom_location.city"
         ]
       },
       "conditions": [],
@@ -47,7 +51,7 @@
       "locale": null
     },
     {
-      "documentId": "qt7nbie7wic3e259frwxcmp7",
+      "documentId": "aen5uxfu4p329d89e97gx5ju",
       "action": "plugin::content-manager.explorer.read",
       "actionParameters": {},
       "subject": "api::event.event",
@@ -63,14 +67,18 @@
           "external_url",
           "owner",
           "external_id",
-          "reports"
+          "reports",
+          "map_location",
+          "custom_location.name",
+          "custom_location.address",
+          "custom_location.city"
         ]
       },
       "conditions": [],
       "locale": null
     },
     {
-      "documentId": "c6fjhqykgemduhq98xm4xywa",
+      "documentId": "rvgisufq0jaqm7jhce1djot9",
       "action": "plugin::content-manager.explorer.update",
       "actionParameters": {},
       "subject": "api::event.event",
@@ -86,7 +94,11 @@
           "external_url",
           "owner",
           "external_id",
-          "reports"
+          "reports",
+          "map_location",
+          "custom_location.name",
+          "custom_location.address",
+          "custom_location.city"
         ]
       },
       "conditions": [],
@@ -198,7 +210,7 @@
       "locale": null
     },
     {
-      "documentId": "xmdq8k5u84zgzirzs82kjhel",
+      "documentId": "mtofpf4ndzdu8vgyy8mtr4i7",
       "action": "plugin::content-manager.explorer.create",
       "actionParameters": {},
       "subject": "api::location.location",
@@ -214,7 +226,8 @@
           "address.street",
           "address.streetNumber",
           "address.city",
-          "address.zip"
+          "address.zip",
+          "events"
         ]
       },
       "conditions": [],
@@ -239,7 +252,7 @@
       "locale": null
     },
     {
-      "documentId": "u56yp4sq1zqyvkaz7qcsgdxe",
+      "documentId": "so1amxldzdv2q0dj74w6698r",
       "action": "plugin::content-manager.explorer.read",
       "actionParameters": {},
       "subject": "api::location.location",
@@ -255,14 +268,15 @@
           "address.street",
           "address.streetNumber",
           "address.city",
-          "address.zip"
+          "address.zip",
+          "events"
         ]
       },
       "conditions": [],
       "locale": null
     },
     {
-      "documentId": "qfg4j9b9lt274kcmonwxdgcw",
+      "documentId": "lirs1py8flpu2dauk6l9hj0o",
       "action": "plugin::content-manager.explorer.update",
       "actionParameters": {},
       "subject": "api::location.location",
@@ -278,7 +292,8 @@
           "address.street",
           "address.streetNumber",
           "address.city",
-          "address.zip"
+          "address.zip",
+          "events"
         ]
       },
       "conditions": [],
@@ -371,13 +386,7 @@
       "actionParameters": {},
       "subject": "api::report.report",
       "properties": {
-        "fields": [
-          "reason",
-          "details",
-          "review_status",
-          "event",
-          "job_offer"
-        ]
+        "fields": ["reason", "details", "review_status", "event", "job_offer"]
       },
       "conditions": [],
       "locale": null
@@ -406,13 +415,7 @@
       "actionParameters": {},
       "subject": "api::report.report",
       "properties": {
-        "fields": [
-          "reason",
-          "details",
-          "review_status",
-          "event",
-          "job_offer"
-        ]
+        "fields": ["reason", "details", "review_status", "event", "job_offer"]
       },
       "conditions": [],
       "locale": null
@@ -423,13 +426,7 @@
       "actionParameters": {},
       "subject": "api::report.report",
       "properties": {
-        "fields": [
-          "reason",
-          "details",
-          "review_status",
-          "event",
-          "job_offer"
-        ]
+        "fields": ["reason", "details", "review_status", "event", "job_offer"]
       },
       "conditions": [],
       "locale": null
@@ -440,15 +437,7 @@
       "actionParameters": {},
       "subject": "api::student-group.student-group",
       "properties": {
-        "fields": [
-          "name",
-          "slug",
-          "description",
-          "website",
-          "instagram",
-          "facebook",
-          "email"
-        ]
+        "fields": ["name", "slug", "description", "website", "instagram", "facebook", "email"]
       },
       "conditions": [],
       "locale": null
@@ -477,15 +466,7 @@
       "actionParameters": {},
       "subject": "api::student-group.student-group",
       "properties": {
-        "fields": [
-          "name",
-          "slug",
-          "description",
-          "website",
-          "instagram",
-          "facebook",
-          "email"
-        ]
+        "fields": ["name", "slug", "description", "website", "instagram", "facebook", "email"]
       },
       "conditions": [],
       "locale": null
@@ -496,15 +477,7 @@
       "actionParameters": {},
       "subject": "api::student-group.student-group",
       "properties": {
-        "fields": [
-          "name",
-          "slug",
-          "description",
-          "website",
-          "instagram",
-          "facebook",
-          "email"
-        ]
+        "fields": ["name", "slug", "description", "website", "instagram", "facebook", "email"]
       },
       "conditions": [],
       "locale": null

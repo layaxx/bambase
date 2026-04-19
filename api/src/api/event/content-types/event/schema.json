@@ -58,6 +58,17 @@
       "relation": "oneToMany",
       "target": "api::report.report",
       "mappedBy": "event"
+    },
+    "map_location": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::location.location",
+      "inversedBy": "events"
+    },
+    "custom_location": {
+      "type": "component",
+      "component": "events.event-location",
+      "repeatable": false
     }
   }
 }

@@ -3,6 +3,8 @@ import { actions, isInputError } from "astro:actions"
 import PageLayout from "@/layouts/PageLayout.astro"
 import { useTranslations } from "@/i18n/translations"
 import IconArrowLeft from "@/components/icons/IconArrowLeft.astro"
+import { fetchLocations } from "@/utils/api"
+import EventForm from "@/components/events/EventForm.astro"
 
 const t = useTranslations(Astro.locals.locale)
 
@@ -12,6 +14,7 @@ if (!token) {
 }
 
 const result = Astro.getActionResult(actions.events.create)
+const allLocations = await fetchLocations()
 
 if (result?.data) {
   return Astro.redirect(`/event/${result.data.slug}`)
@@ -42,172 +45,11 @@ const generalError = result?.error && !isInputError(result.error) ? result.error
     )
   }
 
-  <script>
-    const STORAGE_KEY = "event-new-draft"
-    const FIELDS = ["title", "organizer", "start", "end", "description", "category", "external_url"]
-
-    const form = document.querySelector<HTMLFormElement>("form")!
-
-    // Restore saved values on load (matters when page re-renders after a POST error)
-    const saved = sessionStorage.getItem(STORAGE_KEY)
-    if (saved) {
-      const draft = JSON.parse(saved) as Record<string, string>
-      for (const name of FIELDS) {
-        const el = form.elements.namedItem(name) as
-          | HTMLInputElement
-          | HTMLTextAreaElement
-          | HTMLSelectElement
-          | null
-        if (el && draft[name]) el.value = draft[name]
-      }
-    }
-
-    // Track whether the page is leaving due to a form submission.
-    // pagehide fires for both form submits AND link navigation, so we need to
-    // distinguish them: only clear the draft when the user navigates away via a
-    // link (not when the browser is doing a POST round-trip).
-    let submitting = false
-
-    form.addEventListener("submit", () => {
-      submitting = true
-      const draft: Record<string, string> = {}
-      for (const name of FIELDS) {
-        const el = form.elements.namedItem(name) as
-          | HTMLInputElement
-          | HTMLTextAreaElement
-          | HTMLSelectElement
-          | null
-        if (el) draft[name] = el.value
-      }
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(draft))
-    })
-
-    window.addEventListener("pagehide", () => {
-      if (!submitting) {
-        // User navigated away via a link/back button — clear the draft
-        sessionStorage.removeItem(STORAGE_KEY)
-      }
-    })
-  </script>
-
-  <form action={actions.events.create} class="flex max-w-2xl flex-col gap-6" method="POST">
-    <div class="flex flex-col gap-4">
-      <div class="form-control">
-        <label class="label" for="title">
-          <span class="label-text font-medium">{t.events.fieldTitle}</span>
-        </label>
-        <input
-          class:list={["input input-bordered w-full", inputErrors.title && "input-error"]}
-          id="title"
-          name="title"
-          required
-          type="text"
-        />
-        {inputErrors.title && <p class="mt-1 text-sm text-error">{inputErrors.title[0]}</p>}
-      </div>
-
-      <div class="form-control">
-        <label class="label" for="organizer">
-          <span class="label-text font-medium">{t.events.fieldOrganizer}</span>
-        </label>
-        <input
-          class:list={["input input-bordered w-full", inputErrors.organizer && "input-error"]}
-          id="organizer"
-          name="organizer"
-          required
-          type="text"
-        />
-        {inputErrors.organizer && <p class="mt-1 text-sm text-error">{inputErrors.organizer[0]}</p>}
-      </div>
-
-      <div class="grid gap-4 sm:grid-cols-2">
-        <div class="form-control">
-          <label class="label" for="start">
-            <span class="label-text font-medium">{t.events.fieldStart}</span>
-          </label>
-          <input
-            class:list={["input input-bordered w-full", inputErrors.start && "input-error"]}
-            id="start"
-            name="start"
-            required
-            type="datetime-local"
-          />
-          {inputErrors.start && <p class="mt-1 text-sm text-error">{inputErrors.start[0]}</p>}
-        </div>
-
-        <div class="form-control">
-          <label class="label" for="end">
-            <span class="label-text font-medium">{t.events.fieldEnd}</span>
-          </label>
-          <input
-            class:list={["input input-bordered w-full", inputErrors.end && "input-error"]}
-            id="end"
-            name="end"
-            required
-            type="datetime-local"
-          />
-          {inputErrors.end && <p class="mt-1 text-sm text-error">{inputErrors.end[0]}</p>}
-        </div>
-      </div>
-
-      <div class="form-control">
-        <label class="label" for="category">
-          <span class="label-text font-medium">{t.events.fieldCategory}</span>
-        </label>
-        <select class="select select-bordered w-full" id="category" name="category" required>
-          {
-            Object.entries(t.events.categories).map(([value, label]) => (
-              <option value={value}>{label}</option>
-            ))
-          }
-        </select>
-      </div>
-
-      <div class="form-control">
-        <label class="label" for="description">
-          <span class="label-text font-medium">{t.events.fieldDescription}</span>
-        </label>
-        <textarea
-          class:list={[
-            "textarea textarea-bordered w-full resize-y",
-            inputErrors.description && "textarea-error",
-          ]}
-          id="description"
-          name="description"
-          required
-          rows="6"></textarea>
-        {
-          inputErrors.description && (
-            <p class="mt-1 text-sm text-error">{inputErrors.description[0]}</p>
-          )
-        }
-      </div>
-
-      <div class="form-control">
-        <label class="label" for="external_url">
-          <span class="label-text font-medium">
-            {t.events.fieldExternalUrl}
-            <span class="font-normal text-base-content/50"> {t.events.optionalLabel}</span>
-          </span>
-        </label>
-        <input
-          class:list={["input input-bordered w-full", inputErrors.external_url && "input-error"]}
-          id="external_url"
-          name="external_url"
-          type="url"
-        />
-        {
-          inputErrors.external_url && (
-            <p class="mt-1 text-sm text-error">{inputErrors.external_url[0]}</p>
-          )
-        }
-      </div>
-    </div>
-
-    <div>
-      <button class="btn btn-primary" type="submit">
-        {t.events.submitEvent}
-      </button>
-    </div>
-  </form>
+  <EventForm
+    action={actions.events.create}
+    allLocations={allLocations}
+    enableDraft={true}
+    inputErrors={inputErrors}
+    submitLabel={t.events.submitEvent}
+  />
 </PageLayout>
