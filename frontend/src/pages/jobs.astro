@@ -3,7 +3,7 @@ import PageLayout from "@/layouts/PageLayout.astro"
 import PageHeader from "@/components/PageHeader.astro"
 import IconBriefcase from "@/components/icons/IconBriefcase.astro"
 import JobOfferCard from "@/components/JobOfferCard.astro"
-import { fetchJobOffers } from "@/utils/api"
+import { fetchJobOffers, JOB_TYPES, JOB_FIELDS, type JobType, type JobField } from "@/utils/api"
 import { useTranslations } from "@/i18n/translations"
 
 const t = useTranslations(Astro.locals.locale)
@@ -27,15 +27,112 @@ const isLoggedIn = !!Astro.cookies.get("auth_token")?.value
     </div>
   </PageHeader>
 
+  <details class="mb-6" id="filter-panel">
+    <summary class="btn btn-outline btn-sm w-fit cursor-pointer">
+      Filter
+      <span class="badge badge-primary badge-sm ml-1 hidden" id="filter-badge"></span>
+    </summary>
+    <div class="mt-3 space-y-3">
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="text-sm text-base-content/50">{t.jobs.filterType}:</span>
+        <button class="btn btn-outline btn-sm" data-type-filter="all">
+          {t.jobs.filterAll}
+        </button>
+        {
+          JOB_TYPES.map((type: JobType) => (
+            <button class="btn btn-outline btn-sm" data-type-filter={type}>
+              {t.jobs.jobTypes[type]}
+            </button>
+          ))
+        }
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="text-sm text-base-content/50">{t.jobs.filterField}:</span>
+        <button class="btn btn-outline btn-sm" data-field-filter="all">
+          {t.jobs.filterAll}
+        </button>
+        {
+          JOB_FIELDS.map((field: JobField) => (
+            <button class="btn btn-outline btn-sm" data-field-filter={field}>
+              {t.jobs.jobFields[field]}
+            </button>
+          ))
+        }
+      </div>
+    </div>
+  </details>
+
   {
     jobs.length === 0 ? (
       <p class="text-base-content/60">{t.jobs.noJobs}</p>
     ) : (
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" id="jobs-list">
         {jobs.map((job) => (
-          <JobOfferCard job={job} />
+          <div data-field={job.field} data-type={job.job_type}>
+            <JobOfferCard job={job} />
+          </div>
         ))}
       </div>
     )
   }
+  <p class="hidden text-base-content/60" id="no-jobs-msg">{t.jobs.noJobsFiltered}</p>
 </PageLayout>
+
+<script>
+  import { getParam, setParam } from "@/utils/url-params"
+
+  function applyFilters() {
+    const type = getParam("type", "all")
+    const field = getParam("field", "all")
+
+    let anyVisible = false
+    document.querySelectorAll<HTMLElement>("[data-type]").forEach((card) => {
+      const match =
+        (type === "all" || card.dataset.type === type) &&
+        (field === "all" || card.dataset.field === field)
+      card.style.display = match ? "" : "none"
+      if (match) anyVisible = true
+    })
+
+    document.getElementById("no-jobs-msg")?.classList.toggle("hidden", anyVisible)
+    document.getElementById("jobs-list")?.classList.toggle("hidden", !anyVisible)
+
+    const activeCount = (type !== "all" ? 1 : 0) + (field !== "all" ? 1 : 0)
+    const badge = document.getElementById("filter-badge")
+    if (badge) {
+      badge.textContent = String(activeCount)
+      badge.classList.toggle("hidden", activeCount === 0)
+    }
+    // Auto-open the panel so active filters aren't hidden when arriving via a shared URL
+    const panel = document.getElementById("filter-panel") as HTMLDetailsElement | null
+    if (panel && activeCount > 0) panel.open = true
+
+    document.querySelectorAll<HTMLElement>("[data-type-filter]").forEach((btn) => {
+      const active = btn.dataset.typeFilter === type
+      btn.classList.toggle("btn-primary", active)
+      btn.classList.toggle("btn-outline", !active)
+    })
+
+    document.querySelectorAll<HTMLElement>("[data-field-filter]").forEach((btn) => {
+      const active = btn.dataset.fieldFilter === field
+      btn.classList.toggle("btn-primary", active)
+      btn.classList.toggle("btn-outline", !active)
+    })
+  }
+
+  document.querySelectorAll<HTMLElement>("[data-type-filter]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      setParam("type", btn.dataset.typeFilter!)
+      applyFilters()
+    })
+  })
+
+  document.querySelectorAll<HTMLElement>("[data-field-filter]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      setParam("field", btn.dataset.fieldFilter!)
+      applyFilters()
+    })
+  })
+
+  applyFilters()
+</script>

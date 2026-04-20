@@ -45,6 +45,7 @@ export async function fetchEvents(limit = 100): Promise<Event[]> {
   try {
     const result = await client.collection("events").find({
       sort: ["start:asc"],
+      filters: { end: { $gte: new Date().toISOString() } },
       pagination: { limit },
     })
     return (result.data ?? []) as unknown as Event[]

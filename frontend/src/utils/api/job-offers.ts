@@ -51,6 +51,7 @@ export async function fetchJobOffers(limit = 100): Promise<JobOffer[]> {
   try {
     const result = await client.collection("job-offers").find({
       filters: { online_status: { $eq: "published" } },
+      sort: ["createdAt:desc"],
       populate: ["contact"],
       pagination: { limit },
     })

@@ -170,6 +170,7 @@ const upcomingEventsLabel = t.map.upcomingEvents
     groupByLocation,
     type MapEvent,
   } from "@/utils/map"
+  import { getParam, setParam } from "@/utils/url-params"
 
   // Leaflet is loaded from CDN via a dynamically created <script> tag below.
   declare const L: any
@@ -186,16 +187,6 @@ const upcomingEventsLabel = t.map.upcomingEvents
 
   function getCategoryColor(cat: string): string {
     return getComputedStyle(document.documentElement).getPropertyValue(`--cat-${cat}`).trim()
-  }
-
-  function getParam(key: string, fallback: string): string {
-    return new URLSearchParams(location.search).get(key) ?? fallback
-  }
-
-  function setParam(key: string, value: string): void {
-    const params = new URLSearchParams(location.search)
-    params.set(key, value)
-    history.replaceState(null, "", `?${params}`)
   }
 
   function makeIcon(color: string, eventCount: number) {

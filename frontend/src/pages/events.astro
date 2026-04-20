@@ -3,7 +3,7 @@ import PageLayout from "@/layouts/PageLayout.astro"
 import PageHeader from "@/components/PageHeader.astro"
 import IconCalendar from "@/components/icons/IconCalendar.astro"
 import EventCard from "@/components/EventCard.astro"
-import { fetchEvents } from "@/utils/api"
+import { fetchEvents, EVENT_CATEGORIES } from "@/utils/api"
 import { useTranslations } from "@/i18n/translations"
 
 const t = useTranslations(Astro.locals.locale)
@@ -19,6 +19,12 @@ const grouped = Map.groupBy(events, (e) =>
     month: "long",
   })
 )
+
+const dateFilters = [
+  { key: "upcoming", label: t.events.filterDateUpcoming },
+  { key: "week", label: t.events.filterDateWeek },
+  { key: "month", label: t.events.filterDateMonth },
+] as const
 ---
 
 <PageLayout>
@@ -36,17 +42,42 @@ const grouped = Map.groupBy(events, (e) =>
     </div>
   </PageHeader>
 
+  <div class="mb-2 flex flex-wrap items-center gap-2">
+    <span class="text-sm text-base-content/50">{t.events.filterCategory}:</span>
+    <button class="btn btn-outline btn-sm" data-cat-filter="all">
+      {t.events.filterAll}
+    </button>
+    {
+      EVENT_CATEGORIES.map((cat) => (
+        <button class="btn btn-outline btn-sm" data-cat-filter={cat}>
+          {t.events.categories[cat]}
+        </button>
+      ))
+    }
+  </div>
+
+  <div class="mb-6 flex items-center gap-2">
+    <label class="text-sm text-base-content/50" for="event-date-filter">
+      {t.events.filterDate}:
+    </label>
+    <select class="select select-bordered select-xs" id="event-date-filter">
+      {dateFilters.map(({ key, label }) => <option value={key}>{label}</option>)}
+    </select>
+  </div>
+
   {
     events.length === 0 ? (
       <p class="text-base-content/60">{t.events.noEvents}</p>
     ) : (
-      <div class="space-y-10">
+      <div class="space-y-10" id="events-list">
         {[...grouped.entries()].map(([day, dayEvents]) => (
-          <div>
+          <div data-day-section>
             <h2 class="mb-4 text-lg font-semibold capitalize">{day}</h2>
             <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {dayEvents.map((event) => (
-                <EventCard event={event} />
+                <div data-category={event.category} data-start={event.start}>
+                  <EventCard event={event} />
+                </div>
               ))}
             </div>
           </div>
@@ -54,4 +85,60 @@ const grouped = Map.groupBy(events, (e) =>
       </div>
     )
   }
+  <p class="hidden text-base-content/60" id="no-events-msg">{t.events.noEventsFiltered}</p>
 </PageLayout>
+
+<script>
+  import { getParam, setParam } from "@/utils/url-params"
+
+  function applyFilters() {
+    const cat = getParam("category", "all")
+    const date = getParam("date", "upcoming")
+    const now = Date.now()
+    const cutoff =
+      date === "week" ? now + 7 * 86400_000 : date === "month" ? now + 31 * 86400_000 : Infinity
+
+    document.querySelectorAll<HTMLElement>("[data-category]").forEach((card) => {
+      const catMatch = cat === "all" || card.dataset.category === cat
+      const startMs = new Date(card.dataset.start!).getTime()
+      const dateMatch = startMs <= cutoff
+      card.style.display = catMatch && dateMatch ? "" : "none"
+    })
+
+    // Each day section is hidden when all its cards are filtered out
+    let anyVisible = false
+    document.querySelectorAll<HTMLElement>("[data-day-section]").forEach((section) => {
+      const sectionVisible = [...section.querySelectorAll<HTMLElement>("[data-category]")].some(
+        (c) => c.style.display !== "none"
+      )
+      section.style.display = sectionVisible ? "" : "none"
+      if (sectionVisible) anyVisible = true
+    })
+
+    document.getElementById("no-events-msg")?.classList.toggle("hidden", anyVisible)
+    document.getElementById("events-list")?.classList.toggle("hidden", !anyVisible)
+
+    document.querySelectorAll<HTMLElement>("[data-cat-filter]").forEach((btn) => {
+      const active = btn.dataset.catFilter === cat
+      btn.classList.toggle("btn-primary", active)
+      btn.classList.toggle("btn-outline", !active)
+    })
+
+    const sel = document.getElementById("event-date-filter") as HTMLSelectElement | null
+    if (sel) sel.value = date
+  }
+
+  document.querySelectorAll<HTMLElement>("[data-cat-filter]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      setParam("category", btn.dataset.catFilter!)
+      applyFilters()
+    })
+  })
+
+  document.getElementById("event-date-filter")?.addEventListener("change", (e) => {
+    setParam("date", (e.target as HTMLSelectElement).value)
+    applyFilters()
+  })
+
+  applyFilters()
+</script>

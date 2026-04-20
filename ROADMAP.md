@@ -2,28 +2,6 @@
 
 ## Upcoming
 
-### P6 Filtering for Events, Jobs overview pages
-
-The `/events` and `/jobs` pages currently show all content with no way to filter by date range, category, organizer, or other attributes. Filtering would significantly improve usability as content volume grows.
-
-**Work involved:**
-
-- Add filter UI controls to `/events`: by date range, by category (requires P5), by organizer/group
-- Add filter UI controls to `/jobs`: by category (requires P5), by working hours range, by location (remote/on-site/hybrid)
-- Implement filtering server-side via Strapi query parameters (already supported by `@strapi/client`) or client-side for small datasets
-- Add a search bar (text search on title/description) for both pages
-- Persist filter state in URL query params so results are shareable/bookmarkable
-
-**Open questions:**
-
-- Should filtering be server-side (better performance, SEO) or client-side (snappier UX, simpler implementation)? Astro's SSR mode supports both.
-- P5 (categories) is a soft prerequisite for category-based filtering — should this be bundled with P5?
-- What date filter options make sense for events: "this week", "this month", custom range?
-- Should the homepage event/job widgets also respect filters, or only the dedicated listing pages?
-- Is full-text search in scope, or just filtering on structured fields?
-
----
-
 ### P7 Add data sources for events
 
 Automatically importing events from external sources would reduce the manual effort of maintaining the event calendar and provide better coverage of university life.
@@ -91,6 +69,36 @@ The current dark-mode color scheme (DaisyUI 5 + Tailwind CSS 4) needs refinement
 - Should we support a system-preference-based automatic toggle, or only a manual toggle (already in place)?
 
 ## Done
+
+### P6 Filtering for Events, Jobs overview pages
+
+Client-side filtering on both listing pages. Filter state is persisted in URL query params (`?category=sport&date=week`, `?type=internship&field=it`) so results are shareable and restored on load.
+
+**Decisions made:**
+
+- Filtering is **client-side**: dataset is small (student-city scale, ≤100 items); matches the established `map.astro` pattern. Server-side filtering is straightforward to add later if the dataset grows past ~500 items or SEO on filtered URLs becomes a requirement.
+- Date filter options for events: "All upcoming" / "7 days" / "31 days" — mirrors the map page time filter.
+- Homepage widgets are **not** affected by filters — they show a curated preview only.
+- Full-text search is **deferred** — out of scope for P6.
+- Jobs filter UI uses a collapsible `<details>` panel for mobile; events filter uses an inline bar (fewer controls).
+
+**Work involved:**
+
+- [x] `fetchEvents()` fixed to exclude past events by default (`end >= now` filter added to Strapi query)
+- [x] `/events`: category button bar (All + 6 categories) + date range select (All upcoming / 7 days / 31 days); `?category` and `?date` URL params
+- [x] `/jobs`: collapsible `<details>` filter panel with job type buttons (All + 7 types) and field buttons (All + 8 fields); `?type` and `?field` URL params; badge shows count of active filters; panel auto-opens when URL params are present
+- [x] Active filter badge in jobs panel `<summary>` shows count of active filters; panel auto-opens when arriving via a filtered URL
+- [x] Empty-state messages shown when no items match the active filter combination
+- [x] i18n keys added for all filter UI labels in `de` and `en` locales
+- [x] `JOB_TYPES`, `JOB_FIELDS`, `EVENT_CATEGORIES` and their types exported from the API barrel (`utils/api/index.ts`)
+
+**Still to do / not in scope:**
+
+- Filter by organizer/group on `/events`
+- Filter by working hours range or remote/on-site/hybrid on `/jobs`
+- Full-text search bar on either page
+
+---
 
 ### P4 Interdependencies (events <-> locations)
 
