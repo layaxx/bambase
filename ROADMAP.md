@@ -51,24 +51,60 @@ There is currently no page explaining what BamBase.de is, who runs it, or how to
 
 ---
 
+### P12 Improve Form Layout
+
+Improve the layout/design/UI/UX of form pages (create/edit event, create/edit job) and the overview pages (`/events`, `/jobs`).
+
+**Issues identified — forms:**
+
+- **Job form not extracted into a shared component** — `job/new.astro` contains ~200 lines of inline form HTML, almost certainly duplicated in `job/[uuid]/edit.astro`. Should become a shared `JobForm.astro` component, parallel to the existing `EventForm.astro`.
+- **Bug: custom location section uses `flex-col` without `flex`** — in `EventForm.astro` the custom location container has `class="mt-3 flex-col gap-3"`, which has no effect without `flex`. The inputs fall back to block layout when shown. Fix: add `flex` to the class list.
+- **No visual section separation** — the job form has a `<h2>` for the contact section but no visual divider or card container. Logical field groups should be visually separated (e.g. a `divider` or a `bg-base-200` card wrapper) to make long forms easier to scan.
+- **Required field indicators inconsistent** — optional fields are labelled inline with `(optional)` text, but required fields carry no visible marker. Standardize: mark only optional fields with `(optional)` (current approach) and apply it consistently to all optional fields.
+- **No "Cancel" link next to submit** — both forms have a lone submit button with no escape back to the listing page. A ghost "Cancel" / back link should sit alongside it.
+
+**Issues identified — overview pages:**
+
+- **Filter UI pattern differs between `/events` and `/jobs`** — `/events` uses always-visible inline category buttons plus a `<select>` for date range; `/jobs` uses a collapsible `<details>` panel. Standardize on one approach across both pages.
+- **No result count** — neither page shows "X events / jobs found". The existing `applyFilters()` scripts already know which items are visible; adding a count `<span>` is straightforward.
+- **No "Clear filters" affordance in empty state** — when no items match, the empty-state message gives no way to reset. Both `#no-events-msg` and `#no-jobs-msg` should include a "Clear filters" button.
+- **Inconsistent filter bar spacing on `/events`** — the category buttons row uses `mb-2` and the date select row uses `mb-6`; consolidating them into a single filter bar would clean this up.
+
+**Work involved:**
+
+- [ ] Extract `JobForm.astro` shared component (removes duplication between create and edit)
+- [ ] Fix `flex` missing from custom location section in `EventForm.astro`
+- [ ] Add visual section dividers / card wrappers to both forms
+- [ ] Add "Cancel" (back) link alongside each submit button
+- [ ] Standardize filter UI pattern across `/events` and `/jobs`
+- [ ] Add result count updated by `applyFilters()` on both listing pages
+- [ ] Add "Clear filters" button to empty-state messages on both listing pages
+
+## Done
+
 ### P9 Adjust Dark-mode colors
 
 The current dark-mode color scheme (DaisyUI 5 + Tailwind CSS 4) needs refinement for readability and visual consistency.
 
 **Work involved:**
 
-- Audit all pages in dark mode for contrast issues, unreadable text, or jarring color combinations
-- Adjust the `data-theme` DaisyUI configuration or Tailwind CSS variables for the dark theme
-- Pay particular attention to: map popups (Leaflet default styles don't adapt to dark mode), Mensa meal cards, event/job cards, and form inputs
+- [x] Boost `--color-primary` lightness in dark mode (`global.css`) so `text-primary` links are readable on dark backgrounds
+- [x] Map popups: replace all hardcoded inline-style colors in `buildPopupHtml()` / `makeIcon()` with CSS custom properties (`--popup-*`) that have light/dark variants; add `.leaflet-popup-content-wrapper` dark mode override
+- [x] Mensa badges: replaced with DaisyUI `badge badge-success` in `MensaMealItem.astro` and `MensaCard.astro` (also extracted into shared `MealBadge.astro` component)
+- [x] Section icon containers: replace light-only Tailwind palette classes (`bg-orange-100`, `bg-green-100`, `bg-blue-100`, `bg-purple-100`) with DaisyUI semantic classes (`bg-warning/20`, `bg-success/20`, `bg-info/20`, `bg-secondary/20`) in `MensaCard.astro`, `MensaDaySection.astro`, `JobCard.astro`, `EventsTodayCard.astro`, `InfomapCard.astro`, `StudentGroupsCard.astro`
+- [x] `InfomapCard.astro` category dots: replaced hardcoded hex colors with CSS variables (`--cat-*` / `--cat-*-bg`) defined in `global.css` with proper dark variants
+- [x] Define `--cat-*` and `--cat-*-bg` in `global.css` so they are available globally (not just on `/map`)
+- [x] Audit remaining pages in dark mode for any missed contrast issues — no additional issues found; all pages use DaisyUI semantic classes correctly
 
-**Open questions:**
+**Decisions made:**
 
-- Is there a reference design or brand color palette to adhere to?
-- Should the dark-mode palette be derived from an existing DaisyUI theme, or fully custom?
-- Are there specific pages or components users have flagged as looking broken in dark mode? -> text-primary looks bad on dark mode
-- Should we support a system-preference-based automatic toggle, or only a manual toggle (already in place)?
+- No brand color palette exists; DaisyUI's default `light`/`dark` themes are kept as-is. Only targeted CSS variable overrides are added in `global.css`.
+- Form inputs (`input-bordered`, `textarea-bordered`) use DaisyUI semantic classes and require no changes.
+- System-preference-based auto-toggle is **already implemented** in `Layout.astro` (checks `prefers-color-scheme` before falling back to localStorage). No changes needed.
 
-## Done
+**Open questions:** none
+
+---
 
 ### P6 Filtering for Events, Jobs overview pages
 

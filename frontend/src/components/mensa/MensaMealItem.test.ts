@@ -9,6 +9,8 @@ beforeAll(async () => {
   container = await AstroContainer.create()
 })
 
+const locals = { locale: "de" as const }
+
 const baseMeal: MensaMeal = {
   id: "1",
   name: "Spaghetti Bolognese",
@@ -37,6 +39,7 @@ describe("MensaMealItem", () => {
   it("shows the Vegan badge when isVegan is true", async () => {
     const html = await container.renderToString(MensaMealItem, {
       props: { meal: { ...baseMeal, isVegan: true } },
+      locals,
     })
     expect(html).toContain("Vegan")
   })
@@ -51,6 +54,7 @@ describe("MensaMealItem", () => {
   it("shows the Vegetarisch badge when isVegetarian is true", async () => {
     const html = await container.renderToString(MensaMealItem, {
       props: { meal: { ...baseMeal, isVegetarian: true } },
+      locals,
     })
     expect(html).toContain("Vegetarisch")
   })

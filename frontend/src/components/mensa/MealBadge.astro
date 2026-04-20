@@ -1,0 +1,16 @@
+---
+import { useTranslations } from "@/i18n/translations"
+import IconLeaf from "../icons/IconLeaf.astro"
+
+type Props = {
+  type: "vegan" | "vegetarian"
+}
+
+const { type } = Astro.props
+const t = useTranslations(Astro.locals.locale)
+---
+
+<span class="badge badge-success badge-sm diet-badge badge-soft shrink-0">
+  <IconLeaf class="h-3 w-3" />
+  {type === "vegan" ? t.mensa.vegan : t.mensa.vegetarian}
+</span>

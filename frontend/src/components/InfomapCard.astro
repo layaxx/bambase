@@ -5,18 +5,14 @@ import IconArrowRight from "./icons/IconArrowRight.astro"
 
 const t = useTranslations(Astro.locals.locale)
 
-const categories = [
-  { key: "university", color: "#2563eb" },
-  { key: "venues", color: "#ca8a04" },
-  { key: "other", color: "#64748b" },
-] as const
+const categories = [{ key: "university" }, { key: "venues" }, { key: "other" }] as const
 ---
 
 <section class="mb-12" id="map">
   <div class="mb-6 flex items-center justify-between">
     <div class="flex items-center gap-3">
-      <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
-        <IconMapPin class="h-5 w-5 text-blue-700" />
+      <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-info/20">
+        <IconMapPin class="h-5 w-5 text-info" />
       </div>
       <div>
         <a class="text-xl font-semibold hover:text-primary no-underline" href="/map">
@@ -33,14 +29,14 @@ const categories = [
 
   <div class="grid gap-3 sm:grid-cols-3">
     {
-      categories.map(({ key, color }) => (
+      categories.map(({ key }) => (
         <a
           class="group flex items-center gap-3 rounded-xl border border-base-300 bg-base-100 p-4 transition-all hover:shadow-md no-underline"
           href={`/map?filter=${key}`}
         >
           <div
             class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
-            style={`background-color: ${color}22; color: ${color}`}
+            style={`background-color: var(--cat-${key}-bg); color: var(--cat-${key})`}
           >
             <IconMapPin class="h-4 w-4" />
           </div>

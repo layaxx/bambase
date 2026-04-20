@@ -1,7 +1,7 @@
 ---
 import type { MensaMeal } from "@/utils/api"
 import IconChevronRight from "@/components/icons/IconChevronRight.astro"
-import IconLeaf from "@/components/icons/IconLeaf.astro"
+import MealBadge from "./MealBadge.astro"
 
 interface Props {
   meal: MensaMeal
@@ -18,22 +18,8 @@ const { meal, id } = Astro.props
   <div class="flex items-start justify-between gap-3">
     <div class="flex min-w-0 flex-wrap items-center gap-1.5">
       <span class="text-sm leading-snug text-base-content">{meal.name}</span>
-      {
-        meal.isVegan && (
-          <span class="inline-flex shrink-0 items-center gap-1 rounded-md bg-emerald-100 px-1.5 py-0.5 text-xs font-medium text-emerald-800">
-            <IconLeaf class="h-3 w-3" />
-            Vegan
-          </span>
-        )
-      }
-      {
-        meal.isVegetarian && (
-          <span class="inline-flex shrink-0 items-center gap-1 rounded-md bg-green-100 px-1.5 py-0.5 text-xs font-medium text-green-800">
-            <IconLeaf class="h-3 w-3" />
-            Vegetarisch
-          </span>
-        )
-      }
+      {meal.isVegan && <MealBadge type="vegan" />}
+      {meal.isVegetarian && !meal.isVegan && <MealBadge type="vegetarian" />}
     </div>
     <span class="shrink-0 font-semibold text-sm text-base-content">
       {meal.priceStudents.toFixed(2)} €

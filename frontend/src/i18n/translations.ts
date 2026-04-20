@@ -97,6 +97,8 @@ const de = {
     ] as const,
     weekendHeading: (sat: string, sun: string) => `Samstag & Sonntag, ${sat} – ${sun}`,
     dateLocale: "de-DE",
+    vegan: "Vegan",
+    vegetarian: "Vegetarisch",
   },
   jobs: {
     notFound: {
@@ -366,6 +368,8 @@ const en = {
     ] as const,
     weekendHeading: (sat: string, sun: string) => `Saturday & Sunday, ${sat} – ${sun}`,
     dateLocale: "en-US",
+    vegan: "Vegan",
+    vegetarian: "Vegetarian",
   },
   jobs: {
     notFound: {
