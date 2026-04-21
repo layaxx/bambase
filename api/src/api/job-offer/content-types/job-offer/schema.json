@@ -52,6 +52,12 @@
         "other"
       ]
     },
+    "work_mode": {
+      "type": "enumeration",
+      "required": true,
+      "default": "on_site",
+      "enum": ["on_site", "hybrid", "remote"]
+    },
     "company": {
       "type": "string",
       "required": true

@@ -141,6 +141,12 @@ const de = {
     fieldExternalUrl: "Link zur Stellenanzeige",
     fieldJobType: "Art der Stelle",
     fieldField: "Bereich",
+    fieldWorkMode: "Arbeitsort",
+    workModes: {
+      on_site: "Vor Ort",
+      hybrid: "Hybrid",
+      remote: "Remote",
+    },
     jobTypes: {
       part_time: "Nebenjob",
       internship: "Praktikum",
@@ -421,6 +427,12 @@ const en = {
     fieldExternalUrl: "Link to job listing",
     fieldJobType: "Job type",
     fieldField: "Field",
+    fieldWorkMode: "Work mode",
+    workModes: {
+      on_site: "On-site",
+      hybrid: "Hybrid",
+      remote: "Remote",
+    },
     jobTypes: {
       part_time: "Part-time job",
       internship: "Internship",

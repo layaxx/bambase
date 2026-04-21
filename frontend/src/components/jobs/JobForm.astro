@@ -17,6 +17,7 @@ interface Props {
     description?: string
     job_type?: string
     field?: string
+    work_mode?: string
     external_url?: string
     contact_name?: string
     contact_mail?: string
@@ -117,7 +118,7 @@ const t = useTranslations(Astro.locals.locale)
       }
     </div>
 
-    <div class="grid gap-4 sm:grid-cols-2">
+    <div class="grid gap-4 sm:grid-cols-3">
       <div class="form-control">
         <label class="label" for="job_type">
           <span class="label-text font-medium">{t.jobs.fieldJobType}</span>
@@ -141,6 +142,21 @@ const t = useTranslations(Astro.locals.locale)
           {
             Object.entries(t.jobs.jobFields).map(([value, label]) => (
               <option selected={initialValues.field === value} value={value}>
+                {label}
+              </option>
+            ))
+          }
+        </select>
+      </div>
+
+      <div class="form-control">
+        <label class="label" for="work_mode">
+          <span class="label-text font-medium">{t.jobs.fieldWorkMode}</span>
+        </label>
+        <select class="select select-bordered w-full" id="work_mode" name="work_mode" required>
+          {
+            Object.entries(t.jobs.workModes).map(([value, label]) => (
+              <option selected={initialValues.work_mode === value} value={value}>
                 {label}
               </option>
             ))
@@ -261,6 +277,7 @@ const t = useTranslations(Astro.locals.locale)
     "description",
     "job_type",
     "field",
+    "work_mode",
     "external_url",
     "contact_name",
     "contact_mail",

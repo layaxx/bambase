@@ -484,6 +484,9 @@ export interface ApiJobOfferJobOffer extends Struct.CollectionTypeSchema {
     updatedAt: Schema.Attribute.DateTime
     updatedBy: Schema.Attribute.Relation<"oneToOne", "admin::user"> & Schema.Attribute.Private
     uuid: Schema.Attribute.UID<"title">
+    work_mode: Schema.Attribute.Enumeration<["on_site", "hybrid", "remote"]> &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<"on_site">
     working_hours: Schema.Attribute.Integer &
       Schema.Attribute.Required &
       Schema.Attribute.SetMinMax<

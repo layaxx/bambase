@@ -10,6 +10,7 @@ export const JOB_OFFERS = [
     contact: { name: "Anna Müller", mail: "anna@techcorp.de", phone: "+49 951 123456" },
     job_type: "working_student",
     field: "it",
+    work_mode: "on_site",
     isOwned: true,
   },
   {
@@ -22,6 +23,7 @@ export const JOB_OFFERS = [
     contact: { name: "Max Schmidt", mail: "max@datasystems.de" },
     job_type: "working_student",
     field: "it",
+    work_mode: "remote",
     isOwned: false,
   },
   {
@@ -34,6 +36,7 @@ export const JOB_OFFERS = [
     contact: { name: "John Doe", mail: "jobs@kreativstudio.de" },
     job_type: "part_time",
     field: "it",
+    work_mode: "hybrid",
     isOwned: false,
   },
   {
@@ -46,6 +49,7 @@ export const JOB_OFFERS = [
     contact: { name: "Lisa Weber", mail: "lisa@cloudops.de" },
     job_type: "working_student",
     field: "it",
+    work_mode: "on_site",
     isOwned: false,
   },
   {
@@ -60,6 +64,7 @@ export const JOB_OFFERS = [
     contact: { name: "Tom Bauer", mail: "tom@startuphub.de", phone: "+49 951 654321" },
     job_type: "internship",
     field: "it",
+    work_mode: "hybrid",
     isOwned: false,
   },
   {
@@ -73,6 +78,7 @@ export const JOB_OFFERS = [
     contact: { name: "Sara König", mail: "sara@regiomedia.de" },
     job_type: "working_student",
     field: "marketing",
+    work_mode: "on_site",
     isOwned: false,
   },
 ] as const

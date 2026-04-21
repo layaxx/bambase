@@ -25,6 +25,10 @@ export const JOB_FIELDS = [
 
 export type JobField = (typeof JOB_FIELDS)[number]
 
+export const WORK_MODES = ["on_site", "hybrid", "remote"] as const
+
+export type WorkMode = (typeof WORK_MODES)[number]
+
 export type JobOffer = {
   documentId: string
   uuid: string
@@ -38,6 +42,7 @@ export type JobOffer = {
   external_url?: string
   job_type: JobType
   field: JobField
+  work_mode: WorkMode
   contact: {
     name?: string
     mail?: string
@@ -45,6 +50,7 @@ export type JobOffer = {
   }
   owner?: { id: number }
   reports?: { documentId: string }[]
+  createdAt: string
 }
 
 export async function fetchJobOffers(limit = 100): Promise<JobOffer[]> {
