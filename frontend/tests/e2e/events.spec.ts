@@ -152,6 +152,85 @@ test("event draft is cleared when navigating away without submitting", async ({ 
   expect(titleValue).toBe("")
 })
 
+// ─── Location variant tests ────────────────────────────────────────────────
+
+test("create event with no location — EventLocation section is not rendered", async ({ page }) => {
+  const title = uniqueTitle()
+  await page.goto("/event/new")
+  await page.fill("#title", title)
+  await page.fill("#organizer", "E2E Organizer")
+  await page.fill("#start", FUTURE_START)
+  await page.fill("#end", FUTURE_END)
+  await page.fill("#description", "Automated E2E test event — safe to delete.")
+  // location_type defaults to "none" — leave it unchanged
+  await page.click('button[type="submit"]')
+  await page.waitForURL(/\/event\/[a-z0-9-]+$/)
+
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(title)
+  // EventLocation is only rendered when a location exists; "Ort" dt label should be absent
+  await expect(page.locator("dt").filter({ hasText: "Ort" })).toHaveCount(0)
+
+  await deleteEvent(page)
+})
+
+test("create event with map location (linked) — location name appears on detail page", async ({
+  page,
+}) => {
+  const title = uniqueTitle()
+  await page.goto("/event/new")
+  await page.fill("#title", title)
+  await page.fill("#organizer", "E2E Organizer")
+  await page.fill("#start", FUTURE_START)
+  await page.fill("#end", FUTURE_END)
+  await page.fill("#description", "Automated E2E test event — safe to delete.")
+
+  // Switch to linked location type to reveal the map location dropdown
+  await page.click('input[name="location_type"][value="linked"]')
+  await page.locator("#linked-location-section").waitFor({ state: "visible" })
+
+  // Pick the first real location from the dropdown (index 0 is the empty placeholder)
+  const locationSelect = page.locator('select[name="map_location_id"]')
+  const firstOptionText = await locationSelect.locator("option").nth(1).textContent()
+  await locationSelect.selectOption({ index: 1 })
+
+  await page.click('button[type="submit"]')
+  await page.waitForURL(/\/event\/[a-z0-9-]+$/)
+
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(title)
+  // Option label format is "Location Name · City" — check for the name portion
+  const locationName = (firstOptionText ?? "").split(" · ")[0].trim()
+  await expect(page.locator("body")).toContainText(locationName)
+
+  await deleteEvent(page)
+})
+
+test("create event with custom location — custom name appears on detail page", async ({ page }) => {
+  const title = uniqueTitle()
+  await page.goto("/event/new")
+  await page.fill("#title", title)
+  await page.fill("#organizer", "E2E Organizer")
+  await page.fill("#start", FUTURE_START)
+  await page.fill("#end", FUTURE_END)
+  await page.fill("#description", "Automated E2E test event — safe to delete.")
+
+  // Switch to custom location type to reveal the custom fields
+  await page.click('input[name="location_type"][value="custom"]')
+  await page.locator("#custom-location-section").waitFor({ state: "visible" })
+
+  await page.fill('input[name="custom_location_name"]', "E2E Test Venue")
+  await page.fill('input[name="custom_location_address"]', "Teststraße 1")
+  await page.fill('input[name="custom_location_city"]', "Bamberg")
+
+  await page.click('button[type="submit"]')
+  await page.waitForURL(/\/event\/[a-z0-9-]+$/)
+
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(title)
+  // Custom location name should appear in the EventLocation card
+  await expect(page.locator("body")).toContainText("E2E Test Venue")
+
+  await deleteEvent(page)
+})
+
 test("created event appears on the /events listing page", async ({ page }) => {
   const title = uniqueTitle()
   const eventUrl = await createEvent(page, title)

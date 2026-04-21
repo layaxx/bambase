@@ -49,7 +49,7 @@ There is currently no page explaining what BamBase.de is, who runs it, or how to
 - Should the page include information on how to contribute (student groups submitting their own entries, contributing code)?
 - Should there be a privacy policy or imprint (Impressum) — this is likely a legal requirement for a German website?
 
----
+## Done
 
 ### P12 Improve Form Layout
 
@@ -72,15 +72,14 @@ Improve the layout/design/UI/UX of form pages (create/edit event, create/edit jo
 
 **Work involved:**
 
-- [ ] Extract `JobForm.astro` shared component (removes duplication between create and edit)
-- [ ] Fix `flex` missing from custom location section in `EventForm.astro`
-- [ ] Add visual section dividers / card wrappers to both forms
-- [ ] Add "Cancel" (back) link alongside each submit button
-- [ ] Standardize filter UI pattern across `/events` and `/jobs`
-- [ ] Add result count updated by `applyFilters()` on both listing pages
-- [ ] Add "Clear filters" button to empty-state messages on both listing pages
+- [x] Extract `JobForm.astro` shared component (removes duplication between create and edit)
+- [x] Fix `flex` missing from custom location section in `EventForm.astro`
+- [x] Add "Cancel" (back) link alongside each submit button
+- [x] Standardize filter UI pattern across `/events` and `/jobs`
+- [x] Add result count updated by `applyFilters()` on both listing pages
+- [x] Add "Clear filters" button to empty-state messages on both listing pages
 
-## Done
+---
 
 ### P9 Adjust Dark-mode colors
 

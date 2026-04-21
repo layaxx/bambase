@@ -39,7 +39,7 @@ function toLocalInput(iso: string) {
 
 <PageLayout>
   <div class="mb-6">
-    <a class="btn btn-ghost btn-sm gap-1 pl-0" href={`/event/${slug}`}>
+    <a class="btn btn-ghost btn-sm gap-1 pl-0" href="/events">
       <IconArrowLeft class="h-4 w-4" />
       {t.events.backToEvents}
     </a>
@@ -60,6 +60,7 @@ function toLocalInput(iso: string) {
   <EventForm
     action={actions.events.update}
     allLocations={allLocations}
+    cancelHref={`/event/${slug}`}
     documentId={event.documentId}
     initialValues={{
       title: event.title,

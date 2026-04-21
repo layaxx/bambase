@@ -27,40 +27,42 @@ const isLoggedIn = !!Astro.cookies.get("auth_token")?.value
     </div>
   </PageHeader>
 
-  <details class="mb-6" id="filter-panel">
-    <summary class="btn btn-outline btn-sm w-fit cursor-pointer">
-      Filter
-      <span class="badge badge-primary badge-sm ml-1 hidden" id="filter-badge"></span>
-    </summary>
-    <div class="mt-3 space-y-3">
-      <div class="flex flex-wrap items-center gap-2">
-        <span class="text-sm text-base-content/50">{t.jobs.filterType}:</span>
-        <button class="btn btn-outline btn-sm" data-type-filter="all">
-          {t.jobs.filterAll}
-        </button>
-        {
-          JOB_TYPES.map((type: JobType) => (
-            <button class="btn btn-outline btn-sm" data-type-filter={type}>
-              {t.jobs.jobTypes[type]}
-            </button>
-          ))
-        }
-      </div>
-      <div class="flex flex-wrap items-center gap-2">
-        <span class="text-sm text-base-content/50">{t.jobs.filterField}:</span>
-        <button class="btn btn-outline btn-sm" data-field-filter="all">
-          {t.jobs.filterAll}
-        </button>
-        {
-          JOB_FIELDS.map((field: JobField) => (
-            <button class="btn btn-outline btn-sm" data-field-filter={field}>
-              {t.jobs.jobFields[field]}
-            </button>
-          ))
-        }
-      </div>
+  <div class="mb-6 flex flex-col gap-3">
+    <div class="flex flex-wrap items-center gap-2">
+      <span class="text-sm text-base-content/50">{t.jobs.filterType}:</span>
+      <button class="btn btn-outline btn-sm" data-type-filter="all">
+        {t.jobs.filterAll}
+      </button>
+      {
+        JOB_TYPES.map((type: JobType) => (
+          <button class="btn btn-outline btn-sm" data-type-filter={type}>
+            {t.jobs.jobTypes[type]}
+          </button>
+        ))
+      }
     </div>
-  </details>
+    <div class="flex flex-wrap items-center gap-2">
+      <span class="text-sm text-base-content/50">{t.jobs.filterField}:</span>
+      <button class="btn btn-outline btn-sm" data-field-filter="all">
+        {t.jobs.filterAll}
+      </button>
+      {
+        JOB_FIELDS.map((field: JobField) => (
+          <button class="btn btn-outline btn-sm" data-field-filter={field}>
+            {t.jobs.jobFields[field]}
+          </button>
+        ))
+      }
+    </div>
+  </div>
+
+  <p
+    class="mb-4 text-sm text-base-content/50"
+    data-plural={t.jobs.resultPlural}
+    data-singular={t.jobs.resultSingular}
+    id="result-count"
+  >
+  </p>
 
   {
     jobs.length === 0 ? (
@@ -75,7 +77,10 @@ const isLoggedIn = !!Astro.cookies.get("auth_token")?.value
       </div>
     )
   }
-  <p class="hidden text-base-content/60" id="no-jobs-msg">{t.jobs.noJobsFiltered}</p>
+  <div class="hidden" id="no-jobs-msg">
+    <p class="text-base-content/60">{t.jobs.noJobsFiltered}</p>
+    <button class="btn btn-ghost btn-sm mt-2" id="clear-filters-btn">{t.jobs.clearFilters}</button>
+  </div>
 </PageLayout>
 
 <script>
@@ -85,27 +90,25 @@ const isLoggedIn = !!Astro.cookies.get("auth_token")?.value
     const type = getParam("type", "all")
     const field = getParam("field", "all")
 
-    let anyVisible = false
+    let visibleCount = 0
     document.querySelectorAll<HTMLElement>("[data-type]").forEach((card) => {
       const match =
         (type === "all" || card.dataset.type === type) &&
         (field === "all" || card.dataset.field === field)
       card.style.display = match ? "" : "none"
-      if (match) anyVisible = true
+      if (match) visibleCount++
     })
 
+    const anyVisible = visibleCount > 0
     document.getElementById("no-jobs-msg")?.classList.toggle("hidden", anyVisible)
     document.getElementById("jobs-list")?.classList.toggle("hidden", !anyVisible)
 
-    const activeCount = (type !== "all" ? 1 : 0) + (field !== "all" ? 1 : 0)
-    const badge = document.getElementById("filter-badge")
-    if (badge) {
-      badge.textContent = String(activeCount)
-      badge.classList.toggle("hidden", activeCount === 0)
+    const countEl = document.getElementById("result-count")
+    if (countEl) {
+      const singular = countEl.dataset.singular!
+      const plural = countEl.dataset.plural!
+      countEl.textContent = `${visibleCount} ${visibleCount === 1 ? singular : plural}`
     }
-    // Auto-open the panel so active filters aren't hidden when arriving via a shared URL
-    const panel = document.getElementById("filter-panel") as HTMLDetailsElement | null
-    if (panel && activeCount > 0) panel.open = true
 
     document.querySelectorAll<HTMLElement>("[data-type-filter]").forEach((btn) => {
       const active = btn.dataset.typeFilter === type
@@ -132,6 +135,12 @@ const isLoggedIn = !!Astro.cookies.get("auth_token")?.value
       setParam("field", btn.dataset.fieldFilter!)
       applyFilters()
     })
+  })
+
+  document.getElementById("clear-filters-btn")?.addEventListener("click", () => {
+    setParam("type", "all")
+    setParam("field", "all")
+    applyFilters()
   })
 
   applyFilters()

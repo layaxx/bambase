@@ -73,6 +73,9 @@ const de = {
     filterDateWeek: "7 Tage",
     filterDateMonth: "31 Tage",
     noEventsFiltered: "Keine Veranstaltungen für diesen Filter gefunden.",
+    clearFilters: "Filter zurücksetzen",
+    resultSingular: "Veranstaltung",
+    resultPlural: "Veranstaltungen",
   },
   mensa: {
     cardTitle: "Mensaplan",
@@ -165,6 +168,9 @@ const de = {
     filterType: "Stellenart",
     filterField: "Bereich",
     noJobsFiltered: "Keine Stellenangebote für diesen Filter gefunden.",
+    clearFilters: "Filter zurücksetzen",
+    resultSingular: "Stellenangebot",
+    resultPlural: "Stellenangebote",
   },
   reports: {
     reportJob: "Job melden",
@@ -260,6 +266,9 @@ const de = {
       sessionExpired: "Sitzung abgelaufen.",
     },
   },
+  ui: {
+    cancel: "Abbrechen",
+  },
   footer: {
     builtWith: "Built with DaisyUI",
     backToTop: "Back to top",
@@ -344,6 +353,9 @@ const en = {
     filterDateWeek: "7 days",
     filterDateMonth: "31 days",
     noEventsFiltered: "No events match this filter.",
+    clearFilters: "Clear filters",
+    resultSingular: "event",
+    resultPlural: "events",
   },
   mensa: {
     cardTitle: "Cafeteria",
@@ -436,6 +448,9 @@ const en = {
     filterType: "Job type",
     filterField: "Field",
     noJobsFiltered: "No job listings match this filter.",
+    clearFilters: "Clear filters",
+    resultSingular: "job listing",
+    resultPlural: "job listings",
   },
   reports: {
     reportJob: "Report listing",
@@ -530,6 +545,9 @@ const en = {
       notLoggedIn: "Not logged in.",
       sessionExpired: "Session expired.",
     },
+  },
+  ui: {
+    cancel: "Cancel",
   },
   footer: {
     builtWith: "Built with DaisyUI",

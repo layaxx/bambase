@@ -48,6 +48,7 @@ const generalError = result?.error && !isInputError(result.error) ? result.error
   <EventForm
     action={actions.events.create}
     allLocations={allLocations}
+    cancelHref="/events"
     enableDraft={true}
     inputErrors={inputErrors}
     submitLabel={t.events.submitEvent}

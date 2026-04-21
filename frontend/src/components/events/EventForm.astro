@@ -6,6 +6,7 @@ import { useTranslations } from "@/i18n/translations"
 interface Props {
   action: typeof actions.events.create | typeof actions.events.update
   submitLabel: string
+  cancelHref: string
   allLocations: MapLocation[]
   inputErrors: Record<string, string[] | undefined>
   documentId?: string
@@ -29,6 +30,7 @@ interface Props {
 const {
   action,
   submitLabel,
+  cancelHref,
   allLocations,
   inputErrors,
   documentId,
@@ -228,7 +230,7 @@ const initialLocationType = initialValues.locationType ?? "none"
       </div>
 
       <div
-        class:list={["mt-3 flex-col gap-3", initialLocationType !== "custom" && "hidden"]}
+        class:list={["mt-3 flex flex-col gap-3", initialLocationType !== "custom" && "hidden"]}
         id="custom-location-section"
       >
         <input
@@ -256,10 +258,9 @@ const initialLocationType = initialValues.locationType ?? "none"
     </div>
   </div>
 
-  <div>
-    <button class="btn btn-primary" type="submit">
-      {submitLabel}
-    </button>
+  <div class="flex items-center gap-3">
+    <button class="btn btn-primary" type="submit">{submitLabel}</button>
+    <a class="btn btn-ghost" href={cancelHref}>{t.ui.cancel}</a>
   </div>
 </form>
 

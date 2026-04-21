@@ -1,0 +1,309 @@
+---
+import type { actions } from "astro:actions"
+import { useTranslations } from "@/i18n/translations"
+
+interface Props {
+  action: typeof actions.jobs.create | typeof actions.jobs.update
+  submitLabel: string
+  cancelHref: string
+  inputErrors: Record<string, string[] | undefined>
+  documentId?: string
+  enableDraft?: boolean
+  initialValues?: {
+    title?: string
+    company?: string
+    location?: string
+    working_hours?: number | string
+    description?: string
+    job_type?: string
+    field?: string
+    external_url?: string
+    contact_name?: string
+    contact_mail?: string
+    contact_phone?: string
+  }
+}
+
+const {
+  action,
+  submitLabel,
+  cancelHref,
+  inputErrors,
+  documentId,
+  enableDraft = false,
+  initialValues = {},
+} = Astro.props
+
+const t = useTranslations(Astro.locals.locale)
+---
+
+<form
+  action={action}
+  class="flex max-w-2xl flex-col gap-6"
+  data-draft-key={enableDraft ? "job-new-draft" : undefined}
+  method="POST"
+>
+  {documentId && <input name="documentId" type="hidden" value={documentId} />}
+
+  <div class="flex flex-col gap-4">
+    <div class="form-control">
+      <label class="label" for="title">
+        <span class="label-text font-medium">{t.jobs.fieldTitle}</span>
+      </label>
+      <input
+        class:list={["input input-bordered w-full", inputErrors.title && "input-error"]}
+        id="title"
+        name="title"
+        required
+        type="text"
+        value={initialValues.title}
+      />
+      {inputErrors.title && <p class="mt-1 text-sm text-error">{inputErrors.title[0]}</p>}
+    </div>
+
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div class="form-control">
+        <label class="label" for="company">
+          <span class="label-text font-medium">{t.jobs.fieldCompany}</span>
+        </label>
+        <input
+          class:list={["input input-bordered w-full", inputErrors.company && "input-error"]}
+          id="company"
+          name="company"
+          required
+          type="text"
+          value={initialValues.company}
+        />
+        {inputErrors.company && <p class="mt-1 text-sm text-error">{inputErrors.company[0]}</p>}
+      </div>
+
+      <div class="form-control">
+        <label class="label" for="location">
+          <span class="label-text font-medium">{t.jobs.fieldLocation}</span>
+        </label>
+        <input
+          class:list={["input input-bordered w-full", inputErrors.location && "input-error"]}
+          id="location"
+          name="location"
+          required
+          type="text"
+          value={initialValues.location}
+        />
+        {inputErrors.location && <p class="mt-1 text-sm text-error">{inputErrors.location[0]}</p>}
+      </div>
+    </div>
+
+    <div class="form-control">
+      <label class="label" for="working_hours">
+        <span class="label-text font-medium">{t.jobs.fieldWorkingHours}</span>
+      </label>
+      <input
+        class:list={[
+          "input input-bordered w-full sm:w-40",
+          inputErrors.working_hours && "input-error",
+        ]}
+        id="working_hours"
+        max="168"
+        min="0"
+        name="working_hours"
+        required
+        type="number"
+        value={initialValues.working_hours}
+      />
+      {
+        inputErrors.working_hours && (
+          <p class="mt-1 text-sm text-error">{inputErrors.working_hours[0]}</p>
+        )
+      }
+    </div>
+
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div class="form-control">
+        <label class="label" for="job_type">
+          <span class="label-text font-medium">{t.jobs.fieldJobType}</span>
+        </label>
+        <select class="select select-bordered w-full" id="job_type" name="job_type" required>
+          {
+            Object.entries(t.jobs.jobTypes).map(([value, label]) => (
+              <option selected={initialValues.job_type === value} value={value}>
+                {label}
+              </option>
+            ))
+          }
+        </select>
+      </div>
+
+      <div class="form-control">
+        <label class="label" for="field">
+          <span class="label-text font-medium">{t.jobs.fieldField}</span>
+        </label>
+        <select class="select select-bordered w-full" id="field" name="field">
+          {
+            Object.entries(t.jobs.jobFields).map(([value, label]) => (
+              <option selected={initialValues.field === value} value={value}>
+                {label}
+              </option>
+            ))
+          }
+        </select>
+      </div>
+    </div>
+
+    <div class="form-control">
+      <label class="label" for="description">
+        <span class="label-text font-medium">{t.jobs.fieldDescription}</span>
+      </label>
+      <textarea
+        class:list={[
+          "textarea textarea-bordered w-full resize-y",
+          inputErrors.description && "textarea-error",
+        ]}
+        id="description"
+        name="description"
+        required
+        rows="6">{initialValues.description}</textarea
+      >
+      {
+        inputErrors.description && (
+          <p class="mt-1 text-sm text-error">{inputErrors.description[0]}</p>
+        )
+      }
+    </div>
+
+    <div class="form-control">
+      <label class="label" for="external_url">
+        <span class="label-text font-medium">
+          {t.jobs.fieldExternalUrl}
+          <span class="font-normal text-base-content/50"> {t.jobs.optionalLabel}</span>
+        </span>
+      </label>
+      <input
+        class:list={["input input-bordered w-full", inputErrors.external_url && "input-error"]}
+        id="external_url"
+        name="external_url"
+        type="url"
+        value={initialValues.external_url ?? ""}
+      />
+      {
+        inputErrors.external_url && (
+          <p class="mt-1 text-sm text-error">{inputErrors.external_url[0]}</p>
+        )
+      }
+    </div>
+  </div>
+
+  <div class="flex flex-col gap-4">
+    <h2 class="font-semibold text-lg">{t.jobs.contactSection}</h2>
+
+    <div class="form-control">
+      <label class="label" for="contact_name">
+        <span class="label-text font-medium">
+          {t.jobs.fieldContactName}
+          <span class="font-normal text-base-content/50"> {t.jobs.optionalLabel}</span>
+        </span>
+      </label>
+      <input
+        class="input input-bordered w-full"
+        id="contact_name"
+        name="contact_name"
+        type="text"
+        value={initialValues.contact_name ?? ""}
+      />
+    </div>
+
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div class="form-control">
+        <label class="label" for="contact_mail">
+          <span class="label-text font-medium">
+            {t.jobs.fieldContactMail}
+            <span class="font-normal text-base-content/50"> {t.jobs.optionalLabel}</span>
+          </span>
+        </label>
+        <input
+          class="input input-bordered w-full"
+          id="contact_mail"
+          name="contact_mail"
+          type="email"
+          value={initialValues.contact_mail ?? ""}
+        />
+      </div>
+
+      <div class="form-control">
+        <label class="label" for="contact_phone">
+          <span class="label-text font-medium">
+            {t.jobs.fieldContactPhone}
+            <span class="font-normal text-base-content/50"> {t.jobs.optionalLabel}</span>
+          </span>
+        </label>
+        <input
+          class="input input-bordered w-full"
+          id="contact_phone"
+          name="contact_phone"
+          type="tel"
+          value={initialValues.contact_phone ?? ""}
+        />
+      </div>
+    </div>
+  </div>
+
+  <div class="flex items-center gap-3">
+    <button class="btn btn-primary" type="submit">{submitLabel}</button>
+    <a class="btn btn-ghost" href={cancelHref}>{t.ui.cancel}</a>
+  </div>
+</form>
+
+<script>
+  const FIELDS = [
+    "title",
+    "company",
+    "location",
+    "working_hours",
+    "description",
+    "job_type",
+    "field",
+    "external_url",
+    "contact_name",
+    "contact_mail",
+    "contact_phone",
+  ]
+
+  const form = document.querySelector<HTMLFormElement>("form[data-draft-key]")
+  if (form) {
+    const draftKey = form.dataset.draftKey!
+
+    const saved = sessionStorage.getItem(draftKey)
+    if (saved) {
+      const draft = JSON.parse(saved) as Record<string, string>
+      for (const name of FIELDS) {
+        const el = form.elements.namedItem(name) as
+          | HTMLInputElement
+          | HTMLTextAreaElement
+          | HTMLSelectElement
+          | null
+        if (el && draft[name]) el.value = draft[name]
+      }
+    }
+
+    let submitting = false
+
+    form.addEventListener("submit", () => {
+      submitting = true
+      const draft: Record<string, string> = {}
+      for (const name of FIELDS) {
+        const el = form.elements.namedItem(name) as
+          | HTMLInputElement
+          | HTMLTextAreaElement
+          | HTMLSelectElement
+          | null
+        if (el) draft[name] = el.value
+      }
+      sessionStorage.setItem(draftKey, JSON.stringify(draft))
+    })
+
+    window.addEventListener("pagehide", () => {
+      if (!submitting) {
+        sessionStorage.removeItem(draftKey)
+      }
+    })
+  }
+</script>
