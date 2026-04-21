@@ -1,11 +1,12 @@
 export { strapiUrl, client } from "./client"
-export type { JobOffer, JobType, JobField } from "./job-offers"
+export type { JobOffer, JobType, JobField, WorkMode } from "./job-offers"
 export {
   fetchJobOffers,
   fetchJobOffer,
   fetchMyJobOffers,
   JOB_TYPES,
   JOB_FIELDS,
+  WORK_MODES,
 } from "./job-offers"
 export type { Event, EventMapLocation, EventCustomLocation, EventCategory } from "./events"
 export {

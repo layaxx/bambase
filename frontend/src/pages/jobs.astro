@@ -2,8 +2,19 @@
 import PageLayout from "@/layouts/PageLayout.astro"
 import PageHeader from "@/components/PageHeader.astro"
 import IconBriefcase from "@/components/icons/IconBriefcase.astro"
+import IconSliders from "@/components/icons/IconSliders.astro"
+import IconChevronDown from "@/components/icons/IconChevronDown.astro"
+import IconSearch from "@/components/icons/IconSearch.astro"
 import JobOfferCard from "@/components/jobs/JobOfferCard.astro"
-import { fetchJobOffers, JOB_TYPES, JOB_FIELDS, type JobType, type JobField } from "@/utils/api"
+import {
+  fetchJobOffers,
+  JOB_TYPES,
+  JOB_FIELDS,
+  WORK_MODES,
+  type JobType,
+  type JobField,
+  type WorkMode,
+} from "@/utils/api"
 import { useTranslations } from "@/i18n/translations"
 
 const t = useTranslations(Astro.locals.locale)
@@ -27,42 +38,82 @@ const isLoggedIn = !!Astro.cookies.get("auth_token")?.value
     </div>
   </PageHeader>
 
-  <div class="mb-6 flex flex-col gap-3">
-    <div class="flex flex-wrap items-center gap-2">
-      <span class="text-sm text-base-content/50">{t.jobs.filterType}:</span>
-      <button class="btn btn-outline btn-sm" data-type-filter="all">
-        {t.jobs.filterAll}
-      </button>
-      {
-        JOB_TYPES.map((type: JobType) => (
-          <button class="btn btn-outline btn-sm" data-type-filter={type}>
-            {t.jobs.jobTypes[type]}
-          </button>
-        ))
-      }
-    </div>
-    <div class="flex flex-wrap items-center gap-2">
-      <span class="text-sm text-base-content/50">{t.jobs.filterField}:</span>
-      <button class="btn btn-outline btn-sm" data-field-filter="all">
-        {t.jobs.filterAll}
-      </button>
-      {
-        JOB_FIELDS.map((field: JobField) => (
-          <button class="btn btn-outline btn-sm" data-field-filter={field}>
-            {t.jobs.jobFields[field]}
-          </button>
-        ))
-      }
-    </div>
-  </div>
+  <details class="mb-2 rounded-xl border border-base-300" id="filter-panel">
+    <summary class="flex cursor-pointer list-none items-center justify-between p-3">
+      <div class="flex items-center gap-2">
+        <IconSliders class="h-4 w-4 text-base-content/50" />
+        <span class="text-sm font-medium">{t.jobs.filterHeading}</span>
+      </div>
+      <IconChevronDown class="chevron h-4 w-4 text-base-content/50 transition-transform" />
+    </summary>
 
-  <p
-    class="mb-4 text-sm text-base-content/50"
-    data-plural={t.jobs.resultPlural}
-    data-singular={t.jobs.resultSingular}
-    id="result-count"
-  >
-  </p>
+    <div class="px-5 pb-3">
+      <div class="relative mb-1">
+        <IconSearch
+          class="pointer-events-none absolute left-3 top-1/2 z-1 h-4 w-4 -translate-y-1/2 text-base-content/40"
+        />
+        <input
+          class="input input-bordered w-full pl-9"
+          id="filter-search"
+          placeholder={t.jobs.filterSearch}
+          type="search"
+        />
+      </div>
+
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-medium text-base-content/50" for="filter-type">
+            {t.jobs.filterType}
+          </label>
+          <select class="select select-bordered w-full" id="filter-type">
+            <option value="all">{t.jobs.filterAll}</option>
+            {
+              JOB_TYPES.map((type: JobType) => (
+                <option value={type}>{t.jobs.jobTypes[type]}</option>
+              ))
+            }
+          </select>
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-medium text-base-content/50" for="filter-field">
+            {t.jobs.filterField}
+          </label>
+          <select class="select select-bordered w-full" id="filter-field">
+            <option value="all">{t.jobs.filterAll}</option>
+            {
+              JOB_FIELDS.map((field: JobField) => (
+                <option value={field}>{t.jobs.jobFields[field]}</option>
+              ))
+            }
+          </select>
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-medium text-base-content/50" for="filter-work-mode">
+            {t.jobs.fieldWorkMode}
+          </label>
+          <select class="select select-bordered w-full" id="filter-work-mode">
+            <option value="all">{t.jobs.filterAll}</option>
+            {
+              WORK_MODES.map((mode: WorkMode) => (
+                <option value={mode}>{t.jobs.workModes[mode]}</option>
+              ))
+            }
+          </select>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <div class="mb-4 flex items-center justify-between">
+    <p class="text-sm text-base-content/50">
+      <span class="font-medium text-base-content" id="result-count">{jobs.length}</span>
+      {t.jobs.resultOf}
+      <span class="font-medium text-base-content">{jobs.length}</span>
+      {t.jobs.resultPlural}
+    </p>
+  </div>
 
   {
     jobs.length === 0 ? (
@@ -70,76 +121,112 @@ const isLoggedIn = !!Astro.cookies.get("auth_token")?.value
     ) : (
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" id="jobs-list">
         {jobs.map((job) => (
-          <div data-field={job.field} data-type={job.job_type}>
+          <div
+            data-field={job.field}
+            data-search={`${job.title} ${job.company}`.toLowerCase()}
+            data-type={job.job_type}
+            data-work-mode={job.work_mode}
+          >
             <JobOfferCard job={job} />
           </div>
         ))}
       </div>
     )
   }
-  <div class="hidden" id="no-jobs-msg">
-    <p class="text-base-content/60">{t.jobs.noJobsFiltered}</p>
-    <button class="btn btn-ghost btn-sm mt-2" id="clear-filters-btn">{t.jobs.clearFilters}</button>
+  <div class="hidden py-4 text-center" id="no-jobs-msg">
+    <IconSearch class="mx-auto mb-4 h-10 w-10 text-base-content/60" />
+    <p class="mb-4 text-base-content/60">{t.jobs.noJobsFiltered}</p>
+    <button class="btn btn-outline btn-sm" id="clear-filters-btn">{t.jobs.clearFilters}</button>
   </div>
 </PageLayout>
+
+<style>
+  details[open] :global(.chevron) {
+    transform: rotate(180deg);
+  }
+</style>
 
 <script>
   import { getParam, setParam } from "@/utils/url-params"
 
+  const typeEl = document.getElementById("filter-type") as HTMLSelectElement | null
+  const fieldEl = document.getElementById("filter-field") as HTMLSelectElement | null
+  const workModeEl = document.getElementById("filter-work-mode") as HTMLSelectElement | null
+  const searchEl = document.getElementById("filter-search") as HTMLInputElement | null
+  const noJobsMsgEl = document.getElementById("no-jobs-msg")
+  const jobsListEl = document.getElementById("jobs-list")
+  const resultCountEl = document.getElementById("result-count")
+
   function applyFilters() {
-    const type = getParam("type", "all")
-    const field = getParam("field", "all")
+    const type = typeEl?.value ?? "all"
+    const field = fieldEl?.value ?? "all"
+    const workMode = workModeEl?.value ?? "all"
+    const search = (searchEl?.value ?? "").toLowerCase().trim()
 
     let visibleCount = 0
     document.querySelectorAll<HTMLElement>("[data-type]").forEach((card) => {
       const match =
         (type === "all" || card.dataset.type === type) &&
-        (field === "all" || card.dataset.field === field)
+        (field === "all" || card.dataset.field === field) &&
+        (workMode === "all" || card.dataset.workMode === workMode) &&
+        (!search || (card.dataset.search ?? "").includes(search))
       card.style.display = match ? "" : "none"
       if (match) visibleCount++
     })
 
     const anyVisible = visibleCount > 0
-    document.getElementById("no-jobs-msg")?.classList.toggle("hidden", anyVisible)
-    document.getElementById("jobs-list")?.classList.toggle("hidden", !anyVisible)
+    noJobsMsgEl?.classList.toggle("hidden", anyVisible)
+    jobsListEl?.classList.toggle("hidden", !anyVisible)
 
-    const countEl = document.getElementById("result-count")
-    if (countEl) {
-      const singular = countEl.dataset.singular!
-      const plural = countEl.dataset.plural!
-      countEl.textContent = `${visibleCount} ${visibleCount === 1 ? singular : plural}`
+    if (resultCountEl) {
+      resultCountEl.textContent = String(visibleCount)
     }
-
-    document.querySelectorAll<HTMLElement>("[data-type-filter]").forEach((btn) => {
-      const active = btn.dataset.typeFilter === type
-      btn.classList.toggle("btn-primary", active)
-      btn.classList.toggle("btn-outline", !active)
-    })
-
-    document.querySelectorAll<HTMLElement>("[data-field-filter]").forEach((btn) => {
-      const active = btn.dataset.fieldFilter === field
-      btn.classList.toggle("btn-primary", active)
-      btn.classList.toggle("btn-outline", !active)
-    })
   }
 
-  document.querySelectorAll<HTMLElement>("[data-type-filter]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      setParam("type", btn.dataset.typeFilter!)
-      applyFilters()
-    })
+  if (typeEl) typeEl.value = getParam("type", "all")
+  if (fieldEl) fieldEl.value = getParam("field", "all")
+  if (workModeEl) workModeEl.value = getParam("work_mode", "all")
+  if (searchEl) searchEl.value = getParam("search", "")
+
+  const filterPanel = document.getElementById("filter-panel") as HTMLDetailsElement | null
+  const hasActiveFilters =
+    getParam("type", "all") !== "all" ||
+    getParam("field", "all") !== "all" ||
+    getParam("work_mode", "all") !== "all" ||
+    getParam("search", "") !== ""
+  if (filterPanel && hasActiveFilters) filterPanel.open = true
+
+  typeEl?.addEventListener("change", () => {
+    setParam("type", typeEl.value)
+    applyFilters()
+  })
+  fieldEl?.addEventListener("change", () => {
+    setParam("field", fieldEl.value)
+    applyFilters()
+  })
+  workModeEl?.addEventListener("change", () => {
+    setParam("work_mode", workModeEl.value)
+    applyFilters()
   })
 
-  document.querySelectorAll<HTMLElement>("[data-field-filter]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      setParam("field", btn.dataset.fieldFilter!)
+  let searchTimeout: ReturnType<typeof setTimeout>
+  searchEl?.addEventListener("input", () => {
+    clearTimeout(searchTimeout)
+    searchTimeout = setTimeout(() => {
+      setParam("search", searchEl.value)
       applyFilters()
-    })
+    }, 300)
   })
 
   document.getElementById("clear-filters-btn")?.addEventListener("click", () => {
+    if (typeEl) typeEl.value = "all"
+    if (fieldEl) fieldEl.value = "all"
+    if (workModeEl) workModeEl.value = "all"
+    if (searchEl) searchEl.value = ""
     setParam("type", "all")
     setParam("field", "all")
+    setParam("work_mode", "all")
+    setParam("search", "")
     applyFilters()
   })
 
