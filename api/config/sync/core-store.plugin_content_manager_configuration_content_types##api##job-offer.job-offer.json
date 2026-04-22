@@ -62,6 +62,48 @@
           "sortable": true
         }
       },
+      "job_type": {
+        "edit": {
+          "label": "job_type",
+          "description": "",
+          "placeholder": "",
+          "visible": true,
+          "editable": true
+        },
+        "list": {
+          "label": "job_type",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "field": {
+        "edit": {
+          "label": "field",
+          "description": "",
+          "placeholder": "",
+          "visible": true,
+          "editable": true
+        },
+        "list": {
+          "label": "field",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "work_mode": {
+        "edit": {
+          "label": "work_mode",
+          "description": "",
+          "placeholder": "",
+          "visible": true,
+          "editable": true
+        },
+        "list": {
+          "label": "work_mode",
+          "searchable": true,
+          "sortable": true
+        }
+      },
       "company": {
         "edit": {
           "label": "company",
@@ -204,34 +246,6 @@
           "sortable": false
         }
       },
-      "job_type": {
-        "edit": {
-          "label": "job_type",
-          "description": "",
-          "placeholder": "",
-          "visible": true,
-          "editable": true
-        },
-        "list": {
-          "label": "job_type",
-          "searchable": true,
-          "sortable": true
-        }
-      },
-      "field": {
-        "edit": {
-          "label": "field",
-          "description": "",
-          "placeholder": "",
-          "visible": true,
-          "editable": true
-        },
-        "list": {
-          "label": "field",
-          "searchable": true,
-          "sortable": true
-        }
-      },
       "createdAt": {
         "edit": {
           "label": "createdAt",
@@ -300,12 +314,7 @@
       }
     },
     "layouts": {
-      "list": [
-        "id",
-        "uuid",
-        "title",
-        "description"
-      ],
+      "list": ["id", "uuid", "title", "description"],
       "edit": [
         [
           {
@@ -380,6 +389,12 @@
           },
           {
             "name": "field",
+            "size": 6
+          }
+        ],
+        [
+          {
+            "name": "work_mode",
             "size": 6
           }
         ]
