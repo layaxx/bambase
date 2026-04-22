@@ -6,9 +6,9 @@ import { EVENT_CATEGORIES } from "@/utils/api/events"
 const locationFieldsShape = {
   location_type: z.enum(["none", "linked", "custom"]).default("none"),
   map_location_id: z.string().optional(),
-  custom_location_name: z.string().optional(),
-  custom_location_address: z.string().optional(),
-  custom_location_city: z.string().optional(),
+  custom_location_name: z.string().max(200).optional(),
+  custom_location_address: z.string().max(300).optional(),
+  custom_location_city: z.string().max(100).optional(),
 }
 
 type LocationFields = z.infer<z.ZodObject<typeof locationFieldsShape>>
@@ -35,13 +35,13 @@ function buildLocationData(input: LocationFields) {
 
 const eventBaseSchema = z
   .object({
-    title: z.string().min(1, "Bitte Titel eingeben."),
-    organizer: z.string().min(1, "Bitte Veranstalter eingeben."),
+    title: z.string().min(1, "Bitte Titel eingeben.").max(200),
+    organizer: z.string().min(1, "Bitte Veranstalter eingeben.").max(200),
     description: z.string().min(1, "Bitte Beschreibung eingeben."),
     start: z.string().min(1, "Bitte Startzeit eingeben."),
     end: z.string().min(1, "Bitte Endzeit eingeben."),
     category: z.enum(EVENT_CATEGORIES).default("other"),
-    external_url: z.string().optional(),
+    external_url: z.url().max(2048).optional(),
   })
   .extend(locationFieldsShape)
 
@@ -66,10 +66,8 @@ export const events = {
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        throw new ActionError({
-          code: "FORBIDDEN",
-          message: data?.error?.message ?? "Löschen fehlgeschlagen.",
-        })
+        console.error("Event delete failed:", data?.error)
+        throw new ActionError({ code: "FORBIDDEN", message: "Löschen fehlgeschlagen." })
       }
 
       return {}
@@ -104,10 +102,8 @@ export const events = {
 
       const data = await res.json()
       if (!res.ok) {
-        throw new ActionError({
-          code: "BAD_REQUEST",
-          message: data?.error?.message ?? "Aktualisierung fehlgeschlagen.",
-        })
+        console.error("Event update failed:", data?.error)
+        throw new ActionError({ code: "BAD_REQUEST", message: "Aktualisierung fehlgeschlagen." })
       }
 
       return { slug: data.data.slug as string }
@@ -146,11 +142,8 @@ export const events = {
       const data = await res.json()
 
       if (!res.ok) {
-        console.error("Error creating event:", data.error)
-        throw new ActionError({
-          code: "BAD_REQUEST",
-          message: data?.error?.message ?? "Einreichung fehlgeschlagen.",
-        })
+        console.error("Event create failed:", data?.error)
+        throw new ActionError({ code: "BAD_REQUEST", message: "Einreichung fehlgeschlagen." })
       }
 
       return { slug: data.data.slug }

@@ -49,6 +49,53 @@ There is currently no page explaining what BamBase.de is, who runs it, or how to
 - Should the page include information on how to contribute (student groups submitting their own entries, contributing code)?
 - Should there be a privacy policy or imprint (Impressum) — this is likely a legal requirement for a German website?
 
+### P13 Design & Layout
+
+Cleanup of layout structure, navigation, footer, and visual inconsistencies across all non-homepage pages. No new features — the goal is consistency and polish.
+
+**Issues identified — layout & containers:**
+
+- **Account pages bypass `PageLayout`** — `account.astro` uses `AppLayout` directly with its own `max-w-2xl mx-auto px-4 py-12` container; `account/events.astro` and `account/jobs.astro` use `PageLayout` but with different heading styles. All three should use `PageLayout` uniformly.
+- **Three parallel container strategies in use** — `PageLayout` (inline `max-width: 80rem; padding: 2rem 1rem`), account pages (`max-w-2xl px-4 py-12`), and login/register (`max-w-2xl mx-auto`). Consolidate into one approach. Also move the `PageLayout` inline style to a Tailwind `max-w-7xl` utility.
+- **Heading styles inconsistent** — listing pages (`events`, `jobs`, `mensa`, `map`) use `PageHeader.astro` with `text-3xl font-bold tracking-tight sm:text-4xl`; detail pages use the same classes inline; account pages use `text-2xl font-extrabold`. Standardize on the `PageHeader` component everywhere, or document the intentional distinction.
+
+**Issues identified — header:**
+
+- **Inline `font-family` style** (`Header.astro:39`) — the logo font is set with `style="font-family: 'Archivo Variable', sans-serif;"` instead of a CSS class.
+- **Desktop vs. mobile button inconsistency** — the desktop login button is `btn btn-sm` (neutral); the mobile drawer login button is `btn btn-sm btn-primary w-full` (primary, full-width). They should look equivalent within their respective contexts, not visually different.
+- **Back-navigation button classes differ** — detail and create pages use `btn-ghost btn-sm gap-1 pl-0`; account sub-pages use `btn-ghost btn-sm btn-square`. Pick one pattern and apply it everywhere.
+
+**Issues identified — footer:**
+
+- **Footer exists but is near-empty** — `Footer.astro` contains only a "built with" attribution line and a back-to-top link that points to `href="#"` (non-functional).
+- **Back-to-top link is broken** — `href="#"` jumps to the URL fragment root but does not smoothly scroll. Should be `href="#top"` with `id="top"` on the `<body>` or use a `<button>` with `window.scrollTo`.
+- **No meaningful content** — a footer is the natural place for: site name + tagline, key navigation links (Events, Jobs, Mensa, Map), About/Impressum link (legally required for a German public website), and contact or GitHub link.
+
+**Issues identified — design inconsistencies:**
+
+- **Text opacity scale has five levels** (`/30`, `/40`, `/50`, `/60` and no suffix) used interchangeably for secondary text. Settle on two or three semantic levels (e.g. `base-content/70` for secondary, `base-content/40` for muted) and apply them consistently.
+- **Section icon backgrounds use different semantic colors per section** — `InfomapCard` uses `bg-info/20`, `JobCard` uses `bg-success/20`, `MensaCard` uses `bg-warning/20`. This is intentional theming and can stay, but should be documented as deliberate so future cards follow the same per-section assignment.
+- **Map popup inline styles** — `map.astro` generates Leaflet popup HTML via JavaScript template strings with extensive hardcoded inline styles (padding, font sizes, border radii, the red `#ef4444` event badge color). These should move to CSS classes or at minimum to CSS custom properties in `global.css`, consistent with how the map category colors are already handled.
+- **`StudentGroup.astro` uses webkit inline styles** for line-clamp — replaceable with Tailwind's `line-clamp-4` utility.
+
+**Work involved:**
+
+- [ ] Migrate `account.astro` to use `PageLayout`; unify heading style with other account sub-pages (`text-3xl font-bold tracking-tight sm:text-4xl` or explicit decision to keep `text-2xl`)
+- [ ] Replace `PageLayout.astro` inline style with `max-w-7xl mx-auto px-4 py-8`
+- [ ] Move Header logo `font-family` to a CSS class in `global.css`
+- [ ] Align desktop and mobile login button appearance in `Header.astro`
+- [ ] Standardize back-navigation button class (pick `btn-ghost btn-sm gap-1 pl-0`)
+- [ ] Expand footer: add site nav links, About/Impressum link, fix back-to-top
+- [ ] Reduce text opacity levels to two: `/70` (secondary) and `/40` (muted); do a find-and-replace pass
+- [ ] Extract Leaflet popup inline styles to CSS classes or `global.css` custom properties; remove hardcoded `#ef4444`
+- [ ] Replace inline webkit line-clamp in `StudentGroup.astro` with `line-clamp-4`
+
+**Open questions:**
+
+- Should the footer include an Impressum (legally required for German websites with commercial/editorial character)? BamBase serves a public audience — this is likely a legal requirement and should be a separate task if so.
+- Should there be a breadcrumb component for detail pages (e.g. Events → Event title), or is the existing back-link sufficient?
+- Should the account section have its own narrower max-width (`max-w-2xl`) intentionally, since it's form-heavy? If so, document the exception rather than removing it.
+
 ## Done
 
 ### P12 Improve Form Layout

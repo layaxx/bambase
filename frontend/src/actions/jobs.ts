@@ -4,18 +4,18 @@ import { strapiUrl } from "@/utils/api"
 import { JOB_TYPES, JOB_FIELDS, WORK_MODES } from "@/utils/api/job-offers"
 
 const jobCreateSchema = z.object({
-  title: z.string().min(1, "Bitte Stellenbezeichnung eingeben."),
-  company: z.string().min(1, "Bitte Unternehmen eingeben."),
-  location: z.string().min(1, "Bitte Ort eingeben."),
+  title: z.string().min(1, "Bitte Stellenbezeichnung eingeben.").max(200),
+  company: z.string().min(1, "Bitte Unternehmen eingeben.").max(200),
+  location: z.string().min(1, "Bitte Ort eingeben.").max(200),
   working_hours: z.coerce.number().int().min(0, "Bitte gültige Stundenzahl eingeben."),
   description: z.string().min(1, "Bitte Beschreibung eingeben."),
   job_type: z.enum(JOB_TYPES).default("other"),
   field: z.enum(JOB_FIELDS).default("other"),
   work_mode: z.enum(WORK_MODES).default("on_site"),
-  contact_name: z.string().optional(),
-  contact_mail: z.string().optional(),
-  contact_phone: z.string().optional(),
-  external_url: z.string().optional(),
+  contact_name: z.string().max(200).optional(),
+  contact_mail: z.email().max(254).optional(),
+  contact_phone: z.string().max(50).optional(),
+  external_url: z.url().max(2048).optional(),
 })
 
 export const jobs = {
@@ -33,10 +33,8 @@ export const jobs = {
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        throw new ActionError({
-          code: "FORBIDDEN",
-          message: data?.error?.message ?? "Löschen fehlgeschlagen.",
-        })
+        console.error("Job delete failed:", data?.error)
+        throw new ActionError({ code: "FORBIDDEN", message: "Löschen fehlgeschlagen." })
       }
 
       return {}
@@ -58,10 +56,8 @@ export const jobs = {
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        throw new ActionError({
-          code: "FORBIDDEN",
-          message: data?.error?.message ?? "Archivieren fehlgeschlagen.",
-        })
+        console.error("Job archive failed:", data?.error)
+        throw new ActionError({ code: "FORBIDDEN", message: "Archivieren fehlgeschlagen." })
       }
 
       return {}
@@ -72,18 +68,18 @@ export const jobs = {
     accept: "form",
     input: z.object({
       documentId: z.string().min(1),
-      title: z.string().min(1, "Bitte Stellenbezeichnung eingeben."),
-      company: z.string().min(1, "Bitte Unternehmen eingeben."),
-      location: z.string().min(1, "Bitte Ort eingeben."),
+      title: z.string().min(1, "Bitte Stellenbezeichnung eingeben.").max(200),
+      company: z.string().min(1, "Bitte Unternehmen eingeben.").max(200),
+      location: z.string().min(1, "Bitte Ort eingeben.").max(200),
       working_hours: z.coerce.number().int().min(0, "Bitte gültige Stundenzahl eingeben."),
       description: z.string().min(1, "Bitte Beschreibung eingeben."),
       job_type: z.enum(JOB_TYPES).default("other"),
       field: z.enum(JOB_FIELDS).default("other"),
       work_mode: z.enum(WORK_MODES).default("on_site"),
-      contact_name: z.string().optional(),
-      contact_mail: z.string().optional(),
-      contact_phone: z.string().optional(),
-      external_url: z.string().optional(),
+      contact_name: z.string().max(200).optional(),
+      contact_mail: z.email().max(254).optional(),
+      contact_phone: z.string().max(50).optional(),
+      external_url: z.url().max(2048).optional(),
     }),
     handler: async ({ documentId, ...fields }, context) => {
       const token = context.cookies.get("auth_token")?.value
@@ -114,10 +110,8 @@ export const jobs = {
 
       const data = await res.json()
       if (!res.ok) {
-        throw new ActionError({
-          code: "BAD_REQUEST",
-          message: data?.error?.message ?? "Aktualisierung fehlgeschlagen.",
-        })
+        console.error("Job update failed:", data?.error)
+        throw new ActionError({ code: "BAD_REQUEST", message: "Aktualisierung fehlgeschlagen." })
       }
 
       return { uuid: data.data.uuid as string }
@@ -162,10 +156,8 @@ export const jobs = {
       const data = await res.json()
 
       if (!res.ok) {
-        throw new ActionError({
-          code: "BAD_REQUEST",
-          message: data?.error?.message ?? "Einreichung fehlgeschlagen.",
-        })
+        console.error("Job create failed:", data?.error)
+        throw new ActionError({ code: "BAD_REQUEST", message: "Einreichung fehlgeschlagen." })
       }
 
       return { uuid: data.data.uuid }
