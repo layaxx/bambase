@@ -72,7 +72,8 @@
       "^.+\\.tsx?$": "babel-jest"
     },
     "moduleNameMapper": {
-      "^src/(.*)$": "<rootDir>/src/$1"
+      "^src/(.*)$": "<rootDir>/src/$1",
+      "^/create-service$": "<rootDir>/create-service"
     }
   }
 }

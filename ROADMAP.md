@@ -2,6 +2,100 @@
 
 ## Upcoming
 
+### P16 Performance
+
+Audit-driven improvements to API query efficiency, rendering strategy, and asset loading. No new features — the goal is reducing latency and server load, especially as data volumes grow.
+
+**Issues identified — API over-fetching and N+1 queries:**
+
+- **Mensa page makes 7 serial API calls** — `mensa.astro:17–22` builds an array of 7 days then calls `fetchMensaMeals(day)` for each via `Promise.all`. Each call is a separate HTTP round-trip to Strapi with its own query. A single call filtering on `date: { $in: [...days] }` would replace all 7. Because this is SSR, it happens on every `/mensa` page load.
+- **Job offer `find()` makes 2 queries and deduplicates in JavaScript** — `controllers/job-offer.ts:14–32` runs two parallel `findMany` calls (one for published, one for the user's own offers), then merges and deduplicates in a `Set`. A single `$or` filter would produce the same result with half the database load on every authenticated job listing request.
+- **`fetchLocations()` has a hard limit of 500** — `utils/api/locations.ts:24`. The map currently has ~100 locations; the limit is set to 500 as a safety margin. This loads and serializes the entire locations table plus nested address components on every `/map` load. The limit should reflect the real dataset size, and the fetch should use `fields` projection to drop unused fields.
+- **`update` and `delete` controller methods each fetch the full job/event record just to check ownership** — `controllers/job-offer.ts:48, 67`. Only the `owner.id` field is needed; the full `populate: ["owner"]` call fetches the entire user relation. Use `fields: ["id"], populate: { owner: { fields: ["id"] } }`.
+
+**Issues identified — database:**
+
+- **No indexes on frequently filtered columns** — `events.start`, `events.end` (filtered on every events list with `$gte`/`$lte`), `job-offers.online_status` (filtered on every job list and the `unpublishExpired` service), and `mensa-meals.date` (filtered 7× per mensa page load) have no custom indexes defined. Strapi does not auto-index non-primary enum or datetime fields. These will cause full table scans as row counts grow.
+- **`mensa-meals` sync writes records one at a time** — `api/src/api/mensa/services/mensa.ts` loops over ~60 meals and issues individual `create`/`update`/`delete` calls. This runs 7× daily and causes 60+ sequential database writes per run. Batch with `Promise.all` to parallelise.
+
+**Issues identified — rendering strategy:**
+
+- **Every page is fully SSR with no caching** — `astro.config.mjs` uses `output: "server"`. Pages like `/mensa`, `/map`, and `/` fetch data that changes at most once per day (mensa data via cron at 05:30, locations almost never, events/jobs rarely within minutes). Every visitor triggers a full set of API calls to Strapi. Strapi has no `Cache-Control` headers on public GET endpoints. Adding even a 5-minute `s-maxage` on the Strapi responses, or adding `export const prerender = true` on `/map` and `/mensa`, would eliminate the majority of redundant fetches.
+- **All filtering on `/events` and `/jobs` is client-side** — both pages fetch up to 100 records, render them all to HTML, then hide/show via JavaScript. This couples page weight to dataset size. If either catalog grows to 500+ items, initial HTML will bloat proportionally. The filtering logic should eventually move to server-side query parameters; for now, the existing approach is acceptable at current scale.
+
+**Issues identified — assets:**
+
+- **Leaflet loaded from unpkg CDN at runtime** — `map.astro:115` adds a `<link>` for Leaflet CSS and then injects a `<script>` tag dynamically in JavaScript to load Leaflet JS from `unpkg.com`. This means: (a) the map cannot render until two CDN round-trips complete, (b) there is no subresource integrity check, and (c) the page has an external dependency. Leaflet should be bundled (`npm install leaflet`) or at minimum loaded with `<link rel="preload">` and a `<script defer>`.
+- **Font imports have no `font-display` override** — `Layout.astro:3–4` imports Archivo and Inter via `@fontsource-variable`. These are self-hosted, which is good, but there is no `font-display: swap` override in `global.css`. If the font files are slow to load the browser shows invisible text (FOIT) rather than falling back immediately.
+
+**Work involved:**
+
+- [ ] Collapse the 7 `fetchMensaMeals` calls into one: add a `date: { $in: [...] }` filter variant to `fetchMensaMeals` (or a new `fetchMensaMealsRange` function), update `mensa.astro` to use it
+- [ ] Rewrite `job-offer.ts` `find()` to use a single `$or` query instead of two `findMany` + JS dedup
+- [ ] Reduce `fetchLocations()` limit to match actual dataset size (e.g. 200); add `fields` projection to drop unused columns
+- [ ] Narrow `populate: ["owner"]` in `update` and `delete` controllers to `populate: { owner: { fields: ["id"] } }`
+- [ ] Add database indexes for `events.start`, `events.end`, `job-offers.online_status`, `mensa-meals.date` — via a Strapi database migration or by documenting as a manual PostgreSQL step in the deployment guide
+- [ ] Parallelise the mensa sync loop with `Promise.all` on the create/update/delete batches
+- [ ] Add `Cache-Control: public, s-maxage=300` to public Strapi GET responses (locations, published events, published jobs) via a custom middleware in `api/config/middlewares.ts`
+- [ ] Replace Leaflet CDN `<script>` injection with `npm install leaflet` + a bundled import, and add a `<link rel="preload">` for the CSS
+- [ ] Add `font-display: swap` to the Archivo and Inter `@font-face` declarations in `global.css`
+
+**Open questions:**
+
+- Should `/mensa` and `/map` use Astro's `prerender = true` (static build, rebuilt on deploy) or stay SSR with a short `Cache-Control` TTL? Static build is simpler but requires a redeploy to pick up fresh mensa data; a CDN with `s-maxage=300` at the Strapi layer achieves the same result without changing the rendering mode.
+- Are database indexes best added via a Strapi migration file (keeps them tracked in version control) or via a documented `CREATE INDEX` step in the deployment runbook? Strapi's migration system supports raw SQL, which is the cleanest approach.
+- The client-side filtering on `/events` and `/jobs` was a deliberate design decision (P6). At what catalog size should it move server-side? A reasonable threshold is ~300 items, at which point the rendered HTML is noticeably large and filter latency becomes measurable.
+
+### P15 Test coverage gaps
+
+The existing test suite is strong on utility functions and E2E happy paths but has zero unit-test coverage on the most critical code paths: action handlers, lifecycle hooks, and Strapi controllers. These are the files most likely to silently regress.
+
+**What IS covered well:**
+
+- 17 Vitest unit test files covering all API utility functions, formatting helpers, and key components (`JobForm`, `EventForm`, `ReportModal`, mensa components)
+- 6 Playwright E2E specs covering auth, job CRUD, event CRUD, report submission, public pages, and account pages against a real Docker Compose stack
+- 1 Jest integration test for the mensa import service (319 lines, covers transformation, deduplication, and partial failure)
+
+**Critical gaps — zero unit coverage on high-risk paths:**
+
+- **`actions/auth.ts`** — login, register, and getMe are entirely untested as units. Cookie options (`httpOnly`, `sameSite`, `maxAge`), error message shape, and token parsing are all unverified. If cookie config silently breaks, users log in but aren't actually authenticated.
+- **`actions/jobs.ts`** — all four actions (create, update, delete, archive) have no unit tests. The E2E tests confirm the happy path works but don't cover 403 on non-owner operations, 400 on invalid input, or network failure during submission.
+- **`actions/events.ts`** — same gap. Critically, `buildLocationData()` — the function that routes between no-location, linked map location, and custom location — has no unit test despite several branching conditions and nullable fields.
+- **`actions/reports.ts`** — entirely untested. The `target_type → field name` mapping (`event` vs `job_offer`) is a silent failure point: wrong mapping means reports persist with the wrong relation.
+- **API lifecycle hooks** (`api/src/api/*/content-types/*/lifecycles.ts`) — owner assignment, UUID/slug generation, and `offline_after` date calculation all run in `beforeCreate` hooks with zero test coverage. If owner assignment breaks, content becomes unowned and editable by anyone.
+- **Strapi controllers** (`api/src/api/job-offer/controllers/job-offer.ts`, `event/controllers/event.ts`) — the custom `find()` merging (published + own offers), `update()` ownership check, and `online_status` guard (only `archived` allowed for non-admins) are all untested. These are the server-side authorization enforcement points.
+- **`src/middleware.ts`** — locale detection from `Accept-Language` header and cookie override logic have no tests.
+
+**Moderate gaps:**
+
+- `fetchOngoingOrUpcomingEvents()` and `fetchUpcomingMapEvents()` (complex `$or` time filters, map location population) — not in the existing API utility test files
+- The 401-retry fallback in `fetchJobOffer()` — unverified that it retries with the server token and doesn't loop
+- `utils/url-params.ts` — 9 lines, zero coverage
+- `formatJobOfferDate()` relative-time output (dayjs locale switching)
+- E2E: no test verifies that a non-owner *cannot* edit or delete someone else's content (privilege escalation is only checked implicitly)
+- E2E: account page tests are thin (35 lines) — no test for the empty state, status badge rendering, or the archive confirmation dialog
+
+**Work involved:**
+
+- [x] Unit tests for all four action files — mock `fetch` and `context.cookies`; cover happy path, auth missing, upstream 4xx, and network failure
+- [x] Unit tests for `buildLocationData()` in `events.ts` — all three branches (`none`, `linked`, `custom`), null address/city, missing `map_location_id`
+- [x] Unit tests for `actions/reports.ts` — both `target_type` values, optional `details`, error re-throw
+- [x] Unit tests for `beforeCreate` lifecycle hooks — mock Strapi context; assert owner set, UUID/slug generated, `offline_after` correct, `online_status` defaulted
+- [x] Unit tests for controller ownership guards — mock `ctx.state.user`, assert 403 when IDs mismatch, assert `online_status` field is stripped except for `archived`
+- [x] Unit tests for `fetchOngoingOrUpcomingEvents()` and `fetchUpcomingMapEvents()` — add to existing `events.test.ts`
+- [x] Unit tests for `fetchJobOffer()` 401-retry logic — mock two sequential fetch calls
+- [x] Unit tests for `src/middleware.ts` — cover `Accept-Language` parsing, cookie override, unsupported locale fallback
+- [x] Unit tests for `utils/url-params.ts`
+- [ ] E2E test: authenticated user attempts to DELETE/PUT another user's job and event → expect 403
+- [ ] E2E test: account page with no content shows empty state
+- [ ] CI: add a GitHub Actions workflow that runs `yarn test` in both `api/` and `frontend/` on every pull request; run E2E on a nightly schedule or merge-to-main trigger
+
+**Open questions:**
+
+- Action handlers call raw `fetch()` against Strapi — should unit tests mock at the `fetch` level (using `vi.stubGlobal('fetch', ...)`) or spin up a test Strapi instance? The former is simpler and tests the action logic in isolation; the latter gives more confidence but is slow.
+- Should lifecycle hook tests run against a real Strapi instance (integration-style) or mock the Strapi `strapi` global? Mocking is faster but fragile if hook internals change.
+- The existing E2E suite requires `SEED=true docker-compose up` — is there a CI environment where this can run reliably, or should E2E remain developer-only for now?
+
 ### P7 Add data sources for events
 
 Automatically importing events from external sources would reduce the manual effort of maintaining the event calendar and provide better coverage of university life.
@@ -48,6 +142,57 @@ There is currently no page explaining what BamBase.de is, who runs it, or how to
 - Is there a contact email or form, or should users be directed to a GitHub repo/issue tracker?
 - Should the page include information on how to contribute (student groups submitting their own entries, contributing code)?
 - Should there be a privacy policy or imprint (Impressum) — this is likely a legal requirement for a German website?
+
+### P14 Accessibility
+
+Audit-driven pass to reach WCAG 2.1 AA compliance across all pages and components. Issues are grouped by severity; the work-involved checklist below is ordered by priority.
+
+**Issues identified — page structure:**
+
+- **No skip-to-main-content link** — `AppLayout.astro` has `<Header />` before `<slot />` with no preceding skip link. Keyboard-only users must tab through the entire nav on every page to reach content.
+- **Home page has no `<h1>`** — `index.astro` renders five widget cards, each with an `<h2>`, but there is no top-level `<h1>`. Every page must have exactly one `<h1>`.
+- **`<title>` is the same on all pages** — `Layout.astro:15` has `<title>BamBase.de</title>` hardcoded. Users with multiple tabs open and screen reader users announcing the page title cannot distinguish pages. Should be `Events – BamBase.de`, `Jobs – BamBase.de`, etc.
+
+**Issues identified — forms:**
+
+- **Location type radio group has no `<fieldset>/<legend>`** — `EventForm.astro` lines 181–207 render three radio buttons (`none`, `linked`, `custom`) under a plain `<span>` label. Without a `<fieldset>` grouping them and a `<legend>` naming the group, screen readers cannot announce what the radios are for.
+- **`StudentGroup` expand button has no `aria-expanded`** — `StudentGroup.astro:31` renders a "Mehr anzeigen" button that toggles a clamped description, but `aria-expanded` is never set on it. Screen readers cannot tell users whether the content is expanded or collapsed.
+
+**Issues identified — modals:**
+
+- **`<dialog>` missing `aria-labelledby`** — `ReportModal.astro:24` renders `<dialog class="modal" id="reportModal">` without referencing the `<h3>` inside it. Add `aria-labelledby="reportModalTitle"` on the dialog and `id="reportModalTitle"` on the h3 so screen readers announce the dialog name when it opens.
+- **Modal backdrop button has visible text** — `ReportModal.astro:67` — DaisyUI's backdrop close pattern renders `<button>close</button>`. The word "close" is visually hidden by the overlay but is read aloud by screen readers as an unlabelled action. Replace with `<button aria-label="Schließen">` and an empty or sr-only label.
+
+**Issues identified — dynamic regions:**
+
+- **Result counts not announced to screen readers** — `events.astro:70–76` and `jobs.astro:111` update a result-count element via JavaScript when filters change, but neither element has `aria-live="polite"`. Blind and low-vision users are not informed when the result set changes.
+
+**Issues identified — motion:**
+
+- **No `prefers-reduced-motion` override** — `global.css` has no `@media (prefers-reduced-motion: reduce)` rule. Tailwind transition utilities (`transition-all`, `transition-colors`, `transition-transform`) are used on cards, buttons, the header, and the chevron in the jobs filter panel with no opt-out for users who have vestibular disorders or motion sensitivity.
+
+**Issues identified — contrast (informational):**
+
+- `InfomapCard.astro:46` uses `text-base-content/30` on a description label — 30 % opacity almost certainly fails WCAG AA (4.5:1) on the DaisyUI base background in both light and dark themes. Decorative icons at that opacity are fine; readable text is not.
+- `map.astro:97` and `MensaWeekendSection.astro:16` use `text-base-content/40` on descriptive text. Worth verifying computed contrast ratios; raise to `/60` or higher if they fail.
+
+**Work involved:**
+
+- [ ] Add skip link as the first element in `AppLayout.astro`: `<a class="sr-only focus:not-sr-only" href="#main-content">Zum Inhalt springen</a>`; add `id="main-content"` to `<main>` in `PageLayout.astro`
+- [ ] Add a visually-hidden `<h1>` (or a visible one) to `index.astro` — e.g. `<h1 class="sr-only">BamBase.de – Studierendenportal Bamberg</h1>`
+- [ ] Make `<title>` dynamic: accept a `title` prop in `Layout.astro` and pass it from each page; fall back to `"BamBase.de"`
+- [ ] Wrap the location type radio buttons in `EventForm.astro` with `<fieldset>` and `<legend>`
+- [ ] Add `aria-expanded="false"` to the "Mehr anzeigen" button in `StudentGroup.astro`; toggle it in the existing click handler
+- [ ] Add `aria-labelledby="reportModalTitle"` to the `<dialog>` in `ReportModal.astro`; add `id="reportModalTitle"` to its `<h3>`
+- [ ] Replace the backdrop `<button>close</button>` in `ReportModal.astro` with `<button aria-label="Schließen"></button>`
+- [ ] Add `aria-live="polite"` to the result-count elements in `events.astro` and `jobs.astro`
+- [ ] Add `@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; } }` to `global.css`
+- [ ] Raise `text-base-content/30` in `InfomapCard.astro` to `/60`; verify computed contrast on `/40` usages in `map.astro` and `MensaWeekendSection.astro`
+
+**Open questions:**
+
+- Should the home page `<h1>` be visible (e.g. a hero tagline) or screen-reader-only? A visible tagline ("Das Studierendenportal für Bamberg") would improve the page's value for all users and search engines.
+- Is there a target WCAG conformance level — AA (standard) or AAA? AA is the legal baseline for German public websites (BITV 2.0).
 
 ### P13 Design & Layout
 
