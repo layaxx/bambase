@@ -1,14 +1,23 @@
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { fetchJobOffers, fetchJobOffer, fetchMyJobOffers } from "./job-offers"
 
 const mockFind = vi.hoisted(() => vi.fn())
+const mockCollection = vi.hoisted(() => vi.fn())
 
 vi.mock("./client", () => ({
-  client: {
-    collection: vi.fn().mockReturnValue({ find: mockFind }),
-  },
+  client: { collection: mockCollection },
   strapiUrl: "http://localhost:1337",
 }))
+
+beforeEach(() => {
+  mockFind.mockReset()
+  mockCollection.mockReturnValue({ find: mockFind })
+})
+
+afterEach(() => {
+  vi.restoreAllMocks()
+  vi.unstubAllGlobals()
+})
 
 const STRAPI_URL = "http://localhost:1337"
 
@@ -25,8 +34,6 @@ const sampleJob = {
 }
 
 describe("fetchJobOffers", () => {
-  beforeEach(() => mockFind.mockReset())
-
   it("filters by published status", async () => {
     mockFind.mockResolvedValue({ data: [] })
 
@@ -71,7 +78,6 @@ describe("fetchJobOffers", () => {
 
     expect(result).toEqual([])
     expect(consoleSpy).toHaveBeenCalledWith("Error fetching job offers", expect.any(TypeError))
-    consoleSpy.mockRestore()
   })
 })
 
@@ -80,17 +86,17 @@ describe("fetchJobOffer", () => {
     vi.stubGlobal("fetch", vi.fn())
   })
 
-  it("URL-encodes the slug in the query string", async () => {
+  it("URL-encodes the uuid in the query string", async () => {
     vi.mocked(fetch).mockResolvedValue({
       ok: true,
       json: async () => ({ data: [sampleJob] }),
     } as Response)
-    const slugWithSpecialChars = "test slug & more"
+    const uuidWithSpecialChars = "test uuid & more"
 
-    await fetchJobOffer(slugWithSpecialChars, "token")
+    await fetchJobOffer(uuidWithSpecialChars, "token")
 
     expect(fetch).toHaveBeenCalledWith(
-      expect.stringContaining(encodeURIComponent(slugWithSpecialChars)),
+      expect.stringContaining(encodeURIComponent(uuidWithSpecialChars)),
       expect.any(Object)
     )
   })
@@ -177,7 +183,31 @@ describe("fetchJobOffer", () => {
 
     expect(result).toBeNull()
     expect(consoleSpy).toHaveBeenCalledWith("Error fetching job offer", expect.any(Error))
-    consoleSpy.mockRestore()
+  })
+
+  it("retries with the public token when a custom token returns 401", async () => {
+    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
+    vi.mocked(fetch)
+      .mockResolvedValueOnce({ ok: false, status: 401 } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: [sampleJob] }),
+      } as Response)
+
+    const result = await fetchJobOffer("some-uuid", "custom-token")
+
+    expect(fetch).toHaveBeenCalledTimes(2)
+    expect(result).toEqual(sampleJob)
+    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("retrying"))
+  })
+
+  it("does NOT retry when the default public token itself returns 401", async () => {
+    vi.mocked(fetch).mockResolvedValue({ ok: false, status: 401 } as Response)
+
+    const result = await fetchJobOffer("some-uuid")
+
+    expect(fetch).toHaveBeenCalledTimes(1)
+    expect(result).toBeNull()
   })
 })
 
@@ -243,6 +273,5 @@ describe("fetchMyJobOffers", () => {
 
     expect(result).toEqual([])
     expect(consoleSpy).toHaveBeenCalledWith("Error fetching own job offers", expect.any(Error))
-    consoleSpy.mockRestore()
   })
 })

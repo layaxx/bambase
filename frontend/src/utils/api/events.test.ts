@@ -1,14 +1,29 @@
-import { beforeEach, describe, expect, it, vi } from "vitest"
-import { fetchEvents, fetchEvent, fetchMyEvents } from "./events"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import {
+  fetchEvents,
+  fetchEvent,
+  fetchMyEvents,
+  fetchOngoingOrUpcomingEvents,
+  fetchUpcomingMapEvents,
+} from "./events"
 
 const mockFind = vi.hoisted(() => vi.fn())
+const mockCollection = vi.hoisted(() => vi.fn())
 
 vi.mock("./client", () => ({
-  client: {
-    collection: vi.fn().mockReturnValue({ find: mockFind }),
-  },
+  client: { collection: mockCollection },
   strapiUrl: "http://localhost:1337",
 }))
+
+beforeEach(() => {
+  mockFind.mockReset()
+  mockCollection.mockReturnValue({ find: mockFind })
+})
+
+afterEach(() => {
+  vi.restoreAllMocks()
+  vi.unstubAllGlobals()
+})
 
 const sampleEvent = {
   documentId: "abc123",
@@ -21,8 +36,6 @@ const sampleEvent = {
 }
 
 describe("fetchEvents", () => {
-  beforeEach(() => mockFind.mockReset())
-
   it("sorts results by start ascending", async () => {
     mockFind.mockResolvedValue({ data: [] })
 
@@ -63,13 +76,10 @@ describe("fetchEvents", () => {
 
     expect(result).toEqual([])
     expect(consoleSpy).toHaveBeenCalledWith("Error fetching events", expect.any(TypeError))
-    consoleSpy.mockRestore()
   })
 })
 
 describe("fetchEvent", () => {
-  beforeEach(() => mockFind.mockReset())
-
   it("filters by the given slug", async () => {
     mockFind.mockResolvedValue({ data: [sampleEvent] })
 
@@ -124,7 +134,135 @@ describe("fetchEvent", () => {
 
     expect(result).toBeNull()
     expect(consoleSpy).toHaveBeenCalledWith("Error fetching event", expect.any(TypeError))
-    consoleSpy.mockRestore()
+  })
+})
+
+describe("fetchOngoingOrUpcomingEvents", () => {
+  it("sorts results by start ascending", async () => {
+    mockFind.mockResolvedValue({ data: [] })
+
+    await fetchOngoingOrUpcomingEvents()
+
+    expect(mockFind).toHaveBeenCalledWith(expect.objectContaining({ sort: ["start:asc"] }))
+  })
+
+  it("uses the default limit of 100", async () => {
+    mockFind.mockResolvedValue({ data: [] })
+
+    await fetchOngoingOrUpcomingEvents()
+
+    expect(mockFind).toHaveBeenCalledWith(expect.objectContaining({ pagination: { limit: 100 } }))
+  })
+
+  it("respects a custom limit", async () => {
+    mockFind.mockResolvedValue({ data: [] })
+
+    await fetchOngoingOrUpcomingEvents(50)
+
+    expect(mockFind).toHaveBeenCalledWith(expect.objectContaining({ pagination: { limit: 50 } }))
+  })
+
+  it("returns the data array from the response", async () => {
+    mockFind.mockResolvedValue({ data: [sampleEvent] })
+
+    const result = await fetchOngoingOrUpcomingEvents()
+
+    expect(result).toEqual([sampleEvent])
+  })
+
+  it("uses a $or filter combining today's events and currently-ongoing events", async () => {
+    mockFind.mockResolvedValue({ data: [] })
+
+    await fetchOngoingOrUpcomingEvents()
+
+    const call = mockFind.mock.calls[0][0]
+    expect(call.filters.$or).toHaveLength(2)
+    expect(call.filters.$or[0].start.$gte).toBeDefined()
+    expect(call.filters.$or[0].start.$lte).toBeDefined()
+    expect(call.filters.$or[1].start.$lte).toBeDefined()
+    expect(call.filters.$or[1].end.$gte).toBeDefined()
+  })
+
+  it("logs an error and returns an empty array when the API response is unexpected", async () => {
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+    mockFind.mockResolvedValue(null)
+
+    const result = await fetchOngoingOrUpcomingEvents()
+
+    expect(result).toEqual([])
+    expect(consoleSpy).toHaveBeenCalledWith("Error fetching events", expect.any(TypeError))
+  })
+})
+
+describe("fetchUpcomingMapEvents", () => {
+  it("sorts results by start ascending", async () => {
+    mockFind.mockResolvedValue({ data: [] })
+
+    await fetchUpcomingMapEvents()
+
+    expect(mockFind).toHaveBeenCalledWith(expect.objectContaining({ sort: ["start:asc"] }))
+  })
+
+  it("uses the default limit of 200", async () => {
+    mockFind.mockResolvedValue({ data: [] })
+
+    await fetchUpcomingMapEvents()
+
+    expect(mockFind).toHaveBeenCalledWith(expect.objectContaining({ pagination: { limit: 200 } }))
+  })
+
+  it("respects a custom limit", async () => {
+    mockFind.mockResolvedValue({ data: [] })
+
+    await fetchUpcomingMapEvents(50)
+
+    expect(mockFind).toHaveBeenCalledWith(expect.objectContaining({ pagination: { limit: 50 } }))
+  })
+
+  it("filters to events where end >= now", async () => {
+    mockFind.mockResolvedValue({ data: [] })
+
+    await fetchUpcomingMapEvents()
+
+    const call = mockFind.mock.calls[0][0]
+    expect(call.filters.end.$gte).toBeDefined()
+  })
+
+  it("filters to events where map_location is not null", async () => {
+    mockFind.mockResolvedValue({ data: [] })
+
+    await fetchUpcomingMapEvents()
+
+    const call = mockFind.mock.calls[0][0]
+    expect(call.filters.map_location).toEqual({ $ne: null })
+  })
+
+  it("populates map_location", async () => {
+    mockFind.mockResolvedValue({ data: [] })
+
+    await fetchUpcomingMapEvents()
+
+    expect(mockFind).toHaveBeenCalledWith(
+      expect.objectContaining({ populate: { map_location: true } })
+    )
+  })
+
+  it("returns the data array from the response", async () => {
+    mockFind.mockResolvedValue({ data: [sampleEvent] })
+
+    const result = await fetchUpcomingMapEvents()
+
+    expect(result).toEqual([sampleEvent])
+  })
+
+  it("logs an error and returns an empty array when the API response is unexpected", async () => {
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+    mockFind.mockResolvedValue(null)
+
+    const result = await fetchUpcomingMapEvents()
+
+    expect(result).toEqual([])
+    expect(consoleSpy).toHaveBeenCalledWith("Error fetching upcoming events", expect.any(TypeError))
   })
 })
 
@@ -193,6 +331,5 @@ describe("fetchMyEvents", () => {
 
     expect(result).toEqual([])
     expect(consoleSpy).toHaveBeenCalledWith("Error fetching own events", expect.any(Error))
-    consoleSpy.mockRestore()
   })
 })

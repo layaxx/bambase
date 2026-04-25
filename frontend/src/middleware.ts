@@ -7,21 +7,38 @@ const COOKIE_NAME = "locale"
 
 function parseAcceptLanguage(header: string | null): Locale {
   if (!header) return DEFAULT_LOCALE
-  // Parse e.g. "en-US,en;q=0.9,de;q=0.8" → pick first supported locale
-  const preferred = header
-    .split(",")
-    .map((part) => part.trim().split(";")[0].trim().toLowerCase().slice(0, 2))
-    .find((lang) => SUPPORTED_LOCALES.includes(lang as Locale))
-  return (preferred as Locale) ?? DEFAULT_LOCALE
-}
 
+  const parsed = header
+    .split(",")
+    .map((part) => {
+      const [lang, qValue] = part.trim().split(";")
+      const q = qValue?.startsWith("q=") ? parseFloat(qValue.slice(2)) : 1
+      return {
+        lang: lang.toLowerCase().slice(0, 2),
+        q,
+      }
+    })
+    .sort((a, b) => b.q - a.q)
+
+  const match = parsed.find((entry) => SUPPORTED_LOCALES.includes(entry.lang as Locale))
+
+  return (match?.lang as Locale) ?? DEFAULT_LOCALE
+}
 export const onRequest = defineMiddleware((context, next) => {
-  const cookieLocale = context.cookies.get(COOKIE_NAME)?.value as Locale | undefined
+  const cookieLocaleRaw = context.cookies.get(COOKIE_NAME)?.value?.toLowerCase()
+  const cookieLocale = SUPPORTED_LOCALES.includes(cookieLocaleRaw as Locale)
+    ? (cookieLocaleRaw as Locale)
+    : undefined
   if (cookieLocale && SUPPORTED_LOCALES.includes(cookieLocale)) {
     context.locals.locale = cookieLocale
   } else {
     const acceptLanguage = context.request.headers.get("Accept-Language")
     context.locals.locale = parseAcceptLanguage(acceptLanguage)
+    context.cookies.set(COOKIE_NAME, context.locals.locale, {
+      httpOnly: true,
+      sameSite: "strict",
+      path: "/",
+    })
   }
   return next()
 })
