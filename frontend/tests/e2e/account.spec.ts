@@ -33,3 +33,29 @@ test.describe("My Events (/account/events)", () => {
     await expect(firstLink).not.toHaveAttribute("href", "/event/new")
   })
 })
+
+// ─── Empty state (new user with no content) ─────────────────────────────────
+
+test.describe("Account pages — empty state", () => {
+  test.use({ storageState: { cookies: [], origins: [] } })
+
+  test("new user sees empty-state message on /account/jobs and /account/events", async ({
+    page,
+  }) => {
+    const email = `e2e-empty-${Date.now()}@example.com`
+    await page.goto("/register")
+    await page.fill('[name="email"]', email)
+    await page.fill('[name="password"]', "validpassword1")
+    await page.fill('[name="passwordConfirm"]', "validpassword1")
+    await page.click('button[type="submit"]')
+    await expect(page).toHaveURL("/")
+
+    await page.goto("/account/jobs")
+    await expect(page.getByText("Du hast noch keine Stellenangebote inseriert.")).toBeVisible()
+    await expect(page.getByRole("link", { name: "Job inserieren" })).toBeVisible()
+
+    await page.goto("/account/events")
+    await expect(page.getByText("Du hast noch keine Veranstaltungen eingereicht.")).toBeVisible()
+    await expect(page.getByRole("link", { name: "Veranstaltung einreichen" })).toBeVisible()
+  })
+})

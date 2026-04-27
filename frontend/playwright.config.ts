@@ -14,6 +14,7 @@ import { defineConfig, devices } from "@playwright/test"
  */
 
 export const AUTH_FILE = "tests/e2e/.auth/seed-user.json"
+export const STRAPI_URL = process.env.STRAPI_URL ?? "http://localhost:1337"
 
 export default defineConfig({
   testDir: "./tests/e2e",

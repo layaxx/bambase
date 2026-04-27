@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test"
-import { AUTH_FILE } from "../../playwright.config"
+import { AUTH_FILE, STRAPI_URL } from "../../playwright.config"
 
 /**
  * Event CRUD flows — all tests run as the authenticated seed user.
@@ -150,6 +150,43 @@ test("event draft is cleared when navigating away without submitting", async ({ 
   await page.goto("/event/new")
   const titleValue = await page.locator("#title").inputValue()
   expect(titleValue).toBe("")
+})
+
+// ─── Privilege escalation ───────────────────────────────────────────────────
+
+test.describe("Ownership enforcement — events", () => {
+  let documentId: string
+  let authToken: string
+
+  test.beforeAll(async ({ browser }) => {
+    const ctx = await browser.newContext({ storageState: AUTH_FILE })
+    const pg = await ctx.newPage()
+    await pg.goto("/event/offene-sozialberatung")
+    // Report modal exposes the documentId as a hidden input for non-owner viewers
+    documentId = await pg.locator('input[name="target_id"]').inputValue()
+    const cookies = await ctx.cookies()
+    authToken = cookies.find((c) => c.name === "auth_token")?.value ?? ""
+    await ctx.close()
+    expect(documentId).toBeTruthy()
+    expect(authToken).toBeTruthy()
+  })
+
+  test("cannot DELETE another user's event — Strapi returns 403", async ({ page }) => {
+    const res = await page.request.fetch(`${STRAPI_URL}/api/events/${documentId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${authToken}` },
+    })
+    expect(res.status()).toBe(403)
+  })
+
+  test("cannot PUT (update) another user's event — Strapi returns 403", async ({ page }) => {
+    const res = await page.request.fetch(`${STRAPI_URL}/api/events/${documentId}`, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${authToken}`, "Content-Type": "application/json" },
+      data: JSON.stringify({ data: { title: "Hijacked title" } }),
+    })
+    expect(res.status()).toBe(403)
+  })
 })
 
 // ─── Location variant tests ────────────────────────────────────────────────

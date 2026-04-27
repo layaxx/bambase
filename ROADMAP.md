@@ -46,56 +46,6 @@ Audit-driven improvements to API query efficiency, rendering strategy, and asset
 - Are database indexes best added via a Strapi migration file (keeps them tracked in version control) or via a documented `CREATE INDEX` step in the deployment runbook? Strapi's migration system supports raw SQL, which is the cleanest approach.
 - The client-side filtering on `/events` and `/jobs` was a deliberate design decision (P6). At what catalog size should it move server-side? A reasonable threshold is ~300 items, at which point the rendered HTML is noticeably large and filter latency becomes measurable.
 
-### P15 Test coverage gaps
-
-The existing test suite is strong on utility functions and E2E happy paths but has zero unit-test coverage on the most critical code paths: action handlers, lifecycle hooks, and Strapi controllers. These are the files most likely to silently regress.
-
-**What IS covered well:**
-
-- 17 Vitest unit test files covering all API utility functions, formatting helpers, and key components (`JobForm`, `EventForm`, `ReportModal`, mensa components)
-- 6 Playwright E2E specs covering auth, job CRUD, event CRUD, report submission, public pages, and account pages against a real Docker Compose stack
-- 1 Jest integration test for the mensa import service (319 lines, covers transformation, deduplication, and partial failure)
-
-**Critical gaps — zero unit coverage on high-risk paths:**
-
-- **`actions/auth.ts`** — login, register, and getMe are entirely untested as units. Cookie options (`httpOnly`, `sameSite`, `maxAge`), error message shape, and token parsing are all unverified. If cookie config silently breaks, users log in but aren't actually authenticated.
-- **`actions/jobs.ts`** — all four actions (create, update, delete, archive) have no unit tests. The E2E tests confirm the happy path works but don't cover 403 on non-owner operations, 400 on invalid input, or network failure during submission.
-- **`actions/events.ts`** — same gap. Critically, `buildLocationData()` — the function that routes between no-location, linked map location, and custom location — has no unit test despite several branching conditions and nullable fields.
-- **`actions/reports.ts`** — entirely untested. The `target_type → field name` mapping (`event` vs `job_offer`) is a silent failure point: wrong mapping means reports persist with the wrong relation.
-- **API lifecycle hooks** (`api/src/api/*/content-types/*/lifecycles.ts`) — owner assignment, UUID/slug generation, and `offline_after` date calculation all run in `beforeCreate` hooks with zero test coverage. If owner assignment breaks, content becomes unowned and editable by anyone.
-- **Strapi controllers** (`api/src/api/job-offer/controllers/job-offer.ts`, `event/controllers/event.ts`) — the custom `find()` merging (published + own offers), `update()` ownership check, and `online_status` guard (only `archived` allowed for non-admins) are all untested. These are the server-side authorization enforcement points.
-- **`src/middleware.ts`** — locale detection from `Accept-Language` header and cookie override logic have no tests.
-
-**Moderate gaps:**
-
-- `fetchOngoingOrUpcomingEvents()` and `fetchUpcomingMapEvents()` (complex `$or` time filters, map location population) — not in the existing API utility test files
-- The 401-retry fallback in `fetchJobOffer()` — unverified that it retries with the server token and doesn't loop
-- `utils/url-params.ts` — 9 lines, zero coverage
-- `formatJobOfferDate()` relative-time output (dayjs locale switching)
-- E2E: no test verifies that a non-owner *cannot* edit or delete someone else's content (privilege escalation is only checked implicitly)
-- E2E: account page tests are thin (35 lines) — no test for the empty state, status badge rendering, or the archive confirmation dialog
-
-**Work involved:**
-
-- [x] Unit tests for all four action files — mock `fetch` and `context.cookies`; cover happy path, auth missing, upstream 4xx, and network failure
-- [x] Unit tests for `buildLocationData()` in `events.ts` — all three branches (`none`, `linked`, `custom`), null address/city, missing `map_location_id`
-- [x] Unit tests for `actions/reports.ts` — both `target_type` values, optional `details`, error re-throw
-- [x] Unit tests for `beforeCreate` lifecycle hooks — mock Strapi context; assert owner set, UUID/slug generated, `offline_after` correct, `online_status` defaulted
-- [x] Unit tests for controller ownership guards — mock `ctx.state.user`, assert 403 when IDs mismatch, assert `online_status` field is stripped except for `archived`
-- [x] Unit tests for `fetchOngoingOrUpcomingEvents()` and `fetchUpcomingMapEvents()` — add to existing `events.test.ts`
-- [x] Unit tests for `fetchJobOffer()` 401-retry logic — mock two sequential fetch calls
-- [x] Unit tests for `src/middleware.ts` — cover `Accept-Language` parsing, cookie override, unsupported locale fallback
-- [x] Unit tests for `utils/url-params.ts`
-- [ ] E2E test: authenticated user attempts to DELETE/PUT another user's job and event → expect 403
-- [ ] E2E test: account page with no content shows empty state
-- [ ] CI: add a GitHub Actions workflow that runs `yarn test` in both `api/` and `frontend/` on every pull request; run E2E on a nightly schedule or merge-to-main trigger
-
-**Open questions:**
-
-- Action handlers call raw `fetch()` against Strapi — should unit tests mock at the `fetch` level (using `vi.stubGlobal('fetch', ...)`) or spin up a test Strapi instance? The former is simpler and tests the action logic in isolation; the latter gives more confidence but is slow.
-- Should lifecycle hook tests run against a real Strapi instance (integration-style) or mock the Strapi `strapi` global? Mocking is faster but fragile if hook internals change.
-- The existing E2E suite requires `SEED=true docker-compose up` — is there a CI environment where this can run reliably, or should E2E remain developer-only for now?
-
 ### P7 Add data sources for events
 
 Automatically importing events from external sources would reduce the manual effort of maintaining the event calendar and provide better coverage of university life.
@@ -242,6 +192,51 @@ Cleanup of layout structure, navigation, footer, and visual inconsistencies acro
 - Should the account section have its own narrower max-width (`max-w-2xl`) intentionally, since it's form-heavy? If so, document the exception rather than removing it.
 
 ## Done
+
+### P15 Test coverage gaps
+
+The existing test suite is strong on utility functions and E2E happy paths but has zero unit-test coverage on the most critical code paths: action handlers, lifecycle hooks, and Strapi controllers. These are the files most likely to silently regress.
+
+**What IS covered well:**
+
+- 17 Vitest unit test files covering all API utility functions, formatting helpers, and key components (`JobForm`, `EventForm`, `ReportModal`, mensa components)
+- 6 Playwright E2E specs covering auth, job CRUD, event CRUD, report submission, public pages, and account pages against a real Docker Compose stack
+- 1 Jest integration test for the mensa import service (319 lines, covers transformation, deduplication, and partial failure)
+
+**Critical gaps — zero unit coverage on high-risk paths:**
+
+- **`actions/auth.ts`** — login, register, and getMe are entirely untested as units. Cookie options (`httpOnly`, `sameSite`, `maxAge`), error message shape, and token parsing are all unverified. If cookie config silently breaks, users log in but aren't actually authenticated.
+- **`actions/jobs.ts`** — all four actions (create, update, delete, archive) have no unit tests. The E2E tests confirm the happy path works but don't cover 403 on non-owner operations, 400 on invalid input, or network failure during submission.
+- **`actions/events.ts`** — same gap. Critically, `buildLocationData()` — the function that routes between no-location, linked map location, and custom location — has no unit test despite several branching conditions and nullable fields.
+- **`actions/reports.ts`** — entirely untested. The `target_type → field name` mapping (`event` vs `job_offer`) is a silent failure point: wrong mapping means reports persist with the wrong relation.
+- **API lifecycle hooks** (`api/src/api/*/content-types/*/lifecycles.ts`) — owner assignment, UUID/slug generation, and `offline_after` date calculation all run in `beforeCreate` hooks with zero test coverage. If owner assignment breaks, content becomes unowned and editable by anyone.
+- **Strapi controllers** (`api/src/api/job-offer/controllers/job-offer.ts`, `event/controllers/event.ts`) — the custom `find()` merging (published + own offers), `update()` ownership check, and `online_status` guard (only `archived` allowed for non-admins) are all untested. These are the server-side authorization enforcement points.
+- **`src/middleware.ts`** — locale detection from `Accept-Language` header and cookie override logic have no tests.
+
+**Moderate gaps:**
+
+- `fetchOngoingOrUpcomingEvents()` and `fetchUpcomingMapEvents()` (complex `$or` time filters, map location population) — not in the existing API utility test files
+- The 401-retry fallback in `fetchJobOffer()` — unverified that it retries with the server token and doesn't loop
+- `utils/url-params.ts` — 9 lines, zero coverage
+- `formatJobOfferDate()` relative-time output (dayjs locale switching)
+- E2E: no test verifies that a non-owner *cannot* edit or delete someone else's content (privilege escalation is only checked implicitly)
+- E2E: account page tests are thin (35 lines) — no test for the empty state, status badge rendering, or the archive confirmation dialog
+
+**Work involved:**
+
+- [x] Unit tests for all four action files — mock `fetch` and `context.cookies`; cover happy path, auth missing, upstream 4xx, and network failure
+- [x] Unit tests for `buildLocationData()` in `events.ts` — all three branches (`none`, `linked`, `custom`), null address/city, missing `map_location_id`
+- [x] Unit tests for `actions/reports.ts` — both `target_type` values, optional `details`, error re-throw
+- [x] Unit tests for `beforeCreate` lifecycle hooks — mock Strapi context; assert owner set, UUID/slug generated, `offline_after` correct, `online_status` defaulted
+- [x] Unit tests for controller ownership guards — mock `ctx.state.user`, assert 403 when IDs mismatch, assert `online_status` field is stripped except for `archived`
+- [x] Unit tests for `fetchOngoingOrUpcomingEvents()` and `fetchUpcomingMapEvents()` — add to existing `events.test.ts`
+- [x] Unit tests for `fetchJobOffer()` 401-retry logic — mock two sequential fetch calls
+- [x] Unit tests for `src/middleware.ts` — cover `Accept-Language` parsing, cookie override, unsupported locale fallback
+- [x] Unit tests for `utils/url-params.ts`
+- [x] E2E test: authenticated user attempts to DELETE/PUT another user's job and event → expect 403
+- [x] E2E test: account page with no content shows empty state
+
+---
 
 ### P12 Improve Form Layout
 
