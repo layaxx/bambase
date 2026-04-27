@@ -41,10 +41,10 @@ const isLoggedIn = !!Astro.cookies.get("auth_token")?.value
   <details class="mb-2 rounded-xl border border-base-300" id="filter-panel">
     <summary class="flex cursor-pointer list-none items-center justify-between p-3">
       <div class="flex items-center gap-2">
-        <IconSliders class="h-4 w-4 text-base-content/50" />
+        <IconSliders class="h-4 w-4 text-base-content/40" />
         <span class="text-sm font-medium">{t.jobs.filterHeading}</span>
       </div>
-      <IconChevronDown class="chevron h-4 w-4 text-base-content/50 transition-transform" />
+      <IconChevronDown class="chevron h-4 w-4 text-base-content/40 transition-transform" />
     </summary>
 
     <div class="px-5 pb-3">
@@ -62,7 +62,7 @@ const isLoggedIn = !!Astro.cookies.get("auth_token")?.value
 
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div class="flex flex-col gap-1.5">
-          <label class="text-xs font-medium text-base-content/50" for="filter-type">
+          <label class="text-xs font-medium text-base-content/40" for="filter-type">
             {t.jobs.filterType}
           </label>
           <select class="select select-bordered w-full" id="filter-type">
@@ -76,7 +76,7 @@ const isLoggedIn = !!Astro.cookies.get("auth_token")?.value
         </div>
 
         <div class="flex flex-col gap-1.5">
-          <label class="text-xs font-medium text-base-content/50" for="filter-field">
+          <label class="text-xs font-medium text-base-content/40" for="filter-field">
             {t.jobs.filterField}
           </label>
           <select class="select select-bordered w-full" id="filter-field">
@@ -90,7 +90,7 @@ const isLoggedIn = !!Astro.cookies.get("auth_token")?.value
         </div>
 
         <div class="flex flex-col gap-1.5">
-          <label class="text-xs font-medium text-base-content/50" for="filter-work-mode">
+          <label class="text-xs font-medium text-base-content/40" for="filter-work-mode">
             {t.jobs.fieldWorkMode}
           </label>
           <select class="select select-bordered w-full" id="filter-work-mode">
@@ -107,7 +107,7 @@ const isLoggedIn = !!Astro.cookies.get("auth_token")?.value
   </details>
 
   <div class="mb-4 flex items-center justify-between">
-    <p class="text-sm text-base-content/50">
+    <p class="text-sm text-base-content/40">
       <span class="font-medium text-base-content" id="result-count">{jobs.length}</span>
       {t.jobs.resultOf}
       <span class="font-medium text-base-content">{jobs.length}</span>
@@ -117,7 +117,7 @@ const isLoggedIn = !!Astro.cookies.get("auth_token")?.value
 
   {
     jobs.length === 0 ? (
-      <p class="text-base-content/60">{t.jobs.noJobs}</p>
+      <p class="text-base-content/70">{t.jobs.noJobs}</p>
     ) : (
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" id="jobs-list">
         {jobs.map((job) => (
@@ -134,8 +134,8 @@ const isLoggedIn = !!Astro.cookies.get("auth_token")?.value
     )
   }
   <div class="hidden py-4 text-center" id="no-jobs-msg">
-    <IconSearch class="mx-auto mb-4 h-10 w-10 text-base-content/60" />
-    <p class="mb-4 text-base-content/60">{t.jobs.noJobsFiltered}</p>
+    <IconSearch class="mx-auto mb-4 h-10 w-10 text-base-content/70" />
+    <p class="mb-4 text-base-content/70">{t.jobs.noJobsFiltered}</p>
     <button class="btn btn-outline btn-sm" id="clear-filters-btn">{t.jobs.clearFilters}</button>
   </div>
 </PageLayout>

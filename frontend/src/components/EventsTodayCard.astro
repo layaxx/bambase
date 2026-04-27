@@ -21,7 +21,7 @@ const upcomingOrOngoingEvents = await fetchOngoingOrUpcomingEvents(4)
         <a class="text-xl font-semibold hover:text-primary no-underline" href="/events"
           >{t.events.title}</a
         >
-        <p class="text-sm text-base-content/60">
+        <p class="text-sm text-base-content/70">
           {t.events.countToday(upcomingOrOngoingEvents.length)}
         </p>
       </div>
@@ -34,7 +34,7 @@ const upcomingOrOngoingEvents = await fetchOngoingOrUpcomingEvents(4)
 
   {
     upcomingOrOngoingEvents.length === 0 ? (
-      <p class="text-base-content/60 rounded-xl border border-base-300 bg-base-100 p-6">
+      <p class="text-base-content/70 rounded-xl border border-base-300 bg-base-100 p-6">
         {t.events.none}
       </p>
     ) : (

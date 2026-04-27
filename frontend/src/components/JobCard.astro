@@ -20,7 +20,7 @@ const jobs = await fetchJobOffers(3)
         <a class="text-xl font-semibold hover:text-primary no-underline" href="/jobs"
           >{t.jobs.title}</a
         >
-        <p class="text-sm text-base-content/60">{t.jobs.subtitle}</p>
+        <p class="text-sm text-base-content/70">{t.jobs.subtitle}</p>
       </div>
     </div>
     <a class="btn btn-ghost btn-sm flex gap-1" href="/jobs">
@@ -32,7 +32,7 @@ const jobs = await fetchJobOffers(3)
   <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
     {
       jobs.length === 0 && (
-        <p class="text-base-content/60 rounded-xl border border-base-300 bg-base-100 p-6">
+        <p class="text-base-content/70 rounded-xl border border-base-300 bg-base-100 p-6">
           {t.jobs.noJobs}
         </p>
       )

@@ -41,7 +41,7 @@ const mealsByLocation = Object.fromEntries(
         <a class="text-xl font-semibold hover:text-primary no-underline" href="/mensa"
           >{t.mensa.cardTitle}</a
         >
-        <p class="text-sm text-base-content/60">
+        <p class="text-sm text-base-content/70">
           {
             isToday
               ? t.mensa.cardSubtitleToday(relevantDayFormatted)
@@ -65,7 +65,7 @@ const mealsByLocation = Object.fromEntries(
               "flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-all",
               {
                 "bg-base-100 text-base-content shadow-sm": i === 0,
-                "text-base-content/60 hover:text-base-content": i !== 0,
+                "text-base-content/70 hover:text-base-content": i !== 0,
               },
             ]}
             data-loc={loc.id}
@@ -82,7 +82,7 @@ const mealsByLocation = Object.fromEntries(
       locations.map((loc, i) => (
         <ul class="flex flex-col gap-2" hidden={i !== 0} id={`meals-${loc.id}`}>
           {mealsByLocation[loc.id].length === 0 ? (
-            <li class="text-base-content/60 text-sm">{t.mensa.noData}</li>
+            <li class="text-base-content/70 text-sm">{t.mensa.noData}</li>
           ) : (
             mealsByLocation[loc.id].map((meal) => (
               <li>
@@ -115,9 +115,9 @@ const mealsByLocation = Object.fromEntries(
 
       document.querySelectorAll("[data-mensa-btn]").forEach((b) => {
         b.classList.remove("bg-base-100", "text-base-content", "shadow-sm")
-        b.classList.add("text-base-content/60")
+        b.classList.add("text-base-content/70")
       })
-      btn.classList.remove("text-base-content/60")
+      btn.classList.remove("text-base-content/70")
       btn.classList.add("bg-base-100", "text-base-content", "shadow-sm")
 
       document.querySelectorAll("[id^='meals-']").forEach((el) => {

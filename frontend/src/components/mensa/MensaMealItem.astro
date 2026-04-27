@@ -30,14 +30,14 @@ const { meal, id } = Astro.props
     meal.allergens && meal.allergens.length > 0 && (
       <details class="group/allergens">
         <summary class="cursor-pointer list-none">
-          <span class="flex w-fit items-center gap-1 text-xs text-base-content/50 transition-colors hover:text-base-content/80">
+          <span class="flex w-fit items-center gap-1 text-xs text-base-content/40 transition-colors hover:text-base-content/70">
             <IconChevronRight class="h-3 w-3 transition-transform group-open/allergens:rotate-90" />
             Allergene anzeigen
           </span>
         </summary>
         <div class="mt-1.5 flex flex-wrap gap-1">
           {meal.allergens.map((a) => (
-            <span class="rounded bg-base-200 px-1.5 py-0.5 text-xs text-base-content/60">
+            <span class="rounded bg-base-200 px-1.5 py-0.5 text-xs text-base-content/70">
               {a.name}
             </span>
           ))}

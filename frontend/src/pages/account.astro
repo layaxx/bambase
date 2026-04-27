@@ -1,6 +1,6 @@
 ---
 import { actions } from "astro:actions"
-import AppLayout from "@/layouts/AppLayout.astro"
+import PageLayout from "@/layouts/PageLayout.astro"
 import { useTranslations } from "@/i18n/translations"
 
 const t = useTranslations(Astro.locals.locale)
@@ -14,43 +14,41 @@ if (error) {
 }
 ---
 
-<AppLayout>
-  <main class="max-w-2xl mx-auto px-4 py-12">
-    <h1 class="text-2xl font-extrabold mb-8">{t.auth.accountTitle}</h1>
+<PageLayout>
+  <h1 class="text-3xl font-bold tracking-tight sm:text-4xl mb-8">{t.auth.accountTitle}</h1>
 
-    <div class="card bg-base-100 border border-base-300">
-      <div class="card-body gap-4">
-        <div class="flex flex-col gap-1">
-          <span class="text-xs text-base-content/50 uppercase tracking-wide"
-            >{t.auth.emailFieldLabel}</span
-          >
-          <span class="font-medium">{user.email}</span>
-        </div>
-        <div class="divider my-0"></div>
-        <div class="flex flex-col gap-1">
-          <span class="text-xs text-base-content/50 uppercase tracking-wide"
-            >{t.auth.memberSince}</span
-          >
-          <span class="font-medium">
-            {
-              new Date(user.createdAt).toLocaleDateString(t.auth.dateLocale, {
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-              })
-            }
-          </span>
-        </div>
+  <div class="card bg-base-100 border border-base-300">
+    <div class="card-body gap-4">
+      <div class="flex flex-col gap-1">
+        <span class="text-xs text-base-content/40 uppercase tracking-wide"
+          >{t.auth.emailFieldLabel}</span
+        >
+        <span class="font-medium">{user.email}</span>
+      </div>
+      <div class="divider my-0"></div>
+      <div class="flex flex-col gap-1">
+        <span class="text-xs text-base-content/40 uppercase tracking-wide"
+          >{t.auth.memberSince}</span
+        >
+        <span class="font-medium">
+          {
+            new Date(user.createdAt).toLocaleDateString(t.auth.dateLocale, {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            })
+          }
+        </span>
       </div>
     </div>
+  </div>
 
-    <div class="mt-6 flex flex-wrap gap-3">
-      <a class="btn btn-outline btn-sm" href="/account/jobs">{t.auth.myJobOffers}</a>
-      <a class="btn btn-outline btn-sm" href="/account/events">{t.auth.myEvents}</a>
-    </div>
+  <div class="mt-6 flex flex-wrap gap-3">
+    <a class="btn btn-outline btn-sm" href="/account/jobs">{t.auth.myJobOffers}</a>
+    <a class="btn btn-outline btn-sm" href="/account/events">{t.auth.myEvents}</a>
+  </div>
 
-    <div class="mt-4">
-      <a class="btn btn-outline btn-error btn-sm" href="/logout">{t.auth.logout}</a>
-    </div>
-  </main>
-</AppLayout>
+  <div class="mt-4">
+    <a class="btn btn-outline btn-error btn-sm" href="/logout">{t.auth.logout}</a>
+  </div>
+</PageLayout>

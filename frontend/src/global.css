@@ -23,6 +23,10 @@
   --color-primary: oklch(72% 0.22 277);
 }
 
+.logo-font {
+  font-family: "Archivo Variable", sans-serif;
+}
+
 /* Map category colors */
 :root {
   --cat-university: #2563eb;

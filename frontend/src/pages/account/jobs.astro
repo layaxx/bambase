@@ -29,16 +29,17 @@ const statusLabel: Record<string, string> = {
 ---
 
 <PageLayout>
-  <div class="mb-6 flex items-center gap-3">
-    <a aria-label="Back" class="btn btn-ghost btn-sm btn-square" href="/account">
+  <div class="mb-6">
+    <a class="btn btn-ghost btn-sm gap-1 pl-0" href="/account">
       <IconArrowLeft class="h-4 w-4" />
+      {t.nav.myAccount}
     </a>
-    <h1 class="text-2xl font-extrabold">{t.auth.myJobOffers}</h1>
   </div>
+  <h1 class="text-3xl font-bold tracking-tight sm:text-4xl mb-6">{t.auth.myJobOffers}</h1>
 
   {
     jobs.length === 0 ? (
-      <p class="rounded-xl border border-base-300 bg-base-100 p-6 text-base-content/60">
+      <p class="rounded-xl border border-base-300 bg-base-100 p-6 text-base-content/70">
         {t.auth.noMyJobOffers}
       </p>
     ) : (
@@ -61,10 +62,10 @@ const statusLabel: Record<string, string> = {
                 {statusLabel[job.online_status] ?? job.online_status}
               </span>
             </div>
-            <p class="text-sm text-base-content/60">
+            <p class="text-sm text-base-content/70">
               {job.company} · {job.location}
             </p>
-            <p class="line-clamp-2 text-sm text-base-content/50">{job.description}</p>
+            <p class="line-clamp-2 text-sm text-base-content/40">{job.description}</p>
           </a>
         ))}
       </div>

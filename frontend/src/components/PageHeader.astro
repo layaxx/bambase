@@ -9,14 +9,14 @@ const { label, title, subtitle } = Astro.props
 ---
 
 <section class="mb-6">
-  <div class="mb-2 flex items-center gap-2 text-base-content/60">
+  <div class="mb-2 flex items-center gap-2 text-base-content/70">
     <slot name="icon" />
     <span class="text-sm font-medium">{label}</span>
   </div>
   <div class="flex flex-wrap items-end justify-between gap-4">
     <div>
       <h1 class="mb-2 text-3xl font-bold tracking-tight sm:text-4xl">{title}</h1>
-      <p class="max-w-2xl text-lg text-base-content/60">{subtitle}</p>
+      <p class="max-w-2xl text-lg text-base-content/70">{subtitle}</p>
     </div>
     <slot name="action" />
   </div>

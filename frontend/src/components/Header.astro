@@ -33,11 +33,7 @@ const switchUrl = `/set-locale?lang=${switchLang}&redirect=${encodeURIComponent(
     <!-- Main header row -->
     <div class="flex h-16 items-center justify-between gap-4">
       <!-- Logo -->
-      <a
-        class="text-2xl font-extrabold no-underline leading-none shrink-0"
-        href="/"
-        style="font-family: 'Archivo Variable', sans-serif;"
-      >
+      <a class="text-2xl font-extrabold no-underline leading-none shrink-0 logo-font" href="/">
         BamBase.de
       </a>
 
@@ -50,7 +46,7 @@ const switchUrl = `/set-locale?lang=${switchLang}&redirect=${encodeURIComponent(
                 "px-3 py-1.5 rounded-md text-sm no-underline transition-colors",
                 {
                   "font-semibold bg-base-200 text-base-content": isActive(item.href),
-                  "text-base-content/60 hover:text-base-content hover:bg-base-200": !isActive(
+                  "text-base-content/70 hover:text-base-content hover:bg-base-200": !isActive(
                     item.href
                   ),
                 },
@@ -82,7 +78,7 @@ const switchUrl = `/set-locale?lang=${switchLang}&redirect=${encodeURIComponent(
               </a>
             </div>
           ) : (
-            <a class="btn btn-sm hidden md:flex" href="/login">
+            <a class="btn btn-sm btn-neutral hidden md:flex" href="/login">
               {t.nav.login}
             </a>
           )
@@ -125,7 +121,7 @@ const switchUrl = `/set-locale?lang=${switchLang}&redirect=${encodeURIComponent(
               "px-3 py-2 rounded-md text-sm no-underline transition-colors",
               {
                 "font-semibold bg-base-200 text-base-content": isActive(item.href),
-                "text-base-content/60 hover:text-base-content hover:bg-base-200": !isActive(
+                "text-base-content/70 hover:text-base-content hover:bg-base-200": !isActive(
                   item.href
                 ),
               },
@@ -144,7 +140,7 @@ const switchUrl = `/set-locale?lang=${switchLang}&redirect=${encodeURIComponent(
             {t.nav.myAccount}
           </a>
         ) : (
-          <a class="btn btn-sm btn-primary w-full" href="/login">
+          <a class="btn btn-sm btn-neutral w-full" href="/login">
             {t.nav.login}
           </a>
         )

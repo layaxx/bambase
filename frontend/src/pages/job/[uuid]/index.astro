@@ -55,7 +55,7 @@ if (archiveResult?.data !== undefined && !archiveResult.error) {
     !job ? (
       <div class="text-center py-20">
         <h1 class="text-3xl font-bold mb-4">{t.jobs.notFound.headline}</h1>
-        <p class="text-base-content/60">{t.jobs.notFound.description}</p>
+        <p class="text-base-content/70">{t.jobs.notFound.description}</p>
         <div class="mt-6">
           <a class="btn btn-primary" href="/jobs">
             {t.jobs.backToJobs}
@@ -138,7 +138,7 @@ if (archiveResult?.data !== undefined && !archiveResult.error) {
 
         <div class="grid gap-8 lg:grid-cols-3">
           <div class="lg:col-span-2">
-            <div class="mb-2 flex items-center gap-2 text-base-content/60">
+            <div class="mb-2 flex items-center gap-2 text-base-content/70">
               <IconStore class="h-4 w-4" />
               <span class="text-sm font-medium">{job.company}</span>
             </div>
@@ -149,7 +149,7 @@ if (archiveResult?.data !== undefined && !archiveResult.error) {
               <span class="badge badge-soft">{t.jobs.jobFields[job.field]}</span>
             </div>
 
-            <div class="mb-6 flex flex-wrap gap-4 text-sm text-base-content/60">
+            <div class="mb-6 flex flex-wrap gap-4 text-sm text-base-content/70">
               <div class="flex items-center gap-1.5">
                 <IconMapPin class="h-4 w-4 shrink-0" />
                 {job.location}
@@ -160,7 +160,7 @@ if (archiveResult?.data !== undefined && !archiveResult.error) {
               </div>
             </div>
 
-            <div class="prose prose-sm max-w-none text-base-content/80">
+            <div class="prose prose-sm max-w-none text-base-content/70">
               <p class="whitespace-pre-wrap">{job.description}</p>
             </div>
           </div>
@@ -171,13 +171,13 @@ if (archiveResult?.data !== undefined && !archiveResult.error) {
               <dl class="flex flex-col gap-3 text-sm">
                 {job.contact?.name && (
                   <div>
-                    <dt class="text-base-content/60">Name</dt>
+                    <dt class="text-base-content/70">Name</dt>
                     <dd class="font-medium">{job.contact.name}</dd>
                   </div>
                 )}
                 {job.contact?.mail && (
                   <div>
-                    <dt class="text-base-content/60">E-Mail</dt>
+                    <dt class="text-base-content/70">E-Mail</dt>
                     <dd>
                       <a class="link link-primary break-all" href={`mailto:${job.contact.mail}`}>
                         {job.contact.mail}
@@ -187,7 +187,7 @@ if (archiveResult?.data !== undefined && !archiveResult.error) {
                 )}
                 {job.contact?.phone && (
                   <div>
-                    <dt class="text-base-content/60">Tel.</dt>
+                    <dt class="text-base-content/70">Tel.</dt>
                     <dd>
                       <a class="link link-primary" href={`tel:${job.contact.phone}`}>
                         {job.contact.phone}

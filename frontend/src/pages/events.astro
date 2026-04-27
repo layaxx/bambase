@@ -44,7 +44,7 @@ const dateFilters = [
 
   <div class="mb-6 flex flex-col gap-3">
     <div class="flex flex-wrap items-center gap-2">
-      <span class="text-sm text-base-content/50">{t.events.filterCategory}:</span>
+      <span class="text-sm text-base-content/40">{t.events.filterCategory}:</span>
       <button class="btn btn-outline btn-sm" data-cat-filter="all">
         {t.events.filterAll}
       </button>
@@ -58,7 +58,7 @@ const dateFilters = [
     </div>
 
     <div class="flex items-center gap-2">
-      <label class="text-sm text-base-content/50" for="event-date-filter">
+      <label class="text-sm text-base-content/40" for="event-date-filter">
         {t.events.filterDate}:
       </label>
       <select class="select select-bordered select-xs" id="event-date-filter">
@@ -68,7 +68,7 @@ const dateFilters = [
   </div>
 
   <p
-    class="mb-4 text-sm text-base-content/50"
+    class="mb-4 text-sm text-base-content/40"
     data-plural={t.events.resultPlural}
     data-singular={t.events.resultSingular}
     id="result-count"
@@ -77,7 +77,7 @@ const dateFilters = [
 
   {
     events.length === 0 ? (
-      <p class="text-base-content/60">{t.events.noEvents}</p>
+      <p class="text-base-content/70">{t.events.noEvents}</p>
     ) : (
       <div class="space-y-10" id="events-list">
         {[...grouped.entries()].map(([day, dayEvents]) => (
@@ -96,7 +96,7 @@ const dateFilters = [
     )
   }
   <div class="hidden" id="no-events-msg">
-    <p class="text-base-content/60">{t.events.noEventsFiltered}</p>
+    <p class="text-base-content/70">{t.events.noEventsFiltered}</p>
     <button class="btn btn-ghost btn-sm mt-2" id="clear-filters-btn">{t.events.clearFilters}</button
     >
   </div>

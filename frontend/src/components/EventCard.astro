@@ -20,7 +20,7 @@ const dateLocale = t.mensa.dateLocale
 >
   <div class="mb-3 flex flex-row-reverse justify-between">
     <span class="badge badge-soft badge-sm">{t.events.categories[event.category]}</span>
-    <div class="flex items-center gap-1 text-sm text-base-content/60">
+    <div class="flex items-center gap-1 text-sm text-base-content/70">
       <IconClock class="h-3.5 w-3.5 shrink-0" />
       <span>
         {formatTime(event.start, dateLocale)}
@@ -45,10 +45,10 @@ const dateLocale = t.mensa.dateLocale
   >
     {event.title}
   </h3>
-  {!short && <p class="mb-3 line-clamp-2 text-sm text-base-content/60">{event.description}</p>}
+  {!short && <p class="mb-3 line-clamp-2 text-sm text-base-content/70">{event.description}</p>}
   <div
     class:list={[
-      "mt-auto text-sm text-base-content/60",
+      "mt-auto text-sm text-base-content/70",
       { truncate: short, "flex items-center justify-between gap-2": !short },
     ]}
   >

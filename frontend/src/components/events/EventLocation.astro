@@ -14,13 +14,13 @@ const t = useTranslations(Astro.locals.locale)
 ---
 
 <div class="rounded-xl border border-base-300 bg-base-100 p-5">
-  <dt class="mb-2 text-sm text-base-content/60">{t.events.locationLabel}</dt>
+  <dt class="mb-2 text-sm text-base-content/70">{t.events.locationLabel}</dt>
   <div class="flex items-start gap-2">
-    <IconMapPin class="mt-0.5 h-4 w-4 shrink-0 text-base-content/50" />
+    <IconMapPin class="mt-0.5 h-4 w-4 shrink-0 text-base-content/40" />
     <div class="min-w-0">
       <p class="text-sm font-medium leading-snug">{location.name}</p>
 
-      <p class="mt-0.5 text-xs text-base-content/60">
+      <p class="mt-0.5 text-xs text-base-content/70">
         {
           location.address &&
             typeof location.address === "object" &&

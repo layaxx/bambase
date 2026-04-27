@@ -45,7 +45,7 @@ const location = event?.map_location ?? event?.custom_location
     !event ? (
       <div class="py-20 text-center">
         <h1 class="mb-4 text-3xl font-bold">{t.events.notFound.headline}</h1>
-        <p class="text-base-content/60">{t.events.notFound.description}</p>
+        <p class="text-base-content/70">{t.events.notFound.description}</p>
         <div class="mt-6">
           <a class="btn btn-primary" href="/events">
             {t.events.backToEvents}
@@ -101,12 +101,12 @@ const location = event?.map_location ?? event?.custom_location
 
         <div class="grid gap-8 lg:grid-cols-3">
           <div class="lg:col-span-2">
-            <div class="mb-2 text-sm font-medium text-base-content/60">{event.organizer}</div>
+            <div class="mb-2 text-sm font-medium text-base-content/70">{event.organizer}</div>
             <h1 class="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">{event.title}</h1>
 
             <span class="badge badge-soft mb-4">{t.events.categories[event.category]}</span>
 
-            <div class="mb-6 flex flex-wrap gap-4 text-sm text-base-content/60">
+            <div class="mb-6 flex flex-wrap gap-4 text-sm text-base-content/70">
               <div class="flex items-center gap-1.5">
                 <IconClock class="h-4 w-4 shrink-0" />
                 <span>
@@ -118,7 +118,7 @@ const location = event?.map_location ?? event?.custom_location
               </div>
             </div>
 
-            <div class="prose prose-sm max-w-none text-base-content/80">
+            <div class="prose prose-sm max-w-none text-base-content/70">
               <p class="whitespace-pre-wrap">{event.description}</p>
             </div>
           </div>
@@ -127,13 +127,13 @@ const location = event?.map_location ?? event?.custom_location
             <div class="rounded-xl border border-base-300 bg-base-100 p-5">
               <dl class="flex flex-col gap-3 text-sm">
                 <div>
-                  <dt class="text-base-content/60">{t.events.organizer}</dt>
+                  <dt class="text-base-content/70">{t.events.organizer}</dt>
                   <dd class="font-medium">{event.organizer}</dd>
                 </div>
                 <div>
-                  <dt class="mb-1 text-base-content/60">{t.events.until}</dt>
+                  <dt class="mb-1 text-base-content/70">{t.events.until}</dt>
                   <dd class="font-medium">{formattedEventStart}</dd>
-                  <dd class="text-base-content/60">
+                  <dd class="text-base-content/70">
                     – {formatTime(event.end, dateLocale)}
                     {t.events.clock ? ` ${t.events.clock}` : ""}
                   </dd>
@@ -155,7 +155,7 @@ const location = event?.map_location ?? event?.custom_location
               </a>
             )}
 
-            <div class="rounded-xl border border-base-300 bg-base-100 p-4 text-sm text-base-content/60">
+            <div class="rounded-xl border border-base-300 bg-base-100 p-4 text-sm text-base-content/70">
               <p>{t.reports.eventDisclaimer}</p>
               {!isOwner && !reported && (
                 <div class="mt-2 flex justify-end">

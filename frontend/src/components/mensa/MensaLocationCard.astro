@@ -14,7 +14,7 @@ const { id, label, meals } = Astro.props
 <div class="rounded-xl border border-base-300 bg-base-100 p-4" id={id}>
   <div class="mb-4 flex items-center justify-between">
     <h3 class="font-semibold text-base-content">{label}</h3>
-    <span class="text-xs text-base-content/60">
+    <span class="text-xs text-base-content/70">
       {
         meals.length === 0
           ? "Keine Gerichte"
@@ -25,7 +25,7 @@ const { id, label, meals } = Astro.props
 
   {
     meals.length === 0 ? (
-      <p class="text-sm text-base-content/60">Keine Daten verfügbar.</p>
+      <p class="text-sm text-base-content/70">Keine Daten verfügbar.</p>
     ) : (
       <ul class="flex flex-col gap-2">
         {meals.map((meal) => (

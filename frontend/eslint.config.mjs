@@ -5,6 +5,7 @@ import tseslint from "typescript-eslint"
 import astroPlugin from "eslint-plugin-astro"
 import globals from "globals"
 import noInlineSvg from "./eslint-rules/no-inline-svg.js"
+import noBannedOpacity from "./eslint-rules/no-banned-opacity.js"
 
 /** @type {import("eslint").Linter.RulesRecord} */
 const strictRules = {
@@ -56,9 +57,14 @@ export default defineConfig(
         ...globals.node,
       },
     },
+    plugins: {
+      // @ts-ignore
+      local: { rules: { "no-banned-opacity": noBannedOpacity } },
+    },
     rules: {
       ...strictRules,
       ...tsRules,
+      "local/no-banned-opacity": "error",
     },
   },
 
@@ -73,10 +79,11 @@ export default defineConfig(
     },
     plugins: {
       // @ts-ignore
-      local: { rules: { "no-inline-svg": noInlineSvg } },
+      local: { rules: { "no-inline-svg": noInlineSvg, "no-banned-opacity": noBannedOpacity } },
     },
     rules: {
       "local/no-inline-svg": ["error", { allowedDir: "src/components/icons" }],
+      "local/no-banned-opacity": "error",
       ...strictRules,
       "astro/no-set-html-directive": "error",
       "astro/no-set-text-directive": "error",
