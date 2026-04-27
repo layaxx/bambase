@@ -4,7 +4,18 @@ import { useTranslations } from "@/i18n/translations"
 const t = useTranslations(Astro.locals.locale)
 ---
 
-<footer class="border-t border-base-content/30 mt-10 py-6 text-center text-sm text-base-content/60">
-  <div>{t.footer.builtWith}</div>
-  <a class="link link-hover block mt-2" href="#">{t.footer.backToTop}</a>
+<footer class="border-t border-base-content/30 mt-4 py-4 text-sm">
+  <div class="max-w-7xl mx-auto px-4">
+    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6">
+      <div>
+        <a class="font-extrabold text-base no-underline logo-font" href="/">BamBase.de</a>
+        <p class="text-base-content/70 mt-1">{t.footer.tagline}</p>
+      </div>
+      <nav class="flex flex-wrap gap-x-5 gap-y-2 text-base-content/70 self-end">
+        <a class="link link-hover underline" href="/contact">{t.nav.contact}</a>
+        <a class="link link-hover underline" href="/about">{t.nav.about_us}</a>
+        <a class="link link-hover underline" href="/impressum">{t.footer.impressum}</a>
+      </nav>
+    </div>
+  </div>
 </footer>
