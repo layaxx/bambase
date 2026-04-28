@@ -2,6 +2,87 @@
 
 ## Upcoming
 
+### P17 Style Adjustments
+
+Visual polish pass on the homepage section cards and the sub-page headers. No new features — the goal is consistency and clarity.
+
+**Issues identified — sub-page titles and taglines:**
+
+- **`/events` subtitle is redundant in German** — `"Aktuelle Veranstaltungen und Events in Bamberg."` uses both the German and English word for the same thing. A more useful subtitle would describe what kinds of events are listed, e.g. `"Konzerte, Partys, Sport und mehr – von der Uni bis in die Stadt."` (mirrors the English subtitle structure of other pages).
+- **`/map` title is too generic** — `"Karte"` / `"Map"` conveys nothing specific. `"Campuskarte"` / `"Campus Map"` is more precise. The subtitle `"Wichtige Orte rund um die Universität Bamberg."` / `"Important locations around the University of Bamberg."` is fine as-is.
+
+**Issues identified — homepage section icon colors:**
+
+- Icons should use better (more contrasty) colors
+
+**Issues identified — homepage section icon layout on small screens:**
+
+- **Icon container `div` is not marked `shrink-0`** — in every section card (`EventsTodayCard`, `MensaCard`, `JobCard`, `InfomapCard`, `StudentGroupsCard`), the `h-10 w-10` icon container sits inside a `flex items-center gap-3` row without `shrink-0`. Flexbox can shrink it when the adjacent title text is long or the viewport is narrow. Fix: add `shrink-0` to each icon container `div`.
+
+**Issues identified — job category badge colors:**
+
+- **Both job badges are unstyled (gray)** — `JobOfferCard.astro:20` renders the `job_type` badge as `badge-soft` (default gray) and `JobOfferCard.astro:43` renders the `field` badge as `badge-ghost`. All types look identical in a grid, making it hard to scan for a specific type. Assigning a distinct DaisyUI badge color per `job_type` would help: for example `part_time`→`badge-primary`, `internship`→`badge-secondary`, `working_student`→`badge-info`, `research_assistant`→`badge-warning`, `thesis`→`badge-accent`, `volunteer`→`badge-success`, `other`→`badge-ghost`. The `field` badge can stay unstyled — two colored badges per card would be visually noisy.
+
+**Work involved:**
+
+- [ ] Revise the `/events` subtitle in both `de` and `en` locales (`translations.ts` keys `events.pageSubtitle`) to avoid the German/English tautology
+- [ ] Rename the `/map` page title in both locales from `"Karte"`/`"Map"` to [TO BE DECIDED]
+- [ ] Add `shrink-0` to the `h-10 w-10` icon container `div` in each section card: `EventsTodayCard.astro:17`, `MensaCard.astro:37`, `JobCard.astro:16`, `InfomapCard.astro:14`, `StudentGroupsCard.astro:18`
+- [ ] Add a `JOB_TYPE_BADGE_CLASS` map in `utils/job-status.ts` (or inline in `JobOfferCard.astro`) that maps each `job_type` to a DaisyUI badge modifier; use it in `JobOfferCard.astro:20`
+
+**Open questions:**
+
+- Should the map title change extend to the `PageHeader` on `/map` and the `InfomapCard` link text on the homepage, or just the `<title>` tag? Both should be updated for consistency.
+- choose colors for icons on main page
+- choose a better title for the map page
+- Should job type badge colors be defined in `global.css` as CSS variables (like `--cat-*` for map categories) to make them theme-aware, or are DaisyUI's semantic badge classes sufficient?
+
+### P18 Job Overview Page
+
+Evaluation and optional migration of `/jobs` from client-side to server-side filtering. The current approach works at small scale but couples page weight to dataset size in a way that degrades once job descriptions are long and numerous.
+
+**Current architecture:**
+
+- `fetchJobOffers(limit=100)` (`utils/api/job-offers.ts:56`) fetches all published jobs and passes them to `jobs.astro` at SSR time.
+- All jobs are rendered to HTML as `JobOfferCard` components inside `[data-type]`/`[data-field]`/`[data-work-mode]` wrapper `div`s.
+- The client-side script (`jobs.astro:149–234`) reads URL params, then sets `display: none` on non-matching cards. Result counts and filter state are kept in DOM.
+- Full-text search runs against a `data-search` attribute on each wrapper that concatenates `title + company`.
+
+**Why it works now:** The catalog is small (under 30 published offers at launch). All data fits comfortably in a single Strapi query and the rendered HTML is under 50 KB.
+
+**Why it will degrade:** Job descriptions in the seed data are 3–6 sentences; real postings from employers routinely run 300–800 words. At 50 published offers × 400 words average, the `p.mb-3.line-clamp-2` element alone adds ~100 KB of unrendered text to the DOM (the text is present in the DOM even though CSS clips its visible height). The `data-search` attribute doubles the title+company string. Full initial parse and layout of 150 hidden cards is measurable on mid-range phones.
+
+**Server-side filtering approach:**
+
+The filter state is already in URL query params (`?type=internship&field=it&work_mode=remote&search=python`) thanks to the P6/P12 work. Moving to server-side means:
+
+1. Read params in `jobs.astro` frontmatter (`Astro.url.searchParams`).
+2. Forward them to Strapi as query filters: `{ job_type: { $eq: type }, field: { $eq: field }, work_mode: { $eq: workMode } }` plus a `_q` full-text param for the search term (Strapi supports this on string fields).
+3. Render only the matching jobs. Remove the client-side filter script entirely.
+4. Replace `<select onChange>` / `<input onInput>` with a `<form method="get">` that submits naturally — or keep the JS but have it navigate to the new URL instead of toggling `display`.
+
+The main tradeoff is UX: client-side filtering is instant (no round-trip); server-side filtering causes a full page navigation per filter change. A hybrid — server-side initial render, plus client-side JS that patches the URL and uses `fetch` to re-render the list fragment — is possible but significantly more complex.
+
+**Threshold for migration:**
+
+The existing client-side approach is acceptable up to approximately 50 published offers with typical description lengths. Above that, page weight and DOM size become measurable. The P16 roadmap sets a general threshold of ~300 items for events/jobs; for jobs specifically, description length makes 50 the practical trigger.
+
+**Work involved:**
+
+- [ ] Benchmark the `/jobs` page at current catalog size: measure HTML payload size and Lighthouse performance score as a baseline
+- [ ] Decide: pure server-side (form submit) vs. hybrid (JS fetch + partial render) vs. keeping client-side with a stricter `fields` projection to reduce payload (drop `description` from the list response and expand on detail page only)
+- [ ] If server-side: extend `fetchJobOffers` to accept `{ type?, field?, workMode?, search? }` filter params and forward them to Strapi; add `_q` full-text search support
+- [ ] If server-side: update `jobs.astro` frontmatter to read `Astro.url.searchParams` and pass them to `fetchJobOffers`; replace the filter `<select>` elements with a `<form method="get">` or add JS that navigates instead of hiding
+- [ ] If client-side retained: add `fields` projection to `fetchJobOffers` to exclude `description` from the list query (description is already line-clamped and only useful on the detail page), reducing payload by ~60%
+- [ ] Update result-count and empty-state logic to work without client-side DOM counting when filtering moves server-side
+
+**Open questions:**
+
+- Is full-text search (`search=...`) a requirement for server-side mode? Strapi's `_q` param does a substring match across all string fields, which is less precise than the current `title + company` scope. Scoping to specific fields requires a `$or` filter.
+- Should the filter panel remain a `<details>` collapse, or become always-visible now that it causes a page load? A persistent filter bar (as on `/events`) is more discoverable.
+- If the page moves to server-side rendering with URL navigation, should the URL format change (e.g. `/jobs?type=internship` instead of the current JS-managed param format)? The current param keys (`type`, `field`, `work_mode`, `search`) are clean and can be kept as-is.
+- At what point should pagination be introduced alongside server-side filtering? 50 results per page is a natural default; the Strapi client already supports `pagination.page` and `pagination.pageSize`.
+
 ### P16 Performance
 
 Audit-driven improvements to API query efficiency, rendering strategy, and asset loading. No new features — the goal is reducing latency and server load, especially as data volumes grow.
