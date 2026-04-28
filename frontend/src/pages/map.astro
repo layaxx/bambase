@@ -53,7 +53,7 @@ const upcomingEventsLabel = t.map.upcomingEvents
   </div>
 
   <div class="mb-4 flex items-center gap-2">
-    <label class="text-sm text-base-content/50" for="event-time-filter">
+    <label class="text-sm text-base-content/40" for="event-time-filter">
       {t.map.eventFilterLabel}:
     </label>
     <select class="select select-bordered select-xs" id="event-time-filter">
@@ -92,7 +92,7 @@ const upcomingEventsLabel = t.map.upcomingEvents
                 />
               </div>
               {loc.description && (
-                <div class="mt-0.5 text-xs text-base-content/50">{loc.description}</div>
+                <div class="mt-0.5 text-xs text-base-content/40">{loc.description}</div>
               )}
               {addr && <div class="mt-0.5 text-xs text-base-content/40">{addr}</div>}
               <div class="mt-1 text-xs font-medium" data-category-label={loc.category}>
@@ -123,6 +123,7 @@ const upcomingEventsLabel = t.map.upcomingEvents
     --popup-link: #2563eb;
     --popup-text-secondary: #888;
     --popup-desc: #666;
+    --popup-event-badge: #ef4444;
   }
   [data-theme="dark"] {
     --popup-icon-border: #374151;
@@ -131,6 +132,49 @@ const upcomingEventsLabel = t.map.upcomingEvents
     --popup-link: #93c5fd;
     --popup-text-secondary: #6b7280;
     --popup-desc: #9ca3af;
+    --popup-event-badge: #f87171;
+  }
+
+  /* Popup element classes */
+  .popup-name {
+    font-size: 13px;
+  }
+  .popup-desc {
+    color: var(--popup-desc);
+    font-size: 12px;
+  }
+  .popup-address {
+    color: var(--popup-text-secondary);
+    font-size: 11px;
+  }
+  .popup-website {
+    font-size: 11px;
+  }
+  .popup-category {
+    font-size: 11px;
+  }
+  .popup-events-section {
+    margin-top: 8px;
+    padding-top: 6px;
+    border-top: 1px solid var(--popup-divider);
+  }
+  .popup-label {
+    font-size: 11px;
+    color: var(--popup-text-muted);
+  }
+  .popup-event-item {
+    margin-top: 4px;
+  }
+  .popup-event-link {
+    font-size: 11px;
+    color: var(--popup-link);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .popup-event-date {
+    font-size: 10px;
+    color: var(--popup-text-secondary);
+    display: block;
   }
 
   [data-theme="dark"] .leaflet-tile {
@@ -198,15 +242,11 @@ const upcomingEventsLabel = t.map.upcomingEvents
     categoryLabels[el.dataset.categoryLabel!] = el.textContent ?? ""
   })
 
-  function getCategoryColor(cat: string): string {
-    return getComputedStyle(document.documentElement).getPropertyValue(`--cat-${cat}`).trim()
-  }
-
-  function makeIcon(color: string, eventCount: number) {
-    const dot = `<div style="width:14px;height:14px;border-radius:50%;background:${color};border:2.5px solid var(--popup-icon-border);box-shadow:0 1px 4px rgba(0,0,0,0.35)"></div>`
+  function makeIcon(category: string, eventCount: number) {
+    const dot = `<div style="width:14px;height:14px;border-radius:50%;background:var(--cat-${category},#64748b);border:2.5px solid var(--popup-icon-border);box-shadow:0 1px 4px rgba(0,0,0,0.35)"></div>`
     const badge =
       eventCount > 0
-        ? `<div style="position:absolute;top:-5px;right:-5px;min-width:14px;height:14px;border-radius:7px;background:#ef4444;color:white;font-size:8px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 2px;box-shadow:0 1px 2px rgba(0,0,0,0.3)">${Math.min(eventCount, 9)}</div>`
+        ? `<div style="position:absolute;top:-5px;right:-5px;min-width:14px;height:14px;border-radius:7px;background:var(--popup-event-badge);color:white;font-size:8px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 2px;box-shadow:0 1px 2px rgba(0,0,0,0.3)">${Math.min(eventCount, 9)}</div>`
         : ""
     return L.divIcon({
       className: "",
@@ -218,20 +258,19 @@ const upcomingEventsLabel = t.map.upcomingEvents
   }
 
   function buildPopupHtml(loc: MapLocation, locEvents: MapEvent[]): string {
-    const color = getCategoryColor(loc.category) || "#64748b"
     const categoryLabel = categoryLabels[loc.category] ?? loc.category
     const addrLine = formatAddress(loc.address)
 
     const eventsHtml =
       locEvents.length > 0
-        ? `<div style="margin-top:8px;padding-top:6px;border-top:1px solid var(--popup-divider)">
-             <strong style="font-size:11px;color:var(--popup-text-muted)">${upcomingEventsLabel}:</strong>
+        ? `<div class="popup-events-section">
+             <strong class="popup-label">${upcomingEventsLabel}:</strong>
              ${locEvents
                .map(
                  (ev) =>
-                   `<div style="margin-top:4px">
-                      <a href="/event/${ev.slug}" style="font-size:11px;color:var(--popup-link);text-decoration:none;font-weight:500">${ev.title}</a>
-                      <span style="font-size:10px;color:var(--popup-text-secondary);display:block">${formatEventDate(ev.start, navigator.language)}</span>
+                   `<div class="popup-event-item">
+                      <a href="/event/${ev.slug}" class="popup-event-link">${ev.title}</a>
+                      <span class="popup-event-date">${formatEventDate(ev.start, navigator.language)}</span>
                     </div>`
                )
                .join("")}
@@ -239,11 +278,11 @@ const upcomingEventsLabel = t.map.upcomingEvents
         : ""
 
     return `
-      <strong style="font-size:13px">${loc.name}</strong>
-      ${loc.description ? `<br><span style="color:var(--popup-desc);font-size:12px">${loc.description}</span>` : ""}
-      ${addrLine ? `<br><span style="color:var(--popup-text-secondary);font-size:11px">${addrLine}</span>` : ""}
-      ${loc.external_url ? `<br><a href="${loc.external_url}" target="_blank" rel="noopener noreferrer" style="font-size:11px">Website →</a>` : ""}
-      <br><span style="font-size:11px;color:${color}">${categoryLabel}</span>
+      <strong class="popup-name">${loc.name}</strong>
+      ${loc.description ? `<br><span class="popup-desc">${loc.description}</span>` : ""}
+      ${addrLine ? `<br><span class="popup-address">${addrLine}</span>` : ""}
+      ${loc.external_url ? `<br><a href="${loc.external_url}" target="_blank" rel="noopener noreferrer" class="popup-website">Website →</a>` : ""}
+      <br><span class="popup-category" data-category-label="${loc.category}">${categoryLabel}</span>
       ${eventsHtml}
     `
   }
@@ -265,16 +304,15 @@ const upcomingEventsLabel = t.map.upcomingEvents
       classname: "map-tiles",
     }).addTo(map)
 
-    type MarkerEntry = { marker: any; category: string; loc: MapLocation; color: string }
+    type MarkerEntry = { marker: any; category: string; loc: MapLocation }
     const markerMap: Record<string, MarkerEntry> = {}
 
     locations.forEach((loc) => {
       if (loc.lat == null || loc.lon == null) return
-      const color = getCategoryColor(loc.category) || "#64748b"
-      const marker = L.marker([loc.lat, loc.lon], { icon: makeIcon(color, 0) })
+      const marker = L.marker([loc.lat, loc.lon], { icon: makeIcon(loc.category, 0) })
         .addTo(map)
         .bindPopup("")
-      markerMap[loc.documentId] = { marker, category: loc.category, loc, color }
+      markerMap[loc.documentId] = { marker, category: loc.category, loc }
     })
 
     // ── time-filter ───────────────────────────────────────────────────────────
@@ -289,9 +327,9 @@ const upcomingEventsLabel = t.map.upcomingEvents
         filterEventsByTime(mapEvents, key as "today" | "week" | "month" | "all")
       )
 
-      Object.entries(markerMap).forEach(([locId, { marker, loc, color }]) => {
+      Object.entries(markerMap).forEach(([locId, { marker, loc, category }]) => {
         const locEvents = byLoc[locId] ?? []
-        marker.setIcon(makeIcon(color, locEvents.length))
+        marker.setIcon(makeIcon(category, locEvents.length))
         marker.setPopupContent(buildPopupHtml(loc, locEvents))
       })
 
@@ -304,7 +342,7 @@ const upcomingEventsLabel = t.map.upcomingEvents
       setParam("events", key)
     }
 
-    document.getElementById("event-time-filter")!.addEventListener("change", (e) => {
+    document.getElementById("event-time-filter")?.addEventListener("change", (e) => {
       applyTimeFilter((e.target as HTMLSelectElement).value)
     })
 
