@@ -12,7 +12,6 @@ const de = {
     toggleDark: "Dunkelmodus umschalten",
     openMenu: "Menü öffnen",
     closeMenu: "Menü schließen",
-    contact: "Kontakt",
     about_us: "Über uns",
   },
   events: {
@@ -304,7 +303,6 @@ const en = {
     toggleDark: "Toggle dark mode",
     openMenu: "Open menu",
     closeMenu: "Close menu",
-    contact: "Contact",
     about_us: "About us",
   },
   events: {
