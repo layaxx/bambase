@@ -2,7 +2,13 @@
 import PageLayout from "@/layouts/PageLayout.astro"
 import PageHeader from "@/components/PageHeader.astro"
 import IconMapPin from "@/components/icons/IconMapPin.astro"
-import { fetchLocations, fetchUpcomingMapEvents, type MapLocation } from "@/utils/api"
+import {
+  fetchLocations,
+  fetchUpcomingMapEvents,
+  type Event,
+  type EventMapLocation,
+  type MapLocation,
+} from "@/utils/api"
 import { formatAddress, type MapEvent } from "@/utils/map"
 import { useTranslations } from "@/i18n/translations"
 
@@ -10,12 +16,12 @@ const t = useTranslations(Astro.locals.locale)
 const [locations, upcomingEvents] = await Promise.all([fetchLocations(), fetchUpcomingMapEvents()])
 
 const mapEvents: MapEvent[] = upcomingEvents
-  .filter((ev) => ev.map_location)
+  .filter((ev): ev is Event & { map_location: EventMapLocation } => ev.map_location != null)
   .map((ev) => ({
     title: ev.title,
     slug: ev.slug,
     start: ev.start,
-    locationId: ev.map_location!.documentId,
+    locationId: ev.map_location.documentId,
   }))
 
 const categories: MapLocation["category"][] = [
@@ -111,8 +117,6 @@ const upcomingEventsLabel = t.map.upcomingEvents
     </div>
   </div>
 </PageLayout>
-
-<link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet" />
 
 <style is:global>
   /* Popup UI color tokens */
@@ -219,6 +223,8 @@ const upcomingEventsLabel = t.map.upcomingEvents
 </script>
 
 <script>
+  import L from "leaflet"
+  import "leaflet/dist/leaflet.css"
   import type { MapLocation } from "@/utils/api"
   import {
     filterEventsByTime,
@@ -229,9 +235,6 @@ const upcomingEventsLabel = t.map.upcomingEvents
   } from "@/utils/map"
   import { getParam, setParam } from "@/utils/url-params"
 
-  // Leaflet is loaded from CDN via a dynamically created <script> tag below.
-  declare const L: any
-
   const locations = (window as unknown as { __mapLocations: MapLocation[] }).__mapLocations
   const mapEvents = (window as unknown as { __mapEvents: MapEvent[] }).__mapEvents as MapEvent[]
   const upcomingEventsLabel = (window as unknown as { __upcomingEventsLabel: string })
@@ -239,7 +242,8 @@ const upcomingEventsLabel = t.map.upcomingEvents
 
   const categoryLabels: Record<string, string> = {}
   document.querySelectorAll<HTMLElement>("[data-category-label]").forEach((el) => {
-    categoryLabels[el.dataset.categoryLabel!] = el.textContent ?? ""
+    const label = el.dataset.categoryLabel
+    if (label) categoryLabels[label] = el.textContent ?? ""
   })
 
   function makeIcon(category: string, eventCount: number) {
@@ -289,10 +293,7 @@ const upcomingEventsLabel = t.map.upcomingEvents
 
   // ── Map setup ───────────────────────────────────────────────────────────────
 
-  const leafletScript = document.createElement("script")
-  leafletScript.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-  leafletScript.onload = initMap
-  document.head.appendChild(leafletScript)
+  initMap()
 
   function initMap() {
     const map = L.map("map").setView([49.899, 10.889], 14)
@@ -301,10 +302,10 @@ const upcomingEventsLabel = t.map.upcomingEvents
       attribution:
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       maxZoom: 19,
-      classname: "map-tiles",
+      className: "map-tiles",
     }).addTo(map)
 
-    type MarkerEntry = { marker: any; category: string; loc: MapLocation }
+    type MarkerEntry = { marker: L.Marker; category: string; loc: MapLocation }
     const markerMap: Record<string, MarkerEntry> = {}
 
     locations.forEach((loc) => {
@@ -334,7 +335,7 @@ const upcomingEventsLabel = t.map.upcomingEvents
       })
 
       document.querySelectorAll<HTMLElement>("[data-event-badge]").forEach((el) => {
-        const count = byLoc[el.dataset.eventBadge!]?.length ?? 0
+        const count = el.dataset.eventBadge ? (byLoc[el.dataset.eventBadge]?.length ?? 0) : 0
         el.textContent = String(count)
         el.classList.toggle("hidden", count === 0)
       })
@@ -368,14 +369,16 @@ const upcomingEventsLabel = t.map.upcomingEvents
     }
 
     document.querySelectorAll<HTMLElement>("[data-filter]").forEach((btn) => {
-      btn.addEventListener("click", () => applyFilter(btn.dataset.filter!))
+      btn.addEventListener("click", () => {
+        if (btn.dataset.filter) applyFilter(btn.dataset.filter)
+      })
     })
 
     // ── click list item → fly to marker ──────────────────────────────────────
 
     document.querySelectorAll<HTMLElement>("[data-id]").forEach((item) => {
       item.addEventListener("click", () => {
-        const entry = markerMap[item.dataset.id!]
+        const entry = item.dataset.id ? markerMap[item.dataset.id] : undefined
         if (entry) {
           map.flyTo(entry.marker.getLatLng(), 17, { duration: 0.8 })
           entry.marker.openPopup()
