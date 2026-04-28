@@ -12,6 +12,8 @@ const de = {
     toggleDark: "Dunkelmodus umschalten",
     openMenu: "Menü öffnen",
     closeMenu: "Menü schließen",
+    contact: "Kontakt",
+    about_us: "Über uns",
   },
   events: {
     title: "Heutige Veranstaltungen",
@@ -280,6 +282,8 @@ const de = {
   footer: {
     builtWith: "Built with DaisyUI",
     backToTop: "Back to top",
+    tagline: "Das Studierendenportal für Bamberg.",
+    impressum: "Impressum",
   },
   language: {
     switchLabel: "EN",
@@ -300,6 +304,8 @@ const en = {
     toggleDark: "Toggle dark mode",
     openMenu: "Open menu",
     closeMenu: "Close menu",
+    contact: "Contact",
+    about_us: "About us",
   },
   events: {
     title: "Today's Events",
@@ -568,6 +574,8 @@ const en = {
   footer: {
     builtWith: "Built with DaisyUI",
     backToTop: "Back to top",
+    tagline: "The student portal for Bamberg.",
+    impressum: "Legal Notice",
   },
   language: {
     switchLabel: "DE",

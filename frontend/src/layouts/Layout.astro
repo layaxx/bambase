@@ -19,16 +19,7 @@ import "@fontsource-variable/inter"
       document.documentElement.setAttribute("data-theme", saved ?? (prefersDark ? "dark" : "light"))
     </script>
   </head>
-  <body>
+  <body class="min-h-screen m-0 w-full">
     <slot />
   </body>
 </html>
-
-<style>
-  html,
-  body {
-    margin: 0;
-    width: 100%;
-    height: 100%;
-  }
-</style>
