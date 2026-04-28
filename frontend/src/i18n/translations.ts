@@ -1,5 +1,17 @@
 export type Locale = "de" | "en"
 
+type SetAtPath<T, Path extends unknown[], Value> = Path extends [infer K, ...infer Rest]
+  ? K extends keyof T
+    ? {
+        [P in keyof T]: P extends K
+          ? Rest extends []
+            ? Value
+            : SetAtPath<T[P], Rest, Value>
+          : T[P]
+      }
+    : T
+  : T
+
 const de = {
   nav: {
     jobs: "Jobs",
@@ -284,6 +296,36 @@ const de = {
     tagline: "Das Studierendenportal für Bamberg.",
     impressum: "Impressum",
   },
+  about: {
+    pageTitle: "Über uns",
+    pageSubtitle: "Das studentische Informationsportal für Bamberg.",
+    missionHeading: "Was ist BamBase.de?",
+    missionText:
+      "BamBase.de bündelt Informationen rund um das Studium an der Universität Bamberg an einem zentralen Ort: Veranstaltungen, Stellenangebote, Mensapläne, wichtige Orte auf dem Campus und studentische Gruppen – alles auf einen Blick.",
+    contributingHeading: "Mitmachen",
+    contributingText:
+      "Du kannst Veranstaltungen und Stellenangebote direkt über die Website einreichen. Sie werden nach einer kurzen Prüfung veröffentlicht. Studentische Gruppen, die ihre Informationen ergänzen möchten, wenden sich bitte an das Team.",
+    openSourceHeading: "Open Source",
+    openSourceText:
+      "BamBase.de ist ein Open-Source-Projekt. Fehler, Verbesserungsvorschläge und Fragen können auf GitHub als Issue gemeldet werden.",
+    openSourceLink: "Zum GitHub-Repository",
+    legalHeading: "Rechtliches",
+    legalText: "Informationen zu Betreiber, Datenschutz und rechtlichen Hinweisen findest du im",
+    legalLink: "Impressum",
+  },
+  impressum: {
+    pageTitle: "Impressum",
+    operatorHeading: "Angaben gemäß § 5 TMG",
+    contactHeading: "Kontakt",
+    responsibleHeading: "Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV",
+    disclaimerHeading: "Haftungsausschluss",
+    liabilityContentHeading: "Haftung für Inhalte",
+    liabilityContentText:
+      "Die Inhalte unserer Seiten wurden mit größter Sorgfalt erstellt. Für die Richtigkeit, Vollständigkeit und Aktualität der Inhalte können wir jedoch keine Gewähr übernehmen.",
+    liabilityLinksHeading: "Haftung für Links",
+    liabilityLinksText:
+      "Unser Angebot enthält Links zu externen Webseiten Dritter, auf deren Inhalte wir keinen Einfluss haben. Deshalb können wir für diese fremden Inhalte auch keine Gewähr übernehmen. Für die Inhalte der verlinkten Seiten ist stets der jeweilige Anbieter oder Betreiber der Seiten verantwortlich.",
+  },
   language: {
     switchLabel: "EN",
     switchAccessibleLabel: "Switch to English",
@@ -291,7 +333,11 @@ const de = {
   },
 }
 
-const en = {
+const en: SetAtPath<
+  typeof de,
+  ["mensa", "weekdays"],
+  [string, string, string, string, string, string, string]
+> = {
   nav: {
     jobs: "Jobs",
     events: "Events",
@@ -574,6 +620,38 @@ const en = {
     backToTop: "Back to top",
     tagline: "The student portal for Bamberg.",
     impressum: "Legal Notice",
+  },
+  about: {
+    pageTitle: "About us",
+    pageSubtitle: "The student information portal for Bamberg.",
+    missionHeading: "What is BamBase.de?",
+    missionText:
+      "BamBase.de brings together information about student life at the University of Bamberg in one place: events, job listings, cafeteria menus, important campus locations, and student groups – all at a glance.",
+    contributingHeading: "Get involved",
+    contributingText:
+      "You can submit events and job listings directly through the website. They will be published after a short review. Student groups that want to add or update their information are welcome to reach out to the team.",
+    openSourceHeading: "Open Source",
+    openSourceText:
+      "BamBase.de is an open-source project. Bugs, feature requests, and questions can be reported as issues on GitHub.",
+    openSourceLink: "View on GitHub",
+    legalHeading: "Legal",
+    legalText:
+      "Information about the operator, privacy policy, and legal notices can be found in the",
+    legalLink: "Legal Notice",
+  },
+  impressum: {
+    pageTitle: "Legal Notice",
+    operatorHeading: "Information pursuant to § 5 TMG (German Telemedia Act)",
+    contactHeading: "Contact",
+    responsibleHeading:
+      "Responsible for content pursuant to § 55 para. 2 RStV (German Interstate Broadcasting Treaty)",
+    disclaimerHeading: "Disclaimer",
+    liabilityContentHeading: "Liability for content",
+    liabilityContentText:
+      "The content on our pages has been created with the utmost care. However, we cannot guarantee the accuracy, completeness, or timeliness of the content.",
+    liabilityLinksHeading: "Liability for links",
+    liabilityLinksText:
+      "Our website contains links to external third-party websites over whose content we have no control. Therefore, we cannot accept any liability for this external content. The respective provider or operator of the linked pages is always responsible for their content.",
   },
   language: {
     switchLabel: "DE",

@@ -6,11 +6,49 @@ const t = useTranslations(Astro.locals.locale)
 ---
 
 <PageLayout>
-  <h1 class="text-3xl font-bold tracking-tight sm:text-4xl mb-2">{t.nav.about_us}</h1>
+  <h1 class="text-3xl font-bold tracking-tight sm:text-4xl mb-1">{t.about.pageTitle}</h1>
+  <p class="text-base-content/70 mb-6">{t.about.pageSubtitle}</p>
 
-  <div class="flex flex-col gap-6 max-w-2xl">
+  <div class="flex flex-col gap-8 max-w-2xl">
     <section>
-      <p class="text-base-content/70">[PLACEHOLDER]</p>
+      <h2 class="text-xl font-semibold mb-2">{t.about.missionHeading}</h2>
+      <p class="text-base-content/70">{t.about.missionText}</p>
+    </section>
+
+    <div class="divider my-0"></div>
+
+    <section>
+      <h2 class="text-xl font-semibold mb-2">{t.about.contributingHeading}</h2>
+      <p class="text-base-content/70 mb-4">{t.about.contributingText}</p>
+      <div class="flex flex-wrap gap-3">
+        <a class="btn btn-sm btn-outline" href="/event/new">{t.events.submitEvent}</a>
+        <a class="btn btn-sm btn-outline" href="/job/new">{t.jobs.postJob}</a>
+      </div>
+    </section>
+
+    <div class="divider my-0"></div>
+
+    <section>
+      <h2 class="text-xl font-semibold mb-2">{t.about.openSourceHeading}</h2>
+      <p class="text-base-content/70 mb-4">{t.about.openSourceText}</p>
+      <a
+        class="btn btn-sm btn-outline"
+        href="https://github.com/layaxx/bambase"
+        rel="noopener noreferrer"
+        target="_blank"
+      >
+        {t.about.openSourceLink}
+      </a>
+    </section>
+
+    <div class="divider my-0"></div>
+
+    <section>
+      <h2 class="text-xl font-semibold mb-2">{t.about.legalHeading}</h2>
+      <p class="text-base-content/70">
+        {t.about.legalText}
+        <a class="link link-hover underline" href="/impressum">{t.about.legalLink}</a>.
+      </p>
     </section>
   </div>
 </PageLayout>

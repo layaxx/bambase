@@ -157,23 +157,6 @@ Automatically importing events from external sources would reduce the manual eff
 
 ---
 
-### P8 About us page
-
-There is currently no page explaining what BamBase.de is, who runs it, or how to contribute or contact the team.
-
-**Work involved:**
-
-- Design and implement a `/about` page in Astro
-- Write content: project mission, team/contributors, how to report issues or suggest features, contact info
-- Link the page from the main navigation and/or footer
-
-**Open questions:**
-
-- Who are the people behind the project, and are they comfortable being listed by name?
-- Is there a contact email or form, or should users be directed to a GitHub repo/issue tracker?
-- Should the page include information on how to contribute (student groups submitting their own entries, contributing code)?
-- Should there be a privacy policy or imprint (Impressum) — this is likely a legal requirement for a German website?
-
 ### P14 Accessibility
 
 Audit-driven pass to reach WCAG 2.1 AA compliance across all pages and components. Issues are grouped by severity; the work-involved checklist below is ordered by priority.
@@ -226,6 +209,26 @@ Audit-driven pass to reach WCAG 2.1 AA compliance across all pages and component
 - Is there a target WCAG conformance level — AA (standard) or AAA? AA is the legal baseline for German public websites (BITV 2.0).
 
 ## Done
+
+### P8 About us page
+
+There is currently no page explaining what BamBase.de is, who runs it, or how to contribute or contact the team.
+
+**Work involved:**
+
+- [x] Design and implement a `/about` page in Astro
+- [x] Write content: project mission, contributing (submit events/jobs, reach out for student group listings), open source / GitHub link, legal pointer to `/impressum`
+- [x] Link the page from the main navigation and footer
+- [x] Translate `/about` and `/impressum` into both `de` and `en` via `translations.ts`
+
+**Decisions made:**
+
+- No individual names listed — the page directs users to the GitHub repository for issues, feature requests, and contributions.
+- Contact is via GitHub Issues; no contact email or form.
+- Student groups are directed to reach out to the team (no self-service yet — out of scope).
+- `/impressum` page created (placeholder operator info, pending real details); translated into English as "Legal Notice" with a note that the legal citations (§ 5 TMG, § 55 Abs. 2 RStV) remain in German as they reference German law.
+
+---
 
 ### P13 Design & Layout
 
@@ -550,7 +553,6 @@ Currently, student organizations are stored as a hardcoded JSON file at `fronten
 
 ---
 
-
 ### P1 Map Locations should be API-based
 
 Currently, the ~100+ university map locations (buildings, dorms, libraries, cafés, etc.) are stored as a hardcoded JSON file at `frontend/src/data/infomapLocations.json`. Moving them to the Strapi API would allow admins to add, update, or remove locations without a code deployment.
@@ -619,4 +621,3 @@ The `online_status` enumeration in `api/src/api/job-offer/content-types/job-offe
 - Should archiving notify anyone (e.g. applicants who saved the link)? Probably out of scope for now. -> no notfications
 
 ---
-
