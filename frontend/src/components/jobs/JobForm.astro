@@ -215,13 +215,13 @@ const t = useTranslations(Astro.locals.locale)
       <label class="label" for="contact_name">
         <span class="label-text font-medium">
           {t.jobs.fieldContactName}
-          <span class="font-normal text-base-content/40"> {t.jobs.optionalLabel}</span>
         </span>
       </label>
       <input
         class="input input-bordered w-full"
         id="contact_name"
         name="contact_name"
+        required
         type="text"
         value={initialValues.contact_name ?? ""}
       />

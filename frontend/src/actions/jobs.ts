@@ -12,7 +12,7 @@ const jobCreateSchema = z.object({
   job_type: z.enum(JOB_TYPES).default("other"),
   field: z.enum(JOB_FIELDS).default("other"),
   work_mode: z.enum(WORK_MODES).default("on_site"),
-  contact_name: z.string().max(200).optional(),
+  contact_name: z.string().max(200),
   contact_mail: z.email().max(254).optional(),
   contact_phone: z.string().max(50).optional(),
   external_url: z.url().max(2048).optional(),
