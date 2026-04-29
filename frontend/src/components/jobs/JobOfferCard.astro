@@ -3,6 +3,7 @@ import type { JobOffer } from "@/utils/api/job-offers"
 import { useTranslations } from "@/i18n/translations"
 import IconStore from "../icons/IconStore.astro"
 import { formatJobLocation, formatJobOfferDate } from "@/utils/job-formatting"
+import { JOB_TYPE_BADGE_CLASS } from "@/utils/job-status"
 
 interface Props {
   job: JobOffer
@@ -17,7 +18,9 @@ const t = useTranslations(Astro.locals.locale)
   href={`/job/${job.uuid}`}
 >
   <div class="mb-2 flex flex-row items-center justify-between">
-    <span class="badge badge-soft badge-sm">{t.jobs.jobTypes[job.job_type]}</span>
+    <span class:list={`badge badge-soft badge-sm ${JOB_TYPE_BADGE_CLASS[job.job_type]}`}
+      >{t.jobs.jobTypes[job.job_type]}</span
+    >
     <span class="shrink-0 text-xs text-base-content/70"
       >{formatJobOfferDate(job.createdAt, Astro.locals.locale)}</span
     >

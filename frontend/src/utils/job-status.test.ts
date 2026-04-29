@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
-import { JOB_STATUS_ALERT_CLASS, JOB_STATUS_BADGE_CLASS } from "./job-status"
+import { JOB_STATUS_ALERT_CLASS, JOB_STATUS_BADGE_CLASS, JOB_TYPE_BADGE_CLASS } from "./job-status"
+import { JOB_TYPES } from "./api/job-offers"
 
 // All valid online_status values for a job offer
 const ALL_STATUSES = ["submitted", "published", "expired", "rejected", "archived"] as const
@@ -33,6 +34,7 @@ describe("JOB_STATUS_ALERT_CLASS", () => {
   })
 
   it("returns undefined for an unknown status (caller should fall back)", () => {
+    // @ts-expect-error: We're intentionally testing an invalid status here
     expect(JOB_STATUS_ALERT_CLASS["unknown"]).toBeUndefined()
   })
 })
@@ -65,6 +67,43 @@ describe("JOB_STATUS_BADGE_CLASS", () => {
   })
 
   it("returns undefined for an unknown status (caller should fall back)", () => {
+    // @ts-expect-error: We're intentionally testing an invalid status here
     expect(JOB_STATUS_BADGE_CLASS["unknown"]).toBeUndefined()
+  })
+})
+
+describe("JOB_TYPE_BADGE_CLASS", () => {
+  it("covers all job types", () => {
+    for (const type of JOB_TYPES) {
+      expect(JOB_TYPE_BADGE_CLASS[type]).toBeDefined()
+    }
+  })
+
+  it("maps part_time to badge-primary", () => {
+    expect(JOB_TYPE_BADGE_CLASS.part_time).toBe("badge-primary")
+  })
+
+  it("maps internship to badge-secondary", () => {
+    expect(JOB_TYPE_BADGE_CLASS.internship).toBe("badge-secondary")
+  })
+
+  it("maps working_student to badge-info", () => {
+    expect(JOB_TYPE_BADGE_CLASS.working_student).toBe("badge-info")
+  })
+
+  it("maps research_assistant to badge-warning", () => {
+    expect(JOB_TYPE_BADGE_CLASS.research_assistant).toBe("badge-warning")
+  })
+
+  it("maps thesis to badge-accent", () => {
+    expect(JOB_TYPE_BADGE_CLASS.thesis).toBe("badge-accent")
+  })
+
+  it("maps volunteer to badge-success", () => {
+    expect(JOB_TYPE_BADGE_CLASS.volunteer).toBe("badge-success")
+  })
+
+  it("maps other to badge-ghost", () => {
+    expect(JOB_TYPE_BADGE_CLASS.other).toBe("badge-ghost")
   })
 })

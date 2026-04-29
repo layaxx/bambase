@@ -2,41 +2,6 @@
 
 ## Upcoming
 
-### P17 Style Adjustments
-
-Visual polish pass on the homepage section cards and the sub-page headers. No new features — the goal is consistency and clarity.
-
-**Issues identified — sub-page titles and taglines:**
-
-- **`/events` subtitle is redundant in German** — `"Aktuelle Veranstaltungen und Events in Bamberg."` uses both the German and English word for the same thing. A more useful subtitle would describe what kinds of events are listed, e.g. `"Konzerte, Partys, Sport und mehr – von der Uni bis in die Stadt."` (mirrors the English subtitle structure of other pages).
-- **`/map` title is too generic** — `"Karte"` / `"Map"` conveys nothing specific. `"Campuskarte"` / `"Campus Map"` is more precise. The subtitle `"Wichtige Orte rund um die Universität Bamberg."` / `"Important locations around the University of Bamberg."` is fine as-is.
-
-**Issues identified — homepage section icon colors:**
-
-- Icons should use better (more contrasty) colors
-
-**Issues identified — homepage section icon layout on small screens:**
-
-- **Icon container `div` is not marked `shrink-0`** — in every section card (`EventsTodayCard`, `MensaCard`, `JobCard`, `InfomapCard`, `StudentGroupsCard`), the `h-10 w-10` icon container sits inside a `flex items-center gap-3` row without `shrink-0`. Flexbox can shrink it when the adjacent title text is long or the viewport is narrow. Fix: add `shrink-0` to each icon container `div`.
-
-**Issues identified — job category badge colors:**
-
-- **Both job badges are unstyled (gray)** — `JobOfferCard.astro:20` renders the `job_type` badge as `badge-soft` (default gray) and `JobOfferCard.astro:43` renders the `field` badge as `badge-ghost`. All types look identical in a grid, making it hard to scan for a specific type. Assigning a distinct DaisyUI badge color per `job_type` would help: for example `part_time`→`badge-primary`, `internship`→`badge-secondary`, `working_student`→`badge-info`, `research_assistant`→`badge-warning`, `thesis`→`badge-accent`, `volunteer`→`badge-success`, `other`→`badge-ghost`. The `field` badge can stay unstyled — two colored badges per card would be visually noisy.
-
-**Work involved:**
-
-- [ ] Revise the `/events` subtitle in both `de` and `en` locales (`translations.ts` keys `events.pageSubtitle`) to avoid the German/English tautology
-- [ ] Rename the `/map` page title in both locales from `"Karte"`/`"Map"` to [TO BE DECIDED]
-- [ ] Add `shrink-0` to the `h-10 w-10` icon container `div` in each section card: `EventsTodayCard.astro:17`, `MensaCard.astro:37`, `JobCard.astro:16`, `InfomapCard.astro:14`, `StudentGroupsCard.astro:18`
-- [ ] Add a `JOB_TYPE_BADGE_CLASS` map in `utils/job-status.ts` (or inline in `JobOfferCard.astro`) that maps each `job_type` to a DaisyUI badge modifier; use it in `JobOfferCard.astro:20`
-
-**Open questions:**
-
-- Should the map title change extend to the `PageHeader` on `/map` and the `InfomapCard` link text on the homepage, or just the `<title>` tag? Both should be updated for consistency.
-- choose colors for icons on main page
-- choose a better title for the map page
-- Should job type badge colors be defined in `global.css` as CSS variables (like `--cat-*` for map categories) to make them theme-aware, or are DaisyUI's semantic badge classes sufficient?
-
 ### P18 Job Overview Page
 
 Evaluation and optional migration of `/jobs` from client-side to server-side filtering. The current approach works at small scale but couples page weight to dataset size in a way that degrades once job descriptions are long and numerous.
@@ -209,6 +174,26 @@ Audit-driven pass to reach WCAG 2.1 AA compliance across all pages and component
 - Is there a target WCAG conformance level — AA (standard) or AAA? AA is the legal baseline for German public websites (BITV 2.0).
 
 ## Done
+
+### P17 Style Adjustments
+
+Visual polish pass on the homepage section cards and the sub-page headers. No new features — the goal was consistency and clarity.
+
+**Work involved:**
+
+- [x] Revise the `/events` subtitle in both `de` and `en` locales (`translations.ts` keys `events.pageSubtitle`) to avoid the German/English tautology
+- [x] Rename the `/map` page title in both locales from `"Karte"`/`"Map"` to `"Campuskarte"`/`"Campus Map"`; also updated `nav.infomap`, `map.cardTitle`, and `map.showMap` for consistency
+- [x] Add `shrink-0` to the `h-10 w-10` icon container `div` in each section card: `EventsTodayCard.astro`, `MensaCard.astro`, `JobCard.astro`, `InfomapCard.astro`, `StudentGroupsCard.astro`
+- [x] Add a `JOB_TYPE_BADGE_CLASS` map in `utils/job-status.ts` that maps each `job_type` to a DaisyUI badge modifier; use it in `JobOfferCard.astro`
+
+**Decisions made:**
+
+- `/events` subtitle revised to describe the content ("Konzerte, Partys, Sport und mehr – von der Uni bis in die Stadt." / "Concerts, parties, sports and more – from campus to the city.") rather than repeat the page category.
+- Map title changed to `"Campuskarte"` / `"Campus Map"` everywhere: `<title>` tag, `PageHeader`, `InfomapCard` link text, and nav item — all updated for consistency via the shared `map.*` and `nav.infomap` translation keys.
+- Homepage section icons now use five distinct DaisyUI semantic colors: `error` (events), `warning` (mensa), `success` (jobs), `info` (map), `secondary` (groups). Events was changed from `info` to `error` to eliminate the duplicate blue shared with the map card.
+- Job type badge colors use DaisyUI's semantic badge classes directly (`badge-primary`, `badge-secondary`, etc.) — no CSS variables needed. The `field` badge stays unstyled (`badge-ghost`) to avoid two colored badges per card.
+
+---
 
 ### P8 About us page
 
