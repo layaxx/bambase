@@ -5,22 +5,34 @@
   --font-sans: "Inter Variable", sans-serif;
 }
 
-/* Vegan/vegetarian badge text: success green (oklch 72%) is too light for white backgrounds.
-   Use a dark forest green in light mode, the full success color in dark mode. */
-.diet-badge {
-  color: oklch(38% 0.14 149);
-}
-[data-theme="dark"] .diet-badge {
-  color: var(--color-success);
-}
-
 :root {
   --color-primary: oklch(35.546% 0.19067 268.893);
+
+  /* Semantic colors — 700-shades for text contrast; white content for solid components.
+     Soft badge backgrounds are auto-derived by DaisyUI via color-mix (8% of base + base-100). */
+  --color-info: var(--color-blue-700);
+  --color-info-content: oklch(1 0 0);
+  --color-warning: var(--color-orange-400);
+  --color-warning-content: oklch(1 0 0);
+  --color-error: var(--color-red-700);
+  --color-error-content: oklch(1 0 0);
+  --color-success: var(--color-green-700);
+  --color-success-content: oklch(1 0 0);
 }
 
 /* Boost primary lightness for better text contrast on dark backgrounds */
 [data-theme="dark"] {
   --color-primary: oklch(72% 0.22 277);
+
+  /* 400-shades are lighter and readable on dark backgrounds; near-black content for solid components */
+  --color-info: var(--color-blue-400);
+  --color-info-content: oklch(0.15 0.02 254);
+  --color-warning: var(--color-orange-400);
+  --color-warning-content: oklch(0.15 0.02 38);
+  --color-error: var(--color-red-400);
+  --color-error-content: oklch(0.15 0.02 27);
+  --color-success: var(--color-green-400);
+  --color-success-content: oklch(0.15 0.02 150);
 }
 
 .logo-font {
@@ -28,7 +40,7 @@
 }
 
 /* Map category colors */
-:root {
+:root[data-theme="light"] {
   --cat-university: #2563eb;
   --cat-university-bg: rgba(37, 99, 235, 0.13);
   --cat-mensa: #16a34a;

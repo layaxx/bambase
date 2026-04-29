@@ -291,8 +291,6 @@ const de = {
     cancel: "Abbrechen",
   },
   footer: {
-    builtWith: "Built with DaisyUI",
-    backToTop: "Back to top",
     tagline: "Das Studierendenportal für Bamberg.",
     impressum: "Impressum",
   },
@@ -616,8 +614,6 @@ const en: SetAtPath<
     cancel: "Cancel",
   },
   footer: {
-    builtWith: "Built with DaisyUI",
-    backToTop: "Back to top",
     tagline: "The student portal for Bamberg.",
     impressum: "Legal Notice",
   },

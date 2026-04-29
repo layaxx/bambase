@@ -13,8 +13,10 @@ const upcomingOrOngoingEvents = await fetchOngoingOrUpcomingEvents(4)
 <section class="mb-12" id="events">
   <div class="mb-6 flex items-center justify-between">
     <div class="flex items-center gap-3">
-      <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-error/20">
-        <IconCalendar class="h-5 w-5 text-error" />
+      <div
+        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg badge-soft badge-primary"
+      >
+        <IconCalendar class="h-5 w-5" />
       </div>
       <div>
         <a class="text-xl font-semibold hover:text-primary no-underline" href="/events"
@@ -30,7 +32,6 @@ const upcomingOrOngoingEvents = await fetchOngoingOrUpcomingEvents(4)
       <IconArrowRight class="h-4 w-4" />
     </a>
   </div>
-
   {
     upcomingOrOngoingEvents.length === 0 ? (
       <p class="text-base-content/70 rounded-xl border border-base-300 bg-base-100 p-6">

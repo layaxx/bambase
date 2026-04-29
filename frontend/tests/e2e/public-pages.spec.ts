@@ -12,7 +12,9 @@ test.describe("Homepage", () => {
     expect(page.getByRole("link", { name: "Heutige Veranstaltungen" })).toBeVisible()
     expect(page.locator("#mensa").getByRole("link", { name: "Mensaplan" })).toBeVisible()
     expect(page.getByRole("link", { name: "Aktuelle Stellenangebote" })).toBeVisible()
-    expect(page.locator("#map").getByRole("link", { name: "Karte", exact: true })).toBeVisible()
+    expect(
+      page.locator("#map").getByRole("link", { name: "Campuskarte", exact: true })
+    ).toBeVisible()
     expect(page.getByRole("heading", { name: "Aktiv in Bamberg" })).toBeVisible()
   })
 

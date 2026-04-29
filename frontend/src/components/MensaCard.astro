@@ -34,8 +34,10 @@ const mealsByLocation = Object.fromEntries(
 <section class="mb-12" id="mensa">
   <div class="mb-6 flex items-center justify-between">
     <div class="flex items-center gap-3">
-      <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-warning/20">
-        <IconUtensils class="h-5 w-5 text-warning" />
+      <div
+        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg badge-soft badge-warning"
+      >
+        <IconUtensils class="h-5 w-5" />
       </div>
       <div>
         <a class="text-xl font-semibold hover:text-primary no-underline" href="/mensa"
@@ -62,7 +64,7 @@ const mealsByLocation = Object.fromEntries(
         locations.map((loc, i) => (
           <button
             class:list={[
-              "flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-all",
+              "flex-1 rounded-md px-3 py-1 text-xs font-medium transition-all",
               {
                 "bg-base-100 text-base-content shadow-sm": i === 0,
                 "text-base-content/70 hover:text-base-content": i !== 0,
