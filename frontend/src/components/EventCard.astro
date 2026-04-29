@@ -3,6 +3,7 @@ import type { Event } from "@/utils/api/events"
 import { formatTime } from "@/utils/event-formatting"
 import { useTranslations } from "@/i18n/translations"
 import IconClock from "./icons/IconClock.astro"
+import EventCategoryBadge from "./events/EventCategoryBadge.astro"
 
 interface Props {
   event: Event
@@ -19,7 +20,7 @@ const dateLocale = t.mensa.dateLocale
   href={`/event/${event.slug}`}
 >
   <div class="mb-3 flex flex-row-reverse justify-between">
-    <span class="badge badge-soft badge-sm">{t.events.categories[event.category]}</span>
+    <EventCategoryBadge category={event.category} isSmall />
     <div class="flex items-center gap-1 text-sm text-base-content/70">
       <IconClock class="h-3.5 w-3.5 shrink-0" />
       <span>

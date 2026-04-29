@@ -1,0 +1,33 @@
+---
+import type { EventCategory } from "@/utils/api/events"
+import { useTranslations } from "@/i18n/translations"
+
+const CATEGORY_BADGE_CLASS: Record<EventCategory, string> = {
+  university: "badge-primary",
+  sport: "badge-error",
+  party: "badge-secondary",
+  culture: "badge-accent",
+  social: "badge-success",
+  other: "badge-ghost",
+}
+
+interface Props {
+  category: EventCategory
+  isSmall?: boolean
+  class?: string
+}
+
+const { category, isSmall, class: className } = Astro.props
+const t = useTranslations(Astro.locals.locale)
+---
+
+<span
+  class:list={[
+    "badge badge-soft",
+    CATEGORY_BADGE_CLASS[category],
+    { "badge-sm": isSmall },
+    className,
+  ]}
+>
+  {t.events.categories[category]}
+</span>
