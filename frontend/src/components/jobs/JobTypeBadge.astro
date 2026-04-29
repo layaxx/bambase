@@ -1,0 +1,17 @@
+---
+import type { JobType } from "@/utils/api/job-offers"
+import { useTranslations } from "@/i18n/translations"
+import { JOB_TYPE_BADGE_CLASS } from "@/utils/job-status"
+
+interface Props {
+  jobType: JobType
+  isSmall?: boolean
+}
+
+const { jobType, isSmall } = Astro.props
+const t = useTranslations(Astro.locals.locale)
+---
+
+<span class:list={[`badge badge-soft  ${JOB_TYPE_BADGE_CLASS[jobType]}`, { "badge-sm": isSmall }]}>
+  {t.jobs.jobTypes[jobType]}
+</span>

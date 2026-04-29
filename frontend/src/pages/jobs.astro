@@ -114,7 +114,6 @@ const isLoggedIn = !!Astro.cookies.get("auth_token")?.value
       {t.jobs.resultPlural}
     </p>
   </div>
-
   {
     jobs.length === 0 ? (
       <p class="text-base-content/70">{t.jobs.noJobs}</p>

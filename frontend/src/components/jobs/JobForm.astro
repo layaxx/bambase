@@ -286,41 +286,43 @@ const t = useTranslations(Astro.locals.locale)
 
   const form = document.querySelector<HTMLFormElement>("form[data-draft-key]")
   if (form) {
-    const draftKey = form.dataset.draftKey!
+    const draftKey = form.dataset.draftKey
 
-    const saved = sessionStorage.getItem(draftKey)
-    if (saved) {
-      const draft = JSON.parse(saved) as Record<string, string>
-      for (const name of FIELDS) {
-        const el = form.elements.namedItem(name) as
-          | HTMLInputElement
-          | HTMLTextAreaElement
-          | HTMLSelectElement
-          | null
-        if (el && draft[name]) el.value = draft[name]
+    if (draftKey) {
+      const saved = sessionStorage.getItem(draftKey)
+      if (saved) {
+        const draft = JSON.parse(saved) as Record<string, string>
+        for (const name of FIELDS) {
+          const el = form.elements.namedItem(name) as
+            | HTMLInputElement
+            | HTMLTextAreaElement
+            | HTMLSelectElement
+            | null
+          if (el && draft[name]) el.value = draft[name]
+        }
       }
+
+      let submitting = false
+
+      form.addEventListener("submit", () => {
+        submitting = true
+        const draft: Record<string, string> = {}
+        for (const name of FIELDS) {
+          const el = form.elements.namedItem(name) as
+            | HTMLInputElement
+            | HTMLTextAreaElement
+            | HTMLSelectElement
+            | null
+          if (el) draft[name] = el.value
+        }
+        sessionStorage.setItem(draftKey, JSON.stringify(draft))
+      })
+
+      window.addEventListener("pagehide", () => {
+        if (!submitting) {
+          sessionStorage.removeItem(draftKey)
+        }
+      })
     }
-
-    let submitting = false
-
-    form.addEventListener("submit", () => {
-      submitting = true
-      const draft: Record<string, string> = {}
-      for (const name of FIELDS) {
-        const el = form.elements.namedItem(name) as
-          | HTMLInputElement
-          | HTMLTextAreaElement
-          | HTMLSelectElement
-          | null
-        if (el) draft[name] = el.value
-      }
-      sessionStorage.setItem(draftKey, JSON.stringify(draft))
-    })
-
-    window.addEventListener("pagehide", () => {
-      if (!submitting) {
-        sessionStorage.removeItem(draftKey)
-      }
-    })
   }
 </script>

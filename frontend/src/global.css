@@ -8,8 +8,6 @@
 :root {
   --color-primary: oklch(35.546% 0.19067 268.893);
 
-  /* Semantic colors — 700-shades for text contrast; white content for solid components.
-     Soft badge backgrounds are auto-derived by DaisyUI via color-mix (8% of base + base-100). */
   --color-info: var(--color-blue-700);
   --color-info-content: oklch(1 0 0);
   --color-warning: var(--color-orange-400);
@@ -18,6 +16,10 @@
   --color-error-content: oklch(1 0 0);
   --color-success: var(--color-green-700);
   --color-success-content: oklch(1 0 0);
+  --color-secondary: var(--color-pink-600);
+  --color-secondary-content: oklch(1 0 0);
+  --color-accent: var(--color-teal-600);
+  --color-accent-content: oklch(1 0 0);
 }
 
 /* Boost primary lightness for better text contrast on dark backgrounds */
@@ -33,6 +35,10 @@
   --color-error-content: oklch(0.15 0.02 27);
   --color-success: var(--color-green-400);
   --color-success-content: oklch(0.15 0.02 150);
+  --color-secondary: var(--color-pink-400);
+  --color-secondary-content: oklch(0.15 0.02 332);
+  --color-accent: var(--color-teal-400);
+  --color-accent-content: oklch(0.15 0.02 180);
 }
 
 .logo-font {
