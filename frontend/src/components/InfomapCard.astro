@@ -5,7 +5,11 @@ import IconArrowRight from "./icons/IconArrowRight.astro"
 
 const t = useTranslations(Astro.locals.locale)
 
-const categories = [{ key: "university" }, { key: "venues" }, { key: "other" }] as const
+const categories = [
+  { key: "university", colorScheme: "primary" },
+  { key: "venues", colorScheme: "warning" },
+  { key: "other", colorScheme: "neutral" },
+] as const
 ---
 
 <section class="mb-12" id="map">
@@ -31,14 +35,13 @@ const categories = [{ key: "university" }, { key: "venues" }, { key: "other" }] 
 
   <div class="grid gap-3 sm:grid-cols-3">
     {
-      categories.map(({ key }) => (
+      categories.map(({ key, colorScheme }) => (
         <a
           class="group flex items-center gap-3 rounded-xl border border-base-300 bg-base-100 p-4 transition-all hover:shadow-md no-underline"
           href={`/map?filter=${key}`}
         >
           <div
-            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
-            style={`background-color: var(--cat-${key}-bg); color: var(--cat-${key})`}
+            class:list={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full badge-soft badge-${colorScheme}`}
           >
             <IconMapPin class="h-4 w-4" />
           </div>
