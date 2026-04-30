@@ -6,6 +6,7 @@ const COOKIE_OPTS = {
   path: "/",
   httpOnly: false,
   sameSite: "strict",
+  secure: import.meta.env.PROD,
   maxAge: 60 * 60 * 24 * 7, // 7 days
 } as const
 
