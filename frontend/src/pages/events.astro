@@ -116,7 +116,7 @@ const dateFilters = [
     let visibleCount = 0
     document.querySelectorAll<HTMLElement>("[data-category]").forEach((card) => {
       const catMatch = cat === "all" || card.dataset.category === cat
-      const startMs = new Date(card.dataset.start!).getTime()
+      const startMs = new Date(card.dataset.start ?? "").getTime()
       const dateMatch = startMs <= cutoff
       const visible = catMatch && dateMatch
       card.style.display = visible ? "" : "none"
@@ -138,8 +138,8 @@ const dateFilters = [
 
     const countEl = document.getElementById("result-count")
     if (countEl) {
-      const singular = countEl.dataset.singular!
-      const plural = countEl.dataset.plural!
+      const singular = countEl.dataset.singular ?? ""
+      const plural = countEl.dataset.plural ?? ""
       countEl.textContent = `${visibleCount} ${visibleCount === 1 ? singular : plural}`
     }
 
@@ -155,7 +155,7 @@ const dateFilters = [
 
   document.querySelectorAll<HTMLElement>("[data-cat-filter]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      setParam("category", btn.dataset.catFilter!)
+      setParam("category", btn.dataset.catFilter ?? "")
       applyFilters()
     })
   })

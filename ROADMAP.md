@@ -2,6 +2,14 @@
 
 ## Upcoming
 
+### P19 Sitemap
+
+Add a machine-readable sitemap to improve search engine crawlability. The official Astro sitemap integration (<https://docs.astro.build/en/guides/integrations-guide/sitemap/>) handles static and SSR routes automatically. Dynamic routes (event slugs, job UUIDs) will need to be included via the `customPages` option or a serializer that queries Strapi at build/request time. Authenticated and admin-only routes should be excluded.
+
+### P20 A11Y Rules
+
+Enable `eslint-plugin-jsx-a11y` (or the Astro-aware equivalent) to catch accessibility violations at lint time rather than in manual audits. The ruleset should target WCAG 2.1 AA, consistent with the P14 compliance work already done. Some rules will need configuration to account for Astro's component model (e.g. scoped slots, island hydration). The goal is to prevent regressions as new components are added.
+
 ### P18 Job Overview Page
 
 Evaluation and optional migration of `/jobs` from client-side to server-side filtering. The current approach works at small scale but couples page weight to dataset size in a way that degrades once job descriptions are long and numerous.

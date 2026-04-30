@@ -280,15 +280,15 @@ const initialLocationType = initialValues.locationType ?? "none"
     "custom_location_city",
   ]
 
-  const form = document.querySelector<HTMLFormElement>("form")!
-  const draftKey = form.dataset.draftKey
+  const form = document.querySelector<HTMLFormElement>("form")
+  const draftKey = form?.dataset.draftKey
 
   function updateLocationVisibility() {
-    const locationType = (form.elements.namedItem("location_type") as RadioNodeList)?.value
-    const linkedSection = document.getElementById("linked-location-section")!
-    const customSection = document.getElementById("custom-location-section")!
-    linkedSection.classList.toggle("hidden", locationType !== "linked")
-    customSection.classList.toggle("hidden", locationType !== "custom")
+    const locationType = (form?.elements.namedItem("location_type") as RadioNodeList)?.value
+    const linkedSection = document.getElementById("linked-location-section")
+    const customSection = document.getElementById("custom-location-section")
+    linkedSection?.classList.toggle("hidden", locationType !== "linked")
+    customSection?.classList.toggle("hidden", locationType !== "custom")
   }
 
   if (draftKey) {

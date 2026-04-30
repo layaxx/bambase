@@ -28,7 +28,7 @@ function makeContext({
       },
     },
     locals: {} as Record<string, unknown>,
-  } as unknown as APIContext<Record<string, any>, Record<string, string | undefined>>
+  } as unknown as APIContext<Record<string, unknown>, Record<string, string | undefined>>
 }
 
 describe("onRequest middleware", () => {

@@ -55,6 +55,7 @@ describe("formatAddress", () => {
 
 describe("timeFilterBound", () => {
   it("returns end of the current calendar day for 'today'", () => {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const bound = timeFilterBound("today", NOW)!
     expect(bound.getFullYear()).toBe(2026)
     expect(bound.getMonth()).toBe(3) // April = 3 (0-indexed)
@@ -66,11 +67,13 @@ describe("timeFilterBound", () => {
   })
 
   it("returns now + 7 days for 'week'", () => {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const bound = timeFilterBound("week", NOW)!
     expect(bound.getTime()).toBe(NOW.getTime() + 7 * 86_400_000)
   })
 
   it("returns now + 31 days for 'month'", () => {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const bound = timeFilterBound("month", NOW)!
     expect(bound.getTime()).toBe(NOW.getTime() + 31 * 86_400_000)
   })
