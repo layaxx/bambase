@@ -5,9 +5,13 @@ import InfomapCard from "@/components/InfomapCard.astro"
 import PageLayout from "@/layouts/PageLayout.astro"
 import MensaCard from "@/components/MensaCard.astro"
 import StudentGroupsCard from "@/components/StudentGroupsCard.astro"
+import { useTranslations } from "@/i18n/translations"
+
+const t = useTranslations(Astro.locals.locale)
 ---
 
 <PageLayout>
+  <h1 class="sr-only">{t.footer.tagline}</h1>
   <EventsCard />
   <MensaCard />
   <JobCard />

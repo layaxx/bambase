@@ -21,9 +21,9 @@ const t = useTranslations(Astro.locals.locale)
   {targetType === "job" ? t.reports.reportJob : t.reports.reportEvent}
 </button>
 
-<dialog class="modal" id="reportModal">
+<dialog aria-labelledby="reportModalTitle" class="modal" id="reportModal">
   <div class="modal-box">
-    <h3 class="mb-4 text-lg font-bold">{t.reports.modalTitle}</h3>
+    <h3 class="mb-4 text-lg font-bold" id="reportModalTitle">{t.reports.modalTitle}</h3>
     <form action={actions.reports.submit} method="POST">
       <input name="target_type" type="hidden" value={targetType} />
       <input name="target_id" type="hidden" value={targetId} />
@@ -64,6 +64,6 @@ const t = useTranslations(Astro.locals.locale)
     </form>
   </div>
   <form class="modal-backdrop" method="dialog">
-    <button>close</button>
+    <button aria-label="Schließen"></button>
   </form>
 </dialog>

@@ -109,7 +109,7 @@ const isLoggedIn = !!Astro.cookies.get("auth_token")?.value
   </details>
 
   <div class="mb-4 flex items-center justify-between">
-    <p class="text-sm text-base-content/40">
+    <p aria-live="polite" class="text-sm text-base-content/40">
       <span class="font-medium text-base-content" id="result-count">{jobs.length}</span>
       {t.jobs.resultOf}
       <span class="font-medium text-base-content">{jobs.length}</span>

@@ -23,7 +23,11 @@ const { group } = Astro.props
     {group.description}
   </p>
 
-  <button class="btn btn-ghost btn-xs px-0 mb-3 self-start text-primary" data-expand-btn>
+  <button
+    aria-expanded="false"
+    class="btn btn-ghost btn-xs px-0 mb-3 self-start text-primary"
+    data-expand-btn
+  >
     Mehr anzeigen
   </button>
 
@@ -59,10 +63,12 @@ const { group } = Astro.props
   document.addEventListener("click", (e) => {
     const btn = (e.target as HTMLElement).closest("[data-expand-btn]")
     if (!btn) return
-    const group = btn.closest("[data-student-group]")!
+    const group = btn.closest("[data-student-group]")
+    if (!group) return
     const desc = group.querySelector("[data-description]") as HTMLElement
     const isCollapsed = desc.classList.contains("line-clamp-4")
     desc.classList.toggle("line-clamp-4", !isCollapsed)
     btn.textContent = isCollapsed ? "Weniger anzeigen" : "Mehr anzeigen"
+    btn.setAttribute("aria-expanded", isCollapsed ? "true" : "false")
   })
 </script>

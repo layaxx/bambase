@@ -122,58 +122,32 @@ Automatically importing events from external sources would reduce the manual eff
 
 ---
 
+## Done
+
 ### P14 Accessibility
 
-Audit-driven pass to reach WCAG 2.1 AA compliance across all pages and components. Issues are grouped by severity; the work-involved checklist below is ordered by priority.
-
-**Issues identified — page structure:**
-
-- **No skip-to-main-content link** — `AppLayout.astro` has `<Header />` before `<slot />` with no preceding skip link. Keyboard-only users must tab through the entire nav on every page to reach content.
-- **Home page has no `<h1>`** — `index.astro` renders five widget cards, each with an `<h2>`, but there is no top-level `<h1>`. Every page must have exactly one `<h1>`.
-- **`<title>` is the same on all pages** — `Layout.astro:15` has `<title>BamBase.de</title>` hardcoded. Users with multiple tabs open and screen reader users announcing the page title cannot distinguish pages. Should be `Events – BamBase.de`, `Jobs – BamBase.de`, etc.
-
-**Issues identified — forms:**
-
-- **Location type radio group has no `<fieldset>/<legend>`** — `EventForm.astro` lines 181–207 render three radio buttons (`none`, `linked`, `custom`) under a plain `<span>` label. Without a `<fieldset>` grouping them and a `<legend>` naming the group, screen readers cannot announce what the radios are for.
-- **`StudentGroup` expand button has no `aria-expanded`** — `StudentGroup.astro:31` renders a "Mehr anzeigen" button that toggles a clamped description, but `aria-expanded` is never set on it. Screen readers cannot tell users whether the content is expanded or collapsed.
-
-**Issues identified — modals:**
-
-- **`<dialog>` missing `aria-labelledby`** — `ReportModal.astro:24` renders `<dialog class="modal" id="reportModal">` without referencing the `<h3>` inside it. Add `aria-labelledby="reportModalTitle"` on the dialog and `id="reportModalTitle"` on the h3 so screen readers announce the dialog name when it opens.
-- **Modal backdrop button has visible text** — `ReportModal.astro:67` — DaisyUI's backdrop close pattern renders `<button>close</button>`. The word "close" is visually hidden by the overlay but is read aloud by screen readers as an unlabelled action. Replace with `<button aria-label="Schließen">` and an empty or sr-only label.
-
-**Issues identified — dynamic regions:**
-
-- **Result counts not announced to screen readers** — `events.astro:70–76` and `jobs.astro:111` update a result-count element via JavaScript when filters change, but neither element has `aria-live="polite"`. Blind and low-vision users are not informed when the result set changes.
-
-**Issues identified — motion:**
-
-- **No `prefers-reduced-motion` override** — `global.css` has no `@media (prefers-reduced-motion: reduce)` rule. Tailwind transition utilities (`transition-all`, `transition-colors`, `transition-transform`) are used on cards, buttons, the header, and the chevron in the jobs filter panel with no opt-out for users who have vestibular disorders or motion sensitivity.
-
-**Issues identified — contrast (informational):**
-
-- `InfomapCard.astro:46` uses `text-base-content/30` on a description label — 30 % opacity almost certainly fails WCAG AA (4.5:1) on the DaisyUI base background in both light and dark themes. Decorative icons at that opacity are fine; readable text is not.
-- `map.astro:97` and `MensaWeekendSection.astro:16` use `text-base-content/40` on descriptive text. Worth verifying computed contrast ratios; raise to `/60` or higher if they fail.
+Audit-driven pass to reach WCAG 2.1 AA compliance across all pages and components.
 
 **Work involved:**
 
-- [ ] Add skip link as the first element in `AppLayout.astro`: `<a class="sr-only focus:not-sr-only" href="#main-content">Zum Inhalt springen</a>`; add `id="main-content"` to `<main>` in `PageLayout.astro`
-- [ ] Add a visually-hidden `<h1>` (or a visible one) to `index.astro` — e.g. `<h1 class="sr-only">BamBase.de – Studierendenportal Bamberg</h1>`
-- [ ] Make `<title>` dynamic: accept a `title` prop in `Layout.astro` and pass it from each page; fall back to `"BamBase.de"`
-- [ ] Wrap the location type radio buttons in `EventForm.astro` with `<fieldset>` and `<legend>`
-- [ ] Add `aria-expanded="false"` to the "Mehr anzeigen" button in `StudentGroup.astro`; toggle it in the existing click handler
-- [ ] Add `aria-labelledby="reportModalTitle"` to the `<dialog>` in `ReportModal.astro`; add `id="reportModalTitle"` to its `<h3>`
-- [ ] Replace the backdrop `<button>close</button>` in `ReportModal.astro` with `<button aria-label="Schließen"></button>`
-- [ ] Add `aria-live="polite"` to the result-count elements in `events.astro` and `jobs.astro`
-- [ ] Add `@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; } }` to `global.css`
-- [ ] Raise `text-base-content/30` in `InfomapCard.astro` to `/60`; verify computed contrast on `/40` usages in `map.astro` and `MensaWeekendSection.astro`
+- [x] Added skip link as the first child of `AppLayout.astro` (`<a class="sr-only focus:not-sr-only …" href="#main-content">Zum Inhalt springen</a>`); added `id="main-content"` to the `<main>` in `login.astro` and `register.astro` (which use `AppLayout` directly)
+- [x] Added `<h1 class="sr-only">` to `index.astro` — reuses `t.footer.tagline` so there is no text duplication
+- [x] Made `<title>` dynamic: `title?: string` prop added to `Layout.astro`, `AppLayout.astro`, `PageLayout.astro`; rendered as `{title} – BamBase.de` with `"BamBase.de"` fallback; wired up from every page using existing translation keys; detail pages use the entity's own name with a page-title fallback
+- [x] Wrapped location type radio buttons in `EventForm.astro` with `<fieldset>` / `<legend>` (browser fieldset defaults reset via `border-0 p-0 m-0 min-w-0`)
+- [x] Added `aria-expanded="false"` to "Mehr anzeigen" button in `StudentGroup.astro`; toggled in the click handler
+- [x] Added `aria-labelledby="reportModalTitle"` to `<dialog>` in `ReportModal.astro`; added `id="reportModalTitle"` to its `<h3>`
+- [x] Replaced backdrop `<button>close</button>` in `ReportModal.astro` with `<button aria-label="Schließen"></button>`
+- [x] Added `aria-live="polite"` to the result-count `<p>` in `events.astro` and `jobs.astro`
+- [x] Added `@media (prefers-reduced-motion: reduce)` override to `global.css`
+- [x] Raised `text-base-content/40` to `text-base-content/70` on readable text in `map.astro` (filter label, location description, address); `/70` is both contrast-compliant and consistent with the P13 two-opacity convention
 
-**Open questions:**
+**Decisions made:**
 
-- Should the home page `<h1>` be visible (e.g. a hero tagline) or screen-reader-only? A visible tagline ("Das Studierendenportal für Bamberg") would improve the page's value for all users and search engines.
-- Is there a target WCAG conformance level — AA (standard) or AAA? AA is the legal baseline for German public websites (BITV 2.0).
+- Home page `<h1>` is screen-reader-only (not a visible hero tagline); the existing footer tagline text is reused so the copy stays in sync.
+- Target conformance level: WCAG 2.1 AA (legal baseline for German public websites under BITV 2.0).
+- Contrast fix on `map.astro` used `/70` rather than `/60` to stay within the P13-enforced two-opacity rule (`/70` secondary, `/40` muted).
 
-## Done
+---
 
 ### P17 Style Adjustments
 
