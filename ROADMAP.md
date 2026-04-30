@@ -2,6 +2,14 @@
 
 ## Upcoming
 
+### P20 Registration Workflow and E-Mail Confirmation
+
+Currently, registration is instant and unverified: anyone can register with any email address and is immediately logged in. This undermines content moderation — there is no way to hold a submitter accountable to a real address, and fake accounts require no effort to create.
+
+Strapi ships a built-in email confirmation flow (`users-permissions` plugin, `emailConfirmation: true`) but it is not enabled. When enabled, newly registered users get `confirmed: false` and receive a verification email; until confirmed, they can log in but Strapi will reject their API calls. The frontend would need to handle the confirmation callback URL (`/confirm?confirmation=TOKEN`) and show a "check your inbox" state after registration instead of redirecting immediately.
+
+SMTP must be configured before this can work — currently the API has no email provider set up.
+
 ### P19 Sitemap
 
 Add a machine-readable sitemap to improve search engine crawlability. The official Astro sitemap integration (<https://docs.astro.build/en/guides/integrations-guide/sitemap/>) handles static and SSR routes automatically. Dynamic routes (event slugs, job UUIDs) will need to be included via the `customPages` option or a serializer that queries Strapi at build/request time. Authenticated and admin-only routes should be excluded.

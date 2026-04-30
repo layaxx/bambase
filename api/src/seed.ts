@@ -8,6 +8,9 @@ import { EVENTS } from "./seed/events"
 import { LOCATIONS } from "./seed/locations"
 
 export async function seed(strapi: Core.Strapi) {
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("Seed must not run in production")
+  }
   const existingOffers = await strapi.db.query("api::job-offer.job-offer").count({})
   const existingEvents = await strapi.db.query("api::event.event").count({})
   const existingLocations = await strapi.db.query("api::location.location").count({})
