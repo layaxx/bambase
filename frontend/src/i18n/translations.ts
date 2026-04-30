@@ -314,16 +314,6 @@ const de = {
   },
   impressum: {
     pageTitle: "Impressum",
-    operatorHeading: "Angaben gemäß § 5 TMG",
-    contactHeading: "Kontakt",
-    responsibleHeading: "Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV",
-    disclaimerHeading: "Haftungsausschluss",
-    liabilityContentHeading: "Haftung für Inhalte",
-    liabilityContentText:
-      "Die Inhalte unserer Seiten wurden mit größter Sorgfalt erstellt. Für die Richtigkeit, Vollständigkeit und Aktualität der Inhalte können wir jedoch keine Gewähr übernehmen.",
-    liabilityLinksHeading: "Haftung für Links",
-    liabilityLinksText:
-      "Unser Angebot enthält Links zu externen Webseiten Dritter, auf deren Inhalte wir keinen Einfluss haben. Deshalb können wir für diese fremden Inhalte auch keine Gewähr übernehmen. Für die Inhalte der verlinkten Seiten ist stets der jeweilige Anbieter oder Betreiber der Seiten verantwortlich.",
   },
   privacyPolicy: {
     pageTitle: "Datenschutzerklärung",
@@ -642,17 +632,6 @@ const en: SetAtPath<
   },
   impressum: {
     pageTitle: "Legal Notice",
-    operatorHeading: "Information pursuant to § 5 TMG (German Telemedia Act)",
-    contactHeading: "Contact",
-    responsibleHeading:
-      "Responsible for content pursuant to § 55 para. 2 RStV (German Interstate Broadcasting Treaty)",
-    disclaimerHeading: "Disclaimer",
-    liabilityContentHeading: "Liability for content",
-    liabilityContentText:
-      "The content on our pages has been created with the utmost care. However, we cannot guarantee the accuracy, completeness, or timeliness of the content.",
-    liabilityLinksHeading: "Liability for links",
-    liabilityLinksText:
-      "Our website contains links to external third-party websites over whose content we have no control. Therefore, we cannot accept any liability for this external content. The respective provider or operator of the linked pages is always responsible for their content.",
   },
   privacyPolicy: {
     pageTitle: "Privacy Policy",

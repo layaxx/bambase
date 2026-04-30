@@ -1,6 +1,8 @@
 ---
 import PageLayout from "@/layouts/PageLayout.astro"
 import { useTranslations } from "@/i18n/translations"
+import ImpressumGerman from "@/components/static/impressum.de.astro"
+import ImpressumEnglish from "@/components/static/impressum.en.astro"
 
 const t = useTranslations(Astro.locals.locale)
 ---
@@ -8,36 +10,5 @@ const t = useTranslations(Astro.locals.locale)
 <PageLayout title={t.impressum.pageTitle}>
   <h1 class="text-3xl font-bold tracking-tight sm:text-4xl mb-2">{t.impressum.pageTitle}</h1>
 
-  <div class="flex flex-col gap-6 max-w-2xl">
-    <section>
-      <h2 class="text-lg font-semibold mb-2">{t.impressum.operatorHeading}</h2>
-      <p class="text-base-content/70">
-        [PLACEHOLDER: Name und Anschrift des Betreibers]<br />
-        [PLACEHOLDER: Straße, Hausnummer]<br />
-        [PLACEHOLDER: PLZ, Ort]
-      </p>
-    </section>
-
-    <section>
-      <h2 class="text-lg font-semibold mb-2">{t.impressum.contactHeading}</h2>
-      <p class="text-base-content/70">E-Mail: [PLACEHOLDER: kontakt@example.de]</p>
-    </section>
-
-    <section>
-      <h2 class="text-lg font-semibold mb-2">{t.impressum.responsibleHeading}</h2>
-      <p class="text-base-content/70">
-        [PLACEHOLDER: Name und Anschrift der verantwortlichen Person]<br />
-        [PLACEHOLDER: Straße, Hausnummer]<br />
-        [PLACEHOLDER: PLZ, Ort]
-      </p>
-    </section>
-
-    <section>
-      <h2 class="text-lg font-semibold mb-2">{t.impressum.disclaimerHeading}</h2>
-      <h3 class="font-medium mb-1">{t.impressum.liabilityContentHeading}</h3>
-      <p class="text-base-content/70 mb-4">{t.impressum.liabilityContentText}</p>
-      <h3 class="font-medium mb-1">{t.impressum.liabilityLinksHeading}</h3>
-      <p class="text-base-content/70">{t.impressum.liabilityLinksText}</p>
-    </section>
-  </div>
+  {Astro.locals.locale === "de" ? <ImpressumGerman /> : <ImpressumEnglish />}
 </PageLayout>
