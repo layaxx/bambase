@@ -14,7 +14,7 @@
     "noImplicitThis": true,
     "outDir": "dist",
     "rootDir": ".",
-    "types": ["node", "jest"]
+    "types": ["node"]
   },
   "include": [
     // Include root files

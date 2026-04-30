@@ -54,11 +54,9 @@ services:
   frontend:
     build:
       context: ./frontend
-      args:
-        STRAPI_URL: http://api:1337
-        STRAPI_TOKEN: ${STRAPI_TOKEN}
     container_name: bambase_frontend
     environment:
+      STRAPI_URL: http://api:1337
       STRAPI_TOKEN: ${STRAPI_TOKEN}
     restart: unless-stopped
     depends_on:
