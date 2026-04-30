@@ -28,7 +28,7 @@ const dateFilters = [
 ---
 
 <PageLayout>
-  <PageHeader label="Bamberg" subtitle={t.events.pageSubtitle} title={t.events.pageTitle}>
+  <PageHeader color="primary" subtitle={t.events.pageSubtitle} title={t.events.pageTitle}>
     <IconCalendar class="h-5 w-5" slot="icon" />
     <div class="flex items-center gap-2" slot="action">
       {
@@ -42,7 +42,7 @@ const dateFilters = [
     </div>
   </PageHeader>
 
-  <div class="mb-6 flex flex-col gap-3">
+  <div class="mb-2 flex flex-col gap-3">
     <div class="flex flex-wrap items-center gap-2">
       <span class="text-sm text-base-content/40">{t.events.filterCategory}:</span>
       <button class="btn btn-outline btn-sm" data-cat-filter="all">

@@ -99,7 +99,7 @@ const de = {
     noDataDay: "Für diesen Tag liegen noch keine Daten vor.",
     pageLocations: "Bamberger Mensen",
     pageTitle: "Mensaplan",
-    pageSubtitle: "Speisepläne für Feki, Austraße und Erba – heute und die nächsten 6 Tage.",
+    pageSubtitle: "Speisepläne für Feki, Austraße und Erba.",
     today: "Heute",
     tomorrow: "Morgen",
     weekdays: [
@@ -422,7 +422,7 @@ const en: SetAtPath<
     noDataDay: "No data available for this day yet.",
     pageLocations: "Bamberg Cafeterias",
     pageTitle: "Cafeteria Plan",
-    pageSubtitle: "Menus for Feki, Austraße and Erba – today and the next 6 days.",
+    pageSubtitle: "Menus for Feki, Austraße and Erba.",
     today: "Today",
     tomorrow: "Tomorrow",
     weekdays: [

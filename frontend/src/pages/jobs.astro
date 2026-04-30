@@ -24,7 +24,7 @@ const isLoggedIn = !!Astro.cookies.get("auth_token")?.value
 ---
 
 <PageLayout>
-  <PageHeader label="Bamberg & Region" subtitle={t.jobs.pageSubtitle} title={t.jobs.pageTitle}>
+  <PageHeader color="success" subtitle={t.jobs.pageSubtitle} title={t.jobs.pageTitle}>
     <IconBriefcase class="h-5 w-5" slot="icon" />
     <div class="flex items-center gap-2" slot="action">
       {
@@ -38,13 +38,15 @@ const isLoggedIn = !!Astro.cookies.get("auth_token")?.value
     </div>
   </PageHeader>
 
-  <details class="mb-2 rounded-xl border border-base-300" id="filter-panel">
+  <details class="group mb-2 rounded-xl border border-base-300" id="filter-panel">
     <summary class="flex cursor-pointer list-none items-center justify-between p-3">
       <div class="flex items-center gap-2">
         <IconSliders class="h-4 w-4 text-base-content/40" />
         <span class="text-sm font-medium">{t.jobs.filterHeading}</span>
       </div>
-      <IconChevronDown class="chevron h-4 w-4 text-base-content/40 transition-transform" />
+      <IconChevronDown
+        class="h-4 w-4 text-base-content/40 transition-transform group-open:rotate-180"
+      />
     </summary>
 
     <div class="px-5 pb-3">
@@ -138,12 +140,6 @@ const isLoggedIn = !!Astro.cookies.get("auth_token")?.value
     <button class="btn btn-outline btn-sm" id="clear-filters-btn">{t.jobs.clearFilters}</button>
   </div>
 </PageLayout>
-
-<style>
-  details[open] :global(.chevron) {
-    transform: rotate(180deg);
-  }
-</style>
 
 <script>
   import { getParam, setParam } from "@/utils/url-params"

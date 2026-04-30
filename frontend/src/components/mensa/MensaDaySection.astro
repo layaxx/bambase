@@ -31,11 +31,13 @@ const mealsByLocation = Object.fromEntries(
 ---
 
 <section id={id}>
-  <div class="mb-4 flex items-center gap-3">
-    <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-warning/20">
-      <IconUtensils class="h-5 w-5 text-warning" />
+  <div class="mb-2 flex items-center gap-3">
+    <div
+      class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg badge-soft badge-warning"
+    >
+      <IconUtensils class="h-4 w-4" />
     </div>
-    <h2 class="text-xl font-semibold text-base-content">{heading}</h2>
+    <h2 class="text-lg font-semibold">{heading}</h2>
   </div>
 
   {
