@@ -41,7 +41,7 @@ const formattedEventStart = event ? formatDateTime(event.start, dateLocale) : nu
 const location = event?.map_location ?? event?.custom_location
 ---
 
-<PageLayout>
+<PageLayout title={event?.title ?? t.events.pageTitle}>
   {
     !event ? (
       <div class="py-20 text-center">

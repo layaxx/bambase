@@ -23,7 +23,7 @@ const jobs = await fetchJobOffers()
 const isLoggedIn = !!Astro.cookies.get("auth_token")?.value
 ---
 
-<PageLayout>
+<PageLayout title={t.jobs.pageTitle}>
   <PageHeader color="success" subtitle={t.jobs.pageSubtitle} title={t.jobs.pageTitle}>
     <IconBriefcase class="h-5 w-5" slot="icon" />
     <div class="flex items-center gap-2" slot="action">

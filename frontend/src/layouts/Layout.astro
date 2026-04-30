@@ -2,6 +2,11 @@
 import "../global.css"
 import "@fontsource-variable/archivo"
 import "@fontsource-variable/inter"
+
+interface Props {
+  title?: string
+}
+const { title } = Astro.props
 ---
 
 <!doctype html>
@@ -12,7 +17,7 @@ import "@fontsource-variable/inter"
     <link href="/favicon.svg" rel="icon" type="image/svg+xml" />
     <link href="/favicon.ico" rel="icon" />
     <meta content={Astro.generator} name="generator" />
-    <title>BamBase.de</title>
+    <title>{title ? `${title} – BamBase.de` : "BamBase.de"}</title>
     <script is:inline>
       const saved = localStorage.getItem("theme")
       const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches

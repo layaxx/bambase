@@ -14,8 +14,8 @@ const error =
   result?.data?.success === false ? t.auth.validation.loginFailed : result?.error?.message || null
 ---
 
-<AppLayout>
-  <main class="flex items-center justify-center px-4 py-12">
+<AppLayout title={t.auth.loginTitle}>
+  <main class="flex items-center justify-center px-4 py-12" id="main-content">
     <div class="w-full max-w-md">
       <h1 class="text-2xl font-extrabold mb-2">{t.auth.loginTitle}</h1>
       <p class="text-base-content/70 text-sm mb-6">

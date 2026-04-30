@@ -51,7 +51,7 @@ if (archiveResult?.data !== undefined && !archiveResult.error) {
 }
 ---
 
-<PageLayout>
+<PageLayout title={job?.title ?? t.jobs.pageTitle}>
   {
     !job ? (
       <div class="text-center py-20">
