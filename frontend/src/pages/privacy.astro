@@ -1,0 +1,14 @@
+---
+import PageLayout from "@/layouts/PageLayout.astro"
+import { useTranslations } from "@/i18n/translations"
+import PrivacyGerman from "@/components/static/privacy.de.astro"
+import PrivacyEnglish from "@/components/static/privacy.en.astro"
+
+const t = useTranslations(Astro.locals.locale)
+---
+
+<PageLayout title={t.privacyPolicy.pageTitle}>
+  <h1 class="text-3xl font-bold tracking-tight sm:text-4xl mb-2">{t.privacyPolicy.pageTitle}</h1>
+
+  {Astro.locals.locale === "de" ? <PrivacyGerman /> : <PrivacyEnglish />}
+</PageLayout>
