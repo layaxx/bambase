@@ -70,7 +70,7 @@ export async function fetchJobOffers(limit = 100): Promise<JobOffer[]> {
 
 export async function fetchJobOffer(
   slug: string,
-  token = import.meta.env.STRAPI_TOKEN
+  token = process.env.STRAPI_TOKEN
 ): Promise<JobOffer | null> {
   try {
     const headers: Record<string, string> = {}
@@ -84,9 +84,9 @@ export async function fetchJobOffer(
     )
 
     if (!res.ok) {
-      if (res.status === 401 && token !== import.meta.env.STRAPI_TOKEN) {
+      if (res.status === 401 && token !== process.env.STRAPI_TOKEN) {
         console.warn("Unauthorized access with provided token, retrying with public token...")
-        return fetchJobOffer(slug, import.meta.env.STRAPI_TOKEN)
+        return fetchJobOffer(slug, process.env.STRAPI_TOKEN)
       }
       return null
     }

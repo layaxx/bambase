@@ -23,5 +23,5 @@ export { fetchStudentGroups } from "./student-groups"
 export type { MensaMeal } from "./mensa"
 export { fetchMensaMeals } from "./mensa"
 
-const _threshold = parseInt(import.meta.env.REPORT_WARNING_THRESHOLD ?? "3", 10)
+const _threshold = parseInt(process.env.REPORT_WARNING_THRESHOLD ?? "3", 10)
 export const REPORT_WARNING_THRESHOLD = Number.isNaN(_threshold) ? 3 : _threshold
