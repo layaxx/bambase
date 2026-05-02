@@ -13,7 +13,7 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "preview": "astro preview",
+    "preview": "node --env-file-if-exists=.env.local ./dist/server/entry.mjs",
     "astro": "astro",
     "test": "vitest run",
     "test:watch": "vitest",
