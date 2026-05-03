@@ -16,7 +16,15 @@ const { group } = Astro.props
   data-student-group
 >
   <h3 class="mb-2 font-semibold leading-tight text-base-content group-hover:text-primary">
-    <a class="no-underline" href="#">{group.name}</a>
+    {
+      group.website ? (
+        <a class="no-underline" href={group.website} rel="noopener noreferrer" target="_blank">
+          {group.name}
+        </a>
+      ) : (
+        group.name
+      )
+    }
   </h3>
 
   <p class="mb-2 text-sm text-base-content/70 line-clamp-4" data-description>

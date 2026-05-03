@@ -69,6 +69,7 @@ export default defineConfig(
   },
 
   astroPlugin.configs["flat/recommended"],
+  astroPlugin.configs["flat/jsx-a11y-recommended"],
   {
     files: ["**/*.astro"],
     languageOptions: {
