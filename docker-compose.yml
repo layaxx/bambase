@@ -4,6 +4,7 @@ services:
     restart: unless-stopped
     container_name: bambase_db
     environment:
+      TZ: Europe/Berlin
       POSTGRES_DB: ${DATABASE_NAME:-strapi}
       POSTGRES_USER: ${DATABASE_USERNAME:-strapi}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-strapi}
@@ -27,6 +28,7 @@ services:
     restart: unless-stopped
     container_name: bambase_api
     environment:
+      TZ: Europe/Berlin
       HOST: 0.0.0.0
       PORT: 1337
       APP_KEYS: ${APP_KEYS}
@@ -56,6 +58,7 @@ services:
       context: ./frontend
     container_name: bambase_frontend
     environment:
+      TZ: Europe/Berlin
       STRAPI_URL: http://api:1337
       STRAPI_TOKEN: ${STRAPI_TOKEN}
     restart: unless-stopped
