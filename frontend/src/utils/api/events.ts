@@ -120,6 +120,20 @@ export async function fetchEvent(slug: string): Promise<Event | null> {
   }
 }
 
+/** Fetch slugs for all published events (past and future) for use in the sitemap. */
+export async function fetchAllPublishedEventSlugs(limit = 500): Promise<string[]> {
+  try {
+    const result = await client.collection("events").find({
+      fields: ["slug"],
+      pagination: { limit },
+    })
+    return ((result.data ?? []) as unknown as { slug: string }[]).map((e) => e.slug)
+  } catch (error) {
+    console.error("Error fetching event slugs for sitemap", error)
+    return []
+  }
+}
+
 export async function fetchMyEvents(token: string, userId: number): Promise<Event[]> {
   try {
     const res = await fetch(

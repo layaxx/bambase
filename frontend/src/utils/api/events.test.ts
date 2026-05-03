@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
+  fetchAllPublishedEventSlugs,
   fetchEvents,
   fetchEvent,
   fetchMyEvents,
@@ -263,6 +264,62 @@ describe("fetchUpcomingMapEvents", () => {
 
     expect(result).toEqual([])
     expect(consoleSpy).toHaveBeenCalledWith("Error fetching upcoming events", expect.any(TypeError))
+  })
+})
+
+describe("fetchAllPublishedEventSlugs", () => {
+  it("requests only the slug field", async () => {
+    mockFind.mockResolvedValue({ data: [] })
+
+    await fetchAllPublishedEventSlugs()
+
+    expect(mockFind).toHaveBeenCalledWith(expect.objectContaining({ fields: ["slug"] }))
+  })
+
+  it("uses the default limit of 500", async () => {
+    mockFind.mockResolvedValue({ data: [] })
+
+    await fetchAllPublishedEventSlugs()
+
+    expect(mockFind).toHaveBeenCalledWith(expect.objectContaining({ pagination: { limit: 500 } }))
+  })
+
+  it("respects a custom limit", async () => {
+    mockFind.mockResolvedValue({ data: [] })
+
+    await fetchAllPublishedEventSlugs(50)
+
+    expect(mockFind).toHaveBeenCalledWith(expect.objectContaining({ pagination: { limit: 50 } }))
+  })
+
+  it("returns plain slug strings", async () => {
+    mockFind.mockResolvedValue({ data: [{ slug: "test-event" }, { slug: "another-event" }] })
+
+    const result = await fetchAllPublishedEventSlugs()
+
+    expect(result).toEqual(["test-event", "another-event"])
+  })
+
+  it("applies no date filter", async () => {
+    mockFind.mockResolvedValue({ data: [] })
+
+    await fetchAllPublishedEventSlugs()
+
+    const call = mockFind.mock.calls[0][0]
+    expect(call.filters).toBeUndefined()
+  })
+
+  it("logs an error and returns an empty array when the API response is unexpected", async () => {
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+    mockFind.mockResolvedValue(null)
+
+    const result = await fetchAllPublishedEventSlugs()
+
+    expect(result).toEqual([])
+    expect(consoleSpy).toHaveBeenCalledWith(
+      "Error fetching event slugs for sitemap",
+      expect.any(TypeError)
+    )
   })
 })
 

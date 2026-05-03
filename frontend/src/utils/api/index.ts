@@ -11,9 +11,11 @@ export {
 export type { Event, EventMapLocation, EventCustomLocation, EventCategory } from "./events"
 export {
   fetchEvents,
+  fetchOngoingOrUpcomingEvents,
   fetchEvent,
   fetchUpcomingMapEvents,
   fetchMyEvents,
+  fetchAllPublishedEventSlugs,
   EVENT_CATEGORIES,
 } from "./events"
 export type { MapLocation } from "./locations"

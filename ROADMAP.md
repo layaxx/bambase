@@ -2,6 +2,64 @@
 
 ## Upcoming
 
+### P21 SEO Plugin
+
+Add structured, per-page SEO metadata to improve search engine indexing and social media sharing. The current `<head>` in `Layout.astro` only sets charset, viewport, favicon, and a dynamic `<title>`. There is no `meta description`, no Open Graph tags, no canonical URL, and no `robots.txt` or sitemap — meaning social previews are empty and crawlers work without guidance.
+
+**Current state:**
+
+- `Layout.astro:14–26` contains the entire `<head>`. The only variable content is `<title>`, which receives an optional `title` prop flowing through `PageLayout` → `AppLayout` → `Layout`.
+- Detail pages (`event/[slug]/index.astro`, `job/[uuid]/index.astro`) already derive dynamic titles from entity data, but nothing else.
+- Static pages (`jobs.astro`, `events.astro`) pass a translation string as the title with no further metadata.
+- `public/` has no `robots.txt` and no `sitemap.xml`. The Astro sitemap integration is not installed.
+
+**Recommended approach:**
+
+Use [`astro-seo`](https://github.com/jonasmerlin/astro-seo#readme) (`npm install astro-seo`) to manage the `<head>` declaratively. It covers `<title>`, `<meta name="description">`, Open Graph, Twitter Card, and canonical in a single component with typed props, which fits the existing layout prop-drilling pattern cleanly.
+
+Add a `description?: string` prop to `Layout.astro` alongside the existing `title` prop, then render `<SEO>` inside `<head>` in place of the bare `<title>` tag. All three layout levels (`Layout`, `AppLayout`, `PageLayout`) need to forward the new prop.
+
+Per-page metadata:
+
+| Page | title | description |
+| --- | --- | --- |
+| `index.astro` | `"BamBase.de"` | Static tagline from translations |
+| `events.astro` | `t.events.pageTitle` | Static blurb from translations |
+| `jobs.astro` | `t.jobs.pageTitle` | Static blurb from translations |
+| `map.astro` | `t.map.pageTitle` | Static blurb from translations |
+| `mensa.astro` | `t.mensa.pageTitle` | Static blurb from translations |
+| `event/[slug]` | `event.title` | First ~155 chars of `event.description` |
+| `job/[uuid]` | `job.title` | `job.company` + first ~120 chars of `job.description` |
+| `student-groups.astro` | Static | Static blurb |
+| `/about`, `/impressum`, `/contact` | Static | Static blurb per page |
+
+Open Graph images: a static fallback OG image (1200×630, site logo + wordmark) covers all pages for now. Detail pages can opt into a richer image later if Strapi adds media fields.
+
+Canonical URLs: set to `Astro.url.href` on every page. This matters most for the SSR detail pages, which can be reached with and without trailing slashes, and for the multilingual variants once the `lang` attribute is in play.
+
+`robots.txt`: add to `public/robots.txt`. Allow all crawlers on public pages; disallow `/account/`, `/login`, `/register`, `/job/new`, `/event/new`, and `/api/`.
+
+Sitemap: add `@astrojs/sitemap` (official Astro integration). Static routes are discovered automatically. Dynamic routes (`/event/[slug]`, `/job/[uuid]`) require a `getStaticPaths`-style serializer — since the site is SSR, this means a custom `serialize` callback that queries Strapi for published slugs/UUIDs at build time. Admin-only and account routes must be excluded.
+
+Language: the site serves both `de` and `en` via `Astro.currentLocale`. The `<html lang>` attribute is not currently set. Add `lang={Astro.currentLocale ?? "de"}` to the `<html>` element in `Layout.astro` as a prerequisite; then add `<link rel="alternate" hreflang>` tags for the two language variants of each URL via `astro-seo`'s `languageAlternates` prop.
+
+**Work involved:**
+
+- [ ] Install `astro-seo` and add `description?: string` prop to `Layout.astro`, `AppLayout.astro`, `PageLayout.astro`; replace the bare `<title>` with `<SEO>` in `Layout.astro`
+- [ ] Add `lang={Astro.currentLocale ?? "de"}` to the `<html>` element in `Layout.astro`
+- [ ] Add static `description` translations for all listing and static pages; wire them through to `PageLayout`
+- [ ] Wire dynamic descriptions for `event/[slug]` (truncate `event.description`) and `job/[uuid]` (company + truncated description)
+- [ ] Create a static fallback OG image and add it to `public/`; set as default `og:image` in `Layout.astro`
+- [ ] Add `public/robots.txt` — allow public routes, disallow `/account/`, `/login`, `/register`, `/api/`, `/job/new`, `/event/new`
+- [ ] Install `@astrojs/sitemap`, configure in `astro.config.mjs`; add a Strapi-querying serializer for dynamic event and job routes
+- [ ] Add `hreflang` alternates for `de`/`en` on each page via `astro-seo`'s `languageAlternates` prop
+
+**Open questions:**
+
+- Should the OG image for event/job detail pages be a generated image (e.g. via `@vercel/og` or a Satori-based Astro endpoint) or the static fallback? Generated images add build complexity but significantly improve social previews.
+- The sitemap serializer needs to query Strapi for published slugs/UUIDs at build time. Should this be a dedicated build-time script, or is it acceptable to block the Astro build on a Strapi round-trip?
+- The multilingual setup currently switches locale via a URL prefix or cookie — the exact URL shape of the `en` variant needs to be confirmed before `hreflang` alternates can be set correctly.
+
 ### P20 Registration Workflow and E-Mail Confirmation
 
 Currently, registration is instant and unverified: anyone can register with any email address and is immediately logged in. This undermines content moderation — there is no way to hold a submitter accountable to a real address, and fake accounts require no effort to create.
@@ -9,10 +67,6 @@ Currently, registration is instant and unverified: anyone can register with any 
 Strapi ships a built-in email confirmation flow (`users-permissions` plugin, `emailConfirmation: true`) but it is not enabled. When enabled, newly registered users get `confirmed: false` and receive a verification email; until confirmed, they can log in but Strapi will reject their API calls. The frontend would need to handle the confirmation callback URL (`/confirm?confirmation=TOKEN`) and show a "check your inbox" state after registration instead of redirecting immediately.
 
 SMTP must be configured before this can work — currently the API has no email provider set up.
-
-### P19 Sitemap
-
-Add a machine-readable sitemap to improve search engine crawlability. The official Astro sitemap integration (<https://docs.astro.build/en/guides/integrations-guide/sitemap/>) handles static and SSR routes automatically. Dynamic routes (event slugs, job UUIDs) will need to be included via the `customPages` option or a serializer that queries Strapi at build/request time. Authenticated and admin-only routes should be excluded.
 
 ### P18 Job Overview Page
 
@@ -135,6 +189,18 @@ Automatically importing events from external sources would reduce the manual eff
 ---
 
 ## Done
+
+### P19 Sitemap
+
+A `GET /sitemap.xml` SSR endpoint (`src/pages/sitemap.xml.ts`) returns a machine-readable sitemap for all public pages. Static paths (`/`, `/events`, `/jobs`, `/map`, `/mensa`, `/about`, `/impressum`, `/privacy`) are hardcoded; dynamic paths are fetched from Strapi at request time. Authentication-required routes (`/account`, `/login`, `/register`, `/job/new`, `/event/new`, edit pages) are omitted.
+
+Since the site runs fully SSR, a custom endpoint was chosen over `@astrojs/sitemap`: it reflects the current published state on every request without requiring Strapi access at build time or a hardcoded `site` URL. The origin is derived from `url.origin` in the request context.
+
+Added `fetchAllPublishedEventSlugs()` to `utils/api/events.ts` — a minimal query (`fields: ["slug"]`, no date filter) that returns past and future published event slugs. `fetchJobOffers(500)` is reused for jobs since it already filters to `online_status: 'published'`. Both calls run in parallel via `Promise.all`; either returning `[]` on error, so the sitemap degrades gracefully to static-only if Strapi is unreachable.
+
+Response includes `Cache-Control: public, max-age=600, stale-while-revalidate=3600`.
+
+---
 
 ### P20 A11Y Rules
 

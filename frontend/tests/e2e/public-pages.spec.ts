@@ -85,6 +85,49 @@ test.describe("Map (/map)", () => {
   })
 })
 
+test.describe("Sitemap (/sitemap.xml)", () => {
+  test("returns valid XML with expected static URLs", async ({ request }) => {
+    const response = await request.get("/sitemap.xml")
+
+    expect(response.status()).toBe(200)
+    expect(response.headers()["content-type"]).toContain("application/xml")
+
+    const body = await response.text()
+    expect(body).toContain('<?xml version="1.0"')
+    expect(body).toContain("http://www.sitemaps.org/schemas/sitemap/0.9")
+    expect(body).toContain("/events")
+    expect(body).toContain("/jobs")
+    expect(body).toContain("/about")
+    expect(body).toContain("/impressum")
+    expect(body).toContain("/privacy")
+  })
+
+  test("omits non-published jobs", async ({ request }) => {
+    const response = await request.get("/sitemap.xml")
+
+    const body = await response.text()
+    expect(body).not.toContain('/devops-engineer"') // This job is expired in the seed data
+  })
+
+  test("includes published jobs", async ({ request }) => {
+    const response = await request.get("/sitemap.xml")
+
+    const body = await response.text()
+
+    expect(body).toContain("/job/backend-engineer")
+    expect(body).toContain("/job/frontend-developer-owned-by-seed-user")
+  })
+
+  test("includes published events", async ({ request }) => {
+    const response = await request.get("/sitemap.xml")
+
+    const body = await response.text()
+
+    expect(body).toContain("/event/ersti-party")
+    expect(body).toContain("/event/gastvortrag-ki-im-alltag")
+  })
+})
+
 test("Locale switching from German to English and back to German works as expected", async ({
   page,
 }) => {
