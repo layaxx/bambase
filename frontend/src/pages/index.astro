@@ -10,7 +10,7 @@ import { useTranslations } from "@/i18n/translations"
 const t = useTranslations(Astro.locals.locale)
 ---
 
-<PageLayout>
+<PageLayout description={t.footer.tagline}>
   <h1 class="sr-only">{t.footer.tagline}</h1>
   <EventsCard />
   <MensaCard />

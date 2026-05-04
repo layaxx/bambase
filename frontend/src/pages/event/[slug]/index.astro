@@ -39,9 +39,10 @@ const reported = Astro.url.searchParams.get("reported")
 const formattedEventStart = event ? formatDateTime(event.start, dateLocale) : null
 
 const location = event?.map_location ?? event?.custom_location
+const description = event?.description?.slice(0, 155)
 ---
 
-<PageLayout title={event?.title ?? t.events.pageTitle}>
+<PageLayout description={description} title={event?.title ?? t.events.pageTitle}>
   {
     !event ? (
       <div class="py-20 text-center">

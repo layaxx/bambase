@@ -7,7 +7,7 @@ import PrivacyEnglish from "@/components/static/privacy.en.astro"
 const t = useTranslations(Astro.locals.locale)
 ---
 
-<PageLayout title={t.privacyPolicy.pageTitle}>
+<PageLayout description={t.privacyPolicy.pageSubtitle} title={t.privacyPolicy.pageTitle}>
   <h1 class="text-3xl font-bold tracking-tight sm:text-4xl mb-2">{t.privacyPolicy.pageTitle}</h1>
 
   {Astro.locals.locale === "de" ? <PrivacyGerman /> : <PrivacyEnglish />}

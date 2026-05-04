@@ -30,6 +30,7 @@
     "@fontsource-variable/inter": "^5.2.8",
     "@strapi/client": "^1.6.1",
     "astro": "^6.1.0",
+    "astro-seo": "^1.1.0",
     "daisyui": "^5.0.0",
     "dayjs": "^1.11.20",
     "leaflet": "^1.9.4",

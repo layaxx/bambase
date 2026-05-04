@@ -49,9 +49,13 @@ const archiveResult = Astro.getActionResult(actions.jobs.archive)
 if (archiveResult?.data !== undefined && !archiveResult.error) {
   return Astro.redirect(Astro.url.pathname)
 }
+
+const description = job
+  ? `${job.company}${job.description ? ` – ${job.description.slice(0, 120)}` : ""}`
+  : undefined
 ---
 
-<PageLayout title={job?.title ?? t.jobs.pageTitle}>
+<PageLayout description={description} title={job?.title ?? t.jobs.pageTitle}>
   {
     !job ? (
       <div class="text-center py-20">

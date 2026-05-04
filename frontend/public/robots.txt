@@ -1,0 +1,8 @@
+User-agent: *
+Disallow: /account/
+Disallow: /login
+Disallow: /register
+Disallow: /job/new
+Disallow: /event/new
+Disallow: /api/
+Allow: /api/og/*

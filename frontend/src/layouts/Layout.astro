@@ -2,22 +2,55 @@
 import "../global.css"
 import "@fontsource-variable/archivo"
 import "@fontsource-variable/inter"
+import { SEO } from "astro-seo"
 
 interface Props {
   title?: string
+  description?: string
+  ogImage?: string
 }
-const { title } = Astro.props
+const { title, description, ogImage } = Astro.props
+const seoTitle = title ? `${title} – BamBase.de` : "BamBase.de"
 ---
 
 <!doctype html>
 <html lang={Astro.locals.locale}>
   <head>
-    <meta charset="UTF-8" />
-    <meta content="width=device-width" name="viewport" />
-    <link href="/favicon.svg" rel="icon" type="image/svg+xml" />
-    <link href="/favicon.ico" rel="icon" />
-    <meta content={Astro.generator} name="generator" />
-    <title>{title ? `${title} – BamBase.de` : "BamBase.de"}</title>
+    <SEO
+      canonical={`${Astro.url.origin}${Astro.url.pathname}`}
+      charset="UTF-8"
+      description={description}
+      extend={{
+        link: [
+          {
+            href: "/favicon.svg",
+            rel: "icon",
+            type: "image/svg+xml",
+          },
+          {
+            href: "/favicon.ico",
+            rel: "icon",
+            type: "image/x-icon",
+          },
+        ],
+        meta: [
+          {
+            name: "generator",
+            content: Astro.generator,
+          },
+          { name: "viewport", content: "width=device-width" },
+        ],
+      }}
+      openGraph={{
+        basic: {
+          title: seoTitle,
+          type: "website",
+          image: ogImage ?? `${Astro.url.origin}/og-image.png`,
+        },
+        optional: { description, localeAlternate: ["de", "en"] },
+      }}
+      title={seoTitle}
+    />
     <script is:inline>
       const saved = localStorage.getItem("theme")
       const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches

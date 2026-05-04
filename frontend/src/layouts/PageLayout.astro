@@ -3,11 +3,12 @@ import AppLayout from "@/layouts/AppLayout.astro"
 
 interface Props {
   title?: string
+  description?: string
 }
-const { title } = Astro.props
+const { title, description } = Astro.props
 ---
 
-<AppLayout title={title}>
+<AppLayout description={description} title={title}>
   <main class="max-w-7xl mx-auto px-4 py-8 block grow w-full" id="main-content">
     <slot />
   </main>

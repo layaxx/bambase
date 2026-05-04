@@ -319,9 +319,11 @@ const de = {
   },
   impressum: {
     pageTitle: "Impressum",
+    pageSubtitle: "Rechtliche Angaben zum Betreiber dieses Angebots.",
   },
   privacyPolicy: {
     pageTitle: "Datenschutzerklärung",
+    pageSubtitle: "Informationen zur Verarbeitung personenbezogener Daten.",
   },
   language: {
     switchLabel: "EN",
@@ -642,9 +644,11 @@ const en: SetAtPath<
   },
   impressum: {
     pageTitle: "Legal Notice",
+    pageSubtitle: "Legal information about the operator of this service.",
   },
   privacyPolicy: {
     pageTitle: "Privacy Policy",
+    pageSubtitle: "Information on the processing of personal data.",
   },
   language: {
     switchLabel: "DE",
