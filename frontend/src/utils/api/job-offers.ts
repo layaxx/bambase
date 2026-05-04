@@ -1,4 +1,6 @@
-import { client, strapiUrl } from "./client"
+import { STRAPI_TOKEN } from "astro:env/server"
+import { client } from "./client"
+import { STRAPI_URL } from "astro:env/client"
 
 export const JOB_TYPES = [
   "part_time",
@@ -68,25 +70,22 @@ export async function fetchJobOffers(limit = 100): Promise<JobOffer[]> {
   }
 }
 
-export async function fetchJobOffer(
-  slug: string,
-  token = process.env.STRAPI_TOKEN
-): Promise<JobOffer | null> {
+export async function fetchJobOffer(slug: string, token = STRAPI_TOKEN): Promise<JobOffer | null> {
   try {
     const headers: Record<string, string> = {}
     headers["Authorization"] = `Bearer ${token}`
 
     const res = await fetch(
-      `${strapiUrl}/api/job-offers?filters[uuid][$eq]=${encodeURIComponent(slug)}&populate[contact]=true&populate[owner]=true&populate[reports][filters][review_status][$ne]=dismissed`,
+      `${STRAPI_URL}/api/job-offers?filters[uuid][$eq]=${encodeURIComponent(slug)}&populate[contact]=true&populate[owner]=true&populate[reports][filters][review_status][$ne]=dismissed`,
       {
         headers,
       }
     )
 
     if (!res.ok) {
-      if (res.status === 401 && token !== process.env.STRAPI_TOKEN) {
+      if (res.status === 401 && token !== STRAPI_TOKEN) {
         console.warn("Unauthorized access with provided token, retrying with public token...")
-        return fetchJobOffer(slug, process.env.STRAPI_TOKEN)
+        return fetchJobOffer(slug, STRAPI_TOKEN)
       }
       return null
     }
@@ -102,7 +101,7 @@ export async function fetchJobOffer(
 export async function fetchMyJobOffers(token: string, userId: number): Promise<JobOffer[]> {
   try {
     const res = await fetch(
-      `${strapiUrl}/api/job-offers?filters[owner][id][$eq]=${userId}&populate[0]=contact&sort=createdAt:desc`,
+      `${STRAPI_URL}/api/job-offers?filters[owner][id][$eq]=${userId}&populate[0]=contact&sort=createdAt:desc`,
       { headers: { Authorization: `Bearer ${token}` } }
     )
     if (!res.ok) return []

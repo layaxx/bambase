@@ -1,6 +1,6 @@
 import { defineAction, ActionError } from "astro:actions"
 import { z } from "astro/zod"
-import { strapiUrl } from "@/utils/api"
+import { STRAPI_URL } from "astro:env/client"
 
 const COOKIE_OPTS = {
   path: "/",
@@ -19,7 +19,7 @@ export const auth = {
       redirect: z.string().optional(),
     }),
     handler: async ({ identifier, password, redirect }, context) => {
-      const res = await fetch(`${strapiUrl}/api/auth/local`, {
+      const res = await fetch(`${STRAPI_URL}/api/auth/local`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ identifier, password }),
@@ -53,7 +53,7 @@ export const auth = {
         throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
       }
 
-      const res = await fetch(`${strapiUrl}/api/users/me`, {
+      const res = await fetch(`${STRAPI_URL}/api/users/me`, {
         headers: { Authorization: `Bearer ${token}` },
       })
 
@@ -83,7 +83,7 @@ export const auth = {
         path: ["passwordConfirm"],
       }),
     handler: async ({ email, password }, context) => {
-      const res = await fetch(`${strapiUrl}/api/auth/local/register`, {
+      const res = await fetch(`${STRAPI_URL}/api/auth/local/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, username: email, password }),

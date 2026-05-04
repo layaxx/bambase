@@ -1,4 +1,5 @@
-import { client, strapiUrl } from "./client"
+import { STRAPI_URL } from "astro:env/client"
+import { client } from "./client"
 import type { MapLocation } from "./locations"
 
 export const EVENT_CATEGORIES = [
@@ -137,7 +138,7 @@ export async function fetchAllPublishedEventSlugs(limit = 500): Promise<string[]
 export async function fetchMyEvents(token: string, userId: number): Promise<Event[]> {
   try {
     const res = await fetch(
-      `${strapiUrl}/api/events?filters[owner][id][$eq]=${userId}&sort=start:desc`,
+      `${STRAPI_URL}/api/events?filters[owner][id][$eq]=${userId}&sort=start:desc`,
       { headers: { Authorization: `Bearer ${token}` } }
     )
     if (!res.ok) {

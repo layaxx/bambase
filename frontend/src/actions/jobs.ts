@@ -1,7 +1,7 @@
 import { defineAction, ActionError } from "astro:actions"
 import { z } from "astro/zod"
-import { strapiUrl } from "@/utils/api"
 import { JOB_TYPES, JOB_FIELDS, WORK_MODES } from "@/utils/api/job-offers"
+import { STRAPI_URL } from "../../playwright.config"
 
 const jobCreateSchema = z.object({
   title: z.string().min(1, "Bitte Stellenbezeichnung eingeben.").max(200),
@@ -26,7 +26,7 @@ export const jobs = {
       const token = context.cookies.get("auth_token")?.value
       if (!token) throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
 
-      const res = await fetch(`${strapiUrl}/api/job-offers/${documentId}`, {
+      const res = await fetch(`${STRAPI_URL}/api/job-offers/${documentId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       })
@@ -48,7 +48,7 @@ export const jobs = {
       const token = context.cookies.get("auth_token")?.value
       if (!token) throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
 
-      const res = await fetch(`${strapiUrl}/api/job-offers/${documentId}`, {
+      const res = await fetch(`${STRAPI_URL}/api/job-offers/${documentId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ data: { online_status: "archived" } }),
@@ -85,7 +85,7 @@ export const jobs = {
       const token = context.cookies.get("auth_token")?.value
       if (!token) throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
 
-      const res = await fetch(`${strapiUrl}/api/job-offers/${documentId}`, {
+      const res = await fetch(`${STRAPI_URL}/api/job-offers/${documentId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({
@@ -127,7 +127,7 @@ export const jobs = {
         throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
       }
 
-      const res = await fetch(`${strapiUrl}/api/job-offers`, {
+      const res = await fetch(`${STRAPI_URL}/api/job-offers`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

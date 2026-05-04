@@ -1,7 +1,7 @@
 import { defineAction, ActionError } from "astro:actions"
 import { z } from "astro/zod"
-import { strapiUrl } from "@/utils/api"
 import { EVENT_CATEGORIES } from "@/utils/api/events"
+import { STRAPI_URL } from "astro:env/client"
 
 const locationFieldsShape = {
   location_type: z.enum(["none", "linked", "custom"]).default("none"),
@@ -59,7 +59,7 @@ export const events = {
       const token = context.cookies.get("auth_token")?.value
       if (!token) throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
 
-      const res = await fetch(`${strapiUrl}/api/events/${documentId}`, {
+      const res = await fetch(`${STRAPI_URL}/api/events/${documentId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       })
@@ -83,7 +83,7 @@ export const events = {
       const token = context.cookies.get("auth_token")?.value
       if (!token) throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
 
-      const res = await fetch(`${strapiUrl}/api/events/${documentId}`, {
+      const res = await fetch(`${STRAPI_URL}/api/events/${documentId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({
@@ -119,7 +119,7 @@ export const events = {
         throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
       }
 
-      const res = await fetch(`${strapiUrl}/api/events`, {
+      const res = await fetch(`${STRAPI_URL}/api/events`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

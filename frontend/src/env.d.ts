@@ -1,5 +1,10 @@
 /// <reference types="astro/client" />
 
+declare module "*.astro" {
+  const Component: (props: Record<string, unknown>) => AstroFactoryReturnValue
+  export default Component
+}
+
 declare module "@fontsource-variable/archivo" {}
 declare module "@fontsource-variable/inter" {}
 

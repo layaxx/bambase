@@ -1,4 +1,4 @@
-export { strapiUrl, client } from "./client"
+export { client } from "./client"
 export type { JobOffer, JobType, JobField, WorkMode } from "./job-offers"
 export {
   fetchJobOffers,
