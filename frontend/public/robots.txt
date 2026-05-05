@@ -6,3 +6,6 @@ Disallow: /job/new
 Disallow: /event/new
 Disallow: /api/
 Allow: /api/og/*
+
+
+Sitemap: https://bambase.de/sitemap.xml
