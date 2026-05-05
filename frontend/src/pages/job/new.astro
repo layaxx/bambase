@@ -15,7 +15,7 @@ if (!token) {
 const result = Astro.getActionResult(actions.jobs.create)
 
 if (result?.data) {
-  return Astro.redirect(`/job/${result.data.uuid}`)
+  return Astro.redirect(`/job/${result.data.slug}`)
 }
 
 const inputErrors = isInputError(result?.error) ? result.error.fields : {}

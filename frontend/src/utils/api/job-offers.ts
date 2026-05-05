@@ -33,7 +33,7 @@ export type WorkMode = (typeof WORK_MODES)[number]
 
 export type JobOffer = {
   documentId: string
-  uuid: string
+  slug: string
   title: string
   description: string
   company: string
@@ -76,7 +76,7 @@ export async function fetchJobOffer(slug: string, token = STRAPI_TOKEN): Promise
     headers["Authorization"] = `Bearer ${token}`
 
     const res = await fetch(
-      `${STRAPI_URL}/api/job-offers?filters[uuid][$eq]=${encodeURIComponent(slug)}&populate[contact]=true&populate[owner]=true&populate[reports][filters][review_status][$ne]=dismissed`,
+      `${STRAPI_URL}/api/job-offers?filters[slug][$eq]=${encodeURIComponent(slug)}&populate[contact]=true&populate[owner]=true&populate[reports][filters][review_status][$ne]=dismissed`,
       {
         headers,
       }

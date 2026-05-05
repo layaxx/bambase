@@ -28,7 +28,7 @@ export const GET: APIRoute = async ({ url }) => {
   const entries = [
     ...STATIC_PATHS.map((path) => urlEntry(`${origin}${path}`)),
     ...eventSlugs.map((slug) => urlEntry(`${origin}/event/${encodeURIComponent(slug)}`)),
-    ...jobOffers.map((job) => urlEntry(`${origin}/job/${encodeURIComponent(job.uuid)}`)),
+    ...jobOffers.map((job) => urlEntry(`${origin}/job/${encodeURIComponent(job.slug)}`)),
   ]
 
   const xml = [

@@ -25,8 +25,8 @@ test.describe("Homepage", () => {
 })
 
 test.describe("Job detail — not found", () => {
-  test("visiting a non-existent job UUID shows not-found content", async ({ page }) => {
-    await page.goto("/job/00000000-0000-0000-0000-000000000000")
+  test("visiting a non-existent job slug shows not-found content", async ({ page }) => {
+    await page.goto("/job/not-a-real-slug")
     await expect(page.locator("body")).not.toContainText("500")
     // The page renders a not-found heading, not a server error
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible()

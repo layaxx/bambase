@@ -9,18 +9,18 @@ import JobForm from "@/components/jobs/JobForm.astro"
 const t = useTranslations(Astro.locals.locale)
 
 const token = Astro.cookies.get("auth_token")?.value
-if (!token) return Astro.redirect(`/login?redirect=/job/${Astro.params.uuid}/edit`)
+if (!token) return Astro.redirect(`/login?redirect=/job/${Astro.params.slug}/edit`)
 
-const { uuid } = Astro.params
-const job = uuid ? await fetchJobOffer(uuid, token) : null
+const { slug } = Astro.params
+const job = slug ? await fetchJobOffer(slug, token) : null
 
 if (!job) return Astro.redirect("/jobs")
 
 const { data: me, error: meError } = await Astro.callAction(actions.auth.getMe, {})
-if (meError || !me || job.owner?.id !== me.id) return Astro.redirect(`/job/${uuid}`)
+if (meError || !me || job.owner?.id !== me.id) return Astro.redirect(`/job/${job.slug}`)
 
 const result = Astro.getActionResult(actions.jobs.update)
-if (result?.data) return Astro.redirect(`/job/${result.data.uuid}`)
+if (result?.data) return Astro.redirect(`/job/${result.data.slug}`)
 
 const inputErrors = isInputError(result?.error) ? result.error.fields : {}
 const generalError = result?.error && !isInputError(result.error) ? result.error.message : null
@@ -48,7 +48,7 @@ const generalError = result?.error && !isInputError(result.error) ? result.error
 
   <JobForm
     action={actions.jobs.update}
-    cancelHref={`/job/${uuid}`}
+    cancelHref={`/job/${job.slug}`}
     documentId={job.documentId}
     initialValues={{
       title: job.title,

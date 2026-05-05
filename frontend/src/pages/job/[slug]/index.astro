@@ -14,10 +14,10 @@ import JobTypeBadge from "@/components/jobs/JobTypeBadge.astro"
 
 const t = useTranslations(Astro.locals.locale)
 
-const { uuid } = Astro.params
+const { slug } = Astro.params
 const token = Astro.cookies.get("auth_token")?.value
 const [job, { data: me }] = await Promise.all([
-  uuid ? fetchJobOffer(uuid, token) : Promise.resolve(null),
+  slug ? fetchJobOffer(slug, token) : Promise.resolve(null),
   Astro.callAction(actions.auth.getMe, {}),
 ])
 const isOwner = me && job?.owner?.id === me.id
@@ -54,7 +54,7 @@ const description = job
   ? `${job.company}${job.description ? ` – ${job.description.slice(0, 120)}` : ""}`
   : undefined
 const ogImage =
-  job?.online_status === "published" ? `${Astro.url.origin}/og/job/${job.uuid}.png` : undefined
+  job?.online_status === "published" ? `${Astro.url.origin}/og/job/${job.slug}.png` : undefined
 ---
 
 <PageLayout description={description} ogImage={ogImage} title={job?.title ?? t.jobs.pageTitle}>
@@ -81,7 +81,7 @@ const ogImage =
               <a class="btn btn-ghost btn-sm" href="/account/jobs">
                 {t.auth.myJobOffers}
               </a>
-              <a class="btn btn-outline btn-sm" href={`/job/${job.uuid}/edit`}>
+              <a class="btn btn-outline btn-sm" href={`/job/${job.slug}/edit`}>
                 {t.jobs.editJob}
               </a>
               {job.online_status === "published" || job.online_status === "submitted" ? (

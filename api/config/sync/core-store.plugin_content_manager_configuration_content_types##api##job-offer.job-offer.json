@@ -20,16 +20,16 @@
           "sortable": true
         }
       },
-      "uuid": {
+      "slug": {
         "edit": {
-          "label": "uuid",
+          "label": "slug",
           "description": "",
           "placeholder": "",
           "visible": true,
           "editable": true
         },
         "list": {
-          "label": "uuid",
+          "label": "slug",
           "searchable": true,
           "sortable": true
         }
@@ -314,13 +314,9 @@
       }
     },
     "layouts": {
-      "list": ["id", "uuid", "title", "description"],
+      "list": ["id", "title", "description", "slug"],
       "edit": [
         [
-          {
-            "name": "uuid",
-            "size": 6
-          },
           {
             "name": "title",
             "size": 6
@@ -395,6 +391,10 @@
         [
           {
             "name": "work_mode",
+            "size": 6
+          },
+          {
+            "name": "slug",
             "size": 6
           }
         ]

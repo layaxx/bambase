@@ -114,7 +114,7 @@ export const jobs = {
         throw new ActionError({ code: "BAD_REQUEST", message: "Aktualisierung fehlgeschlagen." })
       }
 
-      return { uuid: data.data.uuid as string }
+      return { slug: String(data.data.slug) }
     },
   }),
 
@@ -160,7 +160,7 @@ export const jobs = {
         throw new ActionError({ code: "BAD_REQUEST", message: "Einreichung fehlgeschlagen." })
       }
 
-      return { uuid: data.data.uuid }
+      return { slug: String(data.data.slug) }
     },
   }),
 }

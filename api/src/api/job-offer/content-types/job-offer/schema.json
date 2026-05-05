@@ -11,7 +11,7 @@
   },
   "pluginOptions": {},
   "attributes": {
-    "uuid": {
+    "slug": {
       "type": "uid",
       "targetField": "title"
     },

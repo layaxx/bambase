@@ -480,10 +480,10 @@ export interface ApiJobOfferJobOffer extends Struct.CollectionTypeSchema {
     owner: Schema.Attribute.Relation<"oneToOne", "plugin::users-permissions.user">
     publishedAt: Schema.Attribute.DateTime
     reports: Schema.Attribute.Relation<"oneToMany", "api::report.report">
+    slug: Schema.Attribute.UID<"title">
     title: Schema.Attribute.String & Schema.Attribute.Required
     updatedAt: Schema.Attribute.DateTime
     updatedBy: Schema.Attribute.Relation<"oneToOne", "admin::user"> & Schema.Attribute.Private
-    uuid: Schema.Attribute.UID<"title">
     work_mode: Schema.Attribute.Enumeration<["on_site", "hybrid", "remote"]> &
       Schema.Attribute.Required &
       Schema.Attribute.DefaultTo<"on_site">

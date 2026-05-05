@@ -105,13 +105,13 @@
       "locale": null
     },
     {
-      "documentId": "e0dyjofi7hwbhxgl60lgcks7",
+      "documentId": "fld0y8ownra9xd8vjldmo3x5",
       "action": "plugin::content-manager.explorer.create",
       "actionParameters": {},
       "subject": "api::job-offer.job-offer",
       "properties": {
         "fields": [
-          "uuid",
+          "slug",
           "title",
           "description",
           "job_type",
@@ -153,13 +153,13 @@
       "locale": null
     },
     {
-      "documentId": "oodwophad1xuqybtqxysyp4x",
+      "documentId": "gtoxkfpotw7q13eza4tk64fg",
       "action": "plugin::content-manager.explorer.read",
       "actionParameters": {},
       "subject": "api::job-offer.job-offer",
       "properties": {
         "fields": [
-          "uuid",
+          "slug",
           "title",
           "description",
           "job_type",
@@ -183,13 +183,13 @@
       "locale": null
     },
     {
-      "documentId": "yqiihccn6k0ndpeaz75grkqe",
+      "documentId": "ckhv96db1txsjq530jqndo53",
       "action": "plugin::content-manager.explorer.update",
       "actionParameters": {},
       "subject": "api::job-offer.job-offer",
       "properties": {
         "fields": [
-          "uuid",
+          "slug",
           "title",
           "description",
           "job_type",

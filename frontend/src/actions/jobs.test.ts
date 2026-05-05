@@ -216,7 +216,7 @@ describe("jobs.update", () => {
   it("sends PUT to the correct documentId URL", async () => {
     vi.mocked(fetch).mockResolvedValue({
       ok: true,
-      json: async () => ({ data: { uuid: "some-uuid" } }),
+      json: async () => ({ data: { slug: "some-slug" } }),
     } as Response)
 
     await jobs.update(
@@ -231,10 +231,10 @@ describe("jobs.update", () => {
     )
   })
 
-  it("returns the uuid from the response", async () => {
+  it("returns the slug from the response", async () => {
     vi.mocked(fetch).mockResolvedValue({
       ok: true,
-      json: async () => ({ data: { uuid: "returned-uuid" } }),
+      json: async () => ({ data: { slug: "returned-slug" } }),
     } as Response)
 
     const result = await jobs.update(
@@ -243,7 +243,7 @@ describe("jobs.update", () => {
       { cookies: makeCookies("token") }
     )
 
-    expect(result).toEqual({ uuid: "returned-uuid" })
+    expect(result).toEqual({ slug: "returned-slug" })
   })
 
   it("throws BAD_REQUEST when the API returns an error", async () => {
@@ -265,7 +265,7 @@ describe("jobs.update", () => {
   it("includes contact fields in the request body", async () => {
     vi.mocked(fetch).mockResolvedValue({
       ok: true,
-      json: async () => ({ data: { uuid: "u" } }),
+      json: async () => ({ data: { slug: "u" } }),
     } as Response)
 
     await jobs.update(
@@ -281,7 +281,7 @@ describe("jobs.update", () => {
   it("omits external_url from the body when not provided", async () => {
     vi.mocked(fetch).mockResolvedValue({
       ok: true,
-      json: async () => ({ data: { uuid: "u" } }),
+      json: async () => ({ data: { slug: "u" } }),
     } as Response)
 
     await jobs.update(
@@ -311,7 +311,7 @@ describe("jobs.create", () => {
   it("sends POST to /api/job-offers", async () => {
     vi.mocked(fetch).mockResolvedValue({
       ok: true,
-      json: async () => ({ data: { uuid: "new-uuid" } }),
+      json: async () => ({ data: { slug: "new-slug" } }),
     } as Response)
 
     await jobs.create(
@@ -326,10 +326,10 @@ describe("jobs.create", () => {
     )
   })
 
-  it("returns the uuid from the response", async () => {
+  it("returns the slug from the response", async () => {
     vi.mocked(fetch).mockResolvedValue({
       ok: true,
-      json: async () => ({ data: { uuid: "created-uuid" } }),
+      json: async () => ({ data: { slug: "created-slug" } }),
     } as Response)
 
     const result = await jobs.create(
@@ -338,7 +338,7 @@ describe("jobs.create", () => {
       { cookies: makeCookies("token") }
     )
 
-    expect(result).toEqual({ uuid: "created-uuid" })
+    expect(result).toEqual({ slug: "created-slug" })
   })
 
   it("throws BAD_REQUEST when the API returns an error", async () => {
@@ -360,7 +360,7 @@ describe("jobs.create", () => {
   it("includes job_type, field, and work_mode in the body", async () => {
     vi.mocked(fetch).mockResolvedValue({
       ok: true,
-      json: async () => ({ data: { uuid: "u" } }),
+      json: async () => ({ data: { slug: "u" } }),
     } as Response)
 
     await jobs.create(

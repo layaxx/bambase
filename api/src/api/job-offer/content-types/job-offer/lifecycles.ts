@@ -9,9 +9,9 @@ export default {
       event.params.data.owner = userId
     }
 
-    event.params.data.uuid = await strapi.plugins["content-manager"].services.uid.generateUIDField({
+    event.params.data.slug = await strapi.plugins["content-manager"].services.uid.generateUIDField({
       contentTypeUID: "api::job-offer.job-offer",
-      field: "uuid",
+      field: "slug",
       data: event.params.data,
     })
 

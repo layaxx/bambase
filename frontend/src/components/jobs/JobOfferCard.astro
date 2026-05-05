@@ -15,7 +15,7 @@ const t = useTranslations(Astro.locals.locale)
 
 <a
   class="group flex flex-col rounded-xl border border-base-300 bg-base-100 p-4 transition-all hover:shadow-md no-underline h-full"
-  href={`/job/${job.uuid}`}
+  href={`/job/${job.slug}`}
 >
   <div class="mb-2 flex flex-row items-center justify-between">
     <JobTypeBadge isSmall jobType={job.job_type} />

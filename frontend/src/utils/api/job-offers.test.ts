@@ -23,7 +23,7 @@ const STRAPI_URL = "http://localhost:1337"
 
 const sampleJob = {
   documentId: "job-123",
-  uuid: "550e8400-e29b-41d4-a716-446655440000",
+  slug: "developer-1",
   title: "Developer",
   description: "Build things",
   company: "ACME",
@@ -86,17 +86,17 @@ describe("fetchJobOffer", () => {
     vi.stubGlobal("fetch", vi.fn())
   })
 
-  it("URL-encodes the uuid in the query string", async () => {
+  it("URL-encodes the slug in the query string", async () => {
     vi.mocked(fetch).mockResolvedValue({
       ok: true,
       json: async () => ({ data: [sampleJob] }),
     } as Response)
-    const uuidWithSpecialChars = "test uuid & more"
+    const slugWithSpecialChars = "test slug & more"
 
-    await fetchJobOffer(uuidWithSpecialChars, "token")
+    await fetchJobOffer(slugWithSpecialChars, "token")
 
     expect(fetch).toHaveBeenCalledWith(
-      expect.stringContaining(encodeURIComponent(uuidWithSpecialChars)),
+      expect.stringContaining(encodeURIComponent(slugWithSpecialChars)),
       expect.any(Object)
     )
   })
@@ -107,7 +107,7 @@ describe("fetchJobOffer", () => {
       json: async () => ({ data: [sampleJob] }),
     } as Response)
 
-    await fetchJobOffer("some-uuid", "my-token")
+    await fetchJobOffer("some-slug", "my-token")
 
     expect(fetch).toHaveBeenCalledWith(
       expect.any(String),
@@ -123,7 +123,7 @@ describe("fetchJobOffer", () => {
       json: async () => ({ data: [sampleJob] }),
     } as Response)
 
-    await fetchJobOffer("some-uuid", "token")
+    await fetchJobOffer("some-slug", "token")
 
     expect(fetch).toHaveBeenCalledWith(
       expect.stringContaining(`${STRAPI_URL}/api/job-offers`),
@@ -137,7 +137,7 @@ describe("fetchJobOffer", () => {
       json: async () => ({ data: [sampleJob] }),
     } as Response)
 
-    await fetchJobOffer("some-uuid", "token")
+    await fetchJobOffer("some-slug", "token")
 
     expect(fetch).toHaveBeenCalledWith(
       expect.stringContaining("populate[reports][filters][review_status][$ne]=dismissed"),
@@ -151,7 +151,7 @@ describe("fetchJobOffer", () => {
       json: async () => ({ data: [sampleJob] }),
     } as Response)
 
-    const result = await fetchJobOffer("some-uuid", "token")
+    const result = await fetchJobOffer("some-slug", "token")
 
     expect(result).toEqual(sampleJob)
   })
@@ -159,7 +159,7 @@ describe("fetchJobOffer", () => {
   it("returns null when the response is not ok", async () => {
     vi.mocked(fetch).mockResolvedValue({ ok: false } as Response)
 
-    const result = await fetchJobOffer("some-uuid", "token")
+    const result = await fetchJobOffer("some-slug", "token")
 
     expect(result).toBeNull()
   })
@@ -170,7 +170,7 @@ describe("fetchJobOffer", () => {
       json: async () => ({ data: [] }),
     } as Response)
 
-    const result = await fetchJobOffer("no-such-uuid", "token")
+    const result = await fetchJobOffer("no-such-slug", "token")
 
     expect(result).toBeNull()
   })
@@ -179,7 +179,7 @@ describe("fetchJobOffer", () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
     vi.mocked(fetch).mockRejectedValue(new Error("network error"))
 
-    const result = await fetchJobOffer("some-uuid", "token")
+    const result = await fetchJobOffer("some-slug", "token")
 
     expect(result).toBeNull()
     expect(consoleSpy).toHaveBeenCalledWith("Error fetching job offer", expect.any(Error))
@@ -194,7 +194,7 @@ describe("fetchJobOffer", () => {
         json: async () => ({ data: [sampleJob] }),
       } as Response)
 
-    const result = await fetchJobOffer("some-uuid", "custom-token")
+    const result = await fetchJobOffer("some-slug", "custom-token")
 
     expect(fetch).toHaveBeenCalledTimes(2)
     expect(result).toEqual(sampleJob)
@@ -204,7 +204,7 @@ describe("fetchJobOffer", () => {
   it("does NOT retry when the default public token itself returns 401", async () => {
     vi.mocked(fetch).mockResolvedValue({ ok: false, status: 401 } as Response)
 
-    const result = await fetchJobOffer("some-uuid")
+    const result = await fetchJobOffer("some-slug")
 
     expect(fetch).toHaveBeenCalledTimes(1)
     expect(result).toBeNull()
