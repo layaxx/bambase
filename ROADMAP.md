@@ -2,119 +2,6 @@
 
 ## Upcoming
 
-### P22 Dynamic OG Images
-
-Generate per-page Open Graph images for event and job detail pages using a Satori-based SSR endpoint. The P21 work wired `og:image` to a static fallback (`/og-image.png`) for all pages; this replaces that fallback on the two detail page types with a generated card showing entity-specific content.
-
-**Motivation:** Events and jobs are primarily shared via messaging apps (WhatsApp, Telegram, Instagram DMs) by the target audience. Social preview cards that show the event title, date, and category — or the job title and company — significantly improve click-through compared to a generic logo card.
-
-**Recommended approach:**
-
-Add two SSR endpoints:
-
-- `src/pages/og/event/[slug].png.ts` — fetches the event from Strapi, renders a card with title, date, and category badge via Satori, returns a PNG response
-- `src/pages/og/job/[uuid].png.ts` — same for jobs, showing title and company
-
-Satori renders HTML/CSS JSX to SVG; `@resvg/resvg-js` converts the SVG to PNG. Install both:
-
-```sh
-npm install satori @resvg/resvg-js
-```
-
-Fonts must be bundled with the Satori call (it cannot use system fonts). The project already includes `@fontsource-variable/archivo` — load the static TTF/WOFF2 from `node_modules/@fontsource-variable/archivo/files/` via `fs.readFileSync` at request time (cached in module scope so it is read once per process).
-
-The `<SEO>` component in `Layout.astro` currently uses a hardcoded `${Astro.url.origin}/og-image.png`. Add an `ogImage?: string` prop to the layout chain (`Layout`, `AppLayout`, `PageLayout`) so individual pages can override it. Then in `event/[slug]/index.astro`:
-
-```ts
-const ogImage = event ? `${Astro.url.origin}/og/event/${event.slug}.png` : undefined
-```
-
-And pass `ogImage={ogImage}` to `<PageLayout>`.
-
-Card design (same layout for both types):
-
-- Background: dark brand color or neutral, 1200×630
-- Logo mark top-left
-- Large title (truncated at ~60 chars to avoid overflow)
-- Subtitle line: formatted date + category badge for events; company name + job type for jobs
-- Footer: `bambase.de` wordmark
-
-**Work involved:**
-
-- [ ] Install `satori` and `@resvg/resvg-js`
-- [ ] Add `ogImage?: string` prop to `Layout.astro`, `AppLayout.astro`, `PageLayout.astro`; forward it into the `openGraph.basic.image` field of `<SEO>`
-- [ ] Create `src/pages/og/event/[slug].png.ts` — fetch event, render Satori card, return PNG with `Cache-Control: public, max-age=86400`
-- [ ] Create `src/pages/og/job/[uuid].png.ts` — same for jobs
-- [ ] Wire `ogImage` in `event/[slug]/index.astro` and `job/[uuid]/index.astro`
-- [ ] Bundle Archivo (or Inter) font into the Satori call; load from `@fontsource-variable` package files, cached in module scope
-- [ ] Verify OG cards render correctly via a social preview inspector (e.g. opengraph.xyz)
-
-**Open questions:**
-
-- `@vercel/og` bundles Satori and removes the need to wire up `@resvg/resvg-js` separately — is the extra bundle weight acceptable, or is raw `satori` + `@resvg/resvg-js` preferred?
-- Should the endpoint return a 302 redirect to the static fallback when the entity is not found (slug/UUID doesn't exist), or respond with 404?
-- Is a 24-hour `max-age` appropriate, or should it be shorter to reflect event detail changes (title edits)?
-
----
-
-### P21 SEO Plugin
-
-Add structured, per-page SEO metadata to improve search engine indexing and social media sharing. The current `<head>` in `Layout.astro` only sets charset, viewport, favicon, and a dynamic `<title>`. There is no `meta description`, no Open Graph tags, no canonical URL, and no `robots.txt` or sitemap — meaning social previews are empty and crawlers work without guidance.
-
-**Current state:**
-
-- `Layout.astro:14–26` contains the entire `<head>`. The only variable content is `<title>`, which receives an optional `title` prop flowing through `PageLayout` → `AppLayout` → `Layout`.
-- Detail pages (`event/[slug]/index.astro`, `job/[uuid]/index.astro`) already derive dynamic titles from entity data, but nothing else.
-- Static pages (`jobs.astro`, `events.astro`) pass a translation string as the title with no further metadata.
-- `public/` has no `robots.txt` and no `sitemap.xml`. The Astro sitemap integration is not installed.
-
-**Recommended approach:**
-
-Use [`astro-seo`](https://github.com/jonasmerlin/astro-seo#readme) (`npm install astro-seo`) to manage the `<head>` declaratively. It covers `<title>`, `<meta name="description">`, Open Graph, Twitter Card, and canonical in a single component with typed props, which fits the existing layout prop-drilling pattern cleanly.
-
-Add a `description?: string` prop to `Layout.astro` alongside the existing `title` prop, then render `<SEO>` inside `<head>` in place of the bare `<title>` tag. All three layout levels (`Layout`, `AppLayout`, `PageLayout`) need to forward the new prop.
-
-Per-page metadata:
-
-| Page | title | description |
-| --- | --- | --- |
-| `index.astro` | `"BamBase.de"` | Static tagline from translations |
-| `events.astro` | `t.events.pageTitle` | Static blurb from translations |
-| `jobs.astro` | `t.jobs.pageTitle` | Static blurb from translations |
-| `map.astro` | `t.map.pageTitle` | Static blurb from translations |
-| `mensa.astro` | `t.mensa.pageTitle` | Static blurb from translations |
-| `event/[slug]` | `event.title` | First ~155 chars of `event.description` |
-| `job/[uuid]` | `job.title` | `job.company` + first ~120 chars of `job.description` |
-| `student-groups.astro` | Static | Static blurb |
-| `/about`, `/impressum`, `/contact` | Static | Static blurb per page |
-
-Open Graph images: a static fallback OG image (1200×630, site logo + wordmark) covers all pages for now. Detail pages can opt into a richer image later if Strapi adds media fields.
-
-Canonical URLs: set to `Astro.url.href` on every page. This matters most for the SSR detail pages, which can be reached with and without trailing slashes, and for the multilingual variants once the `lang` attribute is in play.
-
-`robots.txt`: add to `public/robots.txt`. Allow all crawlers on public pages; disallow `/account/`, `/login`, `/register`, `/job/new`, `/event/new`, and `/api/`.
-
-Sitemap: add `@astrojs/sitemap` (official Astro integration). Static routes are discovered automatically. Dynamic routes (`/event/[slug]`, `/job/[uuid]`) require a `getStaticPaths`-style serializer — since the site is SSR, this means a custom `serialize` callback that queries Strapi for published slugs/UUIDs at build time. Admin-only and account routes must be excluded.
-
-Language: the site serves both `de` and `en` via `Astro.currentLocale`. The `<html lang>` attribute is not currently set. Add `lang={Astro.currentLocale ?? "de"}` to the `<html>` element in `Layout.astro` as a prerequisite; then add `<link rel="alternate" hreflang>` tags for the two language variants of each URL via `astro-seo`'s `languageAlternates` prop.
-
-**Work involved:**
-
-- [x] Install `astro-seo` and add `description?: string` prop to `Layout.astro`, `AppLayout.astro`, `PageLayout.astro`; replace the bare `<title>` with `<SEO>` in `Layout.astro`
-- [x] Add `lang` to the `<html>` element in `Layout.astro` — already present as `lang={Astro.locals.locale}`
-- [x] Add `impressum.pageSubtitle` and `privacyPolicy.pageSubtitle` translation keys; wire existing `pageSubtitle` keys as descriptions through to all static pages
-- [x] Wire dynamic descriptions for `event/[slug]` (truncate `event.description`) and `job/[uuid]` (company + truncated description)
-- [x] Create a static fallback OG image (`public/og-image.png`, 1200×630); set as default `og:image` in `Layout.astro`
-- [x] Add `public/robots.txt` — allow public routes, disallow `/account/`, `/login`, `/register`, `/api/`, `/job/new`, `/event/new`
-- [x] Sitemap — done via P19 (custom SSR endpoint at `src/pages/sitemap.xml.ts`; no `@astrojs/sitemap` needed)
-- [x] `hreflang` alternates — not applicable: locale is cookie-based with no URL prefixes, both `de` and `en` share the same URLs
-
-**Open questions:**
-
-- Should the OG image for event/job detail pages be a generated image (e.g. via `@vercel/og` or a Satori-based Astro endpoint) or the static fallback? -> Static fallback for P21; dynamic Satori-based OG images deferred to P22.
-- ~~The sitemap serializer needs to query Strapi for published slugs/UUIDs at build time.~~ Resolved by P19's SSR approach.
-- ~~The multilingual setup currently switches locale via a URL prefix or cookie — the exact URL shape of the `en` variant needs to be confirmed before `hreflang` alternates can be set correctly.~~ Locale is cookie-based; no URL alternates exist, so hreflang is not applicable.
-
 ### P20 Registration Workflow and E-Mail Confirmation
 
 Currently, registration is instant and unverified: anyone can register with any email address and is immediately logged in. This undermines content moderation — there is no way to hold a submitter accountable to a real address, and fake accounts require no effort to create.
@@ -244,6 +131,45 @@ Automatically importing events from external sources would reduce the manual eff
 ---
 
 ## Done
+
+### P21 SEO Plugin
+
+Added structured, per-page SEO metadata using `astro-seo`. The `<SEO>` component replaces the bare `<title>` tag in `Layout.astro` and handles `<meta name="description">`, Open Graph, Twitter Card, and canonical URL in one place. `description?` and `ogImage?` props were threaded through the full layout chain (`Layout` → `AppLayout` → `PageLayout`) so any page can override them.
+
+Every page now has a title and description: static pages use translation keys; event and job detail pages use the entity title with a truncated description (first ~155 chars for events; company + ~120 chars of description for jobs). All pages set a canonical URL via `Astro.url.href`. The `<html lang>` attribute was already present via `Astro.locals.locale`. A 1200×630 static fallback OG image (`public/og-image.png`) was created and set as the default `og:image`; detail pages override this with generated images via P22. `public/robots.txt` disallows `/account/`, `/login/`, `/register/`, `/api/`, `/job/new`, and `/event/new`. Sitemap was handled by P19. `hreflang` alternates are not applicable since locale is cookie-based with no URL prefixes.
+
+**Work involved:**
+
+- [x] Install `astro-seo`; add `description?: string` and `ogImage?: string` props to `Layout.astro`, `AppLayout.astro`, `PageLayout.astro`; replace the bare `<title>` with `<SEO>` in `Layout.astro`
+- [x] `lang` attribute already present on `<html>` as `lang={Astro.locals.locale}`
+- [x] Add `impressum.pageSubtitle` and `privacyPolicy.pageSubtitle` translation keys; wire `pageSubtitle` keys as descriptions through all static pages
+- [x] Wire dynamic descriptions for `event/[slug]` (truncate `event.description`) and `job/[uuid]` (company + truncated description)
+- [x] Create static fallback OG image (`public/og-image.png`, 1200×630); set as default `og:image` in `Layout.astro`
+- [x] Add `public/robots.txt` — allow public routes, disallow `/account/`, `/login/`, `/register/`, `/api/`, `/job/new`, `/event/new`
+- [x] Sitemap — handled by P19's SSR endpoint; no `@astrojs/sitemap` needed
+- [x] `hreflang` alternates — not applicable; locale is cookie-based, both `de` and `en` share the same URLs
+
+---
+
+### P22 Dynamic OG Images
+
+Two SSR endpoints generate per-page Open Graph images for event and job detail pages. The P21 work wired `og:image` to a static fallback for all pages; P22 replaces that fallback on the two detail page types with a generated 1200×630 card showing entity-specific content (title, date/company, category badge).
+
+Endpoints are at `src/pages/api/og/event/[slug].png.ts` and `src/pages/api/og/job/[uuid].png.ts`. Both use `satori` to render a JSX-like element tree to SVG and `@resvg/resvg-js` to convert to PNG. Rendering and card-layout logic is extracted into `src/utils/opengraph/render.ts` and `src/utils/opengraph/imageContent.ts`. Inter (from `@fontsource/inter`) is loaded at module scope via `fs.readFile` and cached for the process lifetime. On a missing or non-published entity, the endpoint issues a 302 redirect to the static `/og-image.png` fallback rather than returning 404.
+
+Card design is shared across both types: dark gradient background, `BamBase – {Category}` header, large truncated title (60-char cap, font size scales down at 45+ chars), subtitle row (date + category badge for events; company + job-type badge for jobs), `bambase.de` wordmark footer. Response carries `Cache-Control: public, max-age=86400`.
+
+**Work involved:**
+
+- [x] Install `satori` and `@resvg/resvg-js`
+- [x] Add `ogImage?: string` prop to `Layout.astro`, `AppLayout.astro`, `PageLayout.astro`; forward it into the `openGraph.basic.image` field of `<SEO>`
+- [x] Create `src/pages/api/og/event/[slug].png.ts` and `src/pages/api/og/job/[uuid].png.ts` — fetch entity, render Satori card, return PNG with `Cache-Control: public, max-age=86400`; redirect to `/og-image.png` fallback when entity is missing or non-published
+- [x] Extract shared rendering logic into `src/utils/opengraph/render.ts` (font loading + Satori→PNG pipeline) and `src/utils/opengraph/imageContent.ts` (card layout tree, `makeEventSubtitleItems`, `makeJobOfferSubtitleItems`)
+- [x] Wire `ogImage` in `event/[slug]/index.astro` and `job/[uuid]/index.astro`
+- [x] Bundle Inter font (regular + bold) from `@fontsource/inter` package files, loaded via `fs.readFile` and cached in module scope
+- [x] E2E tests in `tests/e2e/og-images.spec.ts` — valid event/job returns 200 PNG with correct headers; missing slug/UUID and non-published job redirect to fallback
+
+---
 
 ### P19 Sitemap
 

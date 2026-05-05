@@ -53,9 +53,11 @@ if (archiveResult?.data !== undefined && !archiveResult.error) {
 const description = job
   ? `${job.company}${job.description ? ` – ${job.description.slice(0, 120)}` : ""}`
   : undefined
+const ogImage =
+  job?.online_status === "published" ? `${Astro.url.origin}/og/job/${job.uuid}.png` : undefined
 ---
 
-<PageLayout description={description} title={job?.title ?? t.jobs.pageTitle}>
+<PageLayout description={description} ogImage={ogImage} title={job?.title ?? t.jobs.pageTitle}>
   {
     !job ? (
       <div class="text-center py-20">

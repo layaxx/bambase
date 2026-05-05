@@ -51,7 +51,12 @@ export default defineConfig({
     {
       name: "unauthenticated",
       use: { ...devices["Desktop Chrome"] },
-      testMatch: ["**/auth.spec.ts", "**/public-pages.spec.ts", "**/reports.spec.ts"],
+      testMatch: [
+        "**/auth.spec.ts",
+        "**/public-pages.spec.ts",
+        "**/reports.spec.ts",
+        "**/og-images.spec.ts",
+      ],
     },
   ],
 })

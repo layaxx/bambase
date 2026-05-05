@@ -40,9 +40,10 @@ const formattedEventStart = event ? formatDateTime(event.start, dateLocale) : nu
 
 const location = event?.map_location ?? event?.custom_location
 const description = event?.description?.slice(0, 155)
+const ogImage = event ? `${Astro.url.origin}/og/event/${event.slug}.png` : undefined
 ---
 
-<PageLayout description={description} title={event?.title ?? t.events.pageTitle}>
+<PageLayout description={description} ogImage={ogImage} title={event?.title ?? t.events.pageTitle}>
   {
     !event ? (
       <div class="py-20 text-center">
