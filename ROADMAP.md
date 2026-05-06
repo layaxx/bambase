@@ -2,13 +2,11 @@
 
 ## Upcoming
 
+## P26 handle uncaught exceptions / API down
+
 ## P25 Add Password reset workflow
 
 Strapi's built-in password reset flow (`users-permissions` plugin) is already configured with a bilingual email template (added in P20), but the frontend has no pages to drive it. Two pages are needed: a "forgot password" page that accepts an email and calls Strapi's `/api/auth/forgot-password` endpoint, and a "reset password" page that reads the `?code=` token from the email link and calls `/api/auth/reset-password` with the new password. Both pages should follow the same UX patterns as `/resend-confirmation`.
-
-## P24 Add 404 Page
-
-Astro falls back to a generic browser error for unknown routes. A custom `src/pages/404.astro` page should be added so unknown URLs receive a styled, on-brand response with a link back to the homepage. Astro picks up `404.astro` automatically for SSR output.
 
 ## P23 Remove find permissions on user type
 
@@ -135,6 +133,12 @@ Automatically importing events from external sources would reduce the manual eff
 ---
 
 ## Done
+
+### P24 Add 404 Page
+
+`src/pages/404.astro` added — unknown URLs now return a styled on-brand page with a "404" heading, a short description, and a link back to the homepage. The page uses `PageLayout` (header + footer) and the standard DaisyUI classes. Translation keys added under `page404` in both `de` and `en` locales. Astro picks up `404.astro` automatically for SSR output.
+
+---
 
 ### P20 Registration Workflow and E-Mail Confirmation
 

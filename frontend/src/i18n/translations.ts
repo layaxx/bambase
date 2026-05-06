@@ -340,6 +340,12 @@ const de = {
     pageTitle: "Datenschutzerklärung",
     pageSubtitle: "Informationen zur Verarbeitung personenbezogener Daten.",
   },
+  page404: {
+    pageTitle: "Seite nicht gefunden",
+    headline: "404",
+    description: "Die gesuchte Seite existiert nicht oder wurde verschoben.",
+    backHome: "Zur Startseite",
+  },
   language: {
     switchLabel: "EN",
     switchAccessibleLabel: "Switch to English",
@@ -679,6 +685,12 @@ const en: SetAtPath<
   privacyPolicy: {
     pageTitle: "Privacy Policy",
     pageSubtitle: "Information on the processing of personal data.",
+  },
+  page404: {
+    pageTitle: "Page not found",
+    headline: "404",
+    description: "The page you are looking for does not exist or has been moved.",
+    backHome: "Back to homepage",
   },
   language: {
     switchLabel: "DE",
