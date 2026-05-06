@@ -1,0 +1,57 @@
+---
+import { actions } from "astro:actions"
+import AppLayout from "@/layouts/AppLayout.astro"
+import { useTranslations } from "@/i18n/translations"
+
+const t = useTranslations(Astro.locals.locale)
+
+const result = Astro.getActionResult(actions.auth.resendConfirmation)
+const prefillEmail = Astro.url.searchParams.get("email") || ""
+---
+
+<AppLayout title={t.auth.resendConfirmationTitle}>
+  <main class="flex justify-center px-4 py-12 grow" id="main-content">
+    <div class="w-full max-w-md">
+      <h1 class="text-2xl font-extrabold mb-2">{t.auth.resendConfirmationTitle}</h1>
+      <p class="text-base-content/70 text-sm mb-6">
+        {t.auth.confirmEmailInstruction}
+      </p>
+
+      {
+        (result?.data?.success || result?.error) && (
+          /* Always show success message to avoid revealing whether an account exists */
+          <div class="alert alert-success mb-4">
+            <span>{t.auth.resendConfirmationSuccess}</span>
+          </div>
+        )
+      }
+
+      {
+        !result?.data?.success && (
+          <form action={actions.auth.resendConfirmation} class="flex flex-col" method="POST">
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">{t.auth.emailLabel}</legend>
+              <input
+                autocomplete="email"
+                class="input w-full"
+                name="email"
+                placeholder={t.auth.emailPlaceholder}
+                required
+                type="email"
+                value={prefillEmail}
+              />
+            </fieldset>
+
+            <button class="btn btn-primary mt-6" type="submit">
+              {t.auth.resendConfirmationBtn}
+            </button>
+          </form>
+        )
+      }
+
+      <p class="text-base-content/70 text-sm mt-4">
+        <a class="link link-primary" href="/login">{t.auth.loginLink}</a>
+      </p>
+    </div>
+  </main>
+</AppLayout>

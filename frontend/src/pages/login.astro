@@ -10,8 +10,17 @@ if (result?.data?.success) {
   return Astro.redirect(result.data.redirect || "/")
 }
 
-const error =
-  result?.data?.success === false ? t.auth.validation.loginFailed : result?.error?.message || null
+const loggedInButNotConfirmed = result?.data?.notConfirmed === true
+const prefillEmail = result?.data?.email || ""
+
+let error: string | null = null
+if (result?.error?.message) {
+  error = result.error.message
+} else if (result?.data?.success === false && !loggedInButNotConfirmed) {
+  error = t.auth.validation.loginFailed
+}
+
+const emailConfirmed = Astro.url.searchParams.get("confirmed") === "true"
 ---
 
 <AppLayout title={t.auth.loginTitle}>
@@ -22,6 +31,33 @@ const error =
         {t.auth.noAccount}
         <a class="link link-primary" href="/register">{t.auth.registerLink}</a>
       </p>
+
+      {
+        loggedInButNotConfirmed && (
+          <div class="alert alert-warning mb-4">
+            <div>
+              <h3 class="font-bold">{t.auth.emailNotConfirmed}</h3>
+              <a
+                class="link"
+                href={`/resend-confirmation${prefillEmail ? `?email=${encodeURIComponent(prefillEmail)}` : ""}`}
+              >
+                {t.auth.resendConfirmationLink}
+              </a>
+            </div>
+          </div>
+        )
+      }
+
+      {
+        emailConfirmed && (
+          <div class="alert alert-success mb-4">
+            <div>
+              <h3 class="font-bold">{t.auth.emailConfirmed}</h3>
+              <p>{t.auth.emailConfirmedYouCanLogin}</p>
+            </div>
+          </div>
+        )
+      }
 
       {
         error && (
@@ -46,7 +82,7 @@ const error =
             placeholder={t.auth.emailPlaceholder}
             required
             type="email"
-            value={result?.data?.username || ""}
+            value={prefillEmail}
           />
         </fieldset>
 

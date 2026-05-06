@@ -15,6 +15,7 @@ export default {
           strapi.db.query("api::event.event").deleteMany({}),
           strapi.db.query("api::location.location").deleteMany({}),
           strapi.db.query("api::student-group.student-group").deleteMany({}),
+          strapi.db.query("plugin::users-permissions.user").deleteMany({}),
         ])
       }
     }
@@ -23,6 +24,19 @@ export default {
       strapi.log.info("Starting seeding process...")
       await seed(strapi)
       strapi.log.info("Seeding process completed.")
+    }
+
+    const frontendUrl = process.env.FRONTEND_URL
+    if (frontendUrl) {
+      const store = strapi.store({ type: "plugin", name: "users-permissions" })
+      const advanced = (await store.get({ key: "advanced" })) as Record<string, unknown>
+      const newRedirection = `${frontendUrl}/login?confirmed=true`
+      if (advanced.email_confirmation_redirection !== newRedirection) {
+        await store.set({
+          key: "advanced",
+          value: { ...advanced, email_confirmation_redirection: newRedirection },
+        })
+      }
     }
   },
 }

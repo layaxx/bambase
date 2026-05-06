@@ -276,15 +276,30 @@ const de = {
     statusExpired: "Abgelaufen",
     statusRejected: "Abgelehnt",
     statusArchived: "Archiviert",
+    checkYourInbox: "Schau in dein Postfach",
+    noLinkReceived: "Keinen Link erhalten?",
+    confirmEmailTitle: "E-Mail bestätigen",
+    confirmEmailSent:
+      "Wir haben dir eine Bestätigungs-E-Mail gesendet. Bitte klicke auf den Link in der E-Mail, um dein Konto zu aktivieren.",
+    confirmEmailInstruction:
+      "Falls du den Bestätigungslink nicht erhalten hast, kannst du eine neue E-Mail anfordern. Prüfe auch deinen Spam-Ordner, falls die E-Mail nicht in deinem Posteingang ist.",
+    confirmSuccess: "E-Mail erfolgreich bestätigt! Du wirst weitergeleitet…",
+    confirmFailed: "Bestätigungslink ungültig oder abgelaufen.",
+    resendConfirmationTitle: "Bestätigung erneut senden",
+    resendConfirmationBtn: "E-Mail erneut senden",
+    resendConfirmationSuccess:
+      "Bestätigungs-E-Mail wurde gesendet, falls ein unbestätigtes Konto mit dieser E-Mail existiert.",
+    emailConfirmed: "E-Mail-Adresse bestätigt!",
+    emailConfirmedYouCanLogin:
+      "Deine E-Mail-Adresse wurde erfolgreich bestätigt. Du kannst dich jetzt anmelden.",
+    emailNotConfirmed: "Deine E-Mail-Adresse wurde noch nicht bestätigt.",
+    resendConfirmationLink: "Mail erneut senden →",
     validation: {
       emailInvalid: "Bitte gültige E-Mail eingeben.",
       passwordRequired: "Bitte Passwort eingeben.",
-      passwordTooShort: "Passwort muss mindestens 10 Zeichen haben.",
       passwordMismatch: "Die Passwörter stimmen nicht überein.",
       loginFailed: "Anmeldung fehlgeschlagen.",
       registerFailed: "Registrierung fehlgeschlagen.",
-      notLoggedIn: "Nicht angemeldet.",
-      sessionExpired: "Sitzung abgelaufen.",
     },
   },
   ui: {
@@ -600,15 +615,30 @@ const en: SetAtPath<
     statusExpired: "Expired",
     statusRejected: "Rejected",
     statusArchived: "Archived",
+    checkYourInbox: "Check your inbox",
+    noLinkReceived: "Didn't receive a link?",
+    confirmEmailTitle: "Confirm Email",
+    confirmEmailSent:
+      "We sent you a confirmation email. Please click the link in the email to activate your account.",
+    confirmEmailInstruction:
+      "If you didn't receive the confirmation link, you can request a new email. Also check your spam folder if the email is not in your inbox.",
+    confirmSuccess: "Email confirmed successfully! Redirecting…",
+    confirmFailed: "Confirmation link is invalid or has expired.",
+    resendConfirmationTitle: "Resend Confirmation",
+    resendConfirmationBtn: "Resend email",
+    resendConfirmationSuccess:
+      "Confirmation email was sent if an unconfirmed account exists with that email address.",
+    emailConfirmed: "Email address confirmed!",
+    emailConfirmedYouCanLogin:
+      "Your email address has been successfully confirmed. You can now log in.",
+    emailNotConfirmed: "Your email address has not been confirmed yet.",
+    resendConfirmationLink: "Resend mail →",
     validation: {
       emailInvalid: "Please enter a valid email address.",
       passwordRequired: "Please enter your password.",
-      passwordTooShort: "Password must be at least 10 characters.",
       passwordMismatch: "Passwords do not match.",
       loginFailed: "Login failed.",
       registerFailed: "Registration failed.",
-      notLoggedIn: "Not logged in.",
-      sessionExpired: "Session expired.",
     },
   },
   ui: {

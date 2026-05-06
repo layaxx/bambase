@@ -49,7 +49,11 @@ describe("auth.login", () => {
       { cookies }
     )
 
-    expect(result).toEqual({ success: true, username: "alice", redirect: "/dashboard" })
+    expect(result).toEqual({
+      success: true,
+      notConfirmed: false,
+      redirect: "/dashboard",
+    })
     expect(cookies.set).toHaveBeenCalledWith(
       "auth_token",
       "my-jwt",
@@ -88,7 +92,26 @@ describe("auth.login", () => {
       { cookies: makeWritableCookies() }
     )
 
-    expect(result).toMatchObject({ success: false, username: "bad@example.com", redirect: null })
+    expect(result).toMatchObject({ success: false, email: "bad@example.com", redirect: null })
+  })
+
+  it("returns notConfirmed: true when Strapi says account email is not confirmed", async () => {
+    vi.mocked(fetch).mockResolvedValue({
+      ok: false,
+      json: async () => ({ error: { message: "Your account email is not confirmed" } }),
+    } as Response)
+
+    const result = await auth.login(
+      { identifier: "unconfirmed@example.com", password: "pass" },
+      // @ts-expect-error - needed because of mocked defineAction function
+      { cookies: makeWritableCookies() }
+    )
+
+    expect(result).toMatchObject({
+      success: false,
+      notConfirmed: true,
+      email: "unconfirmed@example.com",
+    })
   })
 
   it("uses redirect '/' when no redirect param is provided", async () => {
@@ -209,7 +232,7 @@ describe("auth.register", () => {
       { cookies }
     )
 
-    expect(result).toEqual({ username: "bob" })
+    expect(result).toEqual({ confirmationPending: false, email: "bob@b.com" })
     expect(cookies.set).toHaveBeenCalledWith(
       "auth_token",
       "new-jwt",
@@ -279,5 +302,70 @@ describe("auth.register", () => {
       "http://localhost:1337/api/auth/local/register",
       expect.objectContaining({ method: "POST" })
     )
+  })
+
+  it("returns confirmationPending: true and does not set cookies when Strapi returns no JWT", async () => {
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true,
+      json: async () => ({ user: { username: "u@e.com", email: "u@e.com" } }),
+    } as Response)
+
+    const cookies = makeWritableCookies()
+    const result = await auth.register(
+      { email: "u@e.com", password: "longpassword1" },
+      // @ts-expect-error - needed because of mocked defineAction function
+      { cookies }
+    )
+
+    expect(result).toEqual({ confirmationPending: true, email: "u@e.com" })
+    expect(cookies.set).not.toHaveBeenCalled()
+  })
+})
+
+describe("auth.resendConfirmation", () => {
+  beforeEach(() => vi.stubGlobal("fetch", vi.fn()))
+
+  it("returns success: true when Strapi responds ok", async () => {
+    vi.mocked(fetch).mockResolvedValue({ ok: true, json: async () => ({}) } as Response)
+
+    const result = await auth.resendConfirmation(
+      { email: "u@e.com" },
+      // @ts-expect-error - needed because of mocked defineAction function
+      { cookies: makeWritableCookies() }
+    )
+
+    expect(result).toEqual({ success: true })
+  })
+
+  it("POSTs to /api/auth/send-email-confirmation with the email", async () => {
+    vi.mocked(fetch).mockResolvedValue({ ok: true, json: async () => ({}) } as Response)
+
+    await auth.resendConfirmation(
+      { email: "u@e.com" },
+      // @ts-expect-error - needed because of mocked defineAction function
+      { cookies: makeWritableCookies() }
+    )
+
+    expect(fetch).toHaveBeenCalledWith(
+      "http://localhost:1337/api/auth/send-email-confirmation",
+      expect.objectContaining({ method: "POST" })
+    )
+    const body = getFetchBody()
+    expect(body).toMatchObject({ email: "u@e.com" })
+  })
+
+  it("throws BAD_REQUEST on failure", async () => {
+    vi.mocked(fetch).mockResolvedValue({
+      ok: false,
+      json: async () => ({ error: { message: "No account found" } }),
+    } as Response)
+
+    await expect(
+      auth.resendConfirmation(
+        { email: "unknown@e.com" },
+        // @ts-expect-error - needed because of mocked defineAction function
+        { cookies: makeWritableCookies() }
+      )
+    ).rejects.toMatchObject({ code: "BAD_REQUEST", message: "No account found" })
   })
 })

@@ -1,14 +1,7 @@
 import { defineAction, ActionError } from "astro:actions"
 import { z } from "astro/zod"
 import { STRAPI_URL } from "astro:env/client"
-
-const COOKIE_OPTS = {
-  path: "/",
-  httpOnly: false,
-  sameSite: "strict",
-  secure: import.meta.env.PROD,
-  maxAge: 60 * 60 * 24 * 7, // 7 days
-} as const
+import { setAuthCookies } from "@/utils/auth-cookies"
 
 export const auth = {
   login: defineAction({
@@ -28,21 +21,25 @@ export const auth = {
       const data = await res.json()
 
       if (!res.ok) {
+        const message: string = data?.error?.message ?? ""
+        const notConfirmed = message.toLowerCase().includes("not confirmed")
         return {
           success: false,
-          username: identifier,
+          notConfirmed,
+          email: identifier,
           redirect: null,
         }
       }
 
-      context.cookies.set("auth_token", data.jwt, { ...COOKIE_OPTS, httpOnly: true })
-      context.cookies.set(
-        "auth_user",
-        JSON.stringify({ username: data.user.username, email: data.user.email }),
-        COOKIE_OPTS
-      )
+      setAuthCookies(context.cookies, data.jwt, {
+        email: data.user.email,
+      })
 
-      return { success: true, username: data.user.username, redirect: redirect || "/" }
+      return {
+        success: true,
+        notConfirmed: false,
+        redirect: redirect || "/",
+      }
     },
   }),
 
@@ -63,7 +60,6 @@ export const auth = {
 
       return res.json() as Promise<{
         id: number
-        username: string
         email: string
         createdAt: string
       }>
@@ -98,14 +94,41 @@ export const auth = {
         })
       }
 
-      context.cookies.set("auth_token", data.jwt, { ...COOKIE_OPTS, httpOnly: true })
-      context.cookies.set(
-        "auth_user",
-        JSON.stringify({ username: data.user.username, email: data.user.email }),
-        COOKIE_OPTS
-      )
+      // When email confirmation is enabled, Strapi does not return a JWT.
+      // Don't set auth cookies — user must confirm first.
+      if (!data.jwt) {
+        return { confirmationPending: true, email }
+      }
 
-      return { username: data.user.username }
+      setAuthCookies(context.cookies, data.jwt, {
+        email: data.user.email,
+      })
+
+      return { confirmationPending: false, email }
+    },
+  }),
+
+  resendConfirmation: defineAction({
+    accept: "form",
+    input: z.object({
+      email: z.email("Bitte gültige E-Mail eingeben."),
+    }),
+    handler: async ({ email }) => {
+      const res = await fetch(`${STRAPI_URL}/api/auth/send-email-confirmation`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      })
+
+      if (!res.ok) {
+        const data = await res.json()
+        throw new ActionError({
+          code: "BAD_REQUEST",
+          message: data?.error?.message ?? "E-Mail konnte nicht gesendet werden.",
+        })
+      }
+
+      return { success: true }
     },
   }),
 }

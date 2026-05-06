@@ -73,7 +73,7 @@ test.describe("Register", () => {
     await expect(page).toHaveURL(/register\??.*/)
   })
 
-  test("valid credentials redirect to home and user is logged in", async ({ page }) => {
+  test("valid credentials show email confirmation pending UI", async ({ page }) => {
     const email = `e2e-register-${Date.now()}@example.com`
     await page.goto("/register")
     await page.fill('[name="email"]', email)
@@ -81,10 +81,11 @@ test.describe("Register", () => {
     await page.fill('[name="passwordConfirm"]', "validpassword1")
     await page.click('button[type="submit"]')
 
-    await expect(page).toHaveURL("/")
+    await expect(page).toHaveURL(/register\??.*/)
+    await expect(page.getByText("Schau in dein Postfach")).toBeVisible()
 
     const cookies = await page.context().cookies()
-    expect(cookies.some((c) => c.name === "auth_token")).toBe(true)
+    expect(cookies.some((c) => c.name === "auth_token")).toBe(false)
   })
 })
 

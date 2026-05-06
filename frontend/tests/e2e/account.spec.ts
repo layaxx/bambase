@@ -42,11 +42,9 @@ test.describe("Account pages — empty state", () => {
   test("new user sees empty-state message on /account/jobs and /account/events", async ({
     page,
   }) => {
-    const email = `e2e-empty-${Date.now()}@example.com`
-    await page.goto("/register")
-    await page.fill('[name="email"]', email)
-    await page.fill('[name="password"]', "validpassword1")
-    await page.fill('[name="passwordConfirm"]', "validpassword1")
+    await page.goto("/login")
+    await page.fill('[name="identifier"]', "clean@example.com")
+    await page.fill('[name="password"]', "Clean1234!")
     await page.click('button[type="submit"]')
     await expect(page).toHaveURL("/")
 

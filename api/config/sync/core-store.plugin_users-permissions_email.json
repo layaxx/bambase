@@ -6,12 +6,12 @@
       "icon": "sync",
       "options": {
         "from": {
-          "name": "Administration Panel",
-          "email": "no-reply@strapi.io"
+          "name": "BamBase.de",
+          "email": "noreply@bambase.de"
         },
         "response_email": "",
-        "object": "Reset password",
-        "message": "<p>We heard that you lost your password. Sorry about that!</p>\n\n<p>But don’t worry! You can use the following link to reset your password:</p>\n<p><%= URL %>?code=<%= TOKEN %></p>\n\n<p>Thanks.</p>"
+        "object": "Passwort zurücksetzen / Reset password",
+        "message": "<p>Hallo,</p>\n\n<p>du hast dein Passwort vergessen? Kein Problem! Klicke auf den folgenden Link, um ein neues Passwort zu vergeben:</p>\n<p><%= URL %>?code=<%= TOKEN %></p>\n\n<p>Wenn du diese E-Mail nicht angefordert hast, kannst du sie ignorieren.</p>\n\n<p>Dein BamBase.de-Team</p>\n\n<hr>\n\n<p>Hello,</p>\n<p>You can use the following link to reset your password:</p>\n<p><%= URL %>?code=<%= TOKEN %></p>"
       }
     },
     "email_confirmation": {
@@ -19,12 +19,12 @@
       "icon": "check-square",
       "options": {
         "from": {
-          "name": "Administration Panel",
-          "email": "no-reply@strapi.io"
+          "name": "BamBase.de",
+          "email": "noreply@bambase.de"
         },
         "response_email": "",
-        "object": "Account confirmation",
-        "message": "<p>Thank you for registering!</p>\n\n<p>You have to confirm your email address. Please click on the link below.</p>\n\n<p><%= URL %>?confirmation=<%= CODE %></p>\n\n<p>Thanks.</p>"
+        "object": "E-Mail-Adresse bestätigen / Confirm your email",
+        "message": "<p>Hallo,</p>\n\n<p>vielen Dank für deine Registrierung bei BamBase.de! Bitte bestätige deine E-Mail-Adresse, indem du auf den folgenden Link klickst:</p>\n\n<p><a href=\"<%= URL %>?confirmation=<%= CODE %>\">E-Mail-Adresse bestätigen</a></p>\n\n<p>Der Link ist 60 Minuten gültig. Wenn du dich nicht bei BamBase.de registriert hast, kannst du diese E-Mail ignorieren.</p>\n\n<p>Dein BamBase.de-Team</p>\n\n<hr>\n\n<p>Hello,</p>\n<p>Thank you for registering at BamBase.de! Please confirm your email address by clicking the link below:</p>\n<p><a href=\"<%= URL %>?confirmation=<%= CODE %>\">Confirm email address</a></p>"
       }
     }
   },

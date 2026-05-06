@@ -2,13 +2,17 @@
 
 ## Upcoming
 
-### P20 Registration Workflow and E-Mail Confirmation
+## P25 Add Password reset workflow
 
-Currently, registration is instant and unverified: anyone can register with any email address and is immediately logged in. This undermines content moderation — there is no way to hold a submitter accountable to a real address, and fake accounts require no effort to create.
+Strapi's built-in password reset flow (`users-permissions` plugin) is already configured with a bilingual email template (added in P20), but the frontend has no pages to drive it. Two pages are needed: a "forgot password" page that accepts an email and calls Strapi's `/api/auth/forgot-password` endpoint, and a "reset password" page that reads the `?code=` token from the email link and calls `/api/auth/reset-password` with the new password. Both pages should follow the same UX patterns as `/resend-confirmation`.
 
-Strapi ships a built-in email confirmation flow (`users-permissions` plugin, `emailConfirmation: true`) but it is not enabled. When enabled, newly registered users get `confirmed: false` and receive a verification email; until confirmed, they can log in but Strapi will reject their API calls. The frontend would need to handle the confirmation callback URL (`/confirm?confirmation=TOKEN`) and show a "check your inbox" state after registration instead of redirecting immediately.
+## P24 Add 404 Page
 
-SMTP must be configured before this can work — currently the API has no email provider set up.
+Astro falls back to a generic browser error for unknown routes. A custom `src/pages/404.astro` page should be added so unknown URLs receive a styled, on-brand response with a link back to the homepage. Astro picks up `404.astro` automatically for SSR output.
+
+## P23 Remove find permissions on user type
+
+Currently authenticated users have `find` permissions on the `users-permissions` user type, which allows any logged-in user to list all registered accounts. This was likely granted to let the frontend resolve owner information (e.g. displaying the submitter on content). The permission should be revoked and the underlying need addressed differently — for example by embedding the required owner fields directly in the content-type response via `populate`, so no separate user lookup is required.
 
 ### P18 Job Overview Page
 
@@ -131,6 +135,38 @@ Automatically importing events from external sources would reduce the manual eff
 ---
 
 ## Done
+
+### P20 Registration Workflow and E-Mail Confirmation
+
+Registration now requires email confirmation before a new account becomes active. Strapi blocks login for unconfirmed users; the frontend surfaces this state instead of a generic error.
+
+**What changed:**
+
+- Enabled `email_confirmation: true` in Strapi config sync. New registrations set `confirmed: false`; Strapi rejects login attempts until the address is verified.
+- Configured Mailgun as the email provider. Bilingual (DE/EN) templates for email confirmation and password reset are defined in `core-store.plugin_users-permissions_email.json`.
+- `email_confirmation_redirection` is set dynamically at bootstrap from the `FRONTEND_URL` env var (`api/src/index.ts`). Strapi handles the confirmation at `/api/auth/email-confirmation?confirmation=<CODE>` and redirects to `/login?confirmed=true` on success — no frontend confirm page needed.
+- Register page shows a "check your inbox" state (with email address and resend link) instead of redirecting to `/` when Strapi returns no JWT.
+- Login page detects the "not confirmed" Strapi error and shows a targeted warning with a link to `/resend-confirmation`, rather than a generic login-failed message.
+- Login page shows a success banner when arriving via `?confirmed=true`.
+- Added `/resend-confirmation` page and `resendConfirmation` action. The page always shows a success message regardless of whether the account exists, preventing email enumeration.
+- Cookie-setting logic extracted into `frontend/src/utils/auth-cookies.ts` to avoid duplication between login and register flows.
+- E2E tests updated: registration test asserts the confirmation-pending UI; the account empty-state test uses a pre-seeded confirmed `clean@example.com` user (no content) instead of relying on auto-login after registration.
+
+**Work involved:**
+
+- [x] Enable `email_confirmation: true` in Strapi config sync
+- [x] Configure Mailgun email provider
+- [x] Write bilingual confirmation and password-reset email templates
+- [x] Set `email_confirmation_redirection` dynamically from `FRONTEND_URL` at bootstrap; skip write if value unchanged
+- [x] Register page: show "check your inbox" state when `confirmationPending: true`
+- [x] Login page: surface "not confirmed" error with resend link; show success banner on `?confirmed=true`
+- [x] Add `/resend-confirmation` page and `resendConfirmation` action
+- [x] Update `robots.txt` to disallow `/resend-confirmation`
+- [x] Extract cookie-setting logic into `auth-cookies.ts`
+- [x] Add pre-confirmed `clean@example.com` seed user for E2E empty-state test
+- [x] Update E2E tests
+
+---
 
 ### P21 SEO Plugin
 

@@ -2,7 +2,7 @@ import { type Core } from "@strapi/strapi"
 import bcrypt from "bcryptjs"
 
 import { STUDENT_GROUPS } from "./seed/student-groups"
-import { SEED_USER } from "./seed/seed-user"
+import { SEED_USER, CLEAN_USER } from "./seed/seed-user"
 import { JOB_OFFERS } from "./seed/job-offers"
 import { EVENTS } from "./seed/events"
 import { LOCATIONS } from "./seed/locations"
@@ -49,6 +49,23 @@ export async function seed(strapi: Core.Strapi) {
       },
     })
     strapi.log.info(`Seed: created user ${user.email}`)
+  }
+
+  const cleanUser = await strapi.db.query("plugin::users-permissions.user").findOne({
+    where: { email: CLEAN_USER.email },
+  })
+  if (!cleanUser) {
+    const hashed = await bcrypt.hash(CLEAN_USER.password, 10)
+    await strapi.db.query("plugin::users-permissions.user").create({
+      data: {
+        ...CLEAN_USER,
+        password: hashed,
+        provider: "local",
+        confirmed: true,
+        role: role?.id,
+      },
+    })
+    strapi.log.info(`Seed: created clean user ${CLEAN_USER.email}`)
   }
 
   if (existingOffers === 0) {

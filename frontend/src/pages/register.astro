@@ -7,9 +7,12 @@ import { isInputError } from "astro:actions"
 const t = useTranslations(Astro.locals.locale)
 
 const result = Astro.getActionResult(actions.auth.register)
-if (result && !result.error) {
+if (result && !result.error && !result.data.confirmationPending) {
   return Astro.redirect("/")
 }
+
+const confirmationPending = result?.data?.confirmationPending === true
+const confirmedEmail = result?.data?.email
 
 let error: string | null = null
 if (isInputError(result?.error)) {
@@ -21,7 +24,7 @@ if (isInputError(result?.error)) {
     error = t.auth.validation.passwordMismatch
   }
 }
-if (!error && result?.error.code === "BAD_REQUEST") {
+if (!error && result?.error?.code === "BAD_REQUEST") {
   error = t.auth.validation.registerFailed
 }
 ---
@@ -29,60 +32,84 @@ if (!error && result?.error.code === "BAD_REQUEST") {
 <AppLayout title={t.auth.registerTitle}>
   <main class="flex justify-center px-4 py-12 grow" id="main-content">
     <div class="w-full max-w-md">
-      <h1 class="text-2xl font-extrabold mb-2">{t.auth.registerTitle}</h1>
-      <p class="text-base-content/70 text-sm mb-6">
-        {t.auth.alreadyRegistered}
-        <a class="link link-primary" href="/login">{t.auth.loginLink}</a>
-      </p>
-
       {
-        error && (
-          <div class="alert alert-error mb-4">
-            <span>{error}</span>
+        confirmationPending ? (
+          <div class="text-center mb-6">
+            <div class="text-5xl mb-4">✉️</div>
+            <h1 class="text-2xl font-extrabold mb-2">{t.auth.checkYourInbox}</h1>
+            <p class="text-base-content/70 text-sm mb-4">{t.auth.confirmEmailSent}</p>
+            {confirmedEmail && <p class="font-medium text-sm mb-6">{confirmedEmail}</p>}
+            <p class="text-base-content/70 text-sm">
+              {t.auth.noLinkReceived}{" "}
+              <a
+                class="link link-primary"
+                href={`/resend-confirmation${confirmedEmail ? `?email=${encodeURIComponent(confirmedEmail)}` : ""}`}
+              >
+                {t.auth.resendConfirmationLink}
+              </a>
+            </p>
           </div>
+        ) : (
+          <>
+            <h1 class="text-2xl font-extrabold mb-2">{t.auth.registerTitle}</h1>
+            <p class="text-base-content/70 text-sm mb-6">
+              {t.auth.alreadyRegistered}
+              <a class="link link-primary" href="/login">
+                {t.auth.loginLink}
+              </a>
+            </p>
+
+            {error && (
+              <div class="alert alert-error mb-4">
+                <span>{error}</span>
+              </div>
+            )}
+
+            <form action={actions.auth.register} class="flex flex-col" method="POST">
+              <input name="locale" type="hidden" value={Astro.locals.locale} />
+              <fieldset class="fieldset">
+                <legend class="fieldset-legend">{t.auth.emailLabel}</legend>
+                <input
+                  autocomplete="email"
+                  class="input w-full"
+                  name="email"
+                  placeholder={t.auth.emailPlaceholder}
+                  required
+                  type="email"
+                />
+              </fieldset>
+
+              <fieldset class="fieldset">
+                <legend class="fieldset-legend">{t.auth.passwordLabel}</legend>
+                <input
+                  autocomplete="new-password"
+                  class="input w-full"
+                  minlength="10"
+                  name="password"
+                  placeholder={t.auth.passwordMinHint}
+                  required
+                  type="password"
+                />
+              </fieldset>
+
+              <fieldset class="fieldset">
+                <legend class="fieldset-legend">{t.auth.confirmPasswordLabel}</legend>
+                <input
+                  class="input w-full"
+                  name="passwordConfirm"
+                  placeholder={t.auth.confirmPasswordPlaceholder}
+                  required
+                  type="password"
+                />
+              </fieldset>
+
+              <button class="btn btn-primary mt-6" type="submit">
+                {t.auth.createAccountBtn}
+              </button>
+            </form>
+          </>
         )
       }
-
-      <form action={actions.auth.register} class="flex flex-col" method="POST">
-        <input name="locale" type="hidden" value={Astro.locals.locale} />
-        <fieldset class="fieldset">
-          <legend class="fieldset-legend">{t.auth.emailLabel}</legend>
-          <input
-            autocomplete="email"
-            class="input w-full"
-            name="email"
-            placeholder={t.auth.emailPlaceholder}
-            required
-            type="email"
-          />
-        </fieldset>
-
-        <fieldset class="fieldset">
-          <legend class="fieldset-legend">{t.auth.passwordLabel}</legend>
-          <input
-            autocomplete="new-password"
-            class="input w-full"
-            minlength="10"
-            name="password"
-            placeholder={t.auth.passwordMinHint}
-            required
-            type="password"
-          />
-        </fieldset>
-
-        <fieldset class="fieldset">
-          <legend class="fieldset-legend">{t.auth.confirmPasswordLabel}</legend>
-          <input
-            class="input w-full"
-            name="passwordConfirm"
-            placeholder={t.auth.confirmPasswordPlaceholder}
-            required
-            type="password"
-          />
-        </fieldset>
-
-        <button class="btn btn-primary mt-6" type="submit">{t.auth.createAccountBtn}</button>
-      </form>
     </div>
   </main>
 </AppLayout>
