@@ -22,6 +22,7 @@
   "dependencies": {
     "@strapi/plugin-cloud": "5.40.0",
     "@strapi/plugin-users-permissions": "5.40.0",
+    "@strapi/provider-email-mailgun": "^5.44.0",
     "@strapi/strapi": "5.40.0",
     "better-sqlite3": "12.6.2",
     "pg": "^8.20.0",
@@ -47,6 +48,7 @@
     "globals": "^17.5.0",
     "jest": "^30.3.0",
     "prettier": "^3.8.1",
+    "strapi-provider-email-development": "file:providers/strapi-provider-email-development",
     "supertest": "^7.2.2",
     "ts-jest": "^29.4.9",
     "typescript": "^5",

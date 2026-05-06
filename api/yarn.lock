@@ -3896,6 +3896,15 @@
     yup "0.32.9"
     zod "3.25.67"
 
+"@strapi/provider-email-mailgun@^5.44.0":
+  version "5.44.0"
+  resolved "https://registry.yarnpkg.com/@strapi/provider-email-mailgun/-/provider-email-mailgun-5.44.0.tgz#1dede345f9e1b4856440db1a07791a372ee7e554"
+  integrity sha512-r6Pr8jqTpBTOi8ePOSyN662n3P2Vjeq0gWWxRybbo+3Vxw17MU6Sw3syc1ye4sANdItOPDiJnHInf0UVShcjew==
+  dependencies:
+    "@strapi/utils" "5.44.0"
+    form-data "4.0.4"
+    mailgun.js "10.2.1"
+
 "@strapi/provider-email-sendmail@5.40.0":
   version "5.40.0"
   resolved "https://registry.npmjs.org/@strapi/provider-email-sendmail/-/provider-email-sendmail-5.40.0.tgz"
@@ -4106,6 +4115,22 @@
     execa "5.1.1"
     http-errors "2.0.0"
     lodash "4.17.23"
+    node-machine-id "1.1.12"
+    p-map "4.0.0"
+    preferred-pm "3.1.3"
+    yup "0.32.9"
+    zod "3.25.67"
+
+"@strapi/utils@5.44.0":
+  version "5.44.0"
+  resolved "https://registry.yarnpkg.com/@strapi/utils/-/utils-5.44.0.tgz#93d068643809d7c80a5d2277f1e33991b5f90128"
+  integrity sha512-RVlovyRGut0Il3oMG2In+lbjBEvmUhMEGNQS7ASUTY62J7abK+r42fejG8yQFBW3t/41fz9gKKdeUt22CGxr+w==
+  dependencies:
+    "@sindresorhus/slugify" "1.1.0"
+    date-fns "2.30.0"
+    execa "5.1.1"
+    http-errors "2.0.0"
+    lodash "4.18.1"
     node-machine-id "1.1.12"
     p-map "4.0.0"
     preferred-pm "3.1.3"
@@ -5486,6 +5511,15 @@ axios@1.13.5:
     form-data "^4.0.5"
     proxy-from-env "^1.1.0"
 
+axios@^1.6.0:
+  version "1.16.0"
+  resolved "https://registry.yarnpkg.com/axios/-/axios-1.16.0.tgz#f8e5dd931cef2a5f8c32216d5784eda2f8750eb7"
+  integrity sha512-6hp5CwvTPlN2A31g5dxnwAX0orzM7pmCRDLnZSX772mv8WDqICwFjowHuPs04Mc8deIld1+ejhtaMn5vp6b+1w==
+  dependencies:
+    follow-redirects "^1.16.0"
+    form-data "^4.0.5"
+    proxy-from-env "^2.1.0"
+
 babel-jest@30.3.0, babel-jest@^30.3.0:
   version "30.3.0"
   resolved "https://registry.yarnpkg.com/babel-jest/-/babel-jest-30.3.0.tgz#3ff5553fa3bcbb8738d2d7335a4dbdc3bd1a0eb5"
@@ -5593,6 +5627,11 @@ balanced-match@^4.0.2:
   version "4.0.4"
   resolved "https://registry.npmjs.org/balanced-match/-/balanced-match-4.0.4.tgz"
   integrity sha512-BLrgEcRTwX2o6gGxGOCNyMvGSp35YofuYzw9h1IMTRmKqttAZZVU67bdb9Pr2vUHA8+j3i2tJfjO6C6+4myGTA==
+
+base-64@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/base-64/-/base-64-1.0.0.tgz#09d0f2084e32a3fd08c2475b973788eee6ae8f4a"
+  integrity sha512-kwDPIFCGx0NZHog36dj+tHiwP4QMzsZ3AgMViUBKI0+V5n4U0ufTCUMhnQ04diaRI8EX/QcPfql7zlhZ7j4zgg==
 
 base64-js@^1.3.1:
   version "1.5.1"
@@ -7550,6 +7589,11 @@ follow-redirects@^1.15.11, follow-redirects@^1.15.9:
   resolved "https://registry.npmjs.org/follow-redirects/-/follow-redirects-1.15.11.tgz"
   integrity sha512-deG2P0JfjrTxl50XGCDyfI97ZGVCxIpfKYmfyrQ54n5FO/0gfIES8C/Psl6kWVDolizcaaxZJnTS0QSMxvnsBQ==
 
+follow-redirects@^1.16.0:
+  version "1.16.0"
+  resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.16.0.tgz#28474a159d3b9d11ef62050a14ed60e4df6d61bc"
+  integrity sha512-y5rN/uOsadFT/JfYwhxRS5R7Qce+g3zG97+JrtFZlC9klX/W5hD7iiLzScI4nZqUS7DNUdhPgw4xI8W2LuXlUw==
+
 for-in@^1.0.1:
   version "1.0.2"
   resolved "https://registry.npmjs.org/for-in/-/for-in-1.0.2.tgz"
@@ -7587,6 +7631,17 @@ fork-ts-checker-webpack-plugin@8.0.0:
     schema-utils "^3.1.1"
     semver "^7.3.5"
     tapable "^2.2.1"
+
+form-data@4.0.4:
+  version "4.0.4"
+  resolved "https://registry.yarnpkg.com/form-data/-/form-data-4.0.4.tgz#784cdcce0669a9d68e94d11ac4eea98088edd2c4"
+  integrity sha512-KrGhL9Q4zjj0kiUt5OO4Mr/A/jlI2jDYs5eHBpYHPcBEVSiipAvn2Ko2HnPe20rmcuuvMHNdZFp+4IlGTMF0Ow==
+  dependencies:
+    asynckit "^0.4.0"
+    combined-stream "^1.0.8"
+    es-set-tostringtag "^2.1.0"
+    hasown "^2.0.2"
+    mime-types "^2.1.12"
 
 form-data@^4.0.5:
   version "4.0.5"
@@ -9732,6 +9787,11 @@ lodash@4.17.23, lodash@^4.17.20, lodash@^4.17.21, lodash@^4.17.23, lodash@^4.17.
   resolved "https://registry.npmjs.org/lodash/-/lodash-4.17.23.tgz"
   integrity sha512-LgVTMpQtIopCi79SJeDiP0TfWi5CNEc/L/aRdTh3yIvmZXTnheWpKjSZhnvMl8iXbC1tFg9gdHHDMLoV7CnG+w==
 
+lodash@4.18.1:
+  version "4.18.1"
+  resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.18.1.tgz#ff2b66c1f6326d59513de2407bf881439812771c"
+  integrity sha512-dMInicTPVE8d1e5otfwmmjlxkZoUpiVLwyeTdUsi/Caj/gfzzblBcCE5sRHV/AsjuCmxWrte2TNGSYuCeCq+0Q==
+
 log-symbols@^4.1.0:
   version "4.1.0"
   resolved "https://registry.npmjs.org/log-symbols/-/log-symbols-4.1.0.tgz"
@@ -9848,6 +9908,15 @@ mailcomposer@3.12.0:
   dependencies:
     buildmail "3.10.0"
     libmime "2.1.0"
+
+mailgun.js@10.2.1:
+  version "10.2.1"
+  resolved "https://registry.yarnpkg.com/mailgun.js/-/mailgun.js-10.2.1.tgz#411fc39c9d2bd26fcb2445416deab81ebd87044f"
+  integrity sha512-lslXpLdwtLyavJGHsPKlpXLnd3XEuwWY5X/KaTAvv2UvHiOWSlUzqkGW21vVgcQQ9AKw0s5ayS5V9Cv8Ze2OIw==
+  dependencies:
+    axios "^1.6.0"
+    base-64 "^1.0.0"
+    url-join "^4.0.1"
 
 make-dir@^2.0.0, make-dir@^2.1.0:
   version "2.1.0"
@@ -11472,6 +11541,11 @@ proxy-from-env@^1.1.0:
   resolved "https://registry.npmjs.org/proxy-from-env/-/proxy-from-env-1.1.0.tgz"
   integrity sha512-D+zkORCbA9f1tdWRK0RaCR3GPv50cMxcrz4X8k5LTSUD1Dkw47mKJEZQNunItRTkWwgtaUSo1RVFRIG9ZXiFYg==
 
+proxy-from-env@^2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/proxy-from-env/-/proxy-from-env-2.1.0.tgz#a7487568adad577cfaaa7e88c49cab3ab3081aba"
+  integrity sha512-cJ+oHTW1VAEa8cJslgmUZrc+sjRKgAKl3Zyse6+PV38hZe/V6Z14TbCuXcan9F9ghlz4QrFr2c92TNF82UkYHA==
+
 pstree.remy@^1.1.8:
   version "1.1.8"
   resolved "https://registry.npmjs.org/pstree.remy/-/pstree.remy-1.1.8.tgz"
@@ -12747,6 +12821,9 @@ strapi-plugin-config-sync@^3.2.0:
     redux-immutable "^4.0.0"
     redux-thunk "^3.1.0"
 
+"strapi-provider-email-development@file:providers/strapi-provider-email-development":
+  version "0.0.0"
+
 stream-chain@2.2.5, stream-chain@^2.2.5:
   version "2.2.5"
   resolved "https://registry.npmjs.org/stream-chain/-/stream-chain-2.2.5.tgz"
@@ -13561,7 +13638,7 @@ uri-js@^4.2.2, uri-js@^4.4.1:
   dependencies:
     punycode "^2.1.0"
 
-url-join@4.0.1:
+url-join@4.0.1, url-join@^4.0.1:
   version "4.0.1"
   resolved "https://registry.npmjs.org/url-join/-/url-join-4.0.1.tgz"
   integrity sha512-jk1+QP6ZJqyOiuEI9AEWQfju/nB2Pw466kbA0LEZljHwKeMgd9WrAEgEGxjPDD2+TNbbb37rTyhEfrCXfuKXnA==
