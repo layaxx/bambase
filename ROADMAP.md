@@ -2,11 +2,11 @@
 
 ## Upcoming
 
+## P28 check whether fonts are preloaded correctly
+
+## P27 add CI/CD pipelines
+
 ## P26 handle uncaught exceptions / API down
-
-## P25 Add Password reset workflow
-
-Strapi's built-in password reset flow (`users-permissions` plugin) is already configured with a bilingual email template (added in P20), but the frontend has no pages to drive it. Two pages are needed: a "forgot password" page that accepts an email and calls Strapi's `/api/auth/forgot-password` endpoint, and a "reset password" page that reads the `?code=` token from the email link and calls `/api/auth/reset-password` with the new password. Both pages should follow the same UX patterns as `/resend-confirmation`.
 
 ## P23 Remove find permissions on user type
 
@@ -133,6 +133,23 @@ Automatically importing events from external sources would reduce the manual eff
 ---
 
 ## Done
+
+### P25 Add Password reset workflow
+
+Strapi's built-in password reset flow was already configured with a bilingual email template (added in P20). Two frontend pages now drive it: `/forgot-password` accepts an email and calls `/api/auth/forgot-password`, always showing a success message regardless of whether an account exists (anti-enumeration, matching the `/resend-confirmation` pattern); `/reset-password` reads `?code=` from the email link, shows an error if the code is missing, and calls `/api/auth/reset-password` with the new password. Both pages and their `forgotPassword` / `resetPassword` action handlers follow the same UX and code patterns established in P20.
+
+**Work involved:**
+
+- [x] Add `forgotPassword` action to `auth.ts` — POSTs to `/api/auth/forgot-password`; always returns `{ success: true }` to prevent email enumeration
+- [x] Add `resetPassword` action to `auth.ts` — POSTs to `/api/auth/reset-password` with `code`, `password`, and `passwordConfirmation`; throws `BAD_REQUEST` on failure
+- [x] Add `src/pages/forgot-password.astro` — email form; hides itself and shows success alert after submission
+- [x] Add `src/pages/reset-password.astro` — reads `?code=` from URL; shows error with link to `/forgot-password` if code is missing; shows password + confirm fields; shows success alert with login link on success
+- [x] Add translation keys for all new UI strings in both `de` and `en` locales
+- [x] Add `/forgot-password` and `/reset-password` to `robots.txt` Disallow list
+- [x] Unit tests for `auth.forgotPassword` (success, anti-enumeration, request body) and `auth.resetPassword` (success, API error message, fallback message, request body)
+- [x] E2E tests: forgot-password form always shows success; reset-password without code shows error; with code shows form; invalid code shows error; mismatched passwords show validation error
+
+---
 
 ### P24 Add 404 Page
 

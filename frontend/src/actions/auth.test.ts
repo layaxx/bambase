@@ -322,6 +322,121 @@ describe("auth.register", () => {
   })
 })
 
+describe("auth.forgotPassword", () => {
+  beforeEach(() => vi.stubGlobal("fetch", vi.fn()))
+
+  it("returns success: true when the API responds ok", async () => {
+    vi.mocked(fetch).mockResolvedValue({ ok: true, json: async () => ({}) } as Response)
+
+    const result = await auth.forgotPassword(
+      { email: "user@example.com" },
+      // @ts-expect-error - needed because of mocked defineAction function
+      { cookies: makeWritableCookies() }
+    )
+
+    expect(result).toEqual({ success: true })
+  })
+
+  it("returns success: true even when the API fails (anti-enumeration)", async () => {
+    vi.mocked(fetch).mockResolvedValue({ ok: false, json: async () => ({}) } as Response)
+
+    const result = await auth.forgotPassword(
+      { email: "nobody@example.com" },
+      // @ts-expect-error - needed because of mocked defineAction function
+      { cookies: makeWritableCookies() }
+    )
+
+    expect(result).toEqual({ success: true })
+  })
+
+  it("POSTs to /api/auth/forgot-password with the email", async () => {
+    vi.mocked(fetch).mockResolvedValue({ ok: true, json: async () => ({}) } as Response)
+
+    await auth.forgotPassword(
+      { email: "user@example.com" },
+      // @ts-expect-error - needed because of mocked defineAction function
+      { cookies: makeWritableCookies() }
+    )
+
+    expect(fetch).toHaveBeenCalledWith(
+      "http://localhost:1337/api/auth/forgot-password",
+      expect.objectContaining({ method: "POST" })
+    )
+    const body = getFetchBody()
+    expect(body).toMatchObject({ email: "user@example.com" })
+  })
+})
+
+describe("auth.resetPassword", () => {
+  beforeEach(() => vi.stubGlobal("fetch", vi.fn()))
+
+  it("returns success: true when the API responds ok", async () => {
+    vi.mocked(fetch).mockResolvedValue({ ok: true, json: async () => ({}) } as Response)
+
+    const result = await auth.resetPassword(
+      { code: "valid-code", password: "longpassword1" },
+      // @ts-expect-error - needed because of mocked defineAction function
+      { cookies: makeWritableCookies() }
+    )
+
+    expect(result).toEqual({ success: true })
+  })
+
+  it("throws BAD_REQUEST with the API error message on failure", async () => {
+    vi.mocked(fetch).mockResolvedValue({
+      ok: false,
+      json: async () => ({ error: { message: "Invalid or expired code" } }),
+    } as Response)
+
+    await expect(
+      auth.resetPassword(
+        { code: "bad-code", password: "longpassword1" },
+        // @ts-expect-error - needed because of mocked defineAction function
+        { cookies: makeWritableCookies() }
+      )
+    ).rejects.toMatchObject({ code: "BAD_REQUEST", message: "Invalid or expired code" })
+  })
+
+  it("throws BAD_REQUEST with a fallback message when the API gives no error message", async () => {
+    vi.mocked(fetch).mockResolvedValue({
+      ok: false,
+      json: async () => ({}),
+    } as Response)
+
+    await expect(
+      auth.resetPassword(
+        { code: "bad-code", password: "longpassword1" },
+        // @ts-expect-error - needed because of mocked defineAction function
+        { cookies: makeWritableCookies() }
+      )
+    ).rejects.toMatchObject({
+      code: "BAD_REQUEST",
+      message: "Passwort konnte nicht zurückgesetzt werden.",
+    })
+  })
+
+  it("POSTs to /api/auth/reset-password with code, password, and passwordConfirmation", async () => {
+    vi.mocked(fetch).mockResolvedValue({ ok: true, json: async () => ({}) } as Response)
+
+    await auth.resetPassword(
+      { code: "abc123", password: "longpassword1" },
+      // @ts-expect-error - needed because of mocked defineAction function
+      { cookies: makeWritableCookies() }
+    )
+
+    expect(fetch).toHaveBeenCalledWith(
+      "http://localhost:1337/api/auth/reset-password",
+      expect.objectContaining({ method: "POST" })
+    )
+    const body = getFetchBody()
+    expect(body).toMatchObject({
+      code: "abc123",
+      password: "longpassword1",
+      passwordConfirmation: "longpassword1",
+    })
+  })
+})
+
 describe("auth.resendConfirmation", () => {
   beforeEach(() => vi.stubGlobal("fetch", vi.fn()))
 

@@ -106,6 +106,60 @@ test.describe("Protected routes (unauthenticated)", () => {
   })
 })
 
+test.describe("Forgot password", () => {
+  test("submitting any email shows the success message and hides the form", async ({ page }) => {
+    await page.goto("/forgot-password")
+    await page.fill('[name="email"]', "anyone@example.com")
+    await page.click('button[type="submit"]')
+
+    await expect(page.locator(".alert-success")).toBeVisible()
+    await expect(page.locator("form")).not.toBeVisible()
+  })
+
+  test("submitting a non-existent email still shows the success message", async ({ page }) => {
+    await page.goto("/forgot-password")
+    await page.fill('[name="email"]', "nobody@does-not-exist.example.com")
+    await page.click('button[type="submit"]')
+
+    await expect(page.locator(".alert-success")).toBeVisible()
+  })
+})
+
+test.describe("Reset password", () => {
+  test("visiting without a code shows an error and no form", async ({ page }) => {
+    await page.goto("/reset-password")
+
+    await expect(page.locator(".alert-error")).toBeVisible()
+    await expect(page.locator("form")).not.toBeVisible()
+  })
+
+  test("visiting with a code shows the reset form", async ({ page }) => {
+    await page.goto("/reset-password?code=some-code")
+
+    await expect(page.locator("form")).toBeVisible()
+    await expect(page.locator('[name="password"]')).toBeVisible()
+    await expect(page.locator('[name="passwordConfirm"]')).toBeVisible()
+  })
+
+  test("submitting mismatched passwords shows a validation error", async ({ page }) => {
+    await page.goto("/reset-password?code=some-code")
+    await page.fill('[name="password"]', "validpassword1")
+    await page.fill('[name="passwordConfirm"]', "differentpassword2")
+    await page.click('button[type="submit"]')
+
+    await expect(page.locator(".alert-error")).toBeVisible()
+  })
+
+  test("submitting an invalid code shows an error", async ({ page }) => {
+    await page.goto("/reset-password?code=invalid-code")
+    await page.fill('[name="password"]', "validpassword1")
+    await page.fill('[name="passwordConfirm"]', "validpassword1")
+    await page.click('button[type="submit"]')
+
+    await expect(page.locator(".alert-error")).toBeVisible()
+  })
+})
+
 test.describe("Logout", () => {
   test("clears auth cookies and /account then redirects to login", async ({ page }) => {
     await page.goto("/login")

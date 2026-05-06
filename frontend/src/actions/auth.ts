@@ -131,4 +131,51 @@ export const auth = {
       return { success: true }
     },
   }),
+
+  forgotPassword: defineAction({
+    accept: "form",
+    input: z.object({
+      email: z.email("Bitte gültige E-Mail eingeben."),
+    }),
+    handler: async ({ email }) => {
+      await fetch(`${STRAPI_URL}/api/auth/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      })
+      // Always return success to avoid email enumeration.
+      return { success: true }
+    },
+  }),
+
+  resetPassword: defineAction({
+    accept: "form",
+    input: z
+      .object({
+        code: z.string().min(1),
+        password: z.string().min(10, "Passwort muss mindestens 10 Zeichen haben."),
+        passwordConfirm: z.string(),
+      })
+      .refine((d) => d.password === d.passwordConfirm, {
+        message: "Die Passwörter stimmen nicht überein.",
+        path: ["passwordConfirm"],
+      }),
+    handler: async ({ code, password }) => {
+      const res = await fetch(`${STRAPI_URL}/api/auth/reset-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, password, passwordConfirmation: password }),
+      })
+
+      if (!res.ok) {
+        const data = await res.json()
+        throw new ActionError({
+          code: "BAD_REQUEST",
+          message: data?.error?.message ?? "Passwort konnte nicht zurückgesetzt werden.",
+        })
+      }
+
+      return { success: true }
+    },
+  }),
 }

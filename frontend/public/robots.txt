@@ -3,6 +3,8 @@ Disallow: /account/
 Disallow: /login
 Disallow: /register
 Disallow: /resend-confirmation
+Disallow: /forgot-password
+Disallow: /reset-password
 Disallow: /job/new
 Disallow: /event/new
 Disallow: /api/

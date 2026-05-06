@@ -100,6 +100,10 @@ const emailConfirmed = Astro.url.searchParams.get("confirmed") === "true"
 
         <button class="btn btn-primary mt-6" type="submit">{t.auth.loginBtn}</button>
       </form>
+
+      <p class="text-base-content/70 text-sm mt-4">
+        <a class="link link-primary" href="/forgot-password">{t.auth.forgotPasswordLink}</a>
+      </p>
     </div>
   </main>
 </AppLayout>

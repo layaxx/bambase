@@ -31,10 +31,18 @@ export default {
       const store = strapi.store({ type: "plugin", name: "users-permissions" })
       const advanced = (await store.get({ key: "advanced" })) as Record<string, unknown>
       const newRedirection = `${frontendUrl}/login?confirmed=true`
-      if (advanced.email_confirmation_redirection !== newRedirection) {
+      const newResetUrl = `${frontendUrl}/reset-password`
+      if (
+        advanced.email_confirmation_redirection !== newRedirection ||
+        advanced.email_reset_password !== newResetUrl
+      ) {
         await store.set({
           key: "advanced",
-          value: { ...advanced, email_confirmation_redirection: newRedirection },
+          value: {
+            ...advanced,
+            email_confirmation_redirection: newRedirection,
+            email_reset_password: newResetUrl,
+          },
         })
       }
     }
