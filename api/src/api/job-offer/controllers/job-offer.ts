@@ -45,7 +45,7 @@ export default factories.createCoreController("api::job-offer.job-offer", ({ str
     const { id } = ctx.params
     const offer = await strapi
       .documents("api::job-offer.job-offer")
-      .findOne({ documentId: id, populate: ["owner"] })
+      .findOne({ documentId: id, populate: { owner: { fields: ["id"] } } })
 
     if (!offer) return ctx.notFound()
     if (offer.owner?.id !== user.id) return ctx.forbidden()
@@ -66,7 +66,7 @@ export default factories.createCoreController("api::job-offer.job-offer", ({ str
     const { id } = ctx.params
     const offer = await strapi
       .documents("api::job-offer.job-offer")
-      .findOne({ documentId: id, populate: ["owner"] })
+      .findOne({ documentId: id, populate: { owner: { fields: ["id"] } } })
 
     if (!offer) return ctx.notFound()
     if (offer.owner?.id !== user.id) return ctx.forbidden()

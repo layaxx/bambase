@@ -101,7 +101,7 @@ describe("fetchEvent", () => {
     expect(mockFind).toHaveBeenCalledWith(
       expect.objectContaining({
         populate: expect.objectContaining({
-          owner: true,
+          owner: { fields: ["id"] },
           reports: {
             filters: { review_status: { $ne: "dismissed" } },
             fields: [],

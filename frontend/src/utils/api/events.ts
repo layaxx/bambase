@@ -104,7 +104,7 @@ export async function fetchEvent(slug: string): Promise<Event | null> {
     const result = await client.collection("events").find({
       filters: { slug: { $eq: slug } },
       populate: {
-        owner: true,
+        owner: { fields: ["id"] },
         reports: {
           filters: { review_status: { $ne: "dismissed" } },
           fields: [],

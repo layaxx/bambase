@@ -76,7 +76,7 @@ export async function fetchJobOffer(slug: string, token = STRAPI_TOKEN): Promise
     headers["Authorization"] = `Bearer ${token}`
 
     const res = await fetch(
-      `${STRAPI_URL}/api/job-offers?filters[slug][$eq]=${encodeURIComponent(slug)}&populate[contact]=true&populate[owner]=true&populate[reports][filters][review_status][$ne]=dismissed`,
+      `${STRAPI_URL}/api/job-offers?filters[slug][$eq]=${encodeURIComponent(slug)}&populate[contact]=true&populate[owner][fields][0]=id&populate[reports][filters][review_status][$ne]=dismissed`,
       {
         headers,
       }
@@ -104,7 +104,10 @@ export async function fetchMyJobOffers(token: string, userId: number): Promise<J
       `${STRAPI_URL}/api/job-offers?filters[owner][id][$eq]=${userId}&populate[0]=contact&sort=createdAt:desc`,
       { headers: { Authorization: `Bearer ${token}` } }
     )
-    if (!res.ok) return []
+    if (!res.ok) {
+      console.warn("Failed to fetch own job offers:", await res.text())
+      return []
+    }
     const result = await res.json()
     return (result?.data ?? []) as unknown as JobOffer[]
   } catch (error) {

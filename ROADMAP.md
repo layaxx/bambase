@@ -6,10 +6,6 @@
 
 ## P26 handle uncaught exceptions / API down
 
-## P23 Remove find permissions on user type
-
-Currently authenticated users have `find` permissions on the `users-permissions` user type, which allows any logged-in user to list all registered accounts. This was likely granted to let the frontend resolve owner information (e.g. displaying the submitter on content). The permission should be revoked and the underlying need addressed differently — for example by embedding the required owner fields directly in the content-type response via `populate`, so no separate user lookup is required.
-
 ### P18 Job Overview Page
 
 Evaluation and optional migration of `/jobs` from client-side to server-side filtering. The current approach works at small scale but couples page weight to dataset size in a way that degrades once job descriptions are long and numerous.
@@ -131,6 +127,14 @@ Automatically importing events from external sources would reduce the manual eff
 ---
 
 ## Done
+
+### P23 Remove find permissions on user type
+
+`plugin::users-permissions.user.find` removed from the authenticated role in `api/config/sync/user-role.authenticated.json`, closing the user-enumeration hole that let any logged-in user list all registered accounts via `GET /api/users`. `user.me` is retained for the `GET /api/users/me` call used by the `getMe` action.
+
+Owner populate narrowed throughout: `populate: ["owner"]` replaced with `populate: { owner: { fields: ["id"] } }` in the `update()` and `delete()` methods of both the event and job-offer controllers, and the frontend `fetchEvent()` / `fetchJobOffer()` calls updated to request only the `id` field from the owner relation. The frontend only ever uses `owner.id` for ownership checks — no owner name or email is displayed anywhere.
+
+---
 
 ### P28 Font preloading and optimization
 
