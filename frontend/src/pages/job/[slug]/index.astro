@@ -54,7 +54,7 @@ const description = job
   ? `${job.company}${job.description ? ` – ${job.description.slice(0, 120)}` : ""}`
   : undefined
 const ogImage =
-  job?.online_status === "published" ? `${Astro.url.origin}/og/job/${job.slug}.png` : undefined
+  job?.online_status === "published" ? `${Astro.url.origin}/api/og/job/${job.slug}.png` : undefined
 ---
 
 <PageLayout description={description} ogImage={ogImage} title={job?.title ?? t.jobs.pageTitle}>
