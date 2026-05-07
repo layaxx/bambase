@@ -26,8 +26,20 @@ export default defineConfig({
       subsets: ["latin"],
     },
   ],
+  build: {
+    inlineStylesheets: "auto",
+  },
+
+  prefetch: {
+    prefetchAll: false,
+    defaultStrategy: "hover",
+  },
+
   vite: {
     plugins: [tailwindcss()],
+    build: {
+      cssMinify: "lightningcss",
+    },
     resolve: {
       alias: {
         "@": fileURLToPath(new URL("./src", import.meta.url)),
