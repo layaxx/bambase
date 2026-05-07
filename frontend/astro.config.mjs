@@ -1,5 +1,5 @@
 // @ts-check
-import { defineConfig, envField } from "astro/config"
+import { defineConfig, envField, fontProviders } from "astro/config"
 import tailwindcss from "@tailwindcss/vite"
 import node from "@astrojs/node"
 import { fileURLToPath } from "node:url"
@@ -8,6 +8,24 @@ import { fileURLToPath } from "node:url"
 export default defineConfig({
   output: "server",
   adapter: node({ mode: "standalone" }),
+  fonts: [
+    {
+      provider: fontProviders.fontsource(),
+      name: "Inter",
+      cssVariable: "--font-inter",
+      weights: ["100 900"],
+      styles: ["normal"],
+      subsets: ["latin"],
+    },
+    {
+      provider: fontProviders.fontsource(),
+      name: "Archivo",
+      cssVariable: "--font-archivo",
+      weights: [800],
+      styles: ["normal"],
+      subsets: ["latin"],
+    },
+  ],
   vite: {
     plugins: [tailwindcss()],
     resolve: {

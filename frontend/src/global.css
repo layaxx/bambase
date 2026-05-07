@@ -1,8 +1,8 @@
 @import "tailwindcss";
 @plugin "daisyui";
 
-@theme {
-  --font-sans: "Inter Variable", sans-serif;
+@theme inline {
+  --font-sans: var(--font-inter);
 }
 
 :root {
@@ -48,7 +48,7 @@
 }
 
 .logo-font {
-  font-family: "Archivo Variable", sans-serif;
+  font-family: var(--font-archivo);
 }
 
 @media (prefers-reduced-motion: reduce) {

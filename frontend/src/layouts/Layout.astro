@@ -1,7 +1,6 @@
 ---
 import "../global.css"
-import "@fontsource-variable/archivo"
-import "@fontsource-variable/inter"
+import { Font } from "astro:assets"
 import { SEO } from "astro-seo"
 
 interface Props {
@@ -16,6 +15,8 @@ const seoTitle = title ? `${title} – BamBase.de` : "BamBase.de"
 <!doctype html>
 <html lang={Astro.locals.locale}>
   <head>
+    <Font cssVariable="--font-inter" preload />
+    <Font cssVariable="--font-archivo" preload />
     <SEO
       canonical={`${Astro.url.origin}${Astro.url.pathname}`}
       charset="UTF-8"
