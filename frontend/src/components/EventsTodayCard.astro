@@ -4,10 +4,11 @@ import IconCalendar from "./icons/IconCalendar.astro"
 import IconArrowRight from "./icons/IconArrowRight.astro"
 import { fetchOngoingOrUpcomingEvents } from "@/utils/api/events"
 import EventCard from "./EventCard.astro"
+import ApiDownBanner from "./ApiDownBanner.astro"
 
 const t = useTranslations(Astro.locals.locale)
 
-const upcomingOrOngoingEvents = await fetchOngoingOrUpcomingEvents(4)
+const { data: upcomingOrOngoingEvents, apiDown } = await fetchOngoingOrUpcomingEvents(4)
 ---
 
 <section class="mb-12" id="events">
@@ -33,7 +34,9 @@ const upcomingOrOngoingEvents = await fetchOngoingOrUpcomingEvents(4)
     </a>
   </div>
   {
-    upcomingOrOngoingEvents.length === 0 ? (
+    apiDown ? (
+      <ApiDownBanner />
+    ) : upcomingOrOngoingEvents.length === 0 ? (
       <p class="text-base-content/70 rounded-xl border border-base-300 bg-base-100 p-6">
         {t.events.none}
       </p>

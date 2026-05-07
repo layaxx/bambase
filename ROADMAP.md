@@ -4,8 +4,6 @@
 
 ## P27 add CI/CD pipelines
 
-## P26 handle uncaught exceptions / API down
-
 ### P18 Job Overview Page
 
 Evaluation and optional migration of `/jobs` from client-side to server-side filtering. The current approach works at small scale but couples page weight to dataset size in a way that degrades once job descriptions are long and numerous.
@@ -127,6 +125,18 @@ Automatically importing events from external sources would reduce the manual eff
 ---
 
 ## Done
+
+### P26 Handle uncaught exceptions / API down
+
+All API fetch functions now return `ApiResult<T> = { data: T; apiDown: boolean }` instead of bare arrays or null. Strapi SDK calls are wrapped in `withTimeout` (8 s, `Promise.race` + `.finally` to clear the timer); raw `fetch` calls use `fetchWithTimeout` (AbortController, `try/finally` to clear the timer). Both helpers live in `utils/api/client.ts`. The shared `ApiResult<T>` type is defined in `utils/api/types.ts` and re-exported from the barrel.
+
+- `src/pages/500.astro` added — Astro picks it up automatically for unhandled SSR exceptions. Follows the same structure as `404.astro`. Translation keys added under `page500` in both `de` and `en` locales. `/500` added to `robots.txt` Disallow list.
+- `src/components/ApiDownBanner.astro` added — DaisyUI `alert alert-warning` shown wherever `apiDown` is true.
+- **List pages** (`/events`, `/jobs`, `/map`, `/mensa`): destructure `{ data, apiDown }` from fetch results; show `<ApiDownBanner />` above the page content when `apiDown` is true. `/map` and `/mensa` combine `apiDown` across their parallel fetches with `||` / `.some()`.
+- **Detail pages** (`/event/[slug]`, `/job/[slug]`): distinguish "API down" (show banner, no content) from "not found" (show existing not-found UI). Intermediate result variable used to avoid TypeScript destructuring inference issues.
+- **Homepage cards** (`EventsTodayCard`, `JobCard`, `MensaCard`, `StudentGroupsCard`): each card fetches its own data and shows `<ApiDownBanner />` inline when the API is unreachable — no state threading through `index.astro`.
+- **Account pages** and **sitemap endpoint**: destructure `data` only; `apiDown` degrades gracefully (empty list / static-only sitemap).
+- **OG image endpoints**: switched from `.catch(() => null)` to `ApiResult` destructuring.
 
 ### P23 Remove find permissions on user type
 

@@ -13,6 +13,8 @@ const mockCollection = vi.hoisted(() => vi.fn())
 
 vi.mock("./client", () => ({
   client: { collection: mockCollection },
+  withTimeout: (p: Promise<unknown>) => p,
+  fetchWithTimeout: (url: string, opts: RequestInit) => fetch(url, opts),
   strapiUrl: "http://localhost:1337",
 }))
 
@@ -66,7 +68,7 @@ describe("fetchEvents", () => {
 
     const result = await fetchEvents()
 
-    expect(result).toEqual([sampleEvent])
+    expect(result).toEqual({ data: [sampleEvent], apiDown: false })
   })
 
   it("logs an error and returns an empty array when the API response is unexpected", async () => {
@@ -75,7 +77,7 @@ describe("fetchEvents", () => {
 
     const result = await fetchEvents()
 
-    expect(result).toEqual([])
+    expect(result).toEqual({ data: [], apiDown: true })
     expect(consoleSpy).toHaveBeenCalledWith("Error fetching events", expect.any(TypeError))
   })
 })
@@ -116,7 +118,7 @@ describe("fetchEvent", () => {
 
     const result = await fetchEvent("test-event")
 
-    expect(result).toEqual(sampleEvent)
+    expect(result).toEqual({ data: sampleEvent, apiDown: false })
   })
 
   it("returns null when no event matches", async () => {
@@ -124,7 +126,7 @@ describe("fetchEvent", () => {
 
     const result = await fetchEvent("no-such-event")
 
-    expect(result).toBeNull()
+    expect(result).toEqual({ data: null, apiDown: false })
   })
 
   it("logs an error and returns null when the API response is unexpected", async () => {
@@ -133,7 +135,7 @@ describe("fetchEvent", () => {
 
     const result = await fetchEvent("test-event")
 
-    expect(result).toBeNull()
+    expect(result).toEqual({ data: null, apiDown: true })
     expect(consoleSpy).toHaveBeenCalledWith("Error fetching event", expect.any(TypeError))
   })
 })
@@ -168,7 +170,7 @@ describe("fetchOngoingOrUpcomingEvents", () => {
 
     const result = await fetchOngoingOrUpcomingEvents()
 
-    expect(result).toEqual([sampleEvent])
+    expect(result).toEqual({ data: [sampleEvent], apiDown: false })
   })
 
   it("uses a $or filter combining today's events and currently-ongoing events", async () => {
@@ -190,7 +192,7 @@ describe("fetchOngoingOrUpcomingEvents", () => {
 
     const result = await fetchOngoingOrUpcomingEvents()
 
-    expect(result).toEqual([])
+    expect(result).toEqual({ data: [], apiDown: true })
     expect(consoleSpy).toHaveBeenCalledWith("Error fetching events", expect.any(TypeError))
   })
 })
@@ -253,7 +255,7 @@ describe("fetchUpcomingMapEvents", () => {
 
     const result = await fetchUpcomingMapEvents()
 
-    expect(result).toEqual([sampleEvent])
+    expect(result).toEqual({ data: [sampleEvent], apiDown: false })
   })
 
   it("logs an error and returns an empty array when the API response is unexpected", async () => {
@@ -262,7 +264,7 @@ describe("fetchUpcomingMapEvents", () => {
 
     const result = await fetchUpcomingMapEvents()
 
-    expect(result).toEqual([])
+    expect(result).toEqual({ data: [], apiDown: true })
     expect(consoleSpy).toHaveBeenCalledWith("Error fetching upcoming events", expect.any(TypeError))
   })
 })
@@ -297,7 +299,7 @@ describe("fetchAllPublishedEventSlugs", () => {
 
     const result = await fetchAllPublishedEventSlugs()
 
-    expect(result).toEqual(["test-event", "another-event"])
+    expect(result).toEqual({ data: ["test-event", "another-event"], apiDown: false })
   })
 
   it("applies no date filter", async () => {
@@ -315,7 +317,7 @@ describe("fetchAllPublishedEventSlugs", () => {
 
     const result = await fetchAllPublishedEventSlugs()
 
-    expect(result).toEqual([])
+    expect(result).toEqual({ data: [], apiDown: true })
     expect(consoleSpy).toHaveBeenCalledWith(
       "Error fetching event slugs for sitemap",
       expect.any(TypeError)
@@ -366,7 +368,7 @@ describe("fetchMyEvents", () => {
 
     const result = await fetchMyEvents("token", 1)
 
-    expect(result).toEqual([sampleEvent])
+    expect(result).toEqual({ data: [sampleEvent], apiDown: false })
   })
 
   it("returns an empty array when the response is not ok", async () => {
@@ -377,7 +379,7 @@ describe("fetchMyEvents", () => {
 
     const result = await fetchMyEvents("bad-token", 1)
 
-    expect(result).toEqual([])
+    expect(result).toEqual({ data: [], apiDown: false })
   })
 
   it("logs an error and returns an empty array when fetch throws", async () => {
@@ -386,7 +388,7 @@ describe("fetchMyEvents", () => {
 
     const result = await fetchMyEvents("token", 1)
 
-    expect(result).toEqual([])
+    expect(result).toEqual({ data: [], apiDown: true })
     expect(consoleSpy).toHaveBeenCalledWith("Error fetching own events", expect.any(Error))
   })
 })

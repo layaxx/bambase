@@ -14,7 +14,7 @@ if (!token) {
 }
 
 const result = Astro.getActionResult(actions.events.create)
-const allLocations = await fetchLocations()
+const { data: allLocations } = await fetchLocations()
 
 if (result?.data) {
   return Astro.redirect(`/event/${result.data.slug}`)

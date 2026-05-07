@@ -12,7 +12,7 @@ const token = Astro.cookies.get("auth_token")?.value
 if (!token) return Astro.redirect(`/login?redirect=/job/${Astro.params.slug}/edit`)
 
 const { slug } = Astro.params
-const job = slug ? await fetchJobOffer(slug, token) : null
+const { data: job } = slug ? await fetchJobOffer(slug, token) : { data: null }
 
 if (!job) return Astro.redirect("/jobs")
 

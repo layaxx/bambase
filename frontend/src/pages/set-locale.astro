@@ -4,7 +4,6 @@ import type { Locale } from "@/i18n/translations"
 const SUPPORTED: Locale[] = ["de", "en"]
 
 const lang = Astro.url.searchParams.get("lang") as Locale | null
-const redirect = Astro.url.searchParams.get("redirect") ?? "/"
 
 if (lang && SUPPORTED.includes(lang)) {
   Astro.cookies.set("locale", lang, {
@@ -14,5 +13,5 @@ if (lang && SUPPORTED.includes(lang)) {
   })
 }
 
-return Astro.redirect(redirect)
+return Astro.redirect(Astro.url.searchParams.get("redirect") ?? "/")
 ---

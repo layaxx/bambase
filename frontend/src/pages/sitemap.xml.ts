@@ -20,7 +20,7 @@ function urlEntry(loc: string): string {
 export const GET: APIRoute = async ({ url }) => {
   const origin = url.origin
 
-  const [eventSlugs, jobOffers] = await Promise.all([
+  const [{ data: eventSlugs }, { data: jobOffers }] = await Promise.all([
     fetchAllPublishedEventSlugs(),
     fetchJobOffers(500),
   ])

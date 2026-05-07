@@ -7,7 +7,7 @@ vi.mock("./client", () => ({
   client: {
     collection: vi.fn().mockReturnValue({ find: mockFind }),
   },
-  strapiUrl: "http://localhost:1337",
+  withTimeout: (p: Promise<unknown>) => p,
 }))
 
 const sampleGroup = {
@@ -49,7 +49,7 @@ describe("fetchStudentGroups", () => {
 
     const result = await fetchStudentGroups()
 
-    expect(result).toEqual([sampleGroup])
+    expect(result).toEqual({ data: [sampleGroup], apiDown: false })
   })
 
   it("returns an empty array when data is null", async () => {
@@ -57,7 +57,7 @@ describe("fetchStudentGroups", () => {
 
     const result = await fetchStudentGroups()
 
-    expect(result).toEqual([])
+    expect(result).toEqual({ data: [], apiDown: false })
   })
 
   it("logs an error and returns an empty array when the API response is unexpected", async () => {
@@ -66,7 +66,7 @@ describe("fetchStudentGroups", () => {
 
     const result = await fetchStudentGroups()
 
-    expect(result).toEqual([])
+    expect(result).toEqual({ data: [], apiDown: true })
     expect(consoleSpy).toHaveBeenCalledWith("Error fetching student groups", expect.any(TypeError))
     consoleSpy.mockRestore()
   })

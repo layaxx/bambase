@@ -1,6 +1,7 @@
 import { STRAPI_TOKEN } from "astro:env/server"
-import { client } from "./client"
+import { client, withTimeout, fetchWithTimeout } from "./client"
 import { STRAPI_URL } from "astro:env/client"
+import type { ApiResult } from "./types"
 
 export const JOB_TYPES = [
   "part_time",
@@ -55,31 +56,31 @@ export type JobOffer = {
   createdAt: string
 }
 
-export async function fetchJobOffers(limit = 100): Promise<JobOffer[]> {
+export async function fetchJobOffers(limit = 100): Promise<ApiResult<JobOffer[]>> {
   try {
-    const result = await client.collection("job-offers").find({
-      filters: { online_status: { $eq: "published" } },
-      sort: ["createdAt:desc"],
-      populate: ["contact"],
-      pagination: { limit },
-    })
-    return (result.data ?? []) as unknown as JobOffer[]
+    const result = await withTimeout(
+      client.collection("job-offers").find({
+        filters: { online_status: { $eq: "published" } },
+        sort: ["createdAt:desc"],
+        populate: ["contact"],
+        pagination: { limit },
+      })
+    )
+    return { data: (result.data ?? []) as unknown as JobOffer[], apiDown: false }
   } catch (error) {
     console.error("Error fetching job offers", error)
-    return []
+    return { data: [], apiDown: true }
   }
 }
 
-export async function fetchJobOffer(slug: string, token = STRAPI_TOKEN): Promise<JobOffer | null> {
+export async function fetchJobOffer(
+  slug: string,
+  token = STRAPI_TOKEN
+): Promise<ApiResult<JobOffer | null>> {
   try {
-    const headers: Record<string, string> = {}
-    headers["Authorization"] = `Bearer ${token}`
-
-    const res = await fetch(
+    const res = await fetchWithTimeout(
       `${STRAPI_URL}/api/job-offers?filters[slug][$eq]=${encodeURIComponent(slug)}&populate[contact]=true&populate[owner][fields][0]=id&populate[reports][filters][review_status][$ne]=dismissed`,
-      {
-        headers,
-      }
+      { headers: { Authorization: `Bearer ${token}` } }
     )
 
     if (!res.ok) {
@@ -87,31 +88,33 @@ export async function fetchJobOffer(slug: string, token = STRAPI_TOKEN): Promise
         console.warn("Unauthorized access with provided token, retrying with public token...")
         return fetchJobOffer(slug, STRAPI_TOKEN)
       }
-      return null
+      return { data: null, apiDown: false }
     }
     const result = await res.json()
-
-    return (result?.data?.[0] ?? null) as unknown as JobOffer | null
+    return { data: (result?.data?.[0] ?? null) as unknown as JobOffer | null, apiDown: false }
   } catch (error) {
     console.error("Error fetching job offer", error)
-    return null
+    return { data: null, apiDown: true }
   }
 }
 
-export async function fetchMyJobOffers(token: string, userId: number): Promise<JobOffer[]> {
+export async function fetchMyJobOffers(
+  token: string,
+  userId: number
+): Promise<ApiResult<JobOffer[]>> {
   try {
-    const res = await fetch(
+    const res = await fetchWithTimeout(
       `${STRAPI_URL}/api/job-offers?filters[owner][id][$eq]=${userId}&populate[0]=contact&sort=createdAt:desc`,
       { headers: { Authorization: `Bearer ${token}` } }
     )
     if (!res.ok) {
       console.warn("Failed to fetch own job offers:", await res.text())
-      return []
+      return { data: [], apiDown: false }
     }
     const result = await res.json()
-    return (result?.data ?? []) as unknown as JobOffer[]
+    return { data: (result?.data ?? []) as unknown as JobOffer[], apiDown: false }
   } catch (error) {
     console.error("Error fetching own job offers", error)
-    return []
+    return { data: [], apiDown: true }
   }
 }

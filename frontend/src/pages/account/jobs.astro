@@ -17,7 +17,7 @@ if (error) {
 }
 
 const token = Astro.cookies.get("auth_token")!.value
-const jobs = await fetchMyJobOffers(token, user.id)
+const { data: jobs } = await fetchMyJobOffers(token, user.id)
 
 const statusLabel: Record<string, string> = {
   submitted: t.auth.statusSubmitted,

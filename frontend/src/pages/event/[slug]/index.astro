@@ -1,7 +1,7 @@
 ---
 import { actions } from "astro:actions"
 import PageLayout from "@/layouts/PageLayout.astro"
-import { fetchEvent, REPORT_WARNING_THRESHOLD } from "@/utils/api"
+import { fetchEvent, REPORT_WARNING_THRESHOLD, type Event } from "@/utils/api"
 import { formatDateTime, formatTime } from "@/utils/event-formatting"
 import { useTranslations } from "@/i18n/translations"
 import IconArrowLeft from "@/components/icons/IconArrowLeft.astro"
@@ -10,15 +10,18 @@ import IconExternalLink from "@/components/icons/IconExternalLink.astro"
 import ReportModal from "@/components/ReportModal.astro"
 import EventLocation from "@/components/events/EventLocation.astro"
 import EventCategoryBadge from "@/components/events/EventCategoryBadge.astro"
+import ApiDownBanner from "@/components/ApiDownBanner.astro"
 
 const t = useTranslations(Astro.locals.locale)
 const dateLocale = t.mensa.dateLocale
 
 const { slug } = Astro.params
-const [event, { data: me }] = await Promise.all([
-  slug ? fetchEvent(slug) : Promise.resolve(null),
+const [eventResult, { data: me }] = await Promise.all([
+  slug ? fetchEvent(slug) : Promise.resolve({ data: null as Event | null, apiDown: false }),
   Astro.callAction(actions.auth.getMe, {}),
 ])
+const event = eventResult.data
+const apiDown = eventResult.apiDown
 const isOwner = me && event?.owner?.id === me.id
 
 const deleteResult = Astro.getActionResult(actions.events.delete)
@@ -45,7 +48,9 @@ const ogImage = event ? `${Astro.url.origin}/api/og/event/${event.slug}.png` : u
 
 <PageLayout description={description} ogImage={ogImage} title={event?.title ?? t.events.pageTitle}>
   {
-    !event ? (
+    apiDown ? (
+      <ApiDownBanner />
+    ) : !event ? (
       <div class="py-20 text-center">
         <h1 class="mb-4 text-3xl font-bold">{t.events.notFound.headline}</h1>
         <p class="text-base-content/70">{t.events.notFound.description}</p>

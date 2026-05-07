@@ -1,5 +1,6 @@
 import type { Dayjs } from "dayjs"
-import { client } from "./client"
+import { client, withTimeout } from "./client"
+import type { ApiResult } from "./types"
 
 export type MensaMeal = {
   name: string
@@ -11,16 +12,18 @@ export type MensaMeal = {
   id: string
 }
 
-export async function fetchMensaMeals(date: Dayjs): Promise<MensaMeal[]> {
+export async function fetchMensaMeals(date: Dayjs): Promise<ApiResult<MensaMeal[]>> {
   try {
-    const result = await client.collection("mensa-meals").find({
-      filters: { date: { $eq: date.format("YYYY-MM-DD") } },
-      populate: ["allergens"],
-      pagination: { limit: 100 },
-    })
-    return (result.data ?? []) as unknown as MensaMeal[]
+    const result = await withTimeout(
+      client.collection("mensa-meals").find({
+        filters: { date: { $eq: date.format("YYYY-MM-DD") } },
+        populate: ["allergens"],
+        pagination: { limit: 100 },
+      })
+    )
+    return { data: (result.data ?? []) as unknown as MensaMeal[], apiDown: false }
   } catch (error) {
     console.error("Error fetching Mensa meals", error)
-    return []
+    return { data: [], apiDown: true }
   }
 }

@@ -7,6 +7,7 @@ Disallow: /forgot-password
 Disallow: /reset-password
 Disallow: /job/new
 Disallow: /event/new
+Disallow: /500
 Disallow: /api/
 Allow: /api/og/*
 

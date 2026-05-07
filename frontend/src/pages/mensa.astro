@@ -4,6 +4,7 @@ import PageHeader from "@/components/PageHeader.astro"
 import IconUtensils from "@/components/icons/IconUtensils.astro"
 import MensaDaySection from "@/components/mensa/MensaDaySection.astro"
 import MensaWeekendSection from "@/components/mensa/MensaWeekendSection.astro"
+import ApiDownBanner from "@/components/ApiDownBanner.astro"
 import { fetchMensaMeals } from "@/utils/api"
 import { groupMealsByDay } from "@/utils/mensa"
 import dayjs from "dayjs"
@@ -14,12 +15,11 @@ const t = useTranslations(Astro.locals.locale)
 const today = dayjs()
 const days = Array.from({ length: 7 }, (_, i) => today.add(i, "day"))
 
-const mealsByDay = await Promise.all(
-  days.map(async (day) => ({
-    day,
-    meals: await fetchMensaMeals(day),
-  }))
+const mealResults = await Promise.all(
+  days.map(async (day) => ({ day, result: await fetchMensaMeals(day) }))
 )
+const apiDown = mealResults.some((r) => r.result.apiDown)
+const mealsByDay = mealResults.map(({ day, result }) => ({ day, meals: result.data }))
 
 const grouped = groupMealsByDay(mealsByDay, {
   today: t.mensa.today,
@@ -34,6 +34,8 @@ const grouped = groupMealsByDay(mealsByDay, {
   <PageHeader color="warning" subtitle={t.mensa.pageSubtitle} title={t.mensa.pageTitle}>
     <IconUtensils class="h-5 w-5" slot="icon" />
   </PageHeader>
+
+  {apiDown && <ApiDownBanner />}
 
   <div class="flex flex-col gap-10">
     {

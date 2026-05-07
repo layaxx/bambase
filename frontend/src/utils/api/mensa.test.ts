@@ -8,6 +8,7 @@ vi.mock("./client", () => ({
   client: {
     collection: vi.fn().mockReturnValue({ find: mockFind }),
   },
+  withTimeout: (p: Promise<unknown>) => p,
   strapiUrl: "http://localhost:1337",
 }))
 
@@ -52,7 +53,7 @@ describe("fetchMensaMeals", () => {
 
     const result = await fetchMensaMeals(dayjs("2026-04-15"))
 
-    expect(result).toEqual(meals)
+    expect(result).toEqual({ data: meals, apiDown: false })
   })
 
   it("returns an empty array when data is null", async () => {
@@ -60,7 +61,7 @@ describe("fetchMensaMeals", () => {
 
     const result = await fetchMensaMeals(dayjs("2026-04-15"))
 
-    expect(result).toEqual([])
+    expect(result).toEqual({ data: [], apiDown: false })
   })
 
   it("logs an error and returns an empty array when the API response is unexpected", async () => {
@@ -69,7 +70,7 @@ describe("fetchMensaMeals", () => {
 
     const result = await fetchMensaMeals(dayjs("2026-04-15"))
 
-    expect(result).toEqual([])
+    expect(result).toEqual({ data: [], apiDown: true })
     expect(consoleSpy).toHaveBeenCalledWith("Error fetching Mensa meals", expect.any(TypeError))
     consoleSpy.mockRestore()
   })

@@ -7,7 +7,7 @@ export const GET: APIRoute = async ({ params, redirect }) => {
   const { slug } = params
   if (!slug) return redirect("/og-image.png", 302)
 
-  const event = await fetchEvent(slug).catch(() => null)
+  const { data: event } = await fetchEvent(slug)
   if (!event) return redirect("/og-image.png", 302)
 
   try {

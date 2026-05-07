@@ -1,7 +1,8 @@
 ---
 import { actions } from "astro:actions"
 import PageLayout from "@/layouts/PageLayout.astro"
-import { fetchJobOffer, REPORT_WARNING_THRESHOLD } from "@/utils/api"
+import { fetchJobOffer, REPORT_WARNING_THRESHOLD, type JobOffer } from "@/utils/api"
+import ApiDownBanner from "@/components/ApiDownBanner.astro"
 import { JOB_STATUS_ALERT_CLASS } from "@/utils/job-status"
 import { useTranslations } from "@/i18n/translations"
 import IconArrowLeft from "@/components/icons/IconArrowLeft.astro"
@@ -16,10 +17,14 @@ const t = useTranslations(Astro.locals.locale)
 
 const { slug } = Astro.params
 const token = Astro.cookies.get("auth_token")?.value
-const [job, { data: me }] = await Promise.all([
-  slug ? fetchJobOffer(slug, token) : Promise.resolve(null),
+const [jobResult, { data: me }] = await Promise.all([
+  slug
+    ? fetchJobOffer(slug, token)
+    : Promise.resolve({ data: null as JobOffer | null, apiDown: false }),
   Astro.callAction(actions.auth.getMe, {}),
 ])
+const job = jobResult.data
+const apiDown = jobResult.apiDown
 const isOwner = me && job?.owner?.id === me.id
 
 const hasReports = (job?.reports?.length ?? 0) >= REPORT_WARNING_THRESHOLD
@@ -59,7 +64,9 @@ const ogImage =
 
 <PageLayout description={description} ogImage={ogImage} title={job?.title ?? t.jobs.pageTitle}>
   {
-    !job ? (
+    apiDown ? (
+      <ApiDownBanner />
+    ) : !job ? (
       <div class="text-center py-20">
         <h1 class="text-3xl font-bold mb-4">{t.jobs.notFound.headline}</h1>
         <p class="text-base-content/70">{t.jobs.notFound.description}</p>

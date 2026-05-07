@@ -1,4 +1,5 @@
 export { client } from "./client"
+export type { ApiResult } from "./types"
 export type { JobOffer, JobType, JobField, WorkMode } from "./job-offers"
 export {
   fetchJobOffers,

@@ -2,6 +2,7 @@
 import PageLayout from "@/layouts/PageLayout.astro"
 import PageHeader from "@/components/PageHeader.astro"
 import IconMapPin from "@/components/icons/IconMapPin.astro"
+import ApiDownBanner from "@/components/ApiDownBanner.astro"
 import {
   fetchLocations,
   fetchUpcomingMapEvents,
@@ -13,7 +14,10 @@ import { formatAddress, type MapEvent } from "@/utils/map"
 import { useTranslations } from "@/i18n/translations"
 
 const t = useTranslations(Astro.locals.locale)
-const [locations, upcomingEvents] = await Promise.all([fetchLocations(), fetchUpcomingMapEvents()])
+const [locResult, eventsResult] = await Promise.all([fetchLocations(), fetchUpcomingMapEvents()])
+const locations = locResult.data
+const upcomingEvents = eventsResult.data
+const apiDown = locResult.apiDown || eventsResult.apiDown
 
 const mapEvents: MapEvent[] = upcomingEvents
   .filter((ev): ev is Event & { map_location: EventMapLocation } => ev.map_location != null)
@@ -47,6 +51,8 @@ const upcomingEventsLabel = t.map.upcomingEvents
   <PageHeader color="info" subtitle={t.map.pageSubtitle} title={t.map.pageTitle}>
     <IconMapPin class="h-5 w-5" slot="icon" />
   </PageHeader>
+
+  {apiDown && <ApiDownBanner />}
 
   <div class="mb-2 flex flex-wrap gap-2">
     {

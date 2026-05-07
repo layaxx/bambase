@@ -1,4 +1,5 @@
-import { client } from "./client"
+import { client, withTimeout } from "./client"
+import type { ApiResult } from "./types"
 
 export type MapLocation = {
   documentId: string
@@ -17,16 +18,18 @@ export type MapLocation = {
   }
 }
 
-export async function fetchLocations(): Promise<MapLocation[]> {
+export async function fetchLocations(): Promise<ApiResult<MapLocation[]>> {
   try {
-    const result = await client.collection("locations").find({
-      sort: ["name:asc"],
-      pagination: { limit: 500 },
-      populate: ["address"],
-    })
-    return (result.data ?? []) as unknown as MapLocation[]
+    const result = await withTimeout(
+      client.collection("locations").find({
+        sort: ["name:asc"],
+        pagination: { limit: 500 },
+        populate: ["address"],
+      })
+    )
+    return { data: (result.data ?? []) as unknown as MapLocation[], apiDown: false }
   } catch (error) {
     console.error("Error fetching locations", error)
-    return []
+    return { data: [], apiDown: true }
   }
 }

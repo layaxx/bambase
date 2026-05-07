@@ -6,6 +6,7 @@ import IconSliders from "@/components/icons/IconSliders.astro"
 import IconChevronDown from "@/components/icons/IconChevronDown.astro"
 import IconSearch from "@/components/icons/IconSearch.astro"
 import JobOfferCard from "@/components/jobs/JobOfferCard.astro"
+import ApiDownBanner from "@/components/ApiDownBanner.astro"
 import {
   fetchJobOffers,
   JOB_TYPES,
@@ -19,7 +20,7 @@ import { useTranslations } from "@/i18n/translations"
 
 const t = useTranslations(Astro.locals.locale)
 
-const jobs = await fetchJobOffers()
+const { data: jobs, apiDown } = await fetchJobOffers()
 const isLoggedIn = !!Astro.cookies.get("auth_token")?.value
 ---
 
@@ -37,6 +38,8 @@ const isLoggedIn = !!Astro.cookies.get("auth_token")?.value
       <a class="btn btn-primary btn-sm" href="/job/new">{t.jobs.postJob}</a>
     </div>
   </PageHeader>
+
+  {apiDown && <ApiDownBanner />}
 
   <details class="group mb-2 rounded-xl border border-base-300" id="filter-panel">
     <summary class="flex cursor-pointer list-none items-center justify-between p-3">

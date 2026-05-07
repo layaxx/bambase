@@ -7,7 +7,7 @@ export const GET: APIRoute = async ({ params, redirect }) => {
   const { slug } = params
   if (!slug) return redirect("/og-image.png", 302)
 
-  const job = await fetchJobOffer(slug).catch(() => null)
+  const { data: job } = await fetchJobOffer(slug)
 
   if (!job || job.online_status !== "published") return redirect("/og-image.png", 302)
 

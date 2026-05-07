@@ -12,8 +12,8 @@ const token = Astro.cookies.get("auth_token")?.value
 if (!token) return Astro.redirect(`/login?redirect=/event/${Astro.params.slug}/edit`)
 
 const { slug } = Astro.params
-const [event, allLocations] = await Promise.all([
-  slug ? fetchEvent(slug) : Promise.resolve(null),
+const [{ data: event }, { data: allLocations }] = await Promise.all([
+  slug ? fetchEvent(slug) : Promise.resolve({ data: null }),
   fetchLocations(),
 ])
 

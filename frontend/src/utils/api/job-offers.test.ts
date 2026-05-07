@@ -6,6 +6,8 @@ const mockCollection = vi.hoisted(() => vi.fn())
 
 vi.mock("./client", () => ({
   client: { collection: mockCollection },
+  withTimeout: (p: Promise<unknown>) => p,
+  fetchWithTimeout: (url: string, opts: RequestInit) => fetch(url, opts),
   strapiUrl: "http://localhost:1337",
 }))
 
@@ -67,7 +69,7 @@ describe("fetchJobOffers", () => {
 
     const result = await fetchJobOffers()
 
-    expect(result).toEqual([sampleJob])
+    expect(result).toEqual({ data: [sampleJob], apiDown: false })
   })
 
   it("logs an error and returns an empty array when the API response is unexpected", async () => {
@@ -76,7 +78,7 @@ describe("fetchJobOffers", () => {
 
     const result = await fetchJobOffers()
 
-    expect(result).toEqual([])
+    expect(result).toEqual({ data: [], apiDown: true })
     expect(consoleSpy).toHaveBeenCalledWith("Error fetching job offers", expect.any(TypeError))
   })
 })
@@ -153,7 +155,7 @@ describe("fetchJobOffer", () => {
 
     const result = await fetchJobOffer("some-slug", "token")
 
-    expect(result).toEqual(sampleJob)
+    expect(result).toEqual({ data: sampleJob, apiDown: false })
   })
 
   it("returns null when the response is not ok", async () => {
@@ -161,7 +163,7 @@ describe("fetchJobOffer", () => {
 
     const result = await fetchJobOffer("some-slug", "token")
 
-    expect(result).toBeNull()
+    expect(result).toEqual({ data: null, apiDown: false })
   })
 
   it("returns null when the data array is empty", async () => {
@@ -172,7 +174,7 @@ describe("fetchJobOffer", () => {
 
     const result = await fetchJobOffer("no-such-slug", "token")
 
-    expect(result).toBeNull()
+    expect(result).toEqual({ data: null, apiDown: false })
   })
 
   it("logs an error and returns null when fetch throws", async () => {
@@ -181,7 +183,7 @@ describe("fetchJobOffer", () => {
 
     const result = await fetchJobOffer("some-slug", "token")
 
-    expect(result).toBeNull()
+    expect(result).toEqual({ data: null, apiDown: true })
     expect(consoleSpy).toHaveBeenCalledWith("Error fetching job offer", expect.any(Error))
   })
 
@@ -197,7 +199,7 @@ describe("fetchJobOffer", () => {
     const result = await fetchJobOffer("some-slug", "custom-token")
 
     expect(fetch).toHaveBeenCalledTimes(2)
-    expect(result).toEqual(sampleJob)
+    expect(result).toEqual({ data: sampleJob, apiDown: false })
     expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("retrying"))
   })
 
@@ -207,7 +209,7 @@ describe("fetchJobOffer", () => {
     const result = await fetchJobOffer("some-slug")
 
     expect(fetch).toHaveBeenCalledTimes(1)
-    expect(result).toBeNull()
+    expect(result).toEqual({ data: null, apiDown: false })
   })
 })
 
@@ -254,15 +256,15 @@ describe("fetchMyJobOffers", () => {
 
     const result = await fetchMyJobOffers("token", 1)
 
-    expect(result).toEqual([sampleJob])
+    expect(result).toEqual({ data: [sampleJob], apiDown: false })
   })
 
   it("returns an empty array when the response is not ok", async () => {
-    vi.mocked(fetch).mockResolvedValue({ ok: false } as Response)
+    vi.mocked(fetch).mockResolvedValue({ ok: false, text: async () => "Unauthorized" } as Response)
 
     const result = await fetchMyJobOffers("bad-token", 1)
 
-    expect(result).toEqual([])
+    expect(result).toEqual({ data: [], apiDown: false })
   })
 
   it("logs an error and returns an empty array when fetch throws", async () => {
@@ -271,7 +273,7 @@ describe("fetchMyJobOffers", () => {
 
     const result = await fetchMyJobOffers("token", 1)
 
-    expect(result).toEqual([])
+    expect(result).toEqual({ data: [], apiDown: true })
     expect(consoleSpy).toHaveBeenCalledWith("Error fetching own job offers", expect.any(Error))
   })
 })

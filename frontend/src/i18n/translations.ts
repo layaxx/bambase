@@ -361,6 +361,16 @@ const de = {
     description: "Die gesuchte Seite existiert nicht oder wurde verschoben.",
     backHome: "Zur Startseite",
   },
+  page500: {
+    pageTitle: "Serverfehler",
+    headline: "500",
+    description: "Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es später erneut.",
+    backHome: "Zur Startseite",
+  },
+  apiDown: {
+    message:
+      "Der Service ist momentan nicht erreichbar. Einige Inhalte werden möglicherweise nicht angezeigt.",
+  },
   language: {
     switchLabel: "EN",
     switchAccessibleLabel: "Switch to English",
@@ -721,6 +731,15 @@ const en: SetAtPath<
     headline: "404",
     description: "The page you are looking for does not exist or has been moved.",
     backHome: "Back to homepage",
+  },
+  page500: {
+    pageTitle: "Server error",
+    headline: "500",
+    description: "An unexpected error occurred. Please try again later.",
+    backHome: "Back to homepage",
+  },
+  apiDown: {
+    message: "The service is currently unavailable. Some content may not be displayed.",
   },
   language: {
     switchLabel: "DE",

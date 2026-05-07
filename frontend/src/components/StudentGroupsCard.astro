@@ -4,9 +4,10 @@ import StudentGroup from "./StudentGroup.astro"
 import { fetchStudentGroups } from "@/utils/api"
 import { useTranslations } from "@/i18n/translations"
 import IconUsers from "./icons/IconUsers.astro"
+import ApiDownBanner from "./ApiDownBanner.astro"
 
 const t = useTranslations(Astro.locals.locale)
-const groups = await fetchStudentGroups()
+const { data: groups, apiDown } = await fetchStudentGroups()
 
 const LIMIT = 5
 ---
@@ -25,6 +26,8 @@ const LIMIT = 5
       </div>
     </div>
   </div>
+
+  {apiDown && <ApiDownBanner />}
 
   <!-- Original grid: article (col-span-2) + sidebar (col-start-3, row-span-2) + groups (auto-placed) -->
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="main-grid">
