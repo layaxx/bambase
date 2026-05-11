@@ -57,12 +57,13 @@ const dateLocale = t.mensa.dateLocale
     {
       !short && event.external_url && (
         <a
+          aria-label={t.events.moreInfo}
           class="shrink-0 text-primary hover:underline"
           href={event.external_url}
           rel="noopener noreferrer"
           target="_blank"
         >
-          ↗
+          <span aria-hidden="true">↗</span>
         </a>
       )
     }

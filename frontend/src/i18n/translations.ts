@@ -25,6 +25,7 @@ const de = {
     openMenu: "Menü öffnen",
     closeMenu: "Menü schließen",
     about_us: "Über uns",
+    skipToContent: "Zum Inhalt springen",
   },
   events: {
     title: "Heutige Veranstaltungen",
@@ -395,6 +396,7 @@ const en: SetAtPath<
     openMenu: "Open menu",
     closeMenu: "Close menu",
     about_us: "About us",
+    skipToContent: "Skip to content",
   },
   events: {
     title: "Today's Events",

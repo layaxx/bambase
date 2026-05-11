@@ -28,8 +28,14 @@ const switchAccessibleLabel = t.language.switchAccessibleLabel
 const switchUrl = `/set-locale?lang=${switchLang}&redirect=${encodeURIComponent(pathname)}`
 ---
 
+<a
+  class="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 btn btn-neutral btn-sm"
+  href="#main-content"
+>
+  {t.nav.skipToContent}
+</a>
 <header
-  class="sticky top-0 z-50 w-full border-b border- border-base-300 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60"
+  class="sticky top-0 z-50 w-full border-b border-base-300 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60"
 >
   <div class="max-w-7xl mx-auto px-4">
     <div class="flex h-16 items-center gap-6">
@@ -41,6 +47,7 @@ const switchUrl = `/set-locale?lang=${switchLang}&redirect=${encodeURIComponent(
         {
           navItems.map((item) => (
             <a
+              aria-current={isActive(item.href) ? "page" : undefined}
               class:list={[
                 "px-3 py-1.5 rounded-md text-sm no-underline transition-colors",
                 {
@@ -116,6 +123,7 @@ const switchUrl = `/set-locale?lang=${switchLang}&redirect=${encodeURIComponent(
       {
         navItems.map((item) => (
           <a
+            aria-current={isActive(item.href) ? "page" : undefined}
             class:list={[
               "px-3 py-2 rounded-md text-sm no-underline transition-colors",
               {

@@ -95,6 +95,7 @@ if (!error && result?.error?.code === "BAD_REQUEST") {
               <fieldset class="fieldset">
                 <legend class="fieldset-legend">{t.auth.confirmPasswordLabel}</legend>
                 <input
+                  autocomplete="new-password"
                   class="input w-full"
                   name="passwordConfirm"
                   placeholder={t.auth.confirmPasswordPlaceholder}

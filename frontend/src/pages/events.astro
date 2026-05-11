@@ -48,12 +48,12 @@ const dateFilters = [
   <div class="mb-2 flex flex-col gap-3">
     <div class="flex flex-wrap items-center gap-2">
       <span class="text-sm text-base-content/40">{t.events.filterCategory}:</span>
-      <button class="btn btn-outline btn-sm" data-cat-filter="all">
+      <button aria-pressed="false" class="btn btn-outline btn-sm" data-cat-filter="all">
         {t.events.filterAll}
       </button>
       {
         EVENT_CATEGORIES.map((cat) => (
-          <button class="btn btn-outline btn-sm" data-cat-filter={cat}>
+          <button aria-pressed="false" class="btn btn-outline btn-sm" data-cat-filter={cat}>
             {t.events.categories[cat]}
           </button>
         ))
@@ -77,6 +77,8 @@ const dateFilters = [
     data-singular={t.events.resultSingular}
     id="result-count"
   >
+    {events.length}
+    {events.length === 1 ? t.events.resultSingular : t.events.resultPlural}
   </p>
 
   {
@@ -150,6 +152,7 @@ const dateFilters = [
       const active = btn.dataset.catFilter === cat
       btn.classList.toggle("btn-primary", active)
       btn.classList.toggle("btn-outline", !active)
+      btn.setAttribute("aria-pressed", String(active))
     })
 
     const sel = document.getElementById("event-date-filter") as HTMLSelectElement | null
