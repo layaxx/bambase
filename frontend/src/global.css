@@ -51,6 +51,11 @@
   font-family: var(--font-archivo);
 }
 
+.map-container {
+  height: calc(100vh - var(--header-height, 4rem) - 12rem);
+  min-height: 26rem;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

@@ -57,7 +57,7 @@ const upcomingEventsLabel = t.map.upcomingEvents
   <div class="mb-2 flex flex-wrap gap-2">
     {
       categories.map((cat) => (
-        <button class="btn btn-outline btn-sm" data-filter={cat}>
+        <button aria-pressed="false" class="btn btn-outline btn-sm" data-filter={cat}>
           {t.map.categories[cat]}
         </button>
       ))
@@ -79,10 +79,7 @@ const upcomingEventsLabel = t.map.upcomingEvents
     </select>
   </div>
 
-  <div
-    class="flex flex-col gap-4 md:flex-row"
-    style="height: calc(100vh - 280px); min-height: 420px;"
-  >
+  <div class="map-container flex flex-col gap-4 md:flex-row">
     <div
       class="order-2 flex h-48 shrink-0 flex-col overflow-y-auto rounded-xl border border-base-300 bg-base-100 md:order-1 md:h-auto md:w-64"
       id="location-list"
@@ -360,6 +357,7 @@ const upcomingEventsLabel = t.map.upcomingEvents
         const active = btn.dataset.filter === filter
         btn.classList.toggle("btn-primary", active)
         btn.classList.toggle("btn-outline", !active)
+        btn.setAttribute("aria-pressed", String(active))
       })
 
       Object.entries(markerMap).forEach(([_id, { marker, category }]) => {
