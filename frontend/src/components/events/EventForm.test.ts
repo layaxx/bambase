@@ -133,7 +133,7 @@ describe("EventForm", () => {
       const html = await container.renderToString(EventForm, { props: baseProps, locals })
       expect(html).toContain('id="custom-location-section"')
       expect(html).toContain("hidden")
-      expect(html).toContain('class="mt-3 flex flex-col gap-3 hidden" id="custom-location-section"')
+      expect(html).toMatch(/class="[^"]*\bhidden\b[^"]*"[^>]*id="custom-location-section"/)
     })
 
     it("linked section does not have 'hidden' class when locationType is 'linked'", async () => {
@@ -142,7 +142,7 @@ describe("EventForm", () => {
         locals,
       })
       expect(html).toContain('id="linked-location-section"')
-      expect(html).not.toContain('class="mt-3 hidden" id="linked-location-section"')
+      expect(html).not.toMatch(/class="[^"]*\bhidden\b[^"]*"[^>]*id="linked-location-section"/)
     })
 
     it("'linked' radio is checked when locationType is 'linked'", async () => {
@@ -158,7 +158,7 @@ describe("EventForm", () => {
         props: { ...baseProps, initialValues: { locationType: "linked" } },
         locals,
       })
-      expect(html).toContain('class="mt-3 flex flex-col gap-3 hidden" id="custom-location-section"')
+      expect(html).toMatch(/class="[^"]*\bhidden\b[^"]*"[^>]*id="custom-location-section"/)
     })
 
     it("custom section does not have 'hidden' class when locationType is 'custom'", async () => {
@@ -167,9 +167,7 @@ describe("EventForm", () => {
         locals,
       })
       expect(html).toContain('id="custom-location-section"')
-      expect(html).not.toContain(
-        'class="mt-3 flex flex-col gap-3 hidden" id="custom-location-section"'
-      )
+      expect(html).not.toMatch(/class="[^"]*\bhidden\b[^"]*"[^>]*id="custom-location-section"/)
     })
 
     it("'custom' radio is checked when locationType is 'custom'", async () => {

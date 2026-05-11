@@ -51,73 +51,63 @@ const initialLocationType = initialValues.locationType ?? "none"
 >
   {documentId && <input name="documentId" type="hidden" value={documentId} />}
 
-  <div class="flex flex-col gap-4">
-    <div class="form-control">
-      <label class="label" for="title">
-        <span class="label-text font-medium">{t.events.fieldTitle}</span>
-      </label>
+  <div class="flex flex-col">
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend font-medium">{t.events.fieldTitle}</legend>
       <input
-        class:list={["input input-bordered w-full", inputErrors.title && "input-error"]}
+        class:list={["input w-full", inputErrors.title && "input-error"]}
         id="title"
         name="title"
         required
         type="text"
         value={initialValues.title}
       />
-      {inputErrors.title && <p class="mt-1 text-sm text-error">{inputErrors.title[0]}</p>}
-    </div>
+      {inputErrors.title && <p class="fieldset-label text-error">{inputErrors.title[0]}</p>}
+    </fieldset>
 
-    <div class="form-control">
-      <label class="label" for="organizer">
-        <span class="label-text font-medium">{t.events.fieldOrganizer}</span>
-      </label>
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend font-medium">{t.events.fieldOrganizer}</legend>
       <input
-        class:list={["input input-bordered w-full", inputErrors.organizer && "input-error"]}
+        class:list={["input w-full", inputErrors.organizer && "input-error"]}
         id="organizer"
         name="organizer"
         required
         type="text"
         value={initialValues.organizer}
       />
-      {inputErrors.organizer && <p class="mt-1 text-sm text-error">{inputErrors.organizer[0]}</p>}
-    </div>
+      {inputErrors.organizer && <p class="fieldset-label text-error">{inputErrors.organizer[0]}</p>}
+    </fieldset>
 
-    <div class="grid gap-4 sm:grid-cols-2">
-      <div class="form-control">
-        <label class="label" for="start">
-          <span class="label-text font-medium">{t.events.fieldStart}</span>
-        </label>
+    <div class="grid sm:grid-cols-2">
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend font-medium">{t.events.fieldStart}</legend>
         <input
-          class:list={["input input-bordered w-full", inputErrors.start && "input-error"]}
+          class:list={["input w-full", inputErrors.start && "input-error"]}
           id="start"
           name="start"
           required
           type="datetime-local"
           value={initialValues.start}
         />
-        {inputErrors.start && <p class="mt-1 text-sm text-error">{inputErrors.start[0]}</p>}
-      </div>
+        {inputErrors.start && <p class="fieldset-label text-error">{inputErrors.start[0]}</p>}
+      </fieldset>
 
-      <div class="form-control">
-        <label class="label" for="end">
-          <span class="label-text font-medium">{t.events.fieldEnd}</span>
-        </label>
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend font-medium">{t.events.fieldEnd}</legend>
         <input
-          class:list={["input input-bordered w-full", inputErrors.end && "input-error"]}
+          class:list={["input w-full", inputErrors.end && "input-error"]}
           id="end"
           name="end"
           required
           type="datetime-local"
           value={initialValues.end}
         />
-        {inputErrors.end && <p class="mt-1 text-sm text-error">{inputErrors.end[0]}</p>}
-      </div>
+        {inputErrors.end && <p class="fieldset-label text-error">{inputErrors.end[0]}</p>}
+      </fieldset>
     </div>
 
-    <div class="form-control">
-      <label class="label" for="category">
-        <span class="label-text font-medium">{t.events.fieldCategory}</span>
-      </label>
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend font-medium">{t.events.fieldCategory}</legend>
       <select class="select select-bordered w-full" id="category" name="category" required>
         {
           Object.entries(t.events.categories).map(([value, label]) => (
@@ -127,12 +117,10 @@ const initialLocationType = initialValues.locationType ?? "none"
           ))
         }
       </select>
-    </div>
+    </fieldset>
 
-    <div class="form-control">
-      <label class="label" for="description">
-        <span class="label-text font-medium">{t.events.fieldDescription}</span>
-      </label>
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend font-medium">{t.events.fieldDescription}</legend>
       <textarea
         class:list={[
           "textarea textarea-bordered w-full resize-y",
@@ -145,20 +133,18 @@ const initialLocationType = initialValues.locationType ?? "none"
       >
       {
         inputErrors.description && (
-          <p class="mt-1 text-sm text-error">{inputErrors.description[0]}</p>
+          <p class="fieldset-label text-error">{inputErrors.description[0]}</p>
         )
       }
-    </div>
+    </fieldset>
 
-    <div class="form-control">
-      <label class="label" for="external_url">
-        <span class="label-text font-medium">
-          {t.events.fieldExternalUrl}
-          <span class="font-normal text-base-content/40"> {t.events.optionalLabel}</span>
-        </span>
-      </label>
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend font-medium">
+        {t.events.fieldExternalUrl}
+        <span class="font-normal text-base-content/40"> {t.events.optionalLabel}</span>
+      </legend>
       <input
-        class:list={["input input-bordered w-full", inputErrors.external_url && "input-error"]}
+        class:list={["input w-full", inputErrors.external_url && "input-error"]}
         id="external_url"
         name="external_url"
         type="url"
@@ -166,13 +152,13 @@ const initialLocationType = initialValues.locationType ?? "none"
       />
       {
         inputErrors.external_url && (
-          <p class="mt-1 text-sm text-error">{inputErrors.external_url[0]}</p>
+          <p class="fieldset-label text-error">{inputErrors.external_url[0]}</p>
         )
       }
-    </div>
+    </fieldset>
 
-    <fieldset class="form-control border-0 p-0 m-0 min-w-0">
-      <legend class="label-text mb-2 font-medium">
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend font-medium">
         {t.events.fieldLocation}
         <span class="font-normal text-base-content/40"> {t.events.optionalLabel}</span>
       </legend>
@@ -230,30 +216,42 @@ const initialLocationType = initialValues.locationType ?? "none"
       </div>
 
       <div
-        class:list={["mt-3 flex flex-col gap-3", initialLocationType !== "custom" && "hidden"]}
+        class:list={["mt-3 flex flex-col", initialLocationType !== "custom" && "hidden"]}
         id="custom-location-section"
       >
-        <input
-          class="input input-bordered w-full"
-          name="custom_location_name"
-          placeholder={t.events.fieldLocationName}
-          type="text"
-          value={initialValues.custom_location_name ?? ""}
-        />
-        <input
-          class="input input-bordered w-full"
-          name="custom_location_address"
-          placeholder={`${t.events.fieldLocationAddress} ${t.events.optionalLabel}`}
-          type="text"
-          value={initialValues.custom_location_address ?? ""}
-        />
-        <input
-          class="input input-bordered w-full"
-          name="custom_location_city"
-          placeholder={`${t.events.fieldLocationCity} ${t.events.optionalLabel}`}
-          type="text"
-          value={initialValues.custom_location_city ?? ""}
-        />
+        <fieldset class="fieldset">
+          <legend class="fieldset-legend">{t.events.fieldLocationName}</legend>
+          <input
+            class="input w-full"
+            name="custom_location_name"
+            type="text"
+            value={initialValues.custom_location_name ?? ""}
+          />
+        </fieldset>
+        <fieldset class="fieldset">
+          <legend class="fieldset-legend">
+            {t.events.fieldLocationAddress}
+            <span class="font-normal text-base-content/40"> {t.events.optionalLabel}</span>
+          </legend>
+          <input
+            class="input w-full"
+            name="custom_location_address"
+            type="text"
+            value={initialValues.custom_location_address ?? ""}
+          />
+        </fieldset>
+        <fieldset class="fieldset">
+          <legend class="fieldset-legend">
+            {t.events.fieldLocationCity}
+            <span class="font-normal text-base-content/40"> {t.events.optionalLabel}</span>
+          </legend>
+          <input
+            class="input w-full"
+            name="custom_location_city"
+            type="text"
+            value={initialValues.custom_location_city ?? ""}
+          />
+        </fieldset>
       </div>
     </fieldset>
   </div>
