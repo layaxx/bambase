@@ -109,8 +109,8 @@ test.describe("Report — authenticated seed user", () => {
     await expect(page.getByRole("button", { name: "Job melden" })).not.toBeVisible()
     await expect(page.getByRole("button", { name: "Löschen" })).toBeVisible()
 
-    page.once("dialog", (d) => d.accept())
     await page.getByRole("button", { name: "Löschen" }).click()
+    await page.getByRole("dialog").getByRole("button", { name: "Löschen" }).click()
     await expect(page).toHaveURL("/account/jobs")
   })
 
@@ -126,8 +126,8 @@ test.describe("Report — authenticated seed user", () => {
 
     await expect(page.getByRole("button", { name: "Veranstaltung melden" })).not.toBeVisible()
 
-    page.once("dialog", (d) => d.accept())
     await page.getByRole("button", { name: "Löschen" }).click()
+    await page.getByRole("dialog").getByRole("button", { name: "Löschen" }).click()
     await expect(page).toHaveURL("/account/events")
   })
 })
@@ -176,8 +176,8 @@ test.describe("Report warning — threshold reached", () => {
     await page.goto(jobUrl)
     await expect(page.locator(".alert-warning")).toBeVisible()
 
-    page.once("dialog", (d) => d.accept())
     await page.getByRole("button", { name: "Löschen" }).click()
+    await page.getByRole("dialog").getByRole("button", { name: "Löschen" }).click()
     await expect(page).toHaveURL("/account/jobs")
   })
 
@@ -209,8 +209,8 @@ test.describe("Report warning — threshold reached", () => {
     await page.goto(eventUrl)
     await expect(page.locator(".alert-warning")).toBeVisible()
 
-    page.once("dialog", (d) => d.accept())
     await page.getByRole("button", { name: "Löschen" }).click()
+    await page.getByRole("dialog").getByRole("button", { name: "Löschen" }).click()
     await expect(page).toHaveURL("/account/events")
   })
 })

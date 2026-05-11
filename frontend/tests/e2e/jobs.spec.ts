@@ -30,8 +30,8 @@ async function createJob(page: Page, title: string): Promise<string> {
 }
 
 async function deleteJob(page: Page) {
-  page.once("dialog", (dialog) => dialog.accept())
   await page.getByRole("button", { name: "Löschen" }).click()
+  await page.getByRole("dialog").getByRole("button", { name: "Löschen" }).click()
   await expect(page).toHaveURL("/account/jobs")
 }
 
@@ -83,8 +83,8 @@ test("archive job redirects to same page and shows status alert", async ({ page 
   const archiveBtn = page.getByRole("button", { name: "Archivieren" })
   await expect(archiveBtn).toBeVisible()
 
-  page.once("dialog", (dialog) => dialog.accept())
   await archiveBtn.click()
+  await page.getByRole("dialog").getByRole("button", { name: "Archivieren" }).click()
   await expect(page).toHaveURL(jobUrl)
 
   await expect(page.locator('[role="alert"]').first()).toBeVisible()
@@ -97,8 +97,8 @@ test("delete job redirects to /account/jobs and removes it from the list", async
   const title = uniqueTitle()
   await createJob(page, title)
 
-  page.once("dialog", (dialog) => dialog.accept())
   await page.getByRole("button", { name: "Löschen" }).click()
+  await page.getByRole("dialog").getByRole("button", { name: "Löschen" }).click()
 
   await expect(page).toHaveURL("/account/jobs")
   await expect(page.locator("body")).not.toContainText(title)

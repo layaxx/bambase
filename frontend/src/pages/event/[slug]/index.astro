@@ -8,6 +8,7 @@ import IconArrowLeft from "@/components/icons/IconArrowLeft.astro"
 import IconClock from "@/components/icons/IconClock.astro"
 import IconExternalLink from "@/components/icons/IconExternalLink.astro"
 import ReportModal from "@/components/ReportModal.astro"
+import ConfirmModal from "@/components/ConfirmModal.astro"
 import EventLocation from "@/components/events/EventLocation.astro"
 import EventCategoryBadge from "@/components/events/EventCategoryBadge.astro"
 import ApiDownBanner from "@/components/ApiDownBanner.astro"
@@ -75,16 +76,13 @@ const ogImage = event ? `${Astro.url.origin}/api/og/event/${event.slug}.png` : u
               <a class="btn btn-outline btn-sm" href={`/event/${event.slug}/edit`}>
                 {t.events.editEvent}
               </a>
-              <form
-                action={actions.events.delete}
-                method="POST"
-                onsubmit={`return confirm('${t.events.deleteConfirm}')`}
+              <button
+                class="btn btn-outline btn-error btn-sm"
+                onclick="document.getElementById('deleteEventModal').showModal()"
+                type="button"
               >
-                <input name="documentId" type="hidden" value={event.documentId} />
-                <button class="btn btn-outline btn-error btn-sm" type="submit">
-                  {t.events.deleteEvent}
-                </button>
-              </form>
+                {t.events.deleteEvent}
+              </button>
             </div>
           )}
         </div>
@@ -174,6 +172,18 @@ const ogImage = event ? `${Astro.url.origin}/api/og/event/${event.slug}.png` : u
           </aside>
         </div>
       </>
+    )
+  }
+  {
+    event && (
+      <ConfirmModal
+        confirmClass="btn btn-error"
+        confirmLabel={t.events.deleteEvent}
+        formAction={actions.events.delete}
+        hiddenInputs={[{ name: "documentId", value: event.documentId }]}
+        id="deleteEventModal"
+        message={t.events.deleteConfirm}
+      />
     )
   }
 </PageLayout>

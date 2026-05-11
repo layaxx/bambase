@@ -11,6 +11,7 @@ import IconMapPin from "@/components/icons/IconMapPin.astro"
 import IconClock from "@/components/icons/IconClock.astro"
 import IconExternalLink from "@/components/icons/IconExternalLink.astro"
 import ReportModal from "@/components/ReportModal.astro"
+import ConfirmModal from "@/components/ConfirmModal.astro"
 import JobTypeBadge from "@/components/jobs/JobTypeBadge.astro"
 
 const t = useTranslations(Astro.locals.locale)
@@ -28,6 +29,7 @@ const apiDown = jobResult.apiDown
 const isOwner = me && job?.owner?.id === me.id
 
 const hasReports = (job?.reports?.length ?? 0) >= REPORT_WARNING_THRESHOLD
+const canArchive = job?.online_status === "published" || job?.online_status === "submitted"
 
 const reportResult = Astro.getActionResult(actions.reports.submit)
 if (reportResult) {
@@ -91,28 +93,22 @@ const ogImage =
               <a class="btn btn-outline btn-sm" href={`/job/${job.slug}/edit`}>
                 {t.jobs.editJob}
               </a>
-              {job.online_status === "published" || job.online_status === "submitted" ? (
-                <form
-                  action={actions.jobs.archive}
-                  method="POST"
-                  onsubmit={`return confirm('${t.jobs.archiveConfirm}')`}
+              {canArchive ? (
+                <button
+                  class="btn btn-outline btn-sm"
+                  onclick="document.getElementById('archiveJobModal').showModal()"
+                  type="button"
                 >
-                  <input name="documentId" type="hidden" value={job.documentId} />
-                  <button class="btn btn-outline btn-sm" type="submit">
-                    {t.jobs.archiveJob}
-                  </button>
-                </form>
-              ) : null}
-              <form
-                action={actions.jobs.delete}
-                method="POST"
-                onsubmit={`return confirm('${t.jobs.deleteConfirm}')`}
-              >
-                <input name="documentId" type="hidden" value={job.documentId} />
-                <button class="btn btn-outline btn-error btn-sm" type="submit">
-                  {t.jobs.deleteJob}
+                  {t.jobs.archiveJob}
                 </button>
-              </form>
+              ) : null}
+              <button
+                class="btn btn-outline btn-error btn-sm"
+                onclick="document.getElementById('deleteJobModal').showModal()"
+                type="button"
+              >
+                {t.jobs.deleteJob}
+              </button>
             </div>
           )}
         </div>
@@ -231,6 +227,30 @@ const ogImage =
             )}
           </aside>
         </div>
+      </>
+    )
+  }
+  {
+    job && (
+      <>
+        {canArchive && (
+          <ConfirmModal
+            confirmClass="btn btn-warning"
+            confirmLabel={t.jobs.archiveJob}
+            formAction={actions.jobs.archive}
+            hiddenInputs={[{ name: "documentId", value: job.documentId }]}
+            id="archiveJobModal"
+            message={t.jobs.archiveConfirm}
+          />
+        )}
+        <ConfirmModal
+          confirmClass="btn btn-error"
+          confirmLabel={t.jobs.deleteJob}
+          formAction={actions.jobs.delete}
+          hiddenInputs={[{ name: "documentId", value: job.documentId }]}
+          id="deleteJobModal"
+          message={t.jobs.deleteConfirm}
+        />
       </>
     )
   }

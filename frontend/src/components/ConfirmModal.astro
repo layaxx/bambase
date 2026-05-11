@@ -1,0 +1,46 @@
+---
+import { useTranslations } from "@/i18n/translations"
+
+interface Props {
+  id: string
+  title?: string
+  message: string
+  confirmLabel: string
+  confirmClass?: string
+  formAction: any
+  hiddenInputs?: { name: string; value: string }[]
+}
+
+const {
+  id,
+  title,
+  message,
+  confirmLabel,
+  confirmClass = "btn btn-error",
+  formAction,
+  hiddenInputs = [],
+} = Astro.props
+
+const resolvedTitle = title ?? confirmLabel
+
+const t = useTranslations(Astro.locals.locale)
+---
+
+<dialog aria-labelledby={`${id}-title`} class="modal" id={id}>
+  <div class="modal-box">
+    <h3 class="mb-2 text-lg font-bold" id={`${id}-title`}>{resolvedTitle}</h3>
+    <p class="text-base-content/70">{message}</p>
+    <div class="modal-action">
+      <button class="btn" onclick={`document.getElementById('${id}').close()`} type="button">
+        {t.ui.cancel}
+      </button>
+      <form action={formAction} method="POST">
+        {hiddenInputs.map((input) => <input name={input.name} type="hidden" value={input.value} />)}
+        <button class:list={confirmClass} type="submit">{confirmLabel}</button>
+      </form>
+    </div>
+  </div>
+  <form class="modal-backdrop" method="dialog">
+    <button aria-label={t.ui.cancel}></button>
+  </form>
+</dialog>

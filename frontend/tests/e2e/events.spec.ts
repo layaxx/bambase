@@ -34,8 +34,8 @@ async function createEvent(page: Page, title: string): Promise<string> {
 }
 
 async function deleteEvent(page: Page) {
-  page.once("dialog", (dialog) => dialog.accept())
   await page.getByRole("button", { name: "Löschen" }).click()
+  await page.getByRole("dialog").getByRole("button", { name: "Löschen" }).click()
   await expect(page).toHaveURL("/account/events")
 }
 
@@ -115,8 +115,8 @@ test("delete event redirects to /account/events and removes it from the list", a
   const title = uniqueTitle()
   await createEvent(page, title)
 
-  page.once("dialog", (dialog) => dialog.accept())
   await page.getByRole("button", { name: "Löschen" }).click()
+  await page.getByRole("dialog").getByRole("button", { name: "Löschen" }).click()
 
   await expect(page).toHaveURL("/account/events")
   await expect(page.locator("body")).not.toContainText(title)
