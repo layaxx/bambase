@@ -2,6 +2,8 @@
 
 ## Upcoming
 
+## logged in status after seed-reset
+
 ## P27 add CI/CD pipelines
 
 ### P18 Job Overview Page

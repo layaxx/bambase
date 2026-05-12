@@ -12,6 +12,19 @@ export default {
       rule: "0 5,8,10,11,12,14,16 * * *",
     },
   },
+  syncUnivisEvents: {
+    task: async ({ strapi }) => {
+      try {
+        await strapi.service("api::event.univis").load()
+      } catch (error) {
+        console.error("Error syncing UniVis events:", error)
+      }
+    },
+    options: {
+      // every day at 02:00
+      rule: "0 2 * * *",
+    },
+  },
   unpublishExpiredJobOffers: {
     task: async ({ strapi }) => {
       try {

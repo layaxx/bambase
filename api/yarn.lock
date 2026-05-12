@@ -5511,7 +5511,7 @@ axios@1.13.5:
     form-data "^4.0.5"
     proxy-from-env "^1.1.0"
 
-axios@^1.6.0:
+axios@^1.4.0, axios@^1.6.0:
   version "1.16.0"
   resolved "https://registry.yarnpkg.com/axios/-/axios-1.16.0.tgz#f8e5dd931cef2a5f8c32216d5784eda2f8750eb7"
   integrity sha512-6hp5CwvTPlN2A31g5dxnwAX0orzM7pmCRDLnZSX772mv8WDqICwFjowHuPs04Mc8deIld1+ejhtaMn5vp6b+1w==
@@ -7413,6 +7413,13 @@ fast-wrap-ansi@^0.2.0:
   dependencies:
     fast-string-width "^3.0.2"
 
+fast-xml-parser@^4.2.2:
+  version "4.5.6"
+  resolved "https://registry.yarnpkg.com/fast-xml-parser/-/fast-xml-parser-4.5.6.tgz#4ff57d4aca13a2d11aa42ad460495cf00f32b655"
+  integrity sha512-Yd4vkROfJf8AuJrDIVMVmYfULKmIJszVsMv7Vo71aocsKgFxpdlpSHXSaInvyYfgw2PRuObQSW2GFpVMUjxu9A==
+  dependencies:
+    strnum "^1.0.5"
+
 fastq@^1.6.0:
   version "1.20.1"
   resolved "https://registry.npmjs.org/fastq/-/fastq-1.20.1.tgz"
@@ -8158,7 +8165,7 @@ hast-util-whitespace@^3.0.0:
 
 he@^1.2.0:
   version "1.2.0"
-  resolved "https://registry.npmjs.org/he/-/he-1.2.0.tgz"
+  resolved "https://registry.yarnpkg.com/he/-/he-1.2.0.tgz#84ae65fa7eafb165fddb61566ae14baf05664f0f"
   integrity sha512-F/1DnUGPopORZi0ni+CvrCgHQ5FyEAHRLSApuYWMmrbSwoN2Mn/7k+Gl38gJnR7yyDZk6WLXwiGod1JOWNDKGw==
 
 helmet@^6.0.1:
@@ -12082,6 +12089,11 @@ remove-accents@0.5.0:
   resolved "https://registry.npmjs.org/remove-accents/-/remove-accents-0.5.0.tgz"
   integrity sha512-8g3/Otx1eJaVD12e31UbJj1YzdtVvzH85HV7t+9MJYk/u3XmkOUJ5Ys9wQrf9PCPK8+xn4ymzqYCiZl6QWKn+A==
 
+remove-markdown@^0.6.4:
+  version "0.6.4"
+  resolved "https://registry.yarnpkg.com/remove-markdown/-/remove-markdown-0.6.4.tgz#d973e4d2e3d09eb14c2261446e1173e444d5d3df"
+  integrity sha512-BompiLClzjfh46irZmzv+1Q61jZYlKN3iq/hzae9EOUwf7ctr/5wpD4qwgn/FWDAYE18RORO7z/yr+HXZJCY8Q==
+
 renderkid@^3.0.0:
   version "3.0.0"
   resolved "https://registry.npmjs.org/renderkid/-/renderkid-3.0.0.tgz"
@@ -12963,6 +12975,11 @@ strip-json-comments@~2.0.1:
   resolved "https://registry.npmjs.org/strip-json-comments/-/strip-json-comments-2.0.1.tgz"
   integrity sha512-4gB8na07fecVVkOI6Rs4e7T6NOTki5EmL7TUduTs6bu3EdnSycntVJ4re8kgZA+wx9IueI2Y11bfbgwtzuE0KQ==
 
+strnum@^1.0.5:
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/strnum/-/strnum-1.1.2.tgz#57bca4fbaa6f271081715dbc9ed7cee5493e28e4"
+  integrity sha512-vrN+B7DBIoTTZjnPNewwhx6cBA/H+IS7rfW68n7XxC1y7uoiGQBxaKzqucGUgavX15dJgiGztLJ8vxuEzwqBdA==
+
 strtok3@^10.2.2:
   version "10.3.5"
   resolved "https://registry.npmjs.org/strtok3/-/strtok3-10.3.5.tgz"
@@ -13577,6 +13594,14 @@ universalify@^2.0.0:
   version "2.0.1"
   resolved "https://registry.npmjs.org/universalify/-/universalify-2.0.1.tgz"
   integrity sha512-gptHNQghINnc/vTGIk0SOFGFNXw7JVrlRUtConJRlvaw6DuX0wO5Jeko9sWrMBhh+PsYAZ7oXAiOnf/UKogyiw==
+
+univis-api@^0.0.3:
+  version "0.0.3"
+  resolved "https://registry.yarnpkg.com/univis-api/-/univis-api-0.0.3.tgz#add7f11407c4dc906e3cac3835311f6cd7185667"
+  integrity sha512-YKY3vY7vrog+IDpgcg5dR2mXZhhHBuMR+Fytt+UqjSVWA92zMugkUYmJBQmDu0RjOh2Y6ubWLa9kXxknE8Pwlg==
+  dependencies:
+    axios "^1.4.0"
+    fast-xml-parser "^4.2.2"
 
 unload@2.2.0:
   version "2.2.0"
