@@ -19,8 +19,7 @@ const navItems = [
 const pathname = Astro.url.pathname
 const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`)
 
-const authUserRaw = Astro.cookies.get("auth_user")?.value
-const authUser = authUserRaw ? JSON.parse(authUserRaw) : null
+const authUser = Astro.locals.user
 
 const switchLang = t.language.switchLang
 const switchLabel = t.language.switchLabel

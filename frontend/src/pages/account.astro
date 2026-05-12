@@ -1,17 +1,11 @@
 ---
-import { actions } from "astro:actions"
 import PageLayout from "@/layouts/PageLayout.astro"
 import { useTranslations } from "@/i18n/translations"
 
 const t = useTranslations(Astro.locals.locale)
 
-const { data: user, error } = await Astro.callAction(actions.auth.getMe, {})
-
-if (error) {
-  Astro.cookies.delete("auth_token", { path: "/" })
-  Astro.cookies.delete("auth_user", { path: "/" })
-  return Astro.redirect("/login")
-}
+const user = Astro.locals.user
+if (!user) return Astro.redirect("/login?redirect=/account")
 ---
 
 <PageLayout title={t.auth.accountTitle}>

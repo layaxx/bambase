@@ -2,8 +2,6 @@
 
 ## Upcoming
 
-## logged in status after seed-reset
-
 ## P27 add CI/CD pipelines
 
 ### P18 Job Overview Page
@@ -127,6 +125,23 @@ Automatically importing events from external sources would reduce the manual eff
 ---
 
 ## Done
+
+### P29 Server-side auth validation / stale session after seed-reset
+
+Previously, auth state was read from the client-accessible `auth_user` cookie (set at login and never re-verified). After a database seed reset the cookie remained in the browser, leaving users appearing logged in against a user ID that no longer existed — pages would either error or show stale data.
+
+The middleware now validates the JWT on every SSR request by calling `GET /api/users/me` with the token. If Strapi responds with a non-2xx status (user deleted, token revoked, post-seed-reset), both auth cookies are cleared immediately and `locals.user` is set to `null`, transparently logging the user out on their next page load.
+
+**What changed:**
+
+- `middleware.ts` — `onRequest` is now `async`; calls `${STRAPI_URL}/api/users/me` when `auth_token` cookie is present; populates `Astro.locals.user` on success, clears cookies and sets `null` on failure. Both fetch calls wrapped in try/catch with a 3-second `AbortSignal.timeout` so a slow or unreachable Strapi does not block SSR. A secondary `/api/auth/refresh` call (gated by local JWT `exp` check) proactively renews tokens expiring within 24 h.
+- `env.d.ts` — `App.Locals` extended with `user: { id: number; email: string; createdAt: string } | null`.
+- All protected pages (`account`, `account/events`, `account/jobs`, `event/new`, `event/[slug]/edit`, `job/new`, `job/[slug]/edit`) and `Header.astro` read from `Astro.locals.user` instead of parsing cookies themselves. Ownership checks on the edit pages use the already-validated `locals.user` rather than calling `actions.auth.getMe` a second time.
+- `auth-cookies.ts` — `updateJwtCookie` and `deleteAuthCookies` helpers added; `AUTH_COOKIE_OPTS` exported for reuse. `logout.astro` updated to use `deleteAuthCookies`.
+- Account pages (`/account`, `/account/events`, `/account/jobs`) now pass `?redirect=` when bouncing unauthenticated users to `/login`, matching the behaviour of the edit pages.
+- `middleware.test.ts` — new `auth token validation` describe block covers: no token → `null`, valid token → user populated, 401 → cookies cleared + `null`, no refresh when expiry > 24 h, refresh called and cookie updated when expiry ≤ 24 h, user kept if refresh call fails.
+
+---
 
 ### P26 Handle uncaught exceptions / API down
 

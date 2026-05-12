@@ -8,16 +8,15 @@ import JobForm from "@/components/jobs/JobForm.astro"
 
 const t = useTranslations(Astro.locals.locale)
 
-const token = Astro.cookies.get("auth_token")?.value
-if (!token) return Astro.redirect(`/login?redirect=/job/${Astro.params.slug}/edit`)
+const me = Astro.locals.user
+if (!me) return Astro.redirect(`/login?redirect=/job/${Astro.params.slug}/edit`)
 
+const token = Astro.cookies.get("auth_token")!.value
 const { slug } = Astro.params
 const { data: job } = slug ? await fetchJobOffer(slug, token) : { data: null }
 
 if (!job) return Astro.redirect("/jobs")
-
-const { data: me, error: meError } = await Astro.callAction(actions.auth.getMe, {})
-if (meError || !me || job.owner?.id !== me.id) return Astro.redirect(`/job/${job.slug}`)
+if (job.owner?.id !== me.id) return Astro.redirect(`/job/${job.slug}`)
 
 const result = Astro.getActionResult(actions.jobs.update)
 if (result?.data) return Astro.redirect(`/job/${result.data.slug}`)

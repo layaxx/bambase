@@ -7,8 +7,7 @@ import JobForm from "@/components/jobs/JobForm.astro"
 
 const t = useTranslations(Astro.locals.locale)
 
-const token = Astro.cookies.get("auth_token")?.value
-if (!token) {
+if (!Astro.locals.user) {
   return Astro.redirect(`/login?redirect=/job/new`)
 }
 

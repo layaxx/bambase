@@ -8,7 +8,10 @@ beforeAll(async () => {
   container = await AstroContainer.create()
 })
 
-const locals = { locale: "de" as const }
+const locals = {
+  locale: "de" as const,
+  user: { id: 1, email: "user@example.com", createdAt: new Date().toISOString() },
+}
 
 const baseProps = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

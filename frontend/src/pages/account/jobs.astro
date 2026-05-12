@@ -1,5 +1,4 @@
 ---
-import { actions } from "astro:actions"
 import PageLayout from "@/layouts/PageLayout.astro"
 import IconArrowLeft from "@/components/icons/IconArrowLeft.astro"
 import { fetchMyJobOffers } from "@/utils/api"
@@ -8,13 +7,8 @@ import { useTranslations } from "@/i18n/translations"
 
 const t = useTranslations(Astro.locals.locale)
 
-const { data: user, error } = await Astro.callAction(actions.auth.getMe, {})
-
-if (error) {
-  Astro.cookies.delete("auth_token", { path: "/" })
-  Astro.cookies.delete("auth_user", { path: "/" })
-  return Astro.redirect("/login")
-}
+const user = Astro.locals.user
+if (!user) return Astro.redirect("/login?redirect=/account/jobs")
 
 const token = Astro.cookies.get("auth_token")!.value
 const { data: jobs } = await fetchMyJobOffers(token, user.id)

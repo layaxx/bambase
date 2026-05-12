@@ -12,5 +12,6 @@ declare namespace App {
   interface Locals {
     // eslint-disable-next-line @typescript-eslint/consistent-type-imports
     locale: import("./i18n/translations").Locale
+    user: { id: number; email: string; createdAt: string } | null
   }
 }

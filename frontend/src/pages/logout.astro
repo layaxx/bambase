@@ -1,5 +1,5 @@
 ---
-Astro.cookies.delete("auth_token", { path: "/" })
-Astro.cookies.delete("auth_user", { path: "/" })
+import { deleteAuthCookies } from "@/utils/auth-cookies"
+deleteAuthCookies(Astro.cookies)
 return Astro.redirect("/")
 ---

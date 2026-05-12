@@ -8,8 +8,7 @@ import EventForm from "@/components/events/EventForm.astro"
 
 const t = useTranslations(Astro.locals.locale)
 
-const token = Astro.cookies.get("auth_token")?.value
-if (!token) {
+if (!Astro.locals.user) {
   return Astro.redirect(`/login?redirect=/event/new`)
 }
 
