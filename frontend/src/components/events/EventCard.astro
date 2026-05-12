@@ -1,0 +1,64 @@
+---
+import type { Event } from "@/utils/api/events"
+import { formatTime } from "@/utils/event-formatting"
+import { useTranslations } from "@/i18n/translations"
+import IconClock from "../icons/IconClock.astro"
+import IconMapPin from "../icons/IconMapPin.astro"
+import IconUsers from "../icons/IconUsers.astro"
+import EventCategoryBadge from "./EventCategoryBadge.astro"
+
+interface Props {
+  event: Event
+  short?: boolean
+}
+
+const { event, short = false } = Astro.props
+const t = useTranslations(Astro.locals.locale)
+const dateLocale = t.mensa.dateLocale
+const location = event.map_location ?? event.custom_location
+---
+
+<a
+  class="group flex flex-col rounded-xl border border-base-300 bg-base-100 p-4 no-underline transition-all hover:border-primary/30 hover:shadow-md"
+  href={`/event/${event.slug}`}
+>
+  <div class="mb-3 flex items-center justify-between gap-2">
+    <div class="flex items-center gap-1 text-sm text-base-content/70">
+      <IconClock class="h-3.5 w-3.5 shrink-0" />
+      <span>
+        {formatTime(event.start, dateLocale)}
+        {t.events.clock ? ` ${t.events.clock}` : ""}
+        {
+          !short && (
+            <>
+              {" "}
+              – {formatTime(event.end, dateLocale)}
+              {t.events.clock ? ` ${t.events.clock}` : ""}
+            </>
+          )
+        }
+      </span>
+    </div>
+    <EventCategoryBadge category={event.category} isSmall />
+  </div>
+  <h3
+    class="mb-1 line-clamp-2 font-semibold leading-tight text-base-content group-hover:text-primary"
+  >
+    {event.title}
+  </h3>
+  {!short && <p class="mb-2 line-clamp-4 text-sm text-base-content/70">{event.description}</p>}
+  {
+    !short && location && (
+      <div class="flex items-center gap-1 text-sm text-base-content/40">
+        <IconMapPin class="h-3.5 w-3.5 shrink-0" />
+        <span class="truncate">{location.name}</span>
+      </div>
+    )
+  }
+  <div class="pt-1 text-sm text-base-content/40">
+    <div class="flex min-w-0 items-center gap-2">
+      <IconUsers class="h-3.5 w-3.5 shrink-0" />
+      <span class="truncate">{event.organizer}</span>
+    </div>
+  </div>
+</a>
