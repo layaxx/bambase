@@ -69,6 +69,10 @@
       "type": "component",
       "component": "events.event-location",
       "repeatable": false
+    },
+    "hidden": {
+      "type": "boolean",
+      "default": false
     }
   }
 }

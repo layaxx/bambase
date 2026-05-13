@@ -4,7 +4,7 @@
     "unique_email": true,
     "allow_register": true,
     "email_confirmation": true,
-    "email_reset_password": null,
+    "email_reset_password": "http://localhost:4321/reset-password",
     "email_confirmation_redirection": "http://localhost:4321/login?confirmed=true",
     "default_role": "authenticated"
   },

@@ -47,6 +47,15 @@ describe("fetchEvents", () => {
     expect(mockFind).toHaveBeenCalledWith(expect.objectContaining({ sort: ["start:asc"] }))
   })
 
+  it("excludes hidden events", async () => {
+    mockFind.mockResolvedValue({ data: [] })
+
+    await fetchEvents()
+
+    const call = mockFind.mock.calls[0][0]
+    expect(call.filters.hidden).toEqual({ $ne: true })
+  })
+
   it("uses the default limit of 100", async () => {
     mockFind.mockResolvedValue({ data: [] })
 
@@ -83,14 +92,14 @@ describe("fetchEvents", () => {
 })
 
 describe("fetchEvent", () => {
-  it("filters by the given slug", async () => {
+  it("filters by the given slug and excludes hidden events", async () => {
     mockFind.mockResolvedValue({ data: [sampleEvent] })
 
     await fetchEvent("test-event")
 
     expect(mockFind).toHaveBeenCalledWith(
       expect.objectContaining({
-        filters: { slug: { $eq: "test-event" } },
+        filters: { slug: { $eq: "test-event" }, hidden: { $ne: true } },
       })
     )
   })
@@ -186,6 +195,15 @@ describe("fetchOngoingOrUpcomingEvents", () => {
     expect(call.filters.$or[1].end.$gte).toBeDefined()
   })
 
+  it("excludes hidden events", async () => {
+    mockFind.mockResolvedValue({ data: [] })
+
+    await fetchOngoingOrUpcomingEvents()
+
+    const call = mockFind.mock.calls[0][0]
+    expect(call.filters.hidden).toEqual({ $ne: true })
+  })
+
   it("logs an error and returns an empty array when the API response is unexpected", async () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
     mockFind.mockResolvedValue(null)
@@ -238,6 +256,15 @@ describe("fetchUpcomingMapEvents", () => {
 
     const call = mockFind.mock.calls[0][0]
     expect(call.filters.map_location).toEqual({ $ne: null })
+  })
+
+  it("excludes hidden events", async () => {
+    mockFind.mockResolvedValue({ data: [] })
+
+    await fetchUpcomingMapEvents()
+
+    const call = mockFind.mock.calls[0][0]
+    expect(call.filters.hidden).toEqual({ $ne: true })
   })
 
   it("populates map_location", async () => {
@@ -302,13 +329,13 @@ describe("fetchAllPublishedEventSlugs", () => {
     expect(result).toEqual({ data: ["test-event", "another-event"], apiDown: false })
   })
 
-  it("applies no date filter", async () => {
+  it("applies no date filter but excludes hidden events", async () => {
     mockFind.mockResolvedValue({ data: [] })
 
     await fetchAllPublishedEventSlugs()
 
     const call = mockFind.mock.calls[0][0]
-    expect(call.filters).toBeUndefined()
+    expect(call.filters).toEqual({ hidden: { $ne: true } })
   })
 
   it("logs an error and returns an empty array when the API response is unexpected", async () => {

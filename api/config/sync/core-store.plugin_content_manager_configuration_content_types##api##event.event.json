@@ -205,6 +205,20 @@
           "sortable": false
         }
       },
+      "hidden": {
+        "edit": {
+          "label": "hidden",
+          "description": "",
+          "placeholder": "",
+          "visible": true,
+          "editable": true
+        },
+        "list": {
+          "label": "hidden",
+          "searchable": true,
+          "sortable": true
+        }
+      },
       "createdAt": {
         "edit": {
           "label": "createdAt",
@@ -341,6 +355,10 @@
           {
             "name": "map_location",
             "size": 6
+          },
+          {
+            "name": "hidden",
+            "size": 4
           }
         ]
       ]

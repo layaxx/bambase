@@ -72,7 +72,7 @@ async function load() {
       external_id: { $startsWith: "univis:" },
       end: { $gte: now.toISOString() },
     },
-    fields: ["documentId", "external_id", "start"],
+    fields: ["documentId", "external_id", "start", "hidden"],
     pagination: { limit: 5000 },
   })
 
@@ -112,6 +112,10 @@ async function load() {
     const match = existingMap.get(externalId)
 
     if (match) {
+      if (match.hidden) {
+        skipped++
+        continue
+      }
       try {
         await strapi.documents("api::event.event").update({ documentId: match.documentId, data })
         updated++
@@ -138,6 +142,7 @@ async function load() {
 
   for (const [extId, event] of existingMap) {
     if (seenIds.has(extId)) continue
+    if (event.hidden) continue
     await strapi.documents("api::event.event").delete({ documentId: event.documentId })
     deleted++
   }

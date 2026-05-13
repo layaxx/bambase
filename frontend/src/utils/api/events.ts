@@ -49,7 +49,7 @@ export async function fetchEvents(limit = 100): Promise<ApiResult<Event[]>> {
     const result = await withTimeout(
       client.collection("events").find({
         sort: ["start:asc"],
-        filters: { end: { $gte: new Date().toISOString() } },
+        filters: { end: { $gte: new Date().toISOString() }, hidden: { $ne: true } },
         pagination: { limit },
       })
     )
@@ -66,6 +66,7 @@ export async function fetchOngoingOrUpcomingEvents(limit = 100): Promise<ApiResu
       client.collection("events").find({
         sort: ["start:asc"],
         filters: {
+          hidden: { $ne: true },
           $or: [
             {
               start: {
@@ -95,7 +96,11 @@ export async function fetchUpcomingMapEvents(limit = 200): Promise<ApiResult<Eve
     const result = await withTimeout(
       client.collection("events").find({
         sort: ["start:asc"],
-        filters: { end: { $gte: new Date().toISOString() }, map_location: { $ne: null } },
+        filters: {
+          end: { $gte: new Date().toISOString() },
+          map_location: { $ne: null },
+          hidden: { $ne: true },
+        },
         populate: { map_location: true },
         pagination: { limit },
       })
@@ -111,7 +116,7 @@ export async function fetchEvent(slug: string): Promise<ApiResult<Event | null>>
   try {
     const result = await withTimeout(
       client.collection("events").find({
-        filters: { slug: { $eq: slug } },
+        filters: { slug: { $eq: slug }, hidden: { $ne: true } },
         populate: {
           owner: { fields: ["id"] },
           reports: {
@@ -140,6 +145,7 @@ export async function fetchAllPublishedEventSlugs(limit = 500): Promise<ApiResul
     const result = await withTimeout(
       client.collection("events").find({
         fields: ["slug"],
+        filters: { hidden: { $ne: true } },
         pagination: { limit },
       })
     )

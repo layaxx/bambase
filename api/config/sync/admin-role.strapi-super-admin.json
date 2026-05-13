@@ -6,7 +6,7 @@
   "locale": null,
   "permissions": [
     {
-      "documentId": "xdsg3n5k84vmz9gek0bqftwx",
+      "documentId": "jn22pn52drrhe11s66qq9bjn",
       "action": "plugin::content-manager.explorer.create",
       "actionParameters": {},
       "subject": "api::event.event",
@@ -26,7 +26,8 @@
           "map_location",
           "custom_location.name",
           "custom_location.address",
-          "custom_location.city"
+          "custom_location.city",
+          "hidden"
         ]
       },
       "conditions": [],
@@ -51,7 +52,7 @@
       "locale": null
     },
     {
-      "documentId": "aen5uxfu4p329d89e97gx5ju",
+      "documentId": "b7so8ydpph3cch6k9gktlot7",
       "action": "plugin::content-manager.explorer.read",
       "actionParameters": {},
       "subject": "api::event.event",
@@ -71,14 +72,15 @@
           "map_location",
           "custom_location.name",
           "custom_location.address",
-          "custom_location.city"
+          "custom_location.city",
+          "hidden"
         ]
       },
       "conditions": [],
       "locale": null
     },
     {
-      "documentId": "rvgisufq0jaqm7jhce1djot9",
+      "documentId": "hoviwukoqokvlshixt76wb3j",
       "action": "plugin::content-manager.explorer.update",
       "actionParameters": {},
       "subject": "api::event.event",
@@ -98,7 +100,8 @@
           "map_location",
           "custom_location.name",
           "custom_location.address",
-          "custom_location.city"
+          "custom_location.city",
+          "hidden"
         ]
       },
       "conditions": [],
