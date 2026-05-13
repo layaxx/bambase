@@ -37,6 +37,7 @@ export type Event = {
   organizer: string
   category: EventCategory
   external_url?: string
+  external_id?: string
   owner?: { id: number }
   reports?: { documentId: string }[]
   map_location?: EventMapLocation

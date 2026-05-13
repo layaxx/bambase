@@ -100,27 +100,29 @@ Automatically importing events from external sources would reduce the manual eff
 
 **Planned sources:**
 
-- **UniVis** — the official university course/event system
+- **UniVis** — the official university course/event system ✓ implemented
 - **LiveClub website** — local music/nightlife venue
 - More TBD
 
 **Work involved:**
 
-- Build an importer/scraper service (could be a scheduled Strapi lifecycle hook, a cron job, or a separate script) for each source
-- Map external event fields to the `Event` schema; use `external_id` field (already present) to deduplicate and track provenance
-- Handle updates: if an imported event changes on the source, reflect the change; if deleted, mark as expired
-- Add a `source` field to `Event` to indicate origin (manual, univis, liveclub, etc.) and display it on the detail page
-- Respect rate limits and terms of service of external sources
+- [x] Build UniVis importer as a Strapi service (`api/src/api/event/services/univis.ts`) using the `univis-api` npm package against `univis.uni-bamberg.de`
+- [x] Map UniVis fields to the `Event` schema — title, description, organizer, start, end, external_url; category hardcoded to `university`; text cleaned via `he` (HTML entity decode) + `remove-markdown` + custom regex to collapse duplicate link text
+- [x] Deduplicate via `external_id` with a `univis:` prefix; sync window is rolling 2 months (now → +2 months); create/update/delete to keep records in sync with the source
+- [x] Schedule via cron at 02:00 daily (`api/config/cron-tasks.ts`); also runs at bootstrap when `SEED=true`
+- [x] Display sync provenance on the event detail page — `external_id` prefix (`univis:` vs other) determines the notice text; no separate `source` field needed
+- [ ] Build importer for LiveClub website
+- [ ] Build importers for additional sources as identified
 
 **Open questions:**
 
-- Does UniVis offer a public API or structured data feed (iCal, RSS, JSON), or does it require HTML scraping?
-- Does LiveClub publish events in a machine-readable format?
-- Who is responsible for monitoring and maintaining the importers when sources change their format?
-- Should imported events be auto-published, or should they go through a review step first?
-- How should conflicts be handled if an imported event was also manually created by a user?
-- Are there legal/ToS considerations for scraping these sites?
-- Should users be able to "claim" an imported event to add additional info or manage it?
+- Does UniVis offer a public API or structured data feed? → **Yes** — the `univis-api` npm package provides a typed client; no scraping required
+- Should imported events be auto-published, or go through a review step? → **Auto-published** with no review step
+- How should conflicts be handled if an imported event was also manually created? → Deduplication is purely by `external_id`; a manually created event with no `external_id` is never matched, so both would coexist
+- Does LiveClub publish events in a machine-readable format? → Still unknown
+- Who is responsible for monitoring and maintaining the importers when sources change format? → Still open
+- Are there legal/ToS considerations for scraping external sites? → Still open for any future scraping-based sources; UniVis is the university's own system so no concern there
+- Should users be able to "claim" an imported event to add additional info or manage it? → Still open
 
 ---
 

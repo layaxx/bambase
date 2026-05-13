@@ -1,4 +1,16 @@
 /**
+ * Formats an ISO datetime string as a date-only string.
+ * Example (de-DE): "Mittwoch, 15. April"
+ */
+export function formatDate(iso: string, locale: string): string {
+  return new Date(iso).toLocaleString(locale, {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  })
+}
+
+/**
  * Formats an ISO datetime string as a long date+time string.
  * Example (de-DE): "Mittwoch, 15. April, 10:30 Uhr"
  */

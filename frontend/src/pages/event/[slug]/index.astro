@@ -2,27 +2,18 @@
 import { actions } from "astro:actions"
 import PageLayout from "@/layouts/PageLayout.astro"
 import { fetchEvent, REPORT_WARNING_THRESHOLD, type Event } from "@/utils/api"
-import { formatDateTime, formatTime } from "@/utils/event-formatting"
 import { useTranslations } from "@/i18n/translations"
-import IconArrowLeft from "@/components/icons/IconArrowLeft.astro"
-import IconClock from "@/components/icons/IconClock.astro"
-import IconExternalLink from "@/components/icons/IconExternalLink.astro"
-import ReportModal from "@/components/ReportModal.astro"
 import ConfirmModal from "@/components/ConfirmModal.astro"
-import EventLocation from "@/components/events/EventLocation.astro"
-import EventCategoryBadge from "@/components/events/EventCategoryBadge.astro"
 import ApiDownBanner from "@/components/ApiDownBanner.astro"
+import EventDetailPage from "@/components/events/EventDetailPage.astro"
 
 const t = useTranslations(Astro.locals.locale)
-const dateLocale = t.mensa.dateLocale
 
 const { slug } = Astro.params
-const [eventResult, { data: me }] = await Promise.all([
+const [{ data: event, apiDown }, { data: me }] = await Promise.all([
   slug ? fetchEvent(slug) : Promise.resolve({ data: null as Event | null, apiDown: false }),
   Astro.callAction(actions.auth.getMe, {}),
 ])
-const event = eventResult.data
-const apiDown = eventResult.apiDown
 const isOwner = me && event?.owner?.id === me.id
 
 const deleteResult = Astro.getActionResult(actions.events.delete)
@@ -39,10 +30,8 @@ if (reportResult) {
   )
 }
 
-const reported = Astro.url.searchParams.get("reported")
-const formattedEventStart = event ? formatDateTime(event.start, dateLocale) : null
+const hasBeenReported = Astro.url.searchParams.get("reported")
 
-const location = event?.map_location ?? event?.custom_location
 const description = event?.description?.slice(0, 155)
 const ogImage = event ? `${Astro.url.origin}/api/og/event/${event.slug}.png` : undefined
 ---
@@ -62,120 +51,16 @@ const ogImage = event ? `${Astro.url.origin}/api/og/event/${event.slug}.png` : u
         </div>
       </div>
     ) : (
-      <>
-        <div class="mb-6 flex items-center justify-between gap-4">
-          <a class="btn btn-ghost btn-sm gap-1 pl-0" href="/events">
-            <IconArrowLeft class="h-4 w-4" />
-            {t.events.backToEvents}
-          </a>
-          {isOwner && (
-            <div class="flex items-center gap-2">
-              <a class="btn btn-ghost btn-sm" href="/account/events">
-                {t.auth.myEvents}
-              </a>
-              <a class="btn btn-outline btn-sm" href={`/event/${event.slug}/edit`}>
-                {t.events.editEvent}
-              </a>
-              <button
-                class="btn btn-outline btn-error btn-sm"
-                onclick="document.getElementById('deleteEventModal').showModal()"
-                type="button"
-              >
-                {t.events.deleteEvent}
-              </button>
-            </div>
-          )}
-        </div>
-
-        {hasReports && (
-          <div class="alert alert-warning alert-outline mb-6" role="alert">
-            <span>{t.reports.warningHint}</span>
-          </div>
-        )}
-
-        {reported === "success" && (
-          <div class="alert alert-success mb-6" role="alert">
-            <span>{t.reports.successMessage}</span>
-          </div>
-        )}
-
-        {reported === "error" && (
-          <div class="alert alert-error mb-6" role="alert">
-            <span>{t.reports.errorMessage}</span>
-          </div>
-        )}
-
-        <div class="grid gap-8 lg:grid-cols-3">
-          <div class="lg:col-span-2">
-            <div class="mb-2 text-sm font-medium text-base-content/70">{event.organizer}</div>
-            <h1 class="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">{event.title}</h1>
-
-            <EventCategoryBadge category={event.category} class="mb-4" />
-
-            <div class="mb-6 flex flex-wrap gap-4 text-sm text-base-content/70">
-              <div class="flex items-center gap-1.5">
-                <IconClock class="h-4 w-4 shrink-0" />
-                <span>
-                  {formattedEventStart}
-                  {" – "}
-                  {formatTime(event.end, dateLocale)}
-                  {t.events.clock ? ` ${t.events.clock}` : ""}
-                </span>
-              </div>
-            </div>
-
-            <div class="prose prose-sm max-w-none text-base-content/70">
-              <p class="whitespace-pre-wrap">{event.description}</p>
-            </div>
-          </div>
-
-          <aside class="flex flex-col gap-4">
-            <div class="rounded-xl border border-base-300 bg-base-100 p-5">
-              <dl class="flex flex-col gap-3 text-sm">
-                <div>
-                  <dt class="text-base-content/70">{t.events.organizer}</dt>
-                  <dd class="font-medium">{event.organizer}</dd>
-                </div>
-                <div>
-                  <dt class="mb-1 text-base-content/70">{t.events.until}</dt>
-                  <dd class="font-medium">{formattedEventStart}</dd>
-                  <dd class="text-base-content/70">
-                    – {formatTime(event.end, dateLocale)}
-                    {t.events.clock ? ` ${t.events.clock}` : ""}
-                  </dd>
-                </div>
-              </dl>
-            </div>
-
-            {location ? <EventLocation location={location} /> : null}
-
-            {event.external_url && (
-              <a
-                class="btn btn-primary w-full"
-                href={event.external_url}
-                rel="noopener noreferrer"
-                target="_blank"
-              >
-                {t.events.moreInfo}
-                <IconExternalLink class="h-4 w-4" />
-              </a>
-            )}
-
-            <div class="rounded-xl border border-base-300 bg-base-100 p-4 text-sm text-base-content/70">
-              <p>{t.reports.eventDisclaimer}</p>
-              {!isOwner && !reported && (
-                <div class="mt-2 flex justify-end">
-                  <ReportModal targetId={event.documentId} targetType="event" />
-                </div>
-              )}
-            </div>
-          </aside>
-        </div>
-      </>
+      <EventDetailPage
+        event={event}
+        hasBeenReported={hasBeenReported}
+        hasReports={hasReports}
+        isOwner={isOwner}
+      />
     )
   }
   {
-    event && (
+    event && isOwner && (
       <ConfirmModal
         confirmClass="btn btn-error"
         confirmLabel={t.events.deleteEvent}

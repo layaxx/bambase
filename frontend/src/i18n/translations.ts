@@ -37,7 +37,7 @@ const de = {
     pageSubtitle: "Konzerte, Partys, Sport und mehr – von der Uni bis in die Stadt.",
     noEvents: "Keine Veranstaltungen verfügbar.",
     organizer: "Veranstalter",
-    until: "bis",
+    date: "Datum",
     backToEvents: "Alle Veranstaltungen",
     notFound: {
       headline: "Veranstaltung nicht gefunden",
@@ -90,6 +90,9 @@ const de = {
     clearFilters: "Filter zurücksetzen",
     resultSingular: "Veranstaltung",
     resultPlural: "Veranstaltungen",
+    syncedFromUnivis: "Diese Veranstaltung wurde automatisch aus UnivIS importiert.",
+    syncedFromExternal:
+      "Diese Veranstaltung wurde automatisch aus einer externen Quelle importiert.",
   },
   mensa: {
     cardTitle: "Mensaplan",
@@ -408,7 +411,7 @@ const en: SetAtPath<
     pageSubtitle: "Concerts, parties, sports and more – from campus to the city.",
     noEvents: "No events available.",
     organizer: "Organizer",
-    until: "until",
+    date: "Date",
     backToEvents: "All events",
     notFound: {
       headline: "Event not found",
@@ -461,6 +464,8 @@ const en: SetAtPath<
     clearFilters: "Clear filters",
     resultSingular: "event",
     resultPlural: "events",
+    syncedFromUnivis: "This event was automatically imported from UnivIS.",
+    syncedFromExternal: "This event was automatically imported from an external source.",
   },
   mensa: {
     cardTitle: "Cafeteria",
