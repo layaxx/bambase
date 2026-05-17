@@ -2,7 +2,7 @@
 
 ## Upcoming
 
-## P27 add CI/CD pipelines
+### P27 add CI/CD pipelines
 
 ### P18 Job Overview Page
 
@@ -127,6 +127,17 @@ Automatically importing events from external sources would reduce the manual eff
 ---
 
 ## Done
+
+### P28 Sync jobs from Feki site
+
+One-time migration service that imports job postings from the existing feki.de Drupal job board into BamBase.
+
+**What changed:**
+
+- `api/src/api/job-offer/content-types/job-offer/schema.json` — added `external_id` (`string`, unique) to the job-offer schema for deduplication. Generated types updated accordingly.
+- `api/src/api/job-offer/services/migration.ts` — new Strapi service exposing a `load()` function. Fetches all pages from `https://feki.de/api/jobboerse/jobs` (paginated, 100 per page) using a session cookie from the `JOB_OFFER_MIGRATION_COOKIE` env var. Pre-fetches all existing `external_id` values in one query and checks against a `Set` to skip already-imported jobs (avoids N+1 DB queries on re-runs). Maps Drupal fields to BamBase fields: category ID → `job_type` enum, status code → `online_status` enum (with expiry check based on `offline_date`), `hours_per_week` string → integer. HTML descriptions are converted to plain text via tag stripping and `he` entity decoding. `online_status` is set via an explicit `update` call after `create` because the `beforeCreate` lifecycle hook unconditionally resets it to `"submitted"`.
+
+---
 
 ### P29 Server-side auth validation / stale session after seed-reset
 

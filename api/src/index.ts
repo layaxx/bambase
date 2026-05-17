@@ -25,6 +25,7 @@ export default {
       await seed(strapi)
       strapi.log.info("Seeding process completed.")
       await strapi.service("api::event.univis").load()
+      await strapi.service("api::job-offer.migration").load()
     }
 
     const frontendUrl = process.env.FRONTEND_URL

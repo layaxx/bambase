@@ -108,7 +108,7 @@
       "locale": null
     },
     {
-      "documentId": "fld0y8ownra9xd8vjldmo3x5",
+      "documentId": "w8wn1gyu9lac2vndk4dko2m5",
       "action": "plugin::content-manager.explorer.create",
       "actionParameters": {},
       "subject": "api::job-offer.job-offer",
@@ -130,6 +130,7 @@
           "contact.phone",
           "owner",
           "external_url",
+          "external_id",
           "file",
           "reports"
         ]
@@ -156,7 +157,7 @@
       "locale": null
     },
     {
-      "documentId": "gtoxkfpotw7q13eza4tk64fg",
+      "documentId": "loqydiuuk4urgzbnnfgrqfci",
       "action": "plugin::content-manager.explorer.read",
       "actionParameters": {},
       "subject": "api::job-offer.job-offer",
@@ -178,6 +179,7 @@
           "contact.phone",
           "owner",
           "external_url",
+          "external_id",
           "file",
           "reports"
         ]
@@ -186,7 +188,7 @@
       "locale": null
     },
     {
-      "documentId": "ckhv96db1txsjq530jqndo53",
+      "documentId": "pi866g2vo45vkr8174ch9s8x",
       "action": "plugin::content-manager.explorer.update",
       "actionParameters": {},
       "subject": "api::job-offer.job-offer",
@@ -208,6 +210,7 @@
           "contact.phone",
           "owner",
           "external_url",
+          "external_id",
           "file",
           "reports"
         ]

@@ -25,6 +25,25 @@ export default {
       rule: "0 2 * * *",
     },
   },
+  migrateJobOffers: {
+    task: async ({ strapi }) => {
+      if (!process.env.JOB_OFFER_MIGRATION_COOKIE) {
+        console.warn(
+          "JOB_OFFER_MIGRATION_COOKIE is not set. Skipping job offer migration. Set this environment variable to enable migration."
+        )
+        return
+      }
+      try {
+        await strapi.service("api::job-offer.migration").load()
+      } catch (error) {
+        console.error("Error migrating job offers:", error)
+      }
+    },
+    options: {
+      // every day at 03:00
+      rule: "0 3 * * *",
+    },
+  },
   unpublishExpiredJobOffers: {
     task: async ({ strapi }) => {
       try {

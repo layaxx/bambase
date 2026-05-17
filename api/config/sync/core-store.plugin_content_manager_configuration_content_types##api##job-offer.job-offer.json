@@ -217,6 +217,20 @@
           "sortable": true
         }
       },
+      "external_id": {
+        "edit": {
+          "label": "external_id",
+          "description": "",
+          "placeholder": "",
+          "visible": true,
+          "editable": true
+        },
+        "list": {
+          "label": "external_id",
+          "searchable": true,
+          "sortable": true
+        }
+      },
       "file": {
         "edit": {
           "label": "file",
@@ -395,6 +409,12 @@
           },
           {
             "name": "slug",
+            "size": 6
+          }
+        ],
+        [
+          {
+            "name": "external_id",
             "size": 6
           }
         ]

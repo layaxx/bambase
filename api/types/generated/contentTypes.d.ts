@@ -441,6 +441,7 @@ export interface ApiJobOfferJobOffer extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime
     createdBy: Schema.Attribute.Relation<"oneToOne", "admin::user"> & Schema.Attribute.Private
     description: Schema.Attribute.Text & Schema.Attribute.Required
+    external_id: Schema.Attribute.String & Schema.Attribute.Unique
     external_url: Schema.Attribute.String
     field: Schema.Attribute.Enumeration<
       [
