@@ -24,6 +24,8 @@ export default {
       strapi.log.info("Starting seeding process...")
       await seed(strapi)
       strapi.log.info("Seeding process completed.")
+    }
+    if (process.env.SYNC_ON_STARTUP === "true") {
       await strapi.service("api::event.univis").load()
       await strapi.service("api::job-offer.migration").load()
     }
