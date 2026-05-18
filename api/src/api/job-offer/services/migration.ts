@@ -7,6 +7,9 @@ function htmlToText(html: string): string {
         .replace(/<br\s*\/?>/gi, "\n")
         .replace(/<\/p>/gi, "\n")
         .replace(/<[^>]+>/g, "")
+        .replace(/\r\n/g, "\n")
+        .replace(/\n{3,}/g, "\n\n")
+        .trim()
     )
     .replace(/\n{3,}/g, "\n\n")
     .trim()
@@ -141,17 +144,21 @@ async function load() {
     try {
       const doc = await strapi.documents("api::job-offer.job-offer").create({
         data: {
-          title: job.title,
+          title: he.decode(job.title),
           description: htmlToText(job.description),
-          company: job.company_name,
+          company: he.decode(job.company_name),
           external_url: job.url,
-          location: job.location,
+          location: he.decode(job.location),
           createdAt: job.creation_date,
           working_hours: Number(job.hours_per_week),
           job_type: getJobType(job),
           field: "other",
           work_mode: "on_site",
-          contact: { name: job.contact_person, phone: job.contact_tel, mail: job.contact_mail },
+          contact: {
+            name: he.decode(job.contact_person),
+            phone: job.contact_tel,
+            mail: he.decode(job.contact_mail),
+          },
           external_id: job.uuid,
         },
       })
