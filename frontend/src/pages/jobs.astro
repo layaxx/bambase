@@ -126,6 +126,7 @@ const isLoggedIn = !!Astro.locals.user
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" id="jobs-list">
         {jobs.map((job) => (
           <div
+            class="min-w-0"
             data-field={job.field}
             data-search={`${job.title} ${job.company}`.toLowerCase()}
             data-type={job.job_type}
