@@ -7,6 +7,8 @@ ENV NODE_ENV=${NODE_ENV}
 RUN yarn global add node-gyp && yarn config set network-timeout 600000 -g
 WORKDIR /opt/
 COPY package.json yarn.lock ./
+# Needed for yarn validation to succeed
+COPY providers ./providers 
 RUN yarn install --production
 ENV PATH=/opt/node_modules/.bin:$PATH
 WORKDIR /opt/app
