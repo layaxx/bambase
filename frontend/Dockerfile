@@ -12,6 +12,7 @@ RUN yarn install --frozen-lockfile --production=true
 
 FROM deps AS builder
 COPY . .
+ARG STRAPI_URL
 RUN yarn build
 
 # Production image
