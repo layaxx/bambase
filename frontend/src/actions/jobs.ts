@@ -1,7 +1,7 @@
 import { defineAction, ActionError } from "astro:actions"
 import { z } from "astro/zod"
 import { JOB_TYPES, JOB_FIELDS, WORK_MODES } from "@/utils/api/job-offers"
-import { STRAPI_URL } from "../../playwright.config"
+import { STRAPI_URL } from "astro:env/client"
 
 const jobCreateSchema = z.object({
   title: z.string().min(1, "Bitte Stellenbezeichnung eingeben.").max(200),
