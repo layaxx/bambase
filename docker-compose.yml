@@ -44,6 +44,10 @@ services:
       DATABASE_NAME: ${DATABASE_NAME:-strapi}
       DATABASE_USERNAME: ${DATABASE_USERNAME:-strapi}
       DATABASE_PASSWORD: ${DATABASE_PASSWORD:-strapi}
+      MAILGUN_API_KEY: ${MAILGUN_API_KEY}
+      MAILGUN_DOMAIN: ${MAILGUN_DOMAIN}
+      FRONTEND_URL: ${FRONTEND_URL}
+      JOB_OFFER_MIGRATION_COOKIE: ${JOB_OFFER_MIGRATION_COOKIE}
     volumes:
       - api_uploads:/opt/app/public/uploads
     depends_on:
