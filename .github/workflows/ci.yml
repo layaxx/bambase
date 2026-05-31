@@ -135,7 +135,7 @@ jobs:
 
       - name: Wait for stack to be healthy
         run: |
-          timeout 180 bash -c 'until curl -sf http://localhost:1337/admin; do sleep 3; done'
+          timeout 180 bash -c 'until curl -sf http://localhost:1337/_health; do sleep 3; done'
           timeout 60 bash -c 'until curl -sf http://localhost:4321; do sleep 3; done'
 
       - name: Run E2E tests
