@@ -63,6 +63,8 @@ jobs:
         working-directory: frontend
       - run: yarn test
         working-directory: frontend
+        env:
+          STRAPI_TOKEN: "irrelevant-but-must-be-set"
 
   docker-build-api:
     name: Docker build (api)
