@@ -3,6 +3,7 @@ services:
     ports:
       - "1337:1337"
     environment:
+      NODE_ENV: test
       SEED_API_TOKEN: CICD-TEST-TOKEN
       API_TOKEN_SALT: CICD-TEST-SALT
   frontend:
