@@ -1,3 +1,4 @@
+import crypto from "node:crypto"
 import { type Core } from "@strapi/strapi"
 import { seed } from "./seed"
 
@@ -20,12 +21,37 @@ export default {
       }
     }
     if (process.env.SEED === "true") {
-      strapi.service("api::mensa.mensa").load()
       strapi.log.info("Starting seeding process...")
       await seed(strapi)
       strapi.log.info("Seeding process completed.")
+
+      const rawToken = process.env.SEED_API_TOKEN
+      if (rawToken) {
+        const existing = await strapi.db.query("admin::api-token").findOne({
+          where: { name: "ci" },
+        })
+        if (!existing) {
+          const hash = crypto
+            .createHmac("sha512", process.env.API_TOKEN_SALT!)
+            .update(rawToken)
+            .digest("hex")
+          await strapi.db.query("admin::api-token").create({
+            data: {
+              name: "ci",
+              type: "full-access",
+              accessKey: hash,
+              lifespan: null,
+              expiresAt: null,
+              lastUsedAt: null,
+              description: "Access token for CI/CD pipeline",
+            },
+          })
+          strapi.log.info("Seed: created CI API token")
+        }
+      }
     }
     if (process.env.SYNC_ON_STARTUP === "true") {
+      await strapi.service("api::mensa.mensa").load()
       await strapi.service("api::event.univis").load()
       await strapi.service("api::job-offer.migration").load()
     }

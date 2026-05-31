@@ -2,6 +2,11 @@ services:
   api:
     ports:
       - "1337:1337"
+    environment:
+      SEED_API_TOKEN: CICD-TEST-TOKEN
+      API_TOKEN_SALT: CICD-TEST-SALT
   frontend:
     ports:
       - "4321:4321"
+    environment:
+      STRAPI_TOKEN: CICD-TEST-TOKEN
