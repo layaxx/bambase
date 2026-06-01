@@ -1,0 +1,177 @@
+name: CI
+
+on:
+  pull_request:
+
+jobs:
+  lint-api:
+    name: Lint (api)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+          cache-dependency-path: api/yarn.lock
+      - run: yarn install --frozen-lockfile
+        working-directory: api
+      - run: yarn lint && yarn format:check
+        working-directory: api
+
+  lint-frontend:
+    name: Lint (frontend)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+          cache-dependency-path: frontend/yarn.lock
+      - run: yarn install --frozen-lockfile
+        working-directory: frontend
+      - run: yarn lint && yarn format:check
+        working-directory: frontend
+
+  test-api:
+    name: Unit tests (api)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+          cache-dependency-path: api/yarn.lock
+      - run: yarn install --frozen-lockfile
+        working-directory: api
+      - run: yarn test
+        working-directory: api
+
+  test-frontend:
+    name: Unit tests (frontend)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+          cache-dependency-path: frontend/yarn.lock
+      - run: yarn install --frozen-lockfile
+        working-directory: frontend
+      - run: yarn test
+        working-directory: frontend
+        env:
+          STRAPI_TOKEN: "irrelevant-but-must-be-set"
+
+  docker-build-api:
+    name: Docker build (api)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./api
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  docker-build-frontend:
+    name: Docker build (frontend)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: false
+          build-args: STRAPI_URL=http://api:1337
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  e2e:
+    name: E2E tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+          cache-dependency-path: |
+            api/yarn.lock
+            frontend/yarn.lock
+
+      - name: Install API dependencies
+        run: yarn install --frozen-lockfile
+        working-directory: api
+
+      - name: Install frontend dependencies
+        run: yarn install --frozen-lockfile
+        working-directory: frontend
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+        working-directory: frontend
+
+      - name: Build API
+        run: yarn build
+        working-directory: api
+
+      - name: Start API
+        run: yarn start &
+        working-directory: api
+        env:
+          NODE_ENV: test
+          SEED: "true"
+          SEED_API_TOKEN: CICD-TEST-TOKEN
+          API_TOKEN_SALT: CICD-TEST-SALT
+          PORT: 1337
+          HOST: 0.0.0.0
+          APP_KEYS: only-for-ci-testing1,only-for-ci-testing2
+          ADMIN_JWT_SECRET: only-for-ci-testing
+          TRANSFER_TOKEN_SALT: also-only-for-ci-testing
+          JWT_SECRET: again-only-for-ci-testing
+          FRONTEND_URL: https://example.com
+          MAILGUN_API_KEY: "ignored-for-ci-testing"
+          MAILGUN_DOMAIN: "https://example.com"
+
+      - name: Build frontend
+        run: yarn build
+        working-directory: frontend
+        env:
+          STRAPI_URL: http://localhost:1337
+          STRAPI_TOKEN: CICD-TEST-TOKEN
+
+      - name: Start frontend
+        run: node ./dist/server/entry.mjs &
+        working-directory: frontend
+        env:
+          STRAPI_TOKEN: CICD-TEST-TOKEN
+          PORT: 4321
+          HOST: localhost
+
+      - name: Wait for stack to be healthy
+        run: |
+          timeout 180 bash -c 'until curl -sf http://localhost:1337/_health; do sleep 3; done'
+          timeout 60 bash -c 'until curl -sf http://localhost:4321; do sleep 3; done'
+
+      - name: Run E2E tests
+        run: yarn test:e2e
+        working-directory: frontend
+        env:
+          CI: "true"
+          STRAPI_URL: "http://localhost:1337"
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/
+          retention-days: 7
