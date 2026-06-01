@@ -96,7 +96,6 @@ jobs:
   e2e:
     name: E2E tests
     runs-on: ubuntu-latest
-    needs: [docker-build-api, docker-build-frontend]
     steps:
       - uses: actions/checkout@v4
 
@@ -104,7 +103,13 @@ jobs:
         with:
           node-version: 22
           cache: yarn
-          cache-dependency-path: frontend/yarn.lock
+          cache-dependency-path: |
+            api/yarn.lock
+            frontend/yarn.lock
+
+      - name: Install API dependencies
+        run: yarn install --frozen-lockfile
+        working-directory: api
 
       - name: Install frontend dependencies
         run: yarn install --frozen-lockfile
@@ -114,24 +119,42 @@ jobs:
         run: npx playwright install --with-deps chromium
         working-directory: frontend
 
-      - name: Create proxy network
-        run: docker network create proxy
+      - name: Build API
+        run: yarn build
+        working-directory: api
 
-      - name: Start stack
-        run: docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d --build
+      - name: Start API
+        run: yarn start &
+        working-directory: api
         env:
+          NODE_ENV: test
           SEED: "true"
-          APP_KEYS: ${{ secrets.APP_KEYS }}
-          API_TOKEN_SALT: ${{ secrets.API_TOKEN_SALT }}
-          ADMIN_JWT_SECRET: ${{ secrets.ADMIN_JWT_SECRET }}
-          TRANSFER_TOKEN_SALT: ${{ secrets.TRANSFER_TOKEN_SALT }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
-          STRAPI_TOKEN: ${{ secrets.STRAPI_TOKEN }}
-          MAILGUN_API_KEY: ""
-          MAILGUN_DOMAIN: ""
-          FRONTEND_URL: "http://localhost:4321"
-          JOB_OFFER_MIGRATION_COOKIE: ""
+          SEED_API_TOKEN: CICD-TEST-TOKEN
+          API_TOKEN_SALT: CICD-TEST-SALT
+          PORT: 1337
+          HOST: 0.0.0.0
+          APP_KEYS: only-for-ci-testing1,only-for-ci-testing2
+          ADMIN_JWT_SECRET: only-for-ci-testing
+          TRANSFER_TOKEN_SALT: also-only-for-ci-testing
+          JWT_SECRET: again-only-for-ci-testing
+          FRONTEND_URL: https://example.com
+          MAILGUN_API_KEY: "ignored-for-ci-testing"
+          MAILGUN_DOMAIN: "https://example.com"
+
+      - name: Build frontend
+        run: yarn build
+        working-directory: frontend
+        env:
+          STRAPI_URL: http://localhost:1337
+          STRAPI_TOKEN: CICD-TEST-TOKEN
+
+      - name: Start frontend
+        run: node ./dist/server/entry.mjs &
+        working-directory: frontend
+        env:
+          STRAPI_TOKEN: CICD-TEST-TOKEN
+          PORT: 4321
+          HOST: localhost
 
       - name: Wait for stack to be healthy
         run: |
