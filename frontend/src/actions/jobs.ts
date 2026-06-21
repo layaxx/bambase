@@ -23,7 +23,7 @@ export const jobs = {
     accept: "form",
     input: z.object({ documentId: z.string().min(1) }),
     handler: async ({ documentId }, context) => {
-      const token = context.cookies.get("auth_token")?.value
+      const token = context.locals.token
       if (!token) throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
 
       const res = await fetch(`${STRAPI_URL}/api/job-offers/${documentId}`, {
@@ -45,7 +45,7 @@ export const jobs = {
     accept: "form",
     input: z.object({ documentId: z.string().min(1) }),
     handler: async ({ documentId }, context) => {
-      const token = context.cookies.get("auth_token")?.value
+      const token = context.locals.token
       if (!token) throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
 
       const res = await fetch(`${STRAPI_URL}/api/job-offers/${documentId}`, {
@@ -82,38 +82,47 @@ export const jobs = {
       external_url: z.url().max(2048).optional(),
     }),
     handler: async ({ documentId, ...fields }, context) => {
-      const token = context.cookies.get("auth_token")?.value
+      const token = context.locals.token
       if (!token) throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
 
-      const res = await fetch(`${STRAPI_URL}/api/job-offers/${documentId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          data: {
-            title: fields.title,
-            company: fields.company,
-            location: fields.location,
-            working_hours: fields.working_hours,
-            description: fields.description,
-            job_type: fields.job_type,
-            field: fields.field,
-            work_mode: fields.work_mode,
-            external_url: fields.external_url || undefined,
-            contact: {
-              name: fields.contact_name || undefined,
-              mail: fields.contact_mail || undefined,
-              phone: fields.contact_phone || undefined,
+      let res: Response
+      try {
+        res = await fetch(`${STRAPI_URL}/api/job-offers/${documentId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            data: {
+              title: fields.title,
+              company: fields.company,
+              location: fields.location,
+              working_hours: fields.working_hours,
+              description: fields.description,
+              job_type: fields.job_type,
+              field: fields.field,
+              work_mode: fields.work_mode,
+              external_url: fields.external_url || undefined,
+              contact: {
+                name: fields.contact_name || undefined,
+                mail: fields.contact_mail || undefined,
+                phone: fields.contact_phone || undefined,
+              },
             },
-          },
-        }),
-      })
+          }),
+        })
+      } catch {
+        throw new ActionError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Server nicht erreichbar. Bitte versuche es später erneut.",
+        })
+      }
 
-      const data = await res.json()
       if (!res.ok) {
-        console.error("Job update failed:", data?.error)
+        const errData = await res.json().catch(() => ({}))
+        console.error("Job update failed:", errData?.error)
         throw new ActionError({ code: "BAD_REQUEST", message: "Aktualisierung fehlgeschlagen." })
       }
 
+      const data = await res.json()
       return { slug: String(data.data.slug) }
     },
   }),
@@ -122,44 +131,52 @@ export const jobs = {
     accept: "form",
     input: jobCreateSchema,
     handler: async (input, context) => {
-      const token = context.cookies.get("auth_token")?.value
+      const token = context.locals.token
       if (!token) {
         throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
       }
 
-      const res = await fetch(`${STRAPI_URL}/api/job-offers`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          data: {
-            title: input.title,
-            company: input.company,
-            location: input.location,
-            working_hours: input.working_hours,
-            description: input.description,
-            job_type: input.job_type,
-            field: input.field,
-            work_mode: input.work_mode,
-            external_url: input.external_url || undefined,
-            contact: {
-              name: input.contact_name || undefined,
-              mail: input.contact_mail || undefined,
-              phone: input.contact_phone || undefined,
-            },
+      let res: Response
+      try {
+        res = await fetch(`${STRAPI_URL}/api/job-offers`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
-        }),
-      })
-
-      const data = await res.json()
+          body: JSON.stringify({
+            data: {
+              title: input.title,
+              company: input.company,
+              location: input.location,
+              working_hours: input.working_hours,
+              description: input.description,
+              job_type: input.job_type,
+              field: input.field,
+              work_mode: input.work_mode,
+              external_url: input.external_url || undefined,
+              contact: {
+                name: input.contact_name || undefined,
+                mail: input.contact_mail || undefined,
+                phone: input.contact_phone || undefined,
+              },
+            },
+          }),
+        })
+      } catch {
+        throw new ActionError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Server nicht erreichbar. Bitte versuche es später erneut.",
+        })
+      }
 
       if (!res.ok) {
-        console.error("Job create failed:", data?.error)
+        const errData = await res.json().catch(() => ({}))
+        console.error("Job create failed:", errData?.error)
         throw new ActionError({ code: "BAD_REQUEST", message: "Einreichung fehlgeschlagen." })
       }
 
+      const data = await res.json()
       return { slug: String(data.data.slug) }
     },
   }),

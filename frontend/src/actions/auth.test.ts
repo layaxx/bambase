@@ -148,6 +148,51 @@ describe("auth.login", () => {
     const body = getFetchBody()
     expect(body).toMatchObject({ identifier: "u@e.com", password: "pass123" })
   })
+
+  it("sets refresh_token cookie when login returns a refresh token", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        jwt: "my-jwt",
+        refreshToken: "my-refresh-token",
+        user: { email: "a@b.com" },
+      }),
+    } as Response)
+
+    const cookies = makeWritableCookies()
+    await auth.login(
+      { identifier: "a@b.com", password: "pass" },
+      // @ts-expect-error - needed because of mocked defineAction function
+      { cookies }
+    )
+
+    expect(cookies.set).toHaveBeenCalledWith(
+      "refresh_token",
+      "my-refresh-token",
+      expect.objectContaining({ httpOnly: true })
+    )
+  })
+
+  it("still succeeds without refresh_token cookie when login returns no refresh token", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ jwt: "my-jwt", user: { email: "a@b.com" } }),
+    } as Response)
+
+    const cookies = makeWritableCookies()
+    const result = await auth.login(
+      { identifier: "a@b.com", password: "pass" },
+      // @ts-expect-error - needed because of mocked defineAction function
+      { cookies }
+    )
+
+    expect(result).toMatchObject({ success: true })
+    expect(cookies.set).not.toHaveBeenCalledWith(
+      "refresh_token",
+      expect.anything(),
+      expect.anything()
+    )
+  })
 })
 
 describe("auth.getMe", () => {
@@ -158,7 +203,7 @@ describe("auth.getMe", () => {
       auth.getMe(
         {},
         // @ts-expect-error - needed because of mocked defineAction function
-        { cookies: makeWritableCookies() }
+        { cookies: makeWritableCookies(), locals: { token: null } }
       )
     ).rejects.toMatchObject({
       code: "UNAUTHORIZED",
@@ -179,7 +224,7 @@ describe("auth.getMe", () => {
     const result = await auth.getMe(
       {},
       // @ts-expect-error - needed because of mocked defineAction function
-      { cookies: makeWritableCookies({ auth_token: "valid-jwt" }) }
+      { cookies: makeWritableCookies({ auth_token: "valid-jwt" }), locals: { token: "valid-jwt" } }
     )
 
     expect(result).toMatchObject({ id: 7, username: "alice" })
@@ -194,7 +239,10 @@ describe("auth.getMe", () => {
     await auth.getMe(
       {},
       // @ts-expect-error - needed because of mocked defineAction function
-      { cookies: makeWritableCookies({ auth_token: "bearer-token" }) }
+      {
+        cookies: makeWritableCookies({ auth_token: "bearer-token" }),
+        locals: { token: "bearer-token" },
+      }
     )
 
     expect(fetch).toHaveBeenCalledWith(
@@ -210,7 +258,7 @@ describe("auth.getMe", () => {
       auth.getMe(
         {},
         // @ts-expect-error - needed because of mocked defineAction function
-        { cookies: makeWritableCookies({ auth_token: "expired" }) }
+        { cookies: makeWritableCookies({ auth_token: "expired" }), locals: { token: "expired" } }
       )
     ).rejects.toMatchObject({ code: "UNAUTHORIZED" })
   })

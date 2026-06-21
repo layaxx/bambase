@@ -1,7 +1,7 @@
 import { defineMiddleware } from "astro:middleware"
 import { STRAPI_URL } from "astro:env/client"
 import type { Locale } from "@/i18n/translations"
-import { deleteAuthCookies, updateJwtCookie } from "@/utils/auth-cookies"
+import { deleteAuthCookies, updateJwtCookie, updateRefreshTokenCookie } from "@/utils/auth-cookies"
 
 const SUPPORTED_LOCALES: Locale[] = ["de", "en"]
 const DEFAULT_LOCALE: Locale = "de"
@@ -27,14 +27,65 @@ function parseAcceptLanguage(header: string | null): Locale {
   return (match?.lang as Locale) ?? DEFAULT_LOCALE
 }
 
-function getJwtExp(token: string): number | null {
+type JwtResult = { id: number; exp: number } | { expired: true } | null
+
+function decodeJwt(token: string): JwtResult {
   try {
-    const payload = token.split(".")[1]
-    const decoded = JSON.parse(Buffer.from(payload, "base64url").toString())
-    return typeof decoded.exp === "number" ? decoded.exp : null
+    const parts = token.split(".")
+    if (parts.length !== 3) return null
+    const decoded = JSON.parse(Buffer.from(parts[1], "base64url").toString())
+    // Support both legacy format (id: number) and refresh-mode format (userId: string)
+    const id = typeof decoded.id === "number" ? decoded.id : Number(decoded.userId)
+    if (!Number.isInteger(id) || id <= 0) return null
+    if (typeof decoded.exp !== "number" || decoded.exp * 1000 < Date.now()) {
+      return { expired: true }
+    }
+    return { id, exp: decoded.exp }
   } catch {
     return null
   }
+}
+
+async function tryRefresh(
+  context: Parameters<Parameters<typeof defineMiddleware>[0]>[0],
+  refreshToken: string
+): Promise<boolean> {
+  try {
+    const res = await fetch(`${STRAPI_URL}/api/auth/refresh`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshToken }),
+      signal: AbortSignal.timeout(3000),
+    })
+
+    if (res.ok) {
+      const data = await res.json()
+      const { jwt, refreshToken: newRefreshToken } = data
+
+      if (typeof jwt === "string" && jwt) {
+        updateJwtCookie(context.cookies, jwt)
+        context.locals.token = jwt
+
+        if (typeof newRefreshToken === "string" && newRefreshToken) {
+          updateRefreshTokenCookie(context.cookies, newRefreshToken)
+        }
+
+        const verified = decodeJwt(jwt)
+        if (verified && !("expired" in verified)) {
+          context.locals.user = { id: verified.id }
+          return true
+        }
+      }
+    } else if (res.status === 401 || res.status === 403) {
+      deleteAuthCookies(context.cookies)
+    }
+  } catch {
+    // Network error — leave cookies intact, user will appear logged out this request only
+  }
+
+  context.locals.user = null
+  context.locals.token = null
+  return false
 }
 
 export const onRequest = defineMiddleware(async (context, next) => {
@@ -55,42 +106,27 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
 
   const token = context.cookies.get("auth_token")?.value
-  if (token) {
-    try {
-      const res = await fetch(`${STRAPI_URL}/api/users/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-        signal: AbortSignal.timeout(3000),
-      })
-      if (res.ok) {
-        const data = await res.json()
-        context.locals.user = { id: data.id, email: data.email, createdAt: data.createdAt }
+  const refreshToken = context.cookies.get("refresh_token")?.value
 
-        const exp = getJwtExp(token)
-        const oneDayMs = 24 * 60 * 60 * 1000
-        if (exp !== null && exp * 1000 - Date.now() < oneDayMs) {
-          try {
-            const refresh = await fetch(`${STRAPI_URL}/api/auth/refresh`, {
-              method: "POST",
-              headers: { Authorization: `Bearer ${token}` },
-              signal: AbortSignal.timeout(3000),
-            })
-            if (refresh.ok) {
-              const { jwt } = await refresh.json()
-              updateJwtCookie(context.cookies, jwt)
-            }
-          } catch {
-            // refresh failure is non-fatal; keep the current session
-          }
-        }
-      } else {
-        deleteAuthCookies(context.cookies)
-        context.locals.user = null
-      }
-    } catch {
+  if (token) {
+    const verified = decodeJwt(token)
+
+    if (verified && !("expired" in verified)) {
+      context.locals.user = { id: verified.id }
+      context.locals.token = token
+    } else if ((verified === null || "expired" in verified) && refreshToken) {
+      await tryRefresh(context, refreshToken)
+    } else {
+      // Invalid or expired with no refresh token
+      deleteAuthCookies(context.cookies)
       context.locals.user = null
+      context.locals.token = null
     }
+  } else if (refreshToken) {
+    await tryRefresh(context, refreshToken)
   } else {
     context.locals.user = null
+    context.locals.token = null
   }
 
   return next()

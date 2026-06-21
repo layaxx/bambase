@@ -56,7 +56,7 @@ export const events = {
     accept: "form",
     input: z.object({ documentId: z.string().min(1) }),
     handler: async ({ documentId }, context) => {
-      const token = context.cookies.get("auth_token")?.value
+      const token = context.locals.token
       if (!token) throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
 
       const res = await fetch(`${STRAPI_URL}/api/events/${documentId}`, {
@@ -80,32 +80,41 @@ export const events = {
       .extend({ documentId: z.string().min(1) })
       .refine(startBeforeEnd, startBeforeEndMsg),
     handler: async ({ documentId, ...fields }, context) => {
-      const token = context.cookies.get("auth_token")?.value
+      const token = context.locals.token
       if (!token) throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
 
-      const res = await fetch(`${STRAPI_URL}/api/events/${documentId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          data: {
-            title: fields.title,
-            organizer: fields.organizer,
-            description: fields.description,
-            start: fields.start,
-            end: fields.end,
-            category: fields.category,
-            external_url: fields.external_url || undefined,
-            ...buildLocationData(fields),
-          },
-        }),
-      })
+      let res: Response
+      try {
+        res = await fetch(`${STRAPI_URL}/api/events/${documentId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            data: {
+              title: fields.title,
+              organizer: fields.organizer,
+              description: fields.description,
+              start: fields.start,
+              end: fields.end,
+              category: fields.category,
+              external_url: fields.external_url || undefined,
+              ...buildLocationData(fields),
+            },
+          }),
+        })
+      } catch {
+        throw new ActionError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Server nicht erreichbar. Bitte versuche es später erneut.",
+        })
+      }
 
-      const data = await res.json()
       if (!res.ok) {
-        console.error("Event update failed:", data?.error)
+        const errData = await res.json().catch(() => ({}))
+        console.error("Event update failed:", errData?.error)
         throw new ActionError({ code: "BAD_REQUEST", message: "Aktualisierung fehlgeschlagen." })
       }
 
+      const data = await res.json()
       return { slug: data.data.slug as string }
     },
   }),
@@ -114,38 +123,46 @@ export const events = {
     accept: "form",
     input: eventCreateSchema,
     handler: async (input, context) => {
-      const token = context.cookies.get("auth_token")?.value
+      const token = context.locals.token
       if (!token) {
         throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
       }
 
-      const res = await fetch(`${STRAPI_URL}/api/events`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          data: {
-            title: input.title,
-            organizer: input.organizer,
-            description: input.description,
-            start: input.start,
-            end: input.end,
-            category: input.category,
-            external_url: input.external_url || undefined,
-            ...buildLocationData(input),
+      let res: Response
+      try {
+        res = await fetch(`${STRAPI_URL}/api/events`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
-        }),
-      })
-
-      const data = await res.json()
+          body: JSON.stringify({
+            data: {
+              title: input.title,
+              organizer: input.organizer,
+              description: input.description,
+              start: input.start,
+              end: input.end,
+              category: input.category,
+              external_url: input.external_url || undefined,
+              ...buildLocationData(input),
+            },
+          }),
+        })
+      } catch {
+        throw new ActionError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Server nicht erreichbar. Bitte versuche es später erneut.",
+        })
+      }
 
       if (!res.ok) {
-        console.error("Event create failed:", data?.error)
+        const errData = await res.json().catch(() => ({}))
+        console.error("Event create failed:", errData?.error)
         throw new ActionError({ code: "BAD_REQUEST", message: "Einreichung fehlgeschlagen." })
       }
 
+      const data = await res.json()
       return { slug: data.data.slug }
     },
   }),

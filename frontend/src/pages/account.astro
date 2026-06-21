@@ -1,11 +1,20 @@
 ---
 import PageLayout from "@/layouts/PageLayout.astro"
 import { useTranslations } from "@/i18n/translations"
+import { STRAPI_URL } from "astro:env/client"
 
 const t = useTranslations(Astro.locals.locale)
 
 const user = Astro.locals.user
-if (!user) return Astro.redirect("/login?redirect=/account")
+const token = Astro.locals.token
+if (!user || !token) return Astro.redirect("/login?redirect=/account")
+
+const profileRes = await fetch(`${STRAPI_URL}/api/users/me`, {
+  headers: { Authorization: `Bearer ${token}` },
+  signal: AbortSignal.timeout(3000),
+})
+if (!profileRes.ok) return Astro.redirect("/login?redirect=/account")
+const profile: { email: string; createdAt: string } = await profileRes.json()
 ---
 
 <PageLayout title={t.auth.accountTitle}>
@@ -17,7 +26,7 @@ if (!user) return Astro.redirect("/login?redirect=/account")
         <span class="text-xs text-base-content/40 uppercase tracking-wide"
           >{t.auth.emailFieldLabel}</span
         >
-        <span class="font-medium">{user.email}</span>
+        <span class="font-medium">{profile.email}</span>
       </div>
       <div class="divider my-0"></div>
       <div class="flex flex-col gap-1">
@@ -26,7 +35,7 @@ if (!user) return Astro.redirect("/login?redirect=/account")
         >
         <span class="font-medium">
           {
-            new Date(user.createdAt).toLocaleDateString(t.auth.dateLocale, {
+            new Date(profile.createdAt).toLocaleDateString(t.auth.dateLocale, {
               day: "numeric",
               month: "long",
               year: "numeric",

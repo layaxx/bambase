@@ -39,7 +39,7 @@ vi.mock("@/utils/api/job-offers", () => ({
 }))
 
 import { jobs } from "./jobs"
-import { getFetchBody, makeCookies } from "./test-helpers"
+import { getFetchBody, makeContext } from "./test-helpers"
 
 afterEach(() => {
   vi.restoreAllMocks()
@@ -66,7 +66,7 @@ describe("jobs.delete", () => {
       jobs.delete(
         { documentId: "doc-1" },
         // @ts-expect-error - needed because of mocked defineAction function
-        { cookies: makeCookies() }
+        makeContext()
       )
     ).rejects.toMatchObject({ code: "UNAUTHORIZED" })
   })
@@ -77,7 +77,7 @@ describe("jobs.delete", () => {
     await jobs.delete(
       { documentId: "doc-abc" },
       // @ts-expect-error - needed because of mocked defineAction function
-      { cookies: makeCookies("token") }
+      makeContext("token")
     )
 
     expect(fetch).toHaveBeenCalledWith(
@@ -92,7 +92,7 @@ describe("jobs.delete", () => {
     await jobs.delete(
       { documentId: "doc-1" },
       // @ts-expect-error - needed because of mocked defineAction function
-      { cookies: makeCookies("my-token") }
+      makeContext("my-token")
     )
 
     expect(fetch).toHaveBeenCalledWith(
@@ -114,7 +114,7 @@ describe("jobs.delete", () => {
       jobs.delete(
         { documentId: "doc-1" },
         // @ts-expect-error - needed because of mocked defineAction function
-        { cookies: makeCookies("token") }
+        makeContext("token")
       )
     ).rejects.toMatchObject({ code: "FORBIDDEN" })
   })
@@ -125,7 +125,7 @@ describe("jobs.delete", () => {
     const result = await jobs.delete(
       { documentId: "doc-1" },
       // @ts-expect-error - needed because of mocked defineAction function
-      { cookies: makeCookies("token") }
+      makeContext("token")
     )
     expect(result).toEqual({})
   })
@@ -139,7 +139,7 @@ describe("jobs.archive", () => {
       jobs.archive(
         { documentId: "doc-1" },
         // @ts-expect-error - needed because of mocked defineAction function
-        { cookies: makeCookies() }
+        makeContext()
       )
     ).rejects.toMatchObject({ code: "UNAUTHORIZED" })
   })
@@ -150,7 +150,7 @@ describe("jobs.archive", () => {
     await jobs.archive(
       { documentId: "doc-abc" },
       // @ts-expect-error - needed because of mocked defineAction function
-      { cookies: makeCookies("token") }
+      makeContext("token")
     )
 
     expect(fetch).toHaveBeenCalledWith(
@@ -165,7 +165,7 @@ describe("jobs.archive", () => {
     await jobs.archive(
       { documentId: "doc-1" },
       // @ts-expect-error - needed because of mocked defineAction function
-      { cookies: makeCookies("token") }
+      makeContext("token")
     )
 
     const body = getFetchBody()
@@ -183,7 +183,7 @@ describe("jobs.archive", () => {
       jobs.archive(
         { documentId: "doc-1" },
         // @ts-expect-error - needed because of mocked defineAction function
-        { cookies: makeCookies("token") }
+        makeContext("token")
       )
     ).rejects.toMatchObject({ code: "FORBIDDEN" })
   })
@@ -194,7 +194,7 @@ describe("jobs.archive", () => {
     const result = await jobs.archive(
       { documentId: "doc-1" },
       // @ts-expect-error - needed because of mocked defineAction function
-      { cookies: makeCookies("token") }
+      makeContext("token")
     )
     expect(result).toEqual({})
   })
@@ -208,7 +208,7 @@ describe("jobs.update", () => {
       jobs.update(
         baseInput,
         // @ts-expect-error - needed because of mocked defineAction function
-        { cookies: makeCookies() }
+        makeContext()
       )
     ).rejects.toMatchObject({ code: "UNAUTHORIZED" })
   })
@@ -222,7 +222,7 @@ describe("jobs.update", () => {
     await jobs.update(
       baseInput,
       // @ts-expect-error - needed because of mocked defineAction function
-      { cookies: makeCookies("token") }
+      makeContext("token")
     )
 
     expect(fetch).toHaveBeenCalledWith(
@@ -240,7 +240,7 @@ describe("jobs.update", () => {
     const result = await jobs.update(
       baseInput,
       // @ts-expect-error - needed because of mocked defineAction function
-      { cookies: makeCookies("token") }
+      makeContext("token")
     )
 
     expect(result).toEqual({ slug: "returned-slug" })
@@ -257,7 +257,7 @@ describe("jobs.update", () => {
       jobs.update(
         baseInput,
         // @ts-expect-error - needed because of mocked defineAction function
-        { cookies: makeCookies("token") }
+        makeContext("token")
       )
     ).rejects.toMatchObject({ code: "BAD_REQUEST" })
   })
@@ -271,7 +271,7 @@ describe("jobs.update", () => {
     await jobs.update(
       { ...baseInput, contact_name: "HR", contact_mail: "hr@acme.com", contact_phone: "+49123" },
       // @ts-expect-error - needed because of mocked defineAction function
-      { cookies: makeCookies("token") }
+      makeContext("token")
     )
 
     const body = getFetchBody()
@@ -287,7 +287,7 @@ describe("jobs.update", () => {
     await jobs.update(
       baseInput,
       // @ts-expect-error - needed because of mocked defineAction function
-      { cookies: makeCookies("token") }
+      makeContext("token")
     )
 
     const body = getFetchBody()
@@ -303,7 +303,7 @@ describe("jobs.create", () => {
       jobs.create(
         baseInput,
         // @ts-expect-error - needed because of mocked defineAction function
-        { cookies: makeCookies() }
+        makeContext()
       )
     ).rejects.toMatchObject({ code: "UNAUTHORIZED" })
   })
@@ -317,7 +317,7 @@ describe("jobs.create", () => {
     await jobs.create(
       baseInput,
       // @ts-expect-error - needed because of mocked defineAction function
-      { cookies: makeCookies("token") }
+      makeContext("token")
     )
 
     expect(fetch).toHaveBeenCalledWith(
@@ -335,7 +335,7 @@ describe("jobs.create", () => {
     const result = await jobs.create(
       baseInput,
       // @ts-expect-error - needed because of mocked defineAction function
-      { cookies: makeCookies("token") }
+      makeContext("token")
     )
 
     expect(result).toEqual({ slug: "created-slug" })
@@ -352,7 +352,7 @@ describe("jobs.create", () => {
       jobs.create(
         baseInput,
         // @ts-expect-error - needed because of mocked defineAction function
-        { cookies: makeCookies("token") }
+        makeContext("token")
       )
     ).rejects.toMatchObject({ code: "BAD_REQUEST" })
   })
@@ -366,7 +366,7 @@ describe("jobs.create", () => {
     await jobs.create(
       { ...baseInput, job_type: "internship", field: "it", work_mode: "remote" },
       // @ts-expect-error - needed because of mocked defineAction function
-      { cookies: makeCookies("token") }
+      makeContext("token")
     )
 
     const body = getFetchBody()

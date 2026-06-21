@@ -313,9 +313,14 @@ const initialLocationType = initialValues.locationType ?? "none"
 
   if (draftKey) {
     let submitting = false
+    const submitBtn = form.querySelector<HTMLButtonElement>('[type="submit"]')
 
     form.addEventListener("submit", () => {
       submitting = true
+      if (submitBtn) {
+        submitBtn.disabled = true
+        submitBtn.classList.add("loading")
+      }
       const draft: Record<string, string> = {}
       for (const name of FIELDS) {
         const el = form.elements.namedItem(name) as
