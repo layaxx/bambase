@@ -1,5 +1,23 @@
 ---
 import { deleteAuthCookies } from "@/utils/auth-cookies"
+import { STRAPI_URL } from "astro:env/client"
+
+const jwt = Astro.cookies.get("auth_token")?.value
+if (jwt) {
+  try {
+    await fetch(`${STRAPI_URL}/api/auth/logout`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${jwt}`,
+      },
+      signal: AbortSignal.timeout(3000),
+    })
+  } catch {
+    // Logout is best-effort — always clear cookies regardless
+  }
+}
+
 deleteAuthCookies(Astro.cookies)
 return Astro.redirect("/")
 ---

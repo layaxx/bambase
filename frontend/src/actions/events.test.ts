@@ -20,7 +20,7 @@ vi.mock("@/utils/api/events", () => ({
 }))
 
 import { events } from "./events"
-import { getFetchBody, makeCookies } from "./test-helpers"
+import { getFetchBody, makeContext } from "./test-helpers"
 
 afterEach(() => {
   vi.restoreAllMocks()
@@ -50,7 +50,7 @@ describe("events.create — location data in request body", () => {
     await events.create(
       { ...baseEventInput, location_type: "none" },
       // @ts-expect-error - needed because of mocked defineAction function
-      { cookies: makeCookies("token") }
+      makeContext("token")
     )
 
     const body = getFetchBody().data
@@ -67,7 +67,7 @@ describe("events.create — location data in request body", () => {
     await events.create(
       { ...baseEventInput, location_type: "linked", map_location_id: "loc-doc-1" },
       // @ts-expect-error - needed because of mocked defineAction function
-      { cookies: makeCookies("token") }
+      makeContext("token")
     )
 
     const body = getFetchBody().data
@@ -84,7 +84,7 @@ describe("events.create — location data in request body", () => {
     await events.create(
       { ...baseEventInput, location_type: "linked", map_location_id: undefined },
       // @ts-expect-error - needed because of mocked defineAction function
-      { cookies: makeCookies("token") }
+      makeContext("token")
     )
 
     const body = getFetchBody().data
@@ -107,7 +107,7 @@ describe("events.create — location data in request body", () => {
         custom_location_city: "Bamberg",
       },
       // @ts-expect-error - needed because of mocked defineAction function
-      { cookies: makeCookies("token") }
+      makeContext("token")
     )
 
     const body = getFetchBody().data
@@ -128,7 +128,7 @@ describe("events.create — location data in request body", () => {
     await events.create(
       { ...baseEventInput, location_type: "custom", custom_location_name: undefined },
       // @ts-expect-error - needed because of mocked defineAction function
-      { cookies: makeCookies("token") }
+      makeContext("token")
     )
 
     const body = getFetchBody().data
@@ -145,7 +145,7 @@ describe("events.create — location data in request body", () => {
     await events.create(
       { ...baseEventInput, location_type: "custom", custom_location_name: "Hall" },
       // @ts-expect-error - needed because of mocked defineAction function
-      { cookies: makeCookies("token") }
+      makeContext("token")
     )
 
     const body = getFetchBody().data
@@ -163,7 +163,7 @@ describe("events.delete", () => {
       events.delete(
         { documentId: "ev-1" },
         // @ts-expect-error - needed because of mocked defineAction function
-        { cookies: makeCookies() }
+        makeContext()
       )
     ).rejects.toMatchObject({ code: "UNAUTHORIZED" })
   })
@@ -174,7 +174,7 @@ describe("events.delete", () => {
     await events.delete(
       { documentId: "ev-abc" },
       // @ts-expect-error - needed because of mocked defineAction function
-      { cookies: makeCookies("token") }
+      makeContext("token")
     )
 
     expect(fetch).toHaveBeenCalledWith(
@@ -189,7 +189,7 @@ describe("events.delete", () => {
     await events.delete(
       { documentId: "ev-1" },
       // @ts-expect-error - needed because of mocked defineAction function
-      { cookies: makeCookies("my-token") }
+      makeContext("my-token")
     )
 
     expect(fetch).toHaveBeenCalledWith(
@@ -211,7 +211,7 @@ describe("events.delete", () => {
       events.delete(
         { documentId: "ev-1" },
         // @ts-expect-error - needed because of mocked defineAction function
-        { cookies: makeCookies("token") }
+        makeContext("token")
       )
     ).rejects.toMatchObject({ code: "FORBIDDEN" })
   })
@@ -222,7 +222,7 @@ describe("events.delete", () => {
     const result = await events.delete(
       { documentId: "ev-1" },
       // @ts-expect-error - needed because of mocked defineAction function
-      { cookies: makeCookies("token") }
+      makeContext("token")
     )
     expect(result).toEqual({})
   })
@@ -236,7 +236,7 @@ describe("events.update", () => {
       events.update(
         baseEventInput,
         // @ts-expect-error - needed because of mocked defineAction function
-        { cookies: makeCookies() }
+        makeContext()
       )
     ).rejects.toMatchObject({
       code: "UNAUTHORIZED",
@@ -252,7 +252,7 @@ describe("events.update", () => {
     await events.update(
       baseEventInput,
       // @ts-expect-error - needed because of mocked defineAction function
-      { cookies: makeCookies("token") }
+      makeContext("token")
     )
 
     expect(fetch).toHaveBeenCalledWith(
@@ -270,7 +270,7 @@ describe("events.update", () => {
     const result = await events.update(
       baseEventInput,
       // @ts-expect-error - needed because of mocked defineAction function
-      { cookies: makeCookies("token") }
+      makeContext("token")
     )
 
     expect(result).toEqual({ slug: "my-event-slug" })
@@ -287,7 +287,7 @@ describe("events.update", () => {
       events.update(
         baseEventInput,
         // @ts-expect-error - needed because of mocked defineAction function
-        { cookies: makeCookies("token") }
+        makeContext("token")
       )
     ).rejects.toMatchObject({ code: "BAD_REQUEST" })
   })
@@ -301,7 +301,7 @@ describe("events.create", () => {
       events.create(
         baseEventInput,
         // @ts-expect-error - needed because of mocked defineAction function
-        { cookies: makeCookies() }
+        makeContext()
       )
     ).rejects.toMatchObject({ code: "UNAUTHORIZED" })
   })
@@ -315,7 +315,7 @@ describe("events.create", () => {
     await events.create(
       baseEventInput,
       // @ts-expect-error - needed because of mocked defineAction function
-      { cookies: makeCookies("token") }
+      makeContext("token")
     )
 
     expect(fetch).toHaveBeenCalledWith(
@@ -333,7 +333,7 @@ describe("events.create", () => {
     const result = await events.create(
       baseEventInput,
       // @ts-expect-error - needed because of mocked defineAction function
-      { cookies: makeCookies("token") }
+      makeContext("token")
     )
 
     expect(result).toEqual({ slug: "created-slug" })
@@ -350,7 +350,7 @@ describe("events.create", () => {
       events.create(
         baseEventInput,
         // @ts-expect-error - needed because of mocked defineAction function
-        { cookies: makeCookies("token") }
+        makeContext("token")
       )
     ).rejects.toMatchObject({ code: "BAD_REQUEST" })
   })
@@ -364,7 +364,7 @@ describe("events.create", () => {
     await events.create(
       { ...baseEventInput, category: "sport" },
       // @ts-expect-error - needed because of mocked defineAction function
-      { cookies: makeCookies("token") }
+      makeContext("token")
     )
 
     const body = getFetchBody().data

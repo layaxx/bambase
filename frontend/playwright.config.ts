@@ -58,5 +58,12 @@ export default defineConfig({
         "**/og-images.spec.ts",
       ],
     },
+
+    /* 4. Token-refresh flow – does its own login to obtain a real refresh_token */
+    {
+      name: "token-refresh",
+      use: { ...devices["Desktop Chrome"] },
+      testMatch: "**/token-refresh.spec.ts",
+    },
   ],
 })

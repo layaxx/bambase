@@ -31,9 +31,8 @@ export const auth = {
         }
       }
 
-      setAuthCookies(context.cookies, data.jwt, {
-        email: data.user.email,
-      })
+      const refreshToken = typeof data.refreshToken === "string" ? data.refreshToken : undefined
+      setAuthCookies(context.cookies, data.jwt, { email: data.user.email }, refreshToken)
 
       return {
         success: true,
@@ -45,7 +44,7 @@ export const auth = {
 
   getMe: defineAction({
     handler: async (_input, context) => {
-      const token = context.cookies.get("auth_token")?.value
+      const token = context.locals.token
       if (!token) {
         throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
       }
@@ -100,9 +99,8 @@ export const auth = {
         return { confirmationPending: true, email }
       }
 
-      setAuthCookies(context.cookies, data.jwt, {
-        email: data.user.email,
-      })
+      const refreshToken = typeof data.refreshToken === "string" ? data.refreshToken : undefined
+      setAuthCookies(context.cookies, data.jwt, { email: data.user.email }, refreshToken)
 
       return { confirmationPending: false, email }
     },

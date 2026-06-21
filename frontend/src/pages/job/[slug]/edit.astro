@@ -11,7 +11,7 @@ const t = useTranslations(Astro.locals.locale)
 const me = Astro.locals.user
 if (!me) return Astro.redirect(`/login?redirect=/job/${Astro.params.slug}/edit`)
 
-const token = Astro.cookies.get("auth_token")!.value
+const token = Astro.locals.token!
 const { slug } = Astro.params
 const { data: job } = slug ? await fetchJobOffer(slug, token) : { data: null }
 

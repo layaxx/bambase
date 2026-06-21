@@ -10,7 +10,7 @@ const t = useTranslations(Astro.locals.locale)
 const user = Astro.locals.user
 if (!user) return Astro.redirect("/login?redirect=/account/jobs")
 
-const token = Astro.cookies.get("auth_token")!.value
+const token = Astro.locals.token!
 const { data: jobs } = await fetchMyJobOffers(token, user.id)
 
 const statusLabel: Record<string, string> = {

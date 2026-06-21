@@ -1,8 +1,11 @@
 import { vi } from "vitest"
 
-export function makeCookies(token?: string) {
+export function makeContext(token?: string) {
   return {
-    get: (name: string) => (name === "auth_token" && token ? { value: token } : undefined),
+    cookies: {
+      get: (_name: string) => undefined,
+    },
+    locals: { token: token ?? null },
   }
 }
 

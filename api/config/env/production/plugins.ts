@@ -15,6 +15,16 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Plugin =>
       },
     },
   },
+  "users-permissions": {
+    config: {
+      jwtManagement: "refresh",
+      sessions: {
+        accessTokenLifespan: 900, // 15 min
+        maxRefreshTokenLifespan: 2592000, // 30 days
+        idleRefreshTokenLifespan: 1209600, // 14 days
+      },
+    },
+  },
 })
 
 export default config
