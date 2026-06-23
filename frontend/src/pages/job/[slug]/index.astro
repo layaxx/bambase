@@ -17,10 +17,10 @@ import JobTypeBadge from "@/components/jobs/JobTypeBadge.astro"
 const t = useTranslations(Astro.locals.locale)
 
 const { slug } = Astro.params
-const token = Astro.cookies.get("auth_token")?.value
+const token = Astro.locals.token
 const [jobResult, { data: me }] = await Promise.all([
   slug
-    ? fetchJobOffer(slug, token)
+    ? fetchJobOffer(slug, token ?? undefined)
     : Promise.resolve({ data: null as JobOffer | null, apiDown: false }),
   Astro.callAction(actions.auth.getMe, {}),
 ])

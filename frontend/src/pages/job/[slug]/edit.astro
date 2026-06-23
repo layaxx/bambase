@@ -9,9 +9,8 @@ import JobForm from "@/components/jobs/JobForm.astro"
 const t = useTranslations(Astro.locals.locale)
 
 const me = Astro.locals.user
-if (!me) return Astro.redirect(`/login?redirect=/job/${Astro.params.slug}/edit`)
-
-const token = Astro.locals.token!
+const token = Astro.locals.token
+if (!me || !token) return Astro.redirect(`/login?redirect=/job/${Astro.params.slug}/edit`)
 const { slug } = Astro.params
 const { data: job } = slug ? await fetchJobOffer(slug, token) : { data: null }
 

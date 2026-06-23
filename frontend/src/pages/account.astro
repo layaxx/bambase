@@ -2,6 +2,7 @@
 import PageLayout from "@/layouts/PageLayout.astro"
 import { useTranslations } from "@/i18n/translations"
 import { STRAPI_URL } from "astro:env/client"
+import { deleteAuthCookies } from "@/utils/auth-cookies"
 
 const t = useTranslations(Astro.locals.locale)
 
@@ -13,7 +14,16 @@ const profileRes = await fetch(`${STRAPI_URL}/api/users/me`, {
   headers: { Authorization: `Bearer ${token}` },
   signal: AbortSignal.timeout(3000),
 })
-if (!profileRes.ok) return Astro.redirect("/login?redirect=/account")
+if (!profileRes.ok) {
+  if (profileRes.status === 401 || profileRes.status === 403) {
+    deleteAuthCookies(Astro.cookies)
+
+    console.warn("Unauthorized access to profile, logging user out")
+  } else {
+    throw new Error(`Failed to fetch profile: ${profileRes.status} ${profileRes.statusText}`)
+  }
+  return Astro.redirect("/login?redirect=/account")
+}
 const profile: { email: string; createdAt: string } = await profileRes.json()
 ---
 
