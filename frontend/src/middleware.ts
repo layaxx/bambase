@@ -118,6 +118,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
       await tryRefresh(context, refreshToken)
     } else {
       // Invalid or expired with no refresh token
+      console.warn("Token invalid or expired, logging out user")
       deleteAuthCookies(context.cookies)
       context.locals.user = null
       context.locals.token = null

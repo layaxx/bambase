@@ -2,7 +2,7 @@
 import { deleteAuthCookies } from "@/utils/auth-cookies"
 import { STRAPI_URL } from "astro:env/client"
 
-const jwt = Astro.cookies.get("auth_token")?.value
+const jwt = Astro.locals.token
 if (jwt) {
   try {
     await fetch(`${STRAPI_URL}/api/auth/logout`, {
