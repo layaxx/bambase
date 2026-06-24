@@ -24,7 +24,7 @@ export { fetchLocations } from "./locations"
 export type { StudentGroup } from "./student-groups"
 export { fetchStudentGroups } from "./student-groups"
 export type { MensaMeal } from "./mensa"
-export { fetchMensaMeals } from "./mensa"
+export { fetchMensaMeals, fetchMensaMealsRange } from "./mensa"
 
 const _threshold = parseInt(process.env.REPORT_WARNING_THRESHOLD ?? "3", 10)
 export const REPORT_WARNING_THRESHOLD = Number.isNaN(_threshold) ? 3 : _threshold
