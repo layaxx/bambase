@@ -39,9 +39,9 @@ async function load() {
       const transformed = transformApiResponse(apiResponse, mensa.location)
 
       // add or update meals in Strapi
-      for (const day of Object.keys(transformed)) {
-        await updateStrapi(day, transformed[day], mensa.location)
-      }
+      await Promise.all(
+        Object.keys(transformed).map((day) => updateStrapi(day, transformed[day], mensa.location))
+      )
 
       strapi.log.info(`Successfully loaded mensa data for ${mensa.location}`)
     } catch (error) {
@@ -62,9 +62,8 @@ async function updateStrapi(date: string, meals: MensaMealInput[], location: Loc
 
   const existingMap = new Map(existing.map((meal) => [meal.name, meal]))
 
-  let updated = 0
-  let created = 0
-  let deleted = 0
+  const updates: Promise<unknown>[] = []
+  const creates: Promise<unknown>[] = []
 
   for (const meal of meals) {
     if (!meal.name || meal.name.trim() === "-") {
@@ -75,28 +74,24 @@ async function updateStrapi(date: string, meals: MensaMealInput[], location: Loc
     const match = existingMap.get(meal.name)
 
     if (match) {
-      // update existing entry
-      await strapi
-        .documents("api::mensa-meal.mensa-meal")
-        .update({ documentId: match.documentId, data: meal })
+      updates.push(
+        strapi
+          .documents("api::mensa-meal.mensa-meal")
+          .update({ documentId: match.documentId, data: meal })
+      )
       existingMap.delete(meal.name)
-      updated++
     } else {
-      // create new entry
-      await strapi.documents("api::mensa-meal.mensa-meal").create({
-        data: meal,
-      })
-      created++
+      creates.push(strapi.documents("api::mensa-meal.mensa-meal").create({ data: meal }))
     }
   }
 
-  // delete entries that are no longer present in the API response
-  for (const meal of existingMap.values()) {
-    await strapi.documents("api::mensa-meal.mensa-meal").delete({ documentId: meal.documentId })
-    deleted++
-  }
+  const deletes = [...existingMap.values()].map((meal) =>
+    strapi.documents("api::mensa-meal.mensa-meal").delete({ documentId: meal.documentId })
+  )
 
-  return { updated, created, deleted }
+  await Promise.all([...updates, ...creates, ...deletes])
+
+  return { updated: updates.length, created: creates.length, deleted: deletes.length }
 }
 
 function transformApiResponse(

@@ -82,7 +82,7 @@ Audit-driven improvements to API query efficiency, rendering strategy, and asset
 - [ ] Reduce `fetchLocations()` limit to match actual dataset size (e.g. 200); add `fields` projection to drop unused columns
 - [x] Narrow `populate: ["owner"]` in `update` and `delete` controllers to `populate: { owner: { fields: ["id"] } }` — done in P23 for both job-offer and event controllers
 - [ ] Add database indexes for `events.start`, `events.end`, `job-offers.online_status`, `mensa-meals.date` — via a Strapi database migration or by documenting as a manual PostgreSQL step in the deployment guide
-- [ ] Parallelise the mensa sync loop with `Promise.all` on the create/update/delete batches
+- [x] Parallelise the mensa sync loop with `Promise.all` on the create/update/delete batches
 - [ ] Add `Cache-Control: public, s-maxage=300` to public Strapi GET responses (locations, published events, published jobs) via a custom middleware in `api/config/middlewares.ts`
 - [x] Replace Leaflet CDN `<script>` injection with `npm install leaflet` + a bundled import — done; `map.astro` uses `import L from "leaflet"`
 - [x] Add `font-display: swap` to font declarations — done in P28 via Astro's fonts API
