@@ -5,6 +5,7 @@ import type { ApiResult } from "./types"
 export type MensaMeal = {
   name: string
   priceStudents: number
+  date: string
   location: "Feki" | "Austraße" | "Erba"
   isVegan: boolean
   isVegetarian: boolean
@@ -19,6 +20,22 @@ export async function fetchMensaMeals(date: Dayjs): Promise<ApiResult<MensaMeal[
         filters: { date: { $eq: date.format("YYYY-MM-DD") } },
         populate: ["allergens"],
         pagination: { limit: 100 },
+      })
+    )
+    return { data: (result.data ?? []) as unknown as MensaMeal[], apiDown: false }
+  } catch (error) {
+    console.error("Error fetching Mensa meals", error)
+    return { data: [], apiDown: true }
+  }
+}
+
+export async function fetchMensaMealsRange(dates: Dayjs[]): Promise<ApiResult<MensaMeal[]>> {
+  try {
+    const result = await withTimeout(
+      client.collection("mensa-meals").find({
+        filters: { date: { $in: dates.map((d) => d.format("YYYY-MM-DD")) } },
+        populate: ["allergens"],
+        pagination: { limit: 300 },
       })
     )
     return { data: (result.data ?? []) as unknown as MensaMeal[], apiDown: false }

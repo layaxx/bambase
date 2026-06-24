@@ -2,7 +2,6 @@
 
 ## Upcoming
 
-### P27 add CI/CD pipelines
 
 ### P18 Job Overview Page
 
@@ -56,15 +55,15 @@ Audit-driven improvements to API query efficiency, rendering strategy, and asset
 
 **Issues identified — API over-fetching and N+1 queries:**
 
-- **Mensa page makes 7 serial API calls** — `mensa.astro:17–22` builds an array of 7 days then calls `fetchMensaMeals(day)` for each via `Promise.all`. Each call is a separate HTTP round-trip to Strapi with its own query. A single call filtering on `date: { $in: [...days] }` would replace all 7. Because this is SSR, it happens on every `/mensa` page load.
+- **Mensa page makes 7 serial API calls** — `mensa.astro:18–20` builds an array of 7 days then calls `fetchMensaMeals(day)` for each via `Promise.all`. Each call is a separate HTTP round-trip to Strapi with its own query. A single call filtering on `date: { $in: [...days] }` would replace all 7. Because this is SSR, it happens on every `/mensa` page load.
 - **Job offer `find()` makes 2 queries and deduplicates in JavaScript** — `controllers/job-offer.ts:14–32` runs two parallel `findMany` calls (one for published, one for the user's own offers), then merges and deduplicates in a `Set`. A single `$or` filter would produce the same result with half the database load on every authenticated job listing request.
 - **`fetchLocations()` has a hard limit of 500** — `utils/api/locations.ts:24`. The map currently has ~100 locations; the limit is set to 500 as a safety margin. This loads and serializes the entire locations table plus nested address components on every `/map` load. The limit should reflect the real dataset size, and the fetch should use `fields` projection to drop unused fields.
-- **`update` and `delete` controller methods each fetch the full job/event record just to check ownership** — `controllers/job-offer.ts:48, 67`. Only the `owner.id` field is needed; the full `populate: ["owner"]` call fetches the entire user relation. Use `fields: ["id"], populate: { owner: { fields: ["id"] } }`.
+- ~~**`update` and `delete` controller methods each fetch the full job/event record just to check ownership**~~ — **Fixed in P23.** Both job-offer and event controllers already use `populate: { owner: { fields: ["id"] } }`.
 
 **Issues identified — database:**
 
 - **No indexes on frequently filtered columns** — `events.start`, `events.end` (filtered on every events list with `$gte`/`$lte`), `job-offers.online_status` (filtered on every job list and the `unpublishExpired` service), and `mensa-meals.date` (filtered 7× per mensa page load) have no custom indexes defined. Strapi does not auto-index non-primary enum or datetime fields. These will cause full table scans as row counts grow.
-- **`mensa-meals` sync writes records one at a time** — `api/src/api/mensa/services/mensa.ts` loops over ~60 meals and issues individual `create`/`update`/`delete` calls. This runs 7× daily and causes 60+ sequential database writes per run. Batch with `Promise.all` to parallelise.
+- **`mensa-meals` sync writes records one at a time** — `api/src/api/mensa/services/mensa.ts:69–96` loops over meals with sequential `await` calls for each `create`/`update`/`delete`. Runs 7× daily across 3 mensa locations, causing 60+ sequential database writes per run. Batch with `Promise.all` to parallelize.
 
 **Issues identified — rendering strategy:**
 
@@ -73,20 +72,20 @@ Audit-driven improvements to API query efficiency, rendering strategy, and asset
 
 **Issues identified — assets:**
 
-- **Leaflet loaded from unpkg CDN at runtime** — `map.astro:115` adds a `<link>` for Leaflet CSS and then injects a `<script>` tag dynamically in JavaScript to load Leaflet JS from `unpkg.com`. This means: (a) the map cannot render until two CDN round-trips complete, (b) there is no subresource integrity check, and (c) the page has an external dependency. Leaflet should be bundled (`npm install leaflet`) or at minimum loaded with `<link rel="preload">` and a `<script defer>`.
-- **Font imports have no `font-display` override** — `Layout.astro:3–4` imports Archivo and Inter via `@fontsource-variable`. These are self-hosted, which is good, but there is no `font-display: swap` override in `global.css`. If the font files are slow to load the browser shows invisible text (FOIT) rather than falling back immediately.
+- ~~**Leaflet loaded from unpkg CDN at runtime**~~ — **Fixed.** `map.astro` now uses `import L from "leaflet"` and `import "leaflet/dist/leaflet.css"` as a bundled module import; no CDN dependency remains.
+- ~~**Font imports have no `font-display` override**~~ — **Fixed in P28.** Fonts migrated to Astro's native fonts API which injects `font-display: swap` by default.
 
 **Work involved:**
 
-- [ ] Collapse the 7 `fetchMensaMeals` calls into one: add a `date: { $in: [...] }` filter variant to `fetchMensaMeals` (or a new `fetchMensaMealsRange` function), update `mensa.astro` to use it
+- [x] Collapse the 7 `fetchMensaMeals` calls into one: added `fetchMensaMealsRange` with `date: { $in: [...] }` filter; `mensa.astro` now makes a single API call and groups results by date in the page script
 - [ ] Rewrite `job-offer.ts` `find()` to use a single `$or` query instead of two `findMany` + JS dedup
 - [ ] Reduce `fetchLocations()` limit to match actual dataset size (e.g. 200); add `fields` projection to drop unused columns
-- [ ] Narrow `populate: ["owner"]` in `update` and `delete` controllers to `populate: { owner: { fields: ["id"] } }`
+- [x] Narrow `populate: ["owner"]` in `update` and `delete` controllers to `populate: { owner: { fields: ["id"] } }` — done in P23 for both job-offer and event controllers
 - [ ] Add database indexes for `events.start`, `events.end`, `job-offers.online_status`, `mensa-meals.date` — via a Strapi database migration or by documenting as a manual PostgreSQL step in the deployment guide
 - [ ] Parallelise the mensa sync loop with `Promise.all` on the create/update/delete batches
 - [ ] Add `Cache-Control: public, s-maxage=300` to public Strapi GET responses (locations, published events, published jobs) via a custom middleware in `api/config/middlewares.ts`
-- [ ] Replace Leaflet CDN `<script>` injection with `npm install leaflet` + a bundled import, and add a `<link rel="preload">` for the CSS
-- [ ] Add `font-display: swap` to the Archivo and Inter `@font-face` declarations in `global.css`
+- [x] Replace Leaflet CDN `<script>` injection with `npm install leaflet` + a bundled import — done; `map.astro` uses `import L from "leaflet"`
+- [x] Add `font-display: swap` to font declarations — done in P28 via Astro's fonts API
 
 **Open questions:**
 

@@ -131,9 +131,11 @@ const mealsByLocation = Object.fromEntries(
       document.querySelectorAll("[data-mensa-btn]").forEach((b) => {
         b.classList.remove("bg-base-100", "text-base-content", "shadow-sm")
         b.classList.add("text-base-content/70")
+        b.setAttribute("aria-selected", "false")
       })
       btn.classList.remove("text-base-content/70")
       btn.classList.add("bg-base-100", "text-base-content", "shadow-sm")
+      btn.setAttribute("aria-selected", "true")
 
       document.querySelectorAll("[id^='meals-']").forEach((el) => {
         ;(el as HTMLElement).hidden = true

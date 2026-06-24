@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import dayjs from "dayjs"
-import { fetchMensaMeals } from "./mensa"
+import { fetchMensaMeals, fetchMensaMealsRange } from "./mensa"
 
 const mockFind = vi.hoisted(() => vi.fn())
 
@@ -72,6 +72,72 @@ describe("fetchMensaMeals", () => {
 
     expect(result).toEqual({ data: [], apiDown: true })
     expect(consoleSpy).toHaveBeenCalledWith("Error fetching Mensa meals", expect.any(TypeError))
+    consoleSpy.mockRestore()
+  })
+})
+
+describe("fetchMensaMealsRange", () => {
+  beforeEach(() => {
+    mockFind.mockReset()
+  })
+
+  it("passes all dates as $in filter", async () => {
+    mockFind.mockResolvedValue({ data: [] })
+    const dates = [dayjs("2026-04-15"), dayjs("2026-04-16"), dayjs("2026-04-17")]
+
+    await fetchMensaMealsRange(dates)
+
+    expect(mockFind).toHaveBeenCalledOnce()
+    expect(mockFind).toHaveBeenCalledWith(
+      expect.objectContaining({
+        filters: { date: { $in: ["2026-04-15", "2026-04-16", "2026-04-17"] } },
+      })
+    )
+  })
+
+  it("includes allergens in the populate list", async () => {
+    mockFind.mockResolvedValue({ data: [] })
+
+    await fetchMensaMealsRange([dayjs("2026-04-15")])
+
+    expect(mockFind).toHaveBeenCalledWith(expect.objectContaining({ populate: ["allergens"] }))
+  })
+
+  it("returns all meals from the API response", async () => {
+    const meals = [
+      {
+        id: "1",
+        name: "Pasta",
+        date: "2026-04-15",
+        location: "Feki",
+        priceStudents: 2.5,
+        isVegan: false,
+        isVegetarian: true,
+      },
+      {
+        id: "2",
+        name: "Salad",
+        date: "2026-04-16",
+        location: "Erba",
+        priceStudents: 1.8,
+        isVegan: true,
+        isVegetarian: true,
+      },
+    ]
+    mockFind.mockResolvedValue({ data: meals })
+
+    const result = await fetchMensaMealsRange([dayjs("2026-04-15"), dayjs("2026-04-16")])
+
+    expect(result).toEqual({ data: meals, apiDown: false })
+  })
+
+  it("returns empty array and apiDown true on error", async () => {
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+    mockFind.mockResolvedValue(null)
+
+    const result = await fetchMensaMealsRange([dayjs("2026-04-15")])
+
+    expect(result).toEqual({ data: [], apiDown: true })
     consoleSpy.mockRestore()
   })
 })
