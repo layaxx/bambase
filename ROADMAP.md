@@ -78,7 +78,7 @@ Audit-driven improvements to API query efficiency, rendering strategy, and asset
 **Work involved:**
 
 - [x] Collapse the 7 `fetchMensaMeals` calls into one: added `fetchMensaMealsRange` with `date: { $in: [...] }` filter; `mensa.astro` now makes a single API call and groups results by date in the page script
-- [ ] Rewrite `job-offer.ts` `find()` to use a single `$or` query instead of two `findMany` + JS dedup
+- [x] Rewrite `job-offer.ts` `find()` to use a single `$or` query instead of two `findMany` + JS dedup
 - [ ] Reduce `fetchLocations()` limit to match actual dataset size (e.g. 200); add `fields` projection to drop unused columns
 - [x] Narrow `populate: ["owner"]` in `update` and `delete` controllers to `populate: { owner: { fields: ["id"] } }` — done in P23 for both job-offer and event controllers
 - [ ] Add database indexes for `events.start`, `events.end`, `job-offers.online_status`, `mensa-meals.date` — via a Strapi database migration or by documenting as a manual PostgreSQL step in the deployment guide
