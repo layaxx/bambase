@@ -57,7 +57,7 @@ Audit-driven improvements to API query efficiency, rendering strategy, and asset
 
 - **Mensa page makes 7 serial API calls** — `mensa.astro:18–20` builds an array of 7 days then calls `fetchMensaMeals(day)` for each via `Promise.all`. Each call is a separate HTTP round-trip to Strapi with its own query. A single call filtering on `date: { $in: [...days] }` would replace all 7. Because this is SSR, it happens on every `/mensa` page load.
 - **Job offer `find()` makes 2 queries and deduplicates in JavaScript** — `controllers/job-offer.ts:14–32` runs two parallel `findMany` calls (one for published, one for the user's own offers), then merges and deduplicates in a `Set`. A single `$or` filter would produce the same result with half the database load on every authenticated job listing request.
-- **`fetchLocations()` has a hard limit of 500** — `utils/api/locations.ts:24`. The map currently has ~100 locations; the limit is set to 500 as a safety margin. This loads and serializes the entire locations table plus nested address components on every `/map` load. The limit should reflect the real dataset size, and the fetch should use `fields` projection to drop unused fields.
+- ~~**`fetchLocations()` has a hard limit of 500**~~ — **Fixed.** `/map` now passes the active category as a Strapi `$eq` filter, so each page load fetches only the locations for the selected category (~15–30 records) instead of all 100+. A `/api/locations.json` endpoint serves subsequent category switches as a JSON fetch so the map updates in-place without a page reload.
 - ~~**`update` and `delete` controller methods each fetch the full job/event record just to check ownership**~~ — **Fixed in P23.** Both job-offer and event controllers already use `populate: { owner: { fields: ["id"] } }`.
 
 **Issues identified — database:**
@@ -79,7 +79,7 @@ Audit-driven improvements to API query efficiency, rendering strategy, and asset
 
 - [x] Collapse the 7 `fetchMensaMeals` calls into one: added `fetchMensaMealsRange` with `date: { $in: [...] }` filter; `mensa.astro` now makes a single API call and groups results by date in the page script
 - [x] Rewrite `job-offer.ts` `find()` to use a single `$or` query instead of two `findMany` + JS dedup
-- [ ] Reduce `fetchLocations()` limit to match actual dataset size (e.g. 200); add `fields` projection to drop unused columns
+- [x] Reduce locations fetched on `/map`: `fetchLocations()` now accepts an optional category and forwards it as a Strapi `$eq` filter; `map.astro` reads `?filter=` server-side and passes the active category, fetching only the matching subset. A `GET /api/locations.json?category=` endpoint serves client-side category switches without a page reload.
 - [x] Narrow `populate: ["owner"]` in `update` and `delete` controllers to `populate: { owner: { fields: ["id"] } }` — done in P23 for both job-offer and event controllers
 - [ ] Add database indexes for `events.start`, `events.end`, `job-offers.online_status`, `mensa-meals.date` — via a Strapi database migration or by documenting as a manual PostgreSQL step in the deployment guide
 - [x] Parallelise the mensa sync loop with `Promise.all` on the create/update/delete batches

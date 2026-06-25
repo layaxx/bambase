@@ -18,13 +18,16 @@ export type MapLocation = {
   }
 }
 
-export async function fetchLocations(): Promise<ApiResult<MapLocation[]>> {
+export async function fetchLocations(
+  category?: MapLocation["category"]
+): Promise<ApiResult<MapLocation[]>> {
   try {
     const result = await withTimeout(
       client.collection("locations").find({
         sort: ["name:asc"],
         pagination: { limit: 500 },
         populate: ["address"],
+        ...(category ? { filters: { category: { $eq: category } } } : {}),
       })
     )
     return { data: (result.data ?? []) as unknown as MapLocation[], apiDown: false }
