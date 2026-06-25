@@ -14,7 +14,25 @@ import { formatAddress, type MapEvent } from "@/utils/map"
 import { useTranslations } from "@/i18n/translations"
 
 const t = useTranslations(Astro.locals.locale)
-const [locResult, eventsResult] = await Promise.all([fetchLocations(), fetchUpcomingMapEvents()])
+
+const categories: MapLocation["category"][] = [
+  "university",
+  "library",
+  "mensa",
+  "sport",
+  "venues",
+  "other",
+]
+
+const rawFilter = Astro.url.searchParams.get("filter") ?? "university"
+const activeCategory = (categories as string[]).includes(rawFilter)
+  ? (rawFilter as MapLocation["category"])
+  : "university"
+
+const [locResult, eventsResult] = await Promise.all([
+  fetchLocations(activeCategory),
+  fetchUpcomingMapEvents(),
+])
 const locations = locResult.data
 const upcomingEvents = eventsResult.data
 const apiDown = locResult.apiDown || eventsResult.apiDown
@@ -28,14 +46,9 @@ const mapEvents: MapEvent[] = upcomingEvents
     locationId: ev.map_location.documentId,
   }))
 
-const categories: MapLocation["category"][] = [
-  "university",
-  "library",
-  "mensa",
-  "sport",
-  "venues",
-  "other",
-]
+const allCategoryLabels = Object.fromEntries(
+  categories.map((cat) => [cat, t.map.categories[cat]])
+) as Record<MapLocation["category"], string>
 
 const timeFilters = [
   { key: "today", label: t.map.eventFilterToday },
@@ -57,7 +70,14 @@ const upcomingEventsLabel = t.map.upcomingEvents
   <div class="mb-2 flex flex-wrap gap-2">
     {
       categories.map((cat) => (
-        <button aria-pressed="false" class="btn btn-outline btn-sm" data-filter={cat}>
+        <button
+          aria-pressed={cat === activeCategory ? "true" : "false"}
+          class:list={[
+            "btn btn-sm",
+            { "btn-primary": cat === activeCategory, "btn-outline": cat !== activeCategory },
+          ]}
+          data-filter={cat}
+        >
           {t.map.categories[cat]}
         </button>
       ))
@@ -90,7 +110,6 @@ const upcomingEventsLabel = t.map.upcomingEvents
           return (
             <button
               class="cursor-pointer border-b border-base-200 px-3 py-2.5 text-left transition-colors last:border-b-0 hover:bg-base-200"
-              data-category={loc.category}
               data-id={loc.documentId}
             >
               <div class="flex items-center justify-between gap-2">
@@ -219,10 +238,11 @@ const upcomingEventsLabel = t.map.upcomingEvents
   Bridge: define:vars only works on is:inline scripts, so we hoist the
   server-rendered data into a window property that the module script reads below.
 -->
-<script define:vars={{ locations, mapEvents, upcomingEventsLabel }} is:inline>
+<script define:vars={{ locations, mapEvents, upcomingEventsLabel, allCategoryLabels }} is:inline>
   window.__mapLocations = locations
   window.__mapEvents = mapEvents
   window.__upcomingEventsLabel = upcomingEventsLabel
+  window.__categoryLabels = allCategoryLabels
 </script>
 
 <script>
@@ -243,11 +263,30 @@ const upcomingEventsLabel = t.map.upcomingEvents
   const upcomingEventsLabel = (window as unknown as { __upcomingEventsLabel: string })
     .__upcomingEventsLabel as string
 
-  const categoryLabels: Record<string, string> = {}
-  document.querySelectorAll<HTMLElement>("[data-category-label]").forEach((el) => {
-    const label = el.dataset.categoryLabel
-    if (label) categoryLabels[label] = el.textContent ?? ""
-  })
+  const categoryLabels = (window as unknown as { __categoryLabels: Record<string, string> })
+    .__categoryLabels
+
+  function escHtml(s: string): string {
+    return s
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+  }
+
+  function buildListItemHtml(loc: MapLocation): string {
+    const addr = formatAddress(loc.address)
+    const label = categoryLabels[loc.category] ?? loc.category
+    return `<button class="cursor-pointer border-b border-base-200 px-3 py-2.5 text-left transition-colors last:border-b-0 hover:bg-base-200" data-id="${escHtml(loc.documentId)}">
+      <div class="flex items-center justify-between gap-2">
+        <div class="text-sm font-medium leading-snug text-base-content">${escHtml(loc.name)}</div>
+        <span class="badge badge-sm badge-primary hidden shrink-0" data-event-badge="${escHtml(loc.documentId)}"></span>
+      </div>
+      ${loc.description ? `<div class="mt-0.5 text-xs text-base-content/70">${escHtml(loc.description)}</div>` : ""}
+      ${addr ? `<div class="mt-0.5 text-xs text-base-content/40">${escHtml(addr)}</div>` : ""}
+      <div class="mt-1 text-xs font-medium" data-category-label="${escHtml(loc.category)}">${escHtml(label)}</div>
+    </button>`
+  }
 
   function makeIcon(category: string, eventCount: number) {
     const dot = `<div style="width:14px;height:14px;border-radius:50%;background:var(--cat-${category},#64748b);border:2.5px solid var(--popup-icon-border);box-shadow:0 1px 4px rgba(0,0,0,0.35)"></div>`
@@ -321,15 +360,16 @@ const upcomingEventsLabel = t.map.upcomingEvents
 
     // ── time-filter ───────────────────────────────────────────────────────────
 
+    let currentTimeKey: "today" | "week" | "month" | "all" = "week"
+
     function applyTimeFilter(key: string) {
       if (!["today", "week", "month", "all"].includes(key)) {
-        key = "week"
         console.warn(`Invalid time filter key: ${key}, defaulting to "week"`)
+        key = "week"
       }
+      currentTimeKey = key as typeof currentTimeKey
 
-      const byLoc = groupByLocation(
-        filterEventsByTime(mapEvents, key as "today" | "week" | "month" | "all")
-      )
+      const byLoc = groupByLocation(filterEventsByTime(mapEvents, currentTimeKey))
 
       Object.entries(markerMap).forEach(([locId, { marker, loc, category }]) => {
         const locEvents = byLoc[locId] ?? []
@@ -350,9 +390,9 @@ const upcomingEventsLabel = t.map.upcomingEvents
       applyTimeFilter((e.target as HTMLSelectElement).value)
     })
 
-    // ── category-filter ───────────────────────────────────────────────────────
+    // ── category-filter (client-side fetch, no page reload) ──────────────────
 
-    function applyFilter(filter: string) {
+    async function applyFilter(filter: string) {
       document.querySelectorAll<HTMLElement>("[data-filter]").forEach((btn) => {
         const active = btn.dataset.filter === filter
         btn.classList.toggle("btn-primary", active)
@@ -360,14 +400,35 @@ const upcomingEventsLabel = t.map.upcomingEvents
         btn.setAttribute("aria-pressed", String(active))
       })
 
-      Object.entries(markerMap).forEach(([_id, { marker, category }]) => {
-        if (category === filter) map.addLayer(marker)
-        else map.removeLayer(marker)
+      const res = await fetch(`/api/locations.json?category=${encodeURIComponent(filter)}`)
+      if (!res.ok) return
+      const newLocations: MapLocation[] = await res.json()
+
+      Object.values(markerMap).forEach(({ marker }) => map.removeLayer(marker))
+      for (const key in markerMap) delete markerMap[key]
+
+      const byLoc = groupByLocation(filterEventsByTime(mapEvents, currentTimeKey))
+      newLocations.forEach((loc) => {
+        if (loc.lat == null || loc.lon == null) return
+        const locEvents = byLoc[loc.documentId] ?? []
+        const marker = L.marker([loc.lat, loc.lon], {
+          icon: makeIcon(loc.category, locEvents.length),
+        })
+          .addTo(map)
+          .bindPopup(buildPopupHtml(loc, locEvents))
+        markerMap[loc.documentId] = { marker, category: loc.category, loc }
       })
 
-      document.querySelectorAll<HTMLElement>("[data-id]").forEach((item) => {
-        item.style.display = item.dataset.category === filter ? "" : "none"
-      })
+      const list = document.getElementById("location-list")
+      if (list) {
+        list.innerHTML = newLocations.map(buildListItemHtml).join("")
+        document.querySelectorAll<HTMLElement>("[data-event-badge]").forEach((el) => {
+          const count = el.dataset.eventBadge ? (byLoc[el.dataset.eventBadge]?.length ?? 0) : 0
+          el.textContent = String(count)
+          el.classList.toggle("hidden", count === 0)
+        })
+        attachListClickHandlers(list)
+      }
 
       setParam("filter", filter)
     }
@@ -380,19 +441,23 @@ const upcomingEventsLabel = t.map.upcomingEvents
 
     // ── click list item → fly to marker ──────────────────────────────────────
 
-    document.querySelectorAll<HTMLElement>("[data-id]").forEach((item) => {
-      item.addEventListener("click", () => {
-        const entry = item.dataset.id ? markerMap[item.dataset.id] : undefined
-        if (entry) {
-          map.flyTo(entry.marker.getLatLng(), 17, { duration: 0.8 })
-          entry.marker.openPopup()
-        }
+    function attachListClickHandlers(container: HTMLElement) {
+      container.querySelectorAll<HTMLElement>("[data-id]").forEach((item) => {
+        item.addEventListener("click", () => {
+          const entry = item.dataset.id ? markerMap[item.dataset.id] : undefined
+          if (entry) {
+            map.flyTo(entry.marker.getLatLng(), 17, { duration: 0.8 })
+            entry.marker.openPopup()
+          }
+        })
       })
-    })
+    }
+
+    const locationList = document.getElementById("location-list")
+    if (locationList) attachListClickHandlers(locationList)
 
     // ── initialise from URL params ────────────────────────────────────────────
 
     applyTimeFilter(getParam("events", "week"))
-    applyFilter(getParam("filter", "university"))
   }
 </script>

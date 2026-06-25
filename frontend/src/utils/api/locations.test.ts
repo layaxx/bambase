@@ -47,6 +47,25 @@ describe("fetchLocations", () => {
     expect(mockFind).toHaveBeenCalledWith(expect.objectContaining({ populate: ["address"] }))
   })
 
+  it("sends no filters when called without a category", async () => {
+    mockFind.mockResolvedValue({ data: [] })
+
+    await fetchLocations()
+
+    const call = mockFind.mock.calls[0][0]
+    expect(call).not.toHaveProperty("filters")
+  })
+
+  it("sends a category $eq filter when a category is provided", async () => {
+    mockFind.mockResolvedValue({ data: [] })
+
+    await fetchLocations("university")
+
+    expect(mockFind).toHaveBeenCalledWith(
+      expect.objectContaining({ filters: { category: { $eq: "university" } } })
+    )
+  })
+
   it("returns the data array from the response", async () => {
     mockFind.mockResolvedValue({ data: [sampleLocation] })
 
