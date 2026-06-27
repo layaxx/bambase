@@ -2,7 +2,6 @@
 import PageLayout from "@/layouts/PageLayout.astro"
 import PageHeader from "@/components/PageHeader.astro"
 import IconMapPin from "@/components/icons/IconMapPin.astro"
-import ApiDownBanner from "@/components/ApiDownBanner.astro"
 import {
   fetchLocations,
   fetchUpcomingMapEvents,
@@ -10,7 +9,7 @@ import {
   type EventMapLocation,
   type MapLocation,
 } from "@/utils/api"
-import { formatAddress, type MapEvent } from "@/utils/map"
+import { type MapEvent } from "@/utils/map"
 import { useTranslations } from "@/i18n/translations"
 
 const t = useTranslations(Astro.locals.locale)
@@ -58,14 +57,13 @@ const timeFilters = [
 ] as const
 
 const upcomingEventsLabel = t.map.upcomingEvents
+const apiDownMessage = t.apiDown.message
 ---
 
 <PageLayout description={t.map.pageSubtitle} title={t.map.pageTitle}>
   <PageHeader color="info" subtitle={t.map.pageSubtitle} title={t.map.pageTitle}>
     <IconMapPin class="h-5 w-5" slot="icon" />
   </PageHeader>
-
-  {apiDown && <ApiDownBanner />}
 
   <div class="mb-2 flex flex-wrap gap-2">
     {
@@ -104,32 +102,6 @@ const upcomingEventsLabel = t.map.upcomingEvents
       class="order-2 flex h-48 shrink-0 flex-col overflow-y-auto rounded-xl border border-base-300 bg-base-100 md:order-1 md:h-auto md:w-64"
       id="location-list"
     >
-      {
-        locations.map((loc) => {
-          const addr = formatAddress(loc.address)
-          return (
-            <button
-              class="cursor-pointer border-b border-base-200 px-3 py-2.5 text-left transition-colors last:border-b-0 hover:bg-base-200"
-              data-id={loc.documentId}
-            >
-              <div class="flex items-center justify-between gap-2">
-                <div class="text-sm font-medium leading-snug text-base-content">{loc.name}</div>
-                <span
-                  class="badge badge-sm badge-primary hidden shrink-0"
-                  data-event-badge={loc.documentId}
-                />
-              </div>
-              {loc.description && (
-                <div class="mt-0.5 text-xs text-base-content/70">{loc.description}</div>
-              )}
-              {addr && <div class="mt-0.5 text-xs text-base-content/40">{addr}</div>}
-              <div class="mt-1 text-xs font-medium" data-category-label={loc.category}>
-                {t.map.categories[loc.category]}
-              </div>
-            </button>
-          )
-        })
-      }
     </div>
 
     <div
@@ -238,11 +210,23 @@ const upcomingEventsLabel = t.map.upcomingEvents
   Bridge: define:vars only works on is:inline scripts, so we hoist the
   server-rendered data into a window property that the module script reads below.
 -->
-<script define:vars={{ locations, mapEvents, upcomingEventsLabel, allCategoryLabels }} is:inline>
+<script
+  define:vars={{
+    locations,
+    mapEvents,
+    upcomingEventsLabel,
+    allCategoryLabels,
+    apiDownMessage,
+    apiDown,
+  }}
+  is:inline
+>
   window.__mapLocations = locations
   window.__mapEvents = mapEvents
   window.__upcomingEventsLabel = upcomingEventsLabel
   window.__categoryLabels = allCategoryLabels
+  window.__apiDownMessage = apiDownMessage
+  window.__apiDown = apiDown
 </script>
 
 <script>
@@ -265,6 +249,9 @@ const upcomingEventsLabel = t.map.upcomingEvents
 
   const categoryLabels = (window as unknown as { __categoryLabels: Record<string, string> })
     .__categoryLabels
+
+  const apiDownMessage = (window as unknown as { __apiDownMessage: string }).__apiDownMessage
+  const apiDown = (window as unknown as { __apiDown: boolean }).__apiDown
 
   function escHtml(s: string): string {
     return s
@@ -310,13 +297,13 @@ const upcomingEventsLabel = t.map.upcomingEvents
     const eventsHtml =
       locEvents.length > 0
         ? `<div class="popup-events-section">
-             <strong class="popup-label">${upcomingEventsLabel}:</strong>
+             <strong class="popup-label">${escHtml(upcomingEventsLabel)}:</strong>
              ${locEvents
                .map(
                  (ev) =>
                    `<div class="popup-event-item">
-                      <a href="/event/${ev.slug}" class="popup-event-link">${ev.title}</a>
-                      <span class="popup-event-date">${formatEventDate(ev.start, navigator.language)}</span>
+                      <a href="/event/${escHtml(ev.slug)}" class="popup-event-link">${escHtml(ev.title)}</a>
+                      <span class="popup-event-date">${escHtml(formatEventDate(ev.start, navigator.language))}</span>
                     </div>`
                )
                .join("")}
@@ -324,11 +311,11 @@ const upcomingEventsLabel = t.map.upcomingEvents
         : ""
 
     return `
-      <strong class="popup-name">${loc.name}</strong>
-      ${loc.description ? `<br><span class="popup-desc">${loc.description}</span>` : ""}
-      ${addrLine ? `<br><span class="popup-address">${addrLine}</span>` : ""}
-      ${loc.external_url ? `<br><a href="${loc.external_url}" target="_blank" rel="noopener noreferrer" class="popup-website">Website →</a>` : ""}
-      <br><span class="popup-category" data-category-label="${loc.category}">${categoryLabel}</span>
+      <strong class="popup-name">${escHtml(loc.name)}</strong>
+      ${loc.description ? `<br><span class="popup-desc">${escHtml(loc.description)}</span>` : ""}
+      ${addrLine ? `<br><span class="popup-address">${escHtml(addrLine)}</span>` : ""}
+      ${loc.external_url ? `<br><a href="${escHtml(loc.external_url)}" target="_blank" rel="noopener noreferrer" class="popup-website">Website →</a>` : ""}
+      <br><span class="popup-category" data-category-label="${escHtml(loc.category)}">${escHtml(categoryLabel)}</span>
       ${eventsHtml}
     `
   }
@@ -393,44 +380,71 @@ const upcomingEventsLabel = t.map.upcomingEvents
     // ── category-filter (client-side fetch, no page reload) ──────────────────
 
     async function applyFilter(filter: string) {
+      const previousFilter =
+        document.querySelector<HTMLElement>("[data-filter][aria-pressed='true']")?.dataset.filter ??
+        null
+
       document.querySelectorAll<HTMLElement>("[data-filter]").forEach((btn) => {
         const active = btn.dataset.filter === filter
         btn.classList.toggle("btn-primary", active)
         btn.classList.toggle("btn-outline", !active)
         btn.setAttribute("aria-pressed", String(active))
-      })
-
-      const res = await fetch(`/api/locations.json?category=${encodeURIComponent(filter)}`)
-      if (!res.ok) return
-      const newLocations: MapLocation[] = await res.json()
-
-      Object.values(markerMap).forEach(({ marker }) => map.removeLayer(marker))
-      for (const key in markerMap) delete markerMap[key]
-
-      const byLoc = groupByLocation(filterEventsByTime(mapEvents, currentTimeKey))
-      newLocations.forEach((loc) => {
-        if (loc.lat == null || loc.lon == null) return
-        const locEvents = byLoc[loc.documentId] ?? []
-        const marker = L.marker([loc.lat, loc.lon], {
-          icon: makeIcon(loc.category, locEvents.length),
-        })
-          .addTo(map)
-          .bindPopup(buildPopupHtml(loc, locEvents))
-        markerMap[loc.documentId] = { marker, category: loc.category, loc }
+        ;(btn as HTMLButtonElement).disabled = true
       })
 
       const list = document.getElementById("location-list")
       if (list) {
-        list.innerHTML = newLocations.map(buildListItemHtml).join("")
-        document.querySelectorAll<HTMLElement>("[data-event-badge]").forEach((el) => {
-          const count = el.dataset.eventBadge ? (byLoc[el.dataset.eventBadge]?.length ?? 0) : 0
-          el.textContent = String(count)
-          el.classList.toggle("hidden", count === 0)
-        })
-        attachListClickHandlers(list)
+        list.innerHTML = `<div class="flex flex-1 items-center justify-center"><span class="loading loading-spinner loading-sm text-primary"></span></div>`
       }
 
-      setParam("filter", filter)
+      try {
+        const res = await fetch(`/api/locations.json?category=${encodeURIComponent(filter)}`)
+        if (!res.ok) throw new Error("fetch failed")
+        const newLocations: MapLocation[] = await res.json()
+
+        Object.values(markerMap).forEach(({ marker }) => map.removeLayer(marker))
+        for (const key in markerMap) delete markerMap[key]
+
+        const byLoc = groupByLocation(filterEventsByTime(mapEvents, currentTimeKey))
+        newLocations.forEach((loc) => {
+          if (loc.lat == null || loc.lon == null) return
+          const locEvents = byLoc[loc.documentId] ?? []
+          const marker = L.marker([loc.lat, loc.lon], {
+            icon: makeIcon(loc.category, locEvents.length),
+          })
+            .addTo(map)
+            .bindPopup(buildPopupHtml(loc, locEvents))
+          markerMap[loc.documentId] = { marker, category: loc.category, loc }
+        })
+
+        if (list) {
+          list.innerHTML = newLocations.map(buildListItemHtml).join("")
+          document.querySelectorAll<HTMLElement>("[data-event-badge]").forEach((el) => {
+            const count = el.dataset.eventBadge ? (byLoc[el.dataset.eventBadge]?.length ?? 0) : 0
+            el.textContent = String(count)
+            el.classList.toggle("hidden", count === 0)
+          })
+          attachListClickHandlers(list)
+        }
+
+        setParam("filter", filter)
+      } catch {
+        if (previousFilter !== null) {
+          document.querySelectorAll<HTMLElement>("[data-filter]").forEach((btn) => {
+            const active = btn.dataset.filter === previousFilter
+            btn.classList.toggle("btn-primary", active)
+            btn.classList.toggle("btn-outline", !active)
+            btn.setAttribute("aria-pressed", String(active))
+          })
+        }
+        if (list) {
+          list.innerHTML = `<div class="p-3"><div class="alert alert-warning text-xs" role="alert"><span>${escHtml(apiDownMessage)}</span></div></div>`
+        }
+      } finally {
+        document.querySelectorAll<HTMLElement>("[data-filter]").forEach((btn) => {
+          ;(btn as HTMLButtonElement).disabled = false
+        })
+      }
     }
 
     document.querySelectorAll<HTMLElement>("[data-filter]").forEach((btn) => {
@@ -454,7 +468,14 @@ const upcomingEventsLabel = t.map.upcomingEvents
     }
 
     const locationList = document.getElementById("location-list")
-    if (locationList) attachListClickHandlers(locationList)
+    if (locationList) {
+      if (apiDown) {
+        locationList.innerHTML = `<div class="p-3"><div class="alert alert-warning text-xs" role="alert"><span>${escHtml(apiDownMessage)}</span></div></div>`
+      } else {
+        locationList.innerHTML = locations.map(buildListItemHtml).join("")
+        attachListClickHandlers(locationList)
+      }
+    }
 
     // ── initialise from URL params ────────────────────────────────────────────
 
