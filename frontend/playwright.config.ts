@@ -54,6 +54,7 @@ export default defineConfig({
       testMatch: [
         "**/auth.spec.ts",
         "**/public-pages.spec.ts",
+        "**/map.spec.ts",
         "**/reports.spec.ts",
         "**/og-images.spec.ts",
       ],
