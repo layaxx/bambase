@@ -14,7 +14,7 @@ const t = useTranslations(Astro.locals.locale)
 ---
 
 <a
-  class="group flex flex-col rounded-xl border border-base-300 bg-base-100 p-4 transition-all hover:shadow-md no-underline h-full"
+  class="group flex min-w-0 flex-col rounded-xl border border-base-300 bg-base-100 p-4 transition-all hover:shadow-md no-underline h-full"
   href={`/job/${job.slug}`}
 >
   <div class="mb-2 flex flex-row items-center justify-between">
@@ -29,7 +29,7 @@ const t = useTranslations(Astro.locals.locale)
   <div class="mb-2 flex flex-row items-center text-sm text-base-content/70">
     <div class="flex items-center gap-1.5 truncate">
       <IconStore class="h-3.5 w-3.5 shrink-0" />
-      <span class="truncate">{job.company},</span><span
+      <span class="min-w-0 truncate">{job.company},</span><span class="shrink-0"
         >{
           formatJobLocation(job, {
             remote: t.jobs.workModes.remote,
@@ -41,7 +41,7 @@ const t = useTranslations(Astro.locals.locale)
   </div>
   <p class="mb-3 line-clamp-2 text-sm text-base-content/70">{job.description}</p>
   <div class="mt-auto flex items-center justify-between gap-2 text-xs text-base-content/70">
-    <span class="badge badge-ghost badge-sm">{t.jobs.jobFields[job.field]}</span>
+    <span class="badge badge-ghost badge-sm min-w-0 truncate">{t.jobs.jobFields[job.field]}</span>
     <span class="shrink-0">{t.jobs.workingHours(job.working_hours)}</span>
   </div>
 </a>
