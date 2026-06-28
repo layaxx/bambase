@@ -1,5 +1,6 @@
 import { STRAPI_TOKEN } from "astro:env/server"
 import { client, withTimeout, fetchWithTimeout } from "./client"
+import { withCache } from "./cache"
 import { STRAPI_URL } from "astro:env/client"
 import type { ApiResult } from "./types"
 
@@ -85,14 +86,17 @@ export async function fetchJobOffersPaginated(
     filters.$or = [{ title: { $containsi: search } }, { company: { $containsi: search } }]
   }
 
+  const key = `job-offers:paginated:${JSON.stringify(filter)}`
   try {
-    const result = await withTimeout(
-      client.collection("job-offers").find({
-        filters,
-        sort: ["createdAt:desc"],
-        populate: ["contact"],
-        pagination: { page, pageSize },
-      })
+    const result = await withCache(key, () =>
+      withTimeout(
+        client.collection("job-offers").find({
+          filters,
+          sort: ["createdAt:desc"],
+          populate: ["contact"],
+          pagination: { page, pageSize },
+        })
+      )
     )
     const meta = (
       result as unknown as {
@@ -115,14 +119,17 @@ export async function fetchJobOffersPaginated(
 }
 
 export async function fetchJobOffers(limit = 100): Promise<ApiResult<JobOffer[]>> {
+  const key = `job-offers:all:${limit}`
   try {
-    const result = await withTimeout(
-      client.collection("job-offers").find({
-        filters: { online_status: { $eq: "published" } },
-        sort: ["createdAt:desc"],
-        populate: ["contact"],
-        pagination: { limit },
-      })
+    const result = await withCache(key, () =>
+      withTimeout(
+        client.collection("job-offers").find({
+          filters: { online_status: { $eq: "published" } },
+          sort: ["createdAt:desc"],
+          populate: ["contact"],
+          pagination: { limit },
+        })
+      )
     )
     return { data: (result.data ?? []) as unknown as JobOffer[], apiDown: false }
   } catch (error) {

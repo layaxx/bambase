@@ -69,6 +69,7 @@ Audit-driven improvements to API query efficiency, rendering strategy, and asset
 
 - **Every page is fully SSR with no caching** — `astro.config.mjs` uses `output: "server"`. Pages like `/mensa`, `/map`, and `/` fetch data that changes at most once per day (mensa data via cron at 05:30, locations almost never, events/jobs rarely within minutes). Every visitor triggers a full set of API calls to Strapi. Strapi has no `Cache-Control` headers on public GET endpoints. Adding even a 5-minute `s-maxage` on the Strapi responses, or adding `export const prerender = true` on `/map` and `/mensa`, would eliminate the majority of redundant fetches.
 - **All filtering on `/events` and `/jobs` is client-side** — both pages fetch up to 100 records, render them all to HTML, then hide/show via JavaScript. This couples page weight to dataset size. If either catalog grows to 500+ items, initial HTML will bloat proportionally. The filtering logic should eventually move to server-side query parameters; for now, the existing approach is acceptable at current scale.
+- ~~**Cached event queries used a static key with a time-sensitive `new Date()` filter**~~ — **Fixed.** `fetchEvents`, `fetchOngoingOrUpcomingEvents`, and `fetchUpcomingMapEvents` all build a `date >= now` filter inside the `withCache` callback. With a static key the filter timestamp was frozen at cache-fill time, causing events that ended within the 5-minute TTL window to remain visible. Cache keys now include a time-bucket component (`Math.floor(Date.now() / CACHE_TTL_MS)`) so the key rotates every TTL period and the `new Date()` call is never more than one TTL stale.
 
 **Issues identified — assets:**
 
@@ -83,6 +84,7 @@ Audit-driven improvements to API query efficiency, rendering strategy, and asset
 - [x] Narrow `populate: ["owner"]` in `update` and `delete` controllers to `populate: { owner: { fields: ["id"] } }` — done in P23 for both job-offer and event controllers
 - [ ] Add database indexes for `events.start`, `events.end`, `job-offers.online_status`, `mensa-meals.date` — via a Strapi database migration or by documenting as a manual PostgreSQL step in the deployment guide
 - [x] Parallelise the mensa sync loop with `Promise.all` on the create/update/delete batches
+- [x] Fix stale `new Date()` filter in cached event queries: `CACHE_TTL_MS` exported from `cache.ts`; time-bucket component added to cache keys in `fetchEvents`, `fetchOngoingOrUpcomingEvents`, `fetchUpcomingMapEvents`
 - [ ] Add `Cache-Control: public, s-maxage=300` to public Strapi GET responses (locations, published events, published jobs) via a custom middleware in `api/config/middlewares.ts`
 - [x] Replace Leaflet CDN `<script>` injection with `npm install leaflet` + a bundled import — done; `map.astro` uses `import L from "leaflet"`
 - [x] Add `font-display: swap` to font declarations — done in P28 via Astro's fonts API
@@ -126,6 +128,17 @@ Automatically importing events from external sources would reduce the manual eff
 ---
 
 ## Done
+
+### P30 Block javascript: URLs in user-submitted content
+
+Zod v4's `z.url()` accepts the `javascript:` scheme, allowing a registered user to submit an event or job with `external_url = "javascript:..."`. The value passed validation, was stored in Strapi, and was rendered as a raw `href` in `EventDetailPage.astro` and `job/[slug]/index.astro` — Astro escapes HTML entities but does not strip `javascript:` from href attributes, so clicking the link would execute attacker-controlled JS in the page origin.
+
+**What changed:**
+
+- `actions/events.ts` — `external_url` in `eventBaseSchema` now has a `.refine()` check that rejects any URL not starting with `http://` or `https://`.
+- `actions/jobs.ts` — extracted a shared `httpUrl` validator (`z.url().max(2048).refine(...)`) used by both `jobCreateSchema` and the `update` inline schema; both occurrences are now covered without duplication.
+
+---
 
 ### P28 Sync jobs from Feki site
 

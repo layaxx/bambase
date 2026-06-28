@@ -18,6 +18,7 @@ const locals = {
 const baseMeal: MensaMeal = {
   id: "1",
   name: "Spaghetti Bolognese",
+  date: "2026-01-06",
   location: "Feki",
   priceStudents: 3.5,
   isVegan: false,

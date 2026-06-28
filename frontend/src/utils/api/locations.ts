@@ -1,4 +1,5 @@
 import { client, withTimeout } from "./client"
+import { withCache } from "./cache"
 import type { ApiResult } from "./types"
 
 export type MapLocation = {
@@ -21,14 +22,17 @@ export type MapLocation = {
 export async function fetchLocations(
   category?: MapLocation["category"]
 ): Promise<ApiResult<MapLocation[]>> {
+  const key = `locations:${category ?? "all"}`
   try {
-    const result = await withTimeout(
-      client.collection("locations").find({
-        sort: ["name:asc"],
-        pagination: { limit: 500 },
-        populate: ["address"],
-        ...(category ? { filters: { category: { $eq: category } } } : {}),
-      })
+    const result = await withCache(key, () =>
+      withTimeout(
+        client.collection("locations").find({
+          sort: ["name:asc"],
+          pagination: { limit: 500 },
+          populate: ["address"],
+          ...(category ? { filters: { category: { $eq: category } } } : {}),
+        })
+      )
     )
     return { data: (result.data ?? []) as unknown as MapLocation[], apiDown: false }
   } catch (error) {
