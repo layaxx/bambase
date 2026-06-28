@@ -18,6 +18,7 @@ const locals = {
 const meal: MensaMeal = {
   id: "1",
   name: "Pasta Primavera",
+  date: "2026-01-06",
   location: "Feki",
   priceStudents: 3.1,
   isVegan: true,

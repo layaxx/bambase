@@ -12,6 +12,7 @@ beforeAll(async () => {
 const meal: MensaMeal = {
   id: "1",
   name: "Currywurst",
+  date: "2026-01-06",
   location: "Feki",
   priceStudents: 2.8,
   isVegan: false,

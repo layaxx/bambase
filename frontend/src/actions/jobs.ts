@@ -3,6 +3,11 @@ import { z } from "astro/zod"
 import { JOB_TYPES, JOB_FIELDS, WORK_MODES } from "@/utils/api/job-offers"
 import { STRAPI_URL } from "astro:env/client"
 
+const httpUrl = z
+  .url()
+  .max(2048)
+  .refine((url) => /^https?:\/\//i.test(url), "Nur http(s)-URLs sind erlaubt.")
+
 const jobCreateSchema = z.object({
   title: z.string().min(1, "Bitte Stellenbezeichnung eingeben.").max(200),
   company: z.string().min(1, "Bitte Unternehmen eingeben.").max(200),
@@ -15,7 +20,7 @@ const jobCreateSchema = z.object({
   contact_name: z.string().max(200),
   contact_mail: z.email().max(254).optional(),
   contact_phone: z.string().max(50).optional(),
-  external_url: z.url().max(2048).optional(),
+  external_url: httpUrl.optional(),
 })
 
 export const jobs = {
@@ -79,7 +84,7 @@ export const jobs = {
       contact_name: z.string().max(200).optional(),
       contact_mail: z.email().max(254).optional(),
       contact_phone: z.string().max(50).optional(),
-      external_url: z.url().max(2048).optional(),
+      external_url: httpUrl.optional(),
     }),
     handler: async ({ documentId, ...fields }, context) => {
       const token = context.locals.token

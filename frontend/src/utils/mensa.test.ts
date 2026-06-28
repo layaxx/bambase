@@ -133,6 +133,7 @@ describe("groupMealsByDay", () => {
       {
         id: "1",
         name: "Pasta",
+        date: "2026-04-13",
         location: "Feki" as const,
         priceStudents: 2.5,
         isVegan: false,
