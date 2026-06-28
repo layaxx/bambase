@@ -1,0 +1,66 @@
+---
+interface Props {
+  page: number
+  pageCount: number
+  prevLabel: string
+  nextLabel: string
+}
+
+const { page, pageCount, prevLabel, nextLabel } = Astro.props
+
+const MAX_VISIBLE = 5
+const half = Math.floor(MAX_VISIBLE / 2)
+let windowStart = Math.max(1, page - half)
+const windowEnd = Math.min(pageCount, windowStart + MAX_VISIBLE - 1)
+if (windowEnd - windowStart < MAX_VISIBLE - 1)
+  windowStart = Math.max(1, windowEnd - MAX_VISIBLE + 1)
+const pageNumbers = Array.from({ length: windowEnd - windowStart + 1 }, (_, i) => windowStart + i)
+
+function pageUrl(p: number) {
+  const params = new URLSearchParams(Astro.url.searchParams)
+  if (p === 1) params.delete("page")
+  else params.set("page", String(p))
+  const qs = params.toString()
+  return qs ? `?${qs}` : Astro.url.pathname
+}
+---
+
+{
+  pageCount > 1 && (
+    <div class="mt-6 flex justify-center">
+      <div class="join">
+        {page > 1 ? (
+          <a class="join-item btn btn-sm" href={pageUrl(page - 1)}>
+            {prevLabel}
+          </a>
+        ) : (
+          <span class="join-item btn btn-sm btn-disabled">{prevLabel}</span>
+        )}
+        {windowStart > 1 && (
+          <a class="join-item btn btn-sm" href={pageUrl(1)}>
+            1
+          </a>
+        )}
+        {windowStart > 2 && <span class="join-item btn btn-sm btn-disabled">…</span>}
+        {pageNumbers.map((p) => (
+          <a class:list={["join-item btn btn-sm", { "btn-active": p === page }]} href={pageUrl(p)}>
+            {p}
+          </a>
+        ))}
+        {windowEnd < pageCount - 1 && <span class="join-item btn btn-sm btn-disabled">…</span>}
+        {windowEnd < pageCount && (
+          <a class="join-item btn btn-sm" href={pageUrl(pageCount)}>
+            {pageCount}
+          </a>
+        )}
+        {page < pageCount ? (
+          <a class="join-item btn btn-sm" href={pageUrl(page + 1)}>
+            {nextLabel}
+          </a>
+        ) : (
+          <span class="join-item btn btn-sm btn-disabled">{nextLabel}</span>
+        )}
+      </div>
+    </div>
+  )
+}
