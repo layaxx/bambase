@@ -27,7 +27,7 @@ function pageUrl(p: number) {
 
 {
   pageCount > 1 && (
-    <div class="mt-6 flex justify-center">
+    <div class="mt-6 flex justify-center overflow-x-auto">
       <div class="join">
         {page > 1 ? (
           <a class="join-item btn btn-sm" href={pageUrl(page - 1)}>

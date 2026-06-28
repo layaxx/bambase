@@ -21,7 +21,7 @@ import { useTranslations } from "@/i18n/translations"
 
 const t = useTranslations(Astro.locals.locale)
 
-const PAGE_SIZE = 2
+const PAGE_SIZE = 12
 
 const rawType = Astro.url.searchParams.get("type") ?? "all"
 const rawField = Astro.url.searchParams.get("field") ?? "all"
