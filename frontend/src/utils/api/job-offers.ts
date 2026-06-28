@@ -56,6 +56,64 @@ export type JobOffer = {
   createdAt: string
 }
 
+export type JobOffersFilter = {
+  type?: string
+  field?: string
+  workMode?: string
+  search?: string
+  page?: number
+  pageSize?: number
+}
+
+export type JobOfferPage = {
+  jobs: JobOffer[]
+  total: number
+  page: number
+  pageCount: number
+}
+
+export async function fetchJobOffersPaginated(
+  filter: JobOffersFilter = {}
+): Promise<ApiResult<JobOfferPage>> {
+  const { type, field, workMode, search, page = 1, pageSize = 12 } = filter
+
+  const filters: Record<string, unknown> = { online_status: { $eq: "published" } }
+  if (type && type !== "all") filters.job_type = { $eq: type }
+  if (field && field !== "all") filters.field = { $eq: field }
+  if (workMode && workMode !== "all") filters.work_mode = { $eq: workMode }
+  if (search) {
+    filters.$or = [{ title: { $containsi: search } }, { company: { $containsi: search } }]
+  }
+
+  try {
+    const result = await withTimeout(
+      client.collection("job-offers").find({
+        filters,
+        sort: ["createdAt:desc"],
+        populate: ["contact"],
+        pagination: { page, pageSize },
+      })
+    )
+    const meta = (
+      result as unknown as {
+        meta?: { pagination?: { page: number; pageCount: number; total: number } }
+      }
+    ).meta?.pagination
+    return {
+      data: {
+        jobs: (result.data ?? []) as unknown as JobOffer[],
+        total: meta?.total ?? 0,
+        page: meta?.page ?? 1,
+        pageCount: meta?.pageCount ?? 1,
+      },
+      apiDown: false,
+    }
+  } catch (error) {
+    console.error("Error fetching job offers (paginated)", error)
+    return { data: { jobs: [], total: 0, page: 1, pageCount: 1 }, apiDown: true }
+  }
+}
+
 export async function fetchJobOffers(limit = 100): Promise<ApiResult<JobOffer[]>> {
   try {
     const result = await withTimeout(
