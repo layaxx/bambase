@@ -78,14 +78,15 @@ describe("job-offer controller: find()", () => {
     await controller.find(ctx)
 
     expect(strapi.documents).toHaveBeenCalledWith(expect.stringContaining("job-offer"))
+    expect(mockFindMany).toHaveBeenCalledTimes(1)
     expect(mockFindMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        filters: expect.objectContaining({ online_status: { $eq: "published" } }),
-      })
-    )
-    expect(mockFindMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        filters: expect.objectContaining({ owner: { id: { $eq: 5 } } }),
+        filters: expect.objectContaining({
+          $or: expect.arrayContaining([
+            { online_status: { $eq: "published" } },
+            { owner: { id: { $eq: 5 } } },
+          ]),
+        }),
       })
     )
   })
@@ -94,7 +95,7 @@ describe("job-offer controller: find()", () => {
     const publishedItem = { documentId: "pub-1", title: "Published" }
     const ownItem = { documentId: "own-1", title: "Draft" }
     const { strapi, mockFindMany } = makeStrapi()
-    mockFindMany.mockResolvedValueOnce([publishedItem]).mockResolvedValueOnce([ownItem])
+    mockFindMany.mockResolvedValueOnce([publishedItem, ownItem])
 
     const controller = createJobOfferController({ strapi })
     controller.transformResponse = jest.fn((x: unknown) => x)
@@ -107,13 +108,11 @@ describe("job-offer controller: find()", () => {
     expect(returned.map((i) => i.documentId)).toEqual(expect.arrayContaining(["pub-1", "own-1"]))
   })
 
-  it("deduplicates results that appear in both published and own queries", async () => {
+  it("returns all results from the single $or query for authenticated users", async () => {
     const sharedItem = { documentId: "shared-1", title: "Job" }
     const ownOnly = { documentId: "own-2", title: "Draft" }
     const { strapi, mockFindMany } = makeStrapi()
-    mockFindMany
-      .mockResolvedValueOnce([sharedItem]) // published
-      .mockResolvedValueOnce([sharedItem, ownOnly]) // own — sharedItem appears in both
+    mockFindMany.mockResolvedValueOnce([sharedItem, ownOnly])
 
     const controller = createJobOfferController({ strapi })
     controller.transformResponse = jest.fn((x: unknown) => x)
