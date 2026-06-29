@@ -30,6 +30,7 @@ export async function fetchMensaMeals(date: Dayjs): Promise<ApiResult<MensaMeal[
 }
 
 export async function fetchMensaMealsRange(dates: Dayjs[]): Promise<ApiResult<MensaMeal[]>> {
+  if (dates.length === 0) return { data: [], apiDown: false }
   try {
     const result = await withTimeout(
       client.collection("mensa-meals").find({

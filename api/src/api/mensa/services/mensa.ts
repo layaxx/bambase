@@ -39,9 +39,15 @@ async function load() {
       const transformed = transformApiResponse(apiResponse, mensa.location)
 
       // add or update meals in Strapi
-      await Promise.all(
-        Object.keys(transformed).map((day) => updateStrapi(day, transformed[day], mensa.location))
-      )
+      for (const day of Object.keys(transformed)) {
+        try {
+          await updateStrapi(day, transformed[day], mensa.location)
+        } catch (error) {
+          strapi.log.error(
+            `Failed to update Strapi for ${day} at ${mensa.location}: ${error instanceof Error ? error.message : String(error)}`
+          )
+        }
+      }
 
       strapi.log.info(`Successfully loaded mensa data for ${mensa.location}`)
     } catch (error) {
