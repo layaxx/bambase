@@ -18,6 +18,11 @@ vi.mock("./client", () => ({
   strapiUrl: "http://localhost:1337",
 }))
 
+vi.mock("./cache", () => ({
+  withCache: (_key: string, fn: () => Promise<unknown>) => fn(),
+  CACHE_TTL_MS: 300_000,
+}))
+
 beforeEach(() => {
   mockFind.mockReset()
   mockCollection.mockReturnValue({ find: mockFind })

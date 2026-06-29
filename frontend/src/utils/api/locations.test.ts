@@ -11,6 +11,10 @@ vi.mock("./client", () => ({
   strapiUrl: "http://localhost:1337",
 }))
 
+vi.mock("./cache", () => ({
+  withCache: (_key: string, fn: () => Promise<unknown>) => fn(),
+}))
+
 const sampleLocation = {
   documentId: "loc-1",
   slug: "audimax",
