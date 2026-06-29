@@ -1,6 +1,7 @@
 import { defineAction, ActionError } from "astro:actions"
 import { z } from "astro/zod"
 import { EVENT_CATEGORIES } from "@/utils/api/events"
+import { invalidateCacheByPrefix } from "@/utils/api/cache"
 import { STRAPI_URL } from "astro:env/client"
 
 const locationFieldsShape = {
@@ -74,6 +75,7 @@ export const events = {
         throw new ActionError({ code: "FORBIDDEN", message: "Löschen fehlgeschlagen." })
       }
 
+      invalidateCacheByPrefix("events:")
       return {}
     },
   }),
@@ -119,6 +121,7 @@ export const events = {
       }
 
       const data = await res.json()
+      invalidateCacheByPrefix("events:")
       return { slug: data.data.slug as string }
     },
   }),
@@ -167,6 +170,7 @@ export const events = {
       }
 
       const data = await res.json()
+      invalidateCacheByPrefix("events:")
       return { slug: data.data.slug }
     },
   }),

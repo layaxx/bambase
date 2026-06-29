@@ -223,6 +223,11 @@ const isLoggedIn = !!Astro.locals.user
 
     let searchTimer: ReturnType<typeof setTimeout>
     const searchEl = form.querySelector<HTMLInputElement>("input[name='search']")
+    if (searchEl?.value) {
+      searchEl.focus()
+      const len = searchEl.value.length
+      searchEl.setSelectionRange(len, len)
+    }
     searchEl?.addEventListener("input", () => {
       clearTimeout(searchTimer)
       searchTimer = setTimeout(() => form.requestSubmit(), 300)
