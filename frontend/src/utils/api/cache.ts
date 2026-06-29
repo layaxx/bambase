@@ -3,6 +3,12 @@ const MAX_ENTRIES = 100
 
 const store = new Map<string, { value: unknown; expiresAt: number }>()
 
+export function invalidateCacheByPrefix(prefix: string): void {
+  for (const key of store.keys()) {
+    if (key.startsWith(prefix)) store.delete(key)
+  }
+}
+
 export async function withCache<T>(key: string, fn: () => Promise<T>): Promise<T> {
   const now = Date.now()
   const entry = store.get(key)
