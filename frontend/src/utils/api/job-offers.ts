@@ -58,10 +58,11 @@ export type JobOffer = {
 }
 
 export type JobOffersFilter = {
-  type?: string
-  field?: string
-  workMode?: string
+  types?: string[]
+  fields?: string[]
+  workModes?: string[]
   search?: string
+  sort?: string
   page?: number
   pageSize?: number
 }
@@ -76,23 +77,27 @@ export type JobOfferPage = {
 export async function fetchJobOffersPaginated(
   filter: JobOffersFilter = {}
 ): Promise<ApiResult<JobOfferPage>> {
-  const { type, field, workMode, search, page = 1, pageSize = 12 } = filter
+  const { types, fields, workModes, search, sort = "newest", page = 1, pageSize = 12 } = filter
 
   const filters: Record<string, unknown> = { online_status: { $eq: "published" } }
-  if (type && type !== "all") filters.job_type = { $eq: type }
-  if (field && field !== "all") filters.field = { $eq: field }
-  if (workMode && workMode !== "all") filters.work_mode = { $eq: workMode }
+  if (types && types.length === 1) filters.job_type = { $eq: types[0] }
+  else if (types && types.length > 1) filters.job_type = { $in: types }
+  if (fields && fields.length === 1) filters.field = { $eq: fields[0] }
+  else if (fields && fields.length > 1) filters.field = { $in: fields }
+  if (workModes && workModes.length === 1) filters.work_mode = { $eq: workModes[0] }
+  else if (workModes && workModes.length > 1) filters.work_mode = { $in: workModes }
   if (search) {
     filters.$or = [{ title: { $containsi: search } }, { company: { $containsi: search } }]
   }
 
+  const sortOrder = sort === "oldest" ? ["createdAt:asc"] : ["createdAt:desc"]
   const key = `job-offers:paginated:${JSON.stringify(filter)}`
   try {
     const result = await withCache(key, () =>
       withTimeout(
         client.collection("job-offers").find({
           filters,
-          sort: ["createdAt:desc"],
+          sort: sortOrder,
           populate: ["contact"],
           pagination: { page, pageSize },
         })

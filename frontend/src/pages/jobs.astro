@@ -3,13 +3,15 @@ import PageLayout from "@/layouts/PageLayout.astro"
 import PageHeader from "@/components/PageHeader.astro"
 import IconBriefcase from "@/components/icons/IconBriefcase.astro"
 import IconSliders from "@/components/icons/IconSliders.astro"
-import IconChevronDown from "@/components/icons/IconChevronDown.astro"
 import IconSearch from "@/components/icons/IconSearch.astro"
+import IconX from "@/components/icons/IconX.astro"
+import IconCheck from "@/components/icons/IconCheck.astro"
 import JobOfferCard from "@/components/jobs/JobOfferCard.astro"
 import ApiDownBanner from "@/components/ApiDownBanner.astro"
 import Pagination from "@/components/Pagination.astro"
 import {
   fetchJobOffersPaginated,
+  fetchJobOffers,
   JOB_TYPES,
   JOB_FIELDS,
   WORK_MODES,
@@ -23,28 +25,46 @@ const t = useTranslations(Astro.locals.locale)
 
 const PAGE_SIZE = 12
 
-const rawType = Astro.url.searchParams.get("type") ?? "all"
-const rawField = Astro.url.searchParams.get("field") ?? "all"
-const rawWorkMode = Astro.url.searchParams.get("work_mode") ?? "all"
+const rawTypes = Astro.url.searchParams.get("type")?.split(",").filter(Boolean) ?? []
+const rawFields = Astro.url.searchParams.get("field")?.split(",").filter(Boolean) ?? []
+const rawWorkModes = Astro.url.searchParams.get("work_mode")?.split(",").filter(Boolean) ?? []
 const search = Astro.url.searchParams.get("search") ?? ""
+const sort = Astro.url.searchParams.get("sort") ?? "newest"
 const rawPage = parseInt(Astro.url.searchParams.get("page") ?? "1", 10)
 
-const type = (JOB_TYPES as readonly string[]).includes(rawType) ? rawType : "all"
-const field = (JOB_FIELDS as readonly string[]).includes(rawField) ? rawField : "all"
-const workMode = (WORK_MODES as readonly string[]).includes(rawWorkMode) ? rawWorkMode : "all"
+const types = rawTypes.filter((v) => (JOB_TYPES as readonly string[]).includes(v)) as JobType[]
+const fields = rawFields.filter((v) => (JOB_FIELDS as readonly string[]).includes(v)) as JobField[]
+const workModes = rawWorkModes.filter((v) =>
+  (WORK_MODES as readonly string[]).includes(v)
+) as WorkMode[]
 const currentPage = isNaN(rawPage) || rawPage < 1 ? 1 : rawPage
 
-const hasActiveFilter = type !== "all" || field !== "all" || workMode !== "all" || search !== ""
+const hasActiveFilter =
+  types.length > 0 || fields.length > 0 || workModes.length > 0 || search !== ""
 
-const { data, apiDown } = await fetchJobOffersPaginated({
-  type,
-  field,
-  workMode,
-  search,
-  page: currentPage,
-  pageSize: PAGE_SIZE,
-})
+const [{ data, apiDown }, { data: allJobs }] = await Promise.all([
+  fetchJobOffersPaginated({
+    types,
+    fields,
+    workModes,
+    search,
+    sort,
+    page: currentPage,
+    pageSize: PAGE_SIZE,
+  }),
+  fetchJobOffers(),
+])
 const { jobs, total, page: actualPage, pageCount } = data
+
+const typeCounts = Object.fromEntries(
+  JOB_TYPES.map((jt) => [jt, allJobs.filter((j) => j.job_type === jt).length])
+)
+const fieldCounts = Object.fromEntries(
+  JOB_FIELDS.map((jf) => [jf, allJobs.filter((j) => j.field === jf).length])
+)
+const workModeCounts = Object.fromEntries(
+  WORK_MODES.map((wm) => [wm, allJobs.filter((j) => j.work_mode === wm).length])
+)
 
 if (!apiDown && jobs.length === 0 && total > 0) {
   const redirectParams = new URLSearchParams(Astro.url.searchParams)
@@ -54,6 +74,16 @@ if (!apiDown && jobs.length === 0 && total > 0) {
 }
 
 const isLoggedIn = !!Astro.locals.user
+
+function buildToggleUrl(param: string, value: string, current: string[]): string {
+  const params = new URLSearchParams(Astro.url.searchParams)
+  params.delete("page")
+  const next = current.includes(value) ? current.filter((v) => v !== value) : [...current, value]
+  if (next.length === 0) params.delete(param)
+  else params.set(param, next.join(","))
+  const qs = params.toString()
+  return qs ? `?${qs}` : Astro.url.pathname
+}
 ---
 
 <PageLayout description={t.jobs.pageSubtitle} title={t.jobs.pageTitle}>
@@ -73,164 +103,264 @@ const isLoggedIn = !!Astro.locals.user
 
   {apiDown && <ApiDownBanner />}
 
-  <form id="jobs-filter-form" method="get">
-    <details
-      class="group mb-2 rounded-xl border border-base-300"
-      open={hasActiveFilter || undefined}
-    >
-      <summary class="flex cursor-pointer list-none items-center justify-between p-3">
+  <div class="flex flex-col gap-6 lg:grid lg:grid-cols-[256px_1fr] lg:items-start lg:gap-8">
+    <!-- Sidebar filters -->
+    <aside class="lg:sticky lg:top-4">
+      <div class="mb-4 flex items-center justify-between">
         <div class="flex items-center gap-2">
           <IconSliders class="h-4 w-4 text-base-content/40" />
-          <span class="text-sm font-medium">{t.jobs.filterHeading}</span>
+          <span class="font-medium">{t.jobs.filterHeading}</span>
         </div>
-        <IconChevronDown
-          class="h-4 w-4 text-base-content/40 transition-transform group-open:rotate-180"
-        />
-      </summary>
+        {
+          hasActiveFilter && (
+            <a class="text-sm text-primary hover:underline" href={Astro.url.pathname}>
+              {t.jobs.clearFilters}
+            </a>
+          )
+        }
+      </div>
 
-      <div class="px-5 pb-3">
-        <div class="relative mb-1">
+      <!-- JOB TYPE -->
+      <div class="mb-5">
+        <h3 class="mb-2 text-xs font-semibold uppercase tracking-wide text-base-content/40">
+          {t.jobs.filterType}
+        </h3>
+        {
+          JOB_TYPES.map((jt) => {
+            const checked = types.includes(jt)
+            const count = typeCounts[jt] ?? 0
+            return (
+              <a
+                class:list={[
+                  "flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors",
+                  { "bg-neutral text-neutral-content": checked, "hover:bg-base-200": !checked },
+                ]}
+                href={buildToggleUrl("type", jt, types)}
+              >
+                <div class="flex items-center gap-2">
+                  <span
+                    class:list={[
+                      "flex h-4 w-4 shrink-0 items-center justify-center rounded border",
+                      {
+                        "border-neutral-content/60 bg-neutral-content/20": checked,
+                        "border-base-content/40": !checked,
+                      },
+                    ]}
+                  >
+                    {checked && <IconCheck class="h-2.5 w-2.5" />}
+                  </span>
+                  <span>{t.jobs.jobTypes[jt]}</span>
+                </div>
+                <span class="text-xs text-base-content/40">{count}</span>
+              </a>
+            )
+          })
+        }
+      </div>
+
+      <!-- FIELD -->
+      <div class="mb-5">
+        <h3 class="mb-2 text-xs font-semibold uppercase tracking-wide text-base-content/40">
+          {t.jobs.filterField}
+        </h3>
+        {
+          JOB_FIELDS.map((jf) => {
+            const checked = fields.includes(jf)
+            const count = fieldCounts[jf] ?? 0
+            return (
+              <a
+                class:list={[
+                  "flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors",
+                  { "bg-neutral text-neutral-content": checked, "hover:bg-base-200": !checked },
+                ]}
+                href={buildToggleUrl("field", jf, fields)}
+              >
+                <div class="flex items-center gap-2">
+                  <span
+                    class:list={[
+                      "flex h-4 w-4 shrink-0 items-center justify-center rounded border",
+                      {
+                        "border-neutral-content/60 bg-neutral-content/20": checked,
+                        "border-base-content/40": !checked,
+                      },
+                    ]}
+                  >
+                    {checked && <IconCheck class="h-2.5 w-2.5" />}
+                  </span>
+                  <span>{t.jobs.jobFields[jf]}</span>
+                </div>
+                <span class="text-xs text-base-content/40">{count}</span>
+              </a>
+            )
+          })
+        }
+      </div>
+
+      <!-- WORK MODE -->
+      <div class="mb-5">
+        <h3 class="mb-2 text-xs font-semibold uppercase tracking-wide text-base-content/40">
+          {t.jobs.fieldWorkMode}
+        </h3>
+        {
+          WORK_MODES.map((wm) => {
+            const checked = workModes.includes(wm)
+            const count = workModeCounts[wm] ?? 0
+            return (
+              <a
+                class:list={[
+                  "flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors",
+                  { "bg-neutral text-neutral-content": checked, "hover:bg-base-200": !checked },
+                ]}
+                href={buildToggleUrl("work_mode", wm, workModes)}
+              >
+                <div class="flex items-center gap-2">
+                  <span
+                    class:list={[
+                      "flex h-4 w-4 shrink-0 items-center justify-center rounded border",
+                      {
+                        "border-neutral-content/60 bg-neutral-content/20": checked,
+                        "border-base-content/40": !checked,
+                      },
+                    ]}
+                  >
+                    {checked && <IconCheck class="h-2.5 w-2.5" />}
+                  </span>
+                  <span>{t.jobs.workModes[wm]}</span>
+                </div>
+                <span class="text-xs text-base-content/40">{count}</span>
+              </a>
+            )
+          })
+        }
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <div>
+      <!-- Search + sort row -->
+      <div class="mb-4 flex gap-3">
+        <div class="relative flex-1">
           <IconSearch
             class="pointer-events-none absolute left-3 top-1/2 z-1 h-4 w-4 -translate-y-1/2 text-base-content/40"
           />
           <input
             class="input input-bordered w-full pl-9"
-            id="filter-search"
-            name="search"
+            id="search-input"
             placeholder={t.jobs.filterSearch}
             type="search"
             value={search}
           />
         </div>
-
-        <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <div class="flex flex-col gap-1.5">
-            <label class="text-xs font-medium text-base-content/40" for="filter-type">
-              {t.jobs.filterType}
-            </label>
-            <select class="select select-bordered w-full" id="filter-type" name="type">
-              <option selected={type === "all"} value="all">{t.jobs.filterAll}</option>
-              {
-                JOB_TYPES.map((jt: JobType) => (
-                  <option selected={type === jt} value={jt}>
-                    {t.jobs.jobTypes[jt]}
-                  </option>
-                ))
-              }
-            </select>
-          </div>
-
-          <div class="flex flex-col gap-1.5">
-            <label class="text-xs font-medium text-base-content/40" for="filter-field">
-              {t.jobs.filterField}
-            </label>
-            <select class="select select-bordered w-full" id="filter-field" name="field">
-              <option selected={field === "all"} value="all">{t.jobs.filterAll}</option>
-              {
-                JOB_FIELDS.map((jf: JobField) => (
-                  <option selected={field === jf} value={jf}>
-                    {t.jobs.jobFields[jf]}
-                  </option>
-                ))
-              }
-            </select>
-          </div>
-
-          <div class="flex flex-col gap-1.5">
-            <label class="text-xs font-medium text-base-content/40" for="filter-work-mode">
-              {t.jobs.fieldWorkMode}
-            </label>
-            <select class="select select-bordered w-full" id="filter-work-mode" name="work_mode">
-              <option selected={workMode === "all"} value="all">{t.jobs.filterAll}</option>
-              {
-                WORK_MODES.map((wm: WorkMode) => (
-                  <option selected={workMode === wm} value={wm}>
-                    {t.jobs.workModes[wm]}
-                  </option>
-                ))
-              }
-            </select>
-          </div>
-        </div>
+        <select class="select select-bordered shrink-0" id="sort-select">
+          <option selected={sort === "newest"} value="newest">{t.jobs.sortNewest}</option>
+          <option selected={sort === "oldest"} value="oldest">{t.jobs.sortOldest}</option>
+        </select>
       </div>
-    </details>
-  </form>
 
-  <div class="mb-4 flex items-center justify-between">
-    <p aria-live="polite" class="text-sm text-base-content/40">
-      <span class="font-medium text-base-content">{total}</span>
-      {" "}{total === 1 ? t.jobs.resultSingular : t.jobs.resultPlural}
-    </p>
-    {
-      hasActiveFilter && (
-        <a class="btn btn-ghost btn-xs" href={Astro.url.pathname}>
-          {t.jobs.clearFilters}
-        </a>
-      )
-    }
-  </div>
-
-  {
-    !apiDown &&
-      (jobs.length === 0 ? (
-        <div class="py-4 text-center">
-          <IconSearch class="mx-auto mb-4 h-10 w-10 text-base-content/70" />
-          <p class="mb-4 text-base-content/70">
-            {hasActiveFilter ? t.jobs.noJobsFiltered : t.jobs.noJobs}
-          </p>
-          {hasActiveFilter && (
-            <a class="btn btn-outline btn-sm" href={Astro.url.pathname}>
+      <!-- Active filter chips -->
+      {
+        hasActiveFilter && (
+          <div class="mb-4 flex flex-wrap items-center gap-2">
+            {types.map((jt) => (
+              <a class="badge badge-neutral gap-1 pr-1" href={buildToggleUrl("type", jt, types)}>
+                {t.jobs.jobTypes[jt]}
+                <IconX class="h-3 w-3" />
+              </a>
+            ))}
+            {fields.map((jf) => (
+              <a class="badge badge-neutral gap-1 pr-1" href={buildToggleUrl("field", jf, fields)}>
+                {t.jobs.jobFields[jf]}
+                <IconX class="h-3 w-3" />
+              </a>
+            ))}
+            {workModes.map((wm) => (
+              <a
+                class="badge badge-neutral gap-1 pr-1"
+                href={buildToggleUrl("work_mode", wm, workModes)}
+              >
+                {t.jobs.workModes[wm]}
+                <IconX class="h-3 w-3" />
+              </a>
+            ))}
+            <a class="text-sm text-primary hover:underline" href={Astro.url.pathname}>
               {t.jobs.clearFilters}
             </a>
-          )}
-        </div>
-      ) : (
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {jobs.map((job) => (
-            <JobOfferCard job={job} />
-          ))}
-        </div>
-      ))
-  }
+          </div>
+        )
+      }
 
-  <Pagination
-    nextLabel={t.jobs.paginationNext}
-    page={actualPage}
-    pageCount={pageCount}
-    prevLabel={t.jobs.paginationPrev}
-  />
+      <!-- Result count -->
+      <p aria-live="polite" class="mb-4 text-sm text-base-content/40">
+        {t.jobs.showingResults(jobs.length, total)}
+      </p>
+
+      <!-- Job cards or empty state -->
+      {
+        !apiDown &&
+          (jobs.length === 0 ? (
+            <div class="rounded-xl border border-base-300 py-16 text-center">
+              <IconBriefcase class="mx-auto mb-4 h-10 w-10 text-base-content/40" />
+              <p class="mb-1 font-medium">{t.jobs.noJobsFoundTitle}</p>
+              <p class="mb-4 text-sm text-base-content/70">{t.jobs.noJobsFoundHint}</p>
+              {hasActiveFilter && (
+                <a class="btn btn-outline btn-sm" href={Astro.url.pathname}>
+                  {t.jobs.clearFilters}
+                </a>
+              )}
+            </div>
+          ) : (
+            <div class="grid gap-4 sm:grid-cols-2">
+              {jobs.map((job) => (
+                <JobOfferCard job={job} />
+              ))}
+            </div>
+          ))
+      }
+
+      <Pagination
+        nextLabel={t.jobs.paginationNext}
+        page={actualPage}
+        pageCount={pageCount}
+        prevLabel={t.jobs.paginationPrev}
+      />
+    </div>
+  </div>
 </PageLayout>
 
 <script>
-  const form = document.getElementById("jobs-filter-form") as HTMLFormElement | null
-  if (!form) {
-    console.error("jobs-filter-form not found")
-  } else {
-    form.addEventListener("submit", (e) => {
-      e.preventDefault()
-      const data = new FormData(form)
-      const params = new URLSearchParams()
-      for (const [key, value] of data) {
-        if (value !== "all" && value !== "") params.set(key, value as string)
-      }
-      const qs = params.toString()
-      window.location.href = qs ? `?${qs}` : window.location.pathname
-    })
+  const searchInput = document.getElementById("search-input") as HTMLInputElement | null
+  const sortSelect = document.getElementById("sort-select") as HTMLSelectElement | null
 
-    form.querySelectorAll<HTMLSelectElement>("select").forEach((sel) => {
-      sel.addEventListener("change", () => form.requestSubmit())
-    })
+  if (searchInput) {
+    if (searchInput.value) {
+      searchInput.focus()
+      const len = searchInput.value.length
+      searchInput.setSelectionRange(len, len)
+    }
 
     let searchTimer: ReturnType<typeof setTimeout>
-    const searchEl = form.querySelector<HTMLInputElement>("input[name='search']")
-    if (searchEl?.value) {
-      searchEl.focus()
-      const len = searchEl.value.length
-      searchEl.setSelectionRange(len, len)
-    }
-    searchEl?.addEventListener("input", () => {
+    searchInput.addEventListener("input", () => {
       clearTimeout(searchTimer)
-      searchTimer = setTimeout(() => form.requestSubmit(), 300)
+      searchTimer = setTimeout(() => {
+        const params = new URLSearchParams(window.location.search)
+        const val = searchInput.value.trim()
+        if (val) params.set("search", val)
+        else params.delete("search")
+        params.delete("page")
+        const qs = params.toString()
+        window.location.href = qs ? `?${qs}` : window.location.pathname
+      }, 300)
+    })
+  }
+
+  if (sortSelect) {
+    sortSelect.addEventListener("change", () => {
+      const params = new URLSearchParams(window.location.search)
+      if (sortSelect.value === "newest") params.delete("sort")
+      else params.set("sort", sortSelect.value)
+      params.delete("page")
+      const qs = params.toString()
+      window.location.href = qs ? `?${qs}` : window.location.pathname
     })
   }
 </script>
