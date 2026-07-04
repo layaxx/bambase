@@ -1,0 +1,150 @@
+---
+import IconSliders from "@/components/icons/IconSliders.astro"
+import IconChevronDown from "@/components/icons/IconChevronDown.astro"
+import IconSearch from "@/components/icons/IconSearch.astro"
+import { JOB_TYPES, JOB_FIELDS, WORK_MODES } from "@/utils/api"
+import { useTranslations } from "@/i18n/translations"
+
+interface Props {
+  hasActiveFilter: boolean
+  activeFilterCount: number
+  sort: string
+  search: string
+  mobileType: string
+  mobileField: string
+  mobileWorkMode: string
+}
+
+const {
+  hasActiveFilter,
+  activeFilterCount,
+  sort,
+  search,
+  mobileType,
+  mobileField,
+  mobileWorkMode,
+} = Astro.props
+const t = useTranslations(Astro.locals.locale)
+---
+
+<form class="mb-4 lg:hidden" id="mobile-filter-form" method="get">
+  <input name="sort" type="hidden" value={sort} />
+  <details class="group rounded-xl border border-base-300" open={hasActiveFilter || undefined}>
+    <summary class="flex cursor-pointer list-none items-center justify-between p-3">
+      <div class="flex items-center gap-2">
+        <IconSliders class="h-4 w-4 text-base-content/40" />
+        <span class="text-sm font-medium">
+          {t.jobs.filterHeading}
+          {
+            activeFilterCount > 0 && (
+              <span class="badge badge-neutral badge-sm ml-1">{activeFilterCount}</span>
+            )
+          }
+        </span>
+      </div>
+      <IconChevronDown
+        class="h-4 w-4 text-base-content/40 transition-transform group-open:rotate-180"
+      />
+    </summary>
+    <div class="px-4 pb-3">
+      <div class="relative mb-3">
+        <IconSearch
+          class="pointer-events-none absolute left-3 top-1/2 z-1 h-4 w-4 -translate-y-1/2 text-base-content/40"
+        />
+        <input
+          class="input input-bordered w-full pl-9"
+          id="mobile-filter-search"
+          name="search"
+          placeholder={t.jobs.filterSearch}
+          type="search"
+          value={search}
+        />
+      </div>
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-medium text-base-content/40" for="mobile-filter-type">
+            {t.jobs.filterType}
+          </label>
+          <select class="select select-bordered w-full" id="mobile-filter-type" name="type">
+            <option selected={mobileType === "all"} value="all">{t.jobs.filterAll}</option>
+            {
+              JOB_TYPES.map((jt) => (
+                <option selected={mobileType === jt} value={jt}>
+                  {t.jobs.jobTypes[jt]}
+                </option>
+              ))
+            }
+          </select>
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-medium text-base-content/40" for="mobile-filter-field">
+            {t.jobs.filterField}
+          </label>
+          <select class="select select-bordered w-full" id="mobile-filter-field" name="field">
+            <option selected={mobileField === "all"} value="all">{t.jobs.filterAll}</option>
+            {
+              JOB_FIELDS.map((jf) => (
+                <option selected={mobileField === jf} value={jf}>
+                  {t.jobs.jobFields[jf]}
+                </option>
+              ))
+            }
+          </select>
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-medium text-base-content/40" for="mobile-filter-work-mode">
+            {t.jobs.fieldWorkMode}
+          </label>
+          <select
+            class="select select-bordered w-full"
+            id="mobile-filter-work-mode"
+            name="work_mode"
+          >
+            <option selected={mobileWorkMode === "all"} value="all">{t.jobs.filterAll}</option>
+            {
+              WORK_MODES.map((wm) => (
+                <option selected={mobileWorkMode === wm} value={wm}>
+                  {t.jobs.workModes[wm]}
+                </option>
+              ))
+            }
+          </select>
+        </div>
+      </div>
+    </div>
+  </details>
+</form>
+
+<script>
+  const mobileForm = document.getElementById("mobile-filter-form") as HTMLFormElement | null
+  if (mobileForm) {
+    mobileForm.addEventListener("submit", (e) => {
+      e.preventDefault()
+      const data = new FormData(mobileForm)
+      const params = new URLSearchParams()
+      for (const [key, value] of data) {
+        if (value !== "all" && value !== "") params.set(key, value as string)
+      }
+      const qs = params.toString()
+      window.location.href = qs ? `?${qs}` : window.location.pathname
+    })
+
+    mobileForm.querySelectorAll("select").forEach((sel) => {
+      sel.addEventListener("change", () => mobileForm.requestSubmit())
+    })
+
+    const mobileSearch = mobileForm.querySelector<HTMLInputElement>("input[name='search']")
+    if (mobileSearch) {
+      if (mobileSearch.value) {
+        mobileSearch.focus()
+        const len = mobileSearch.value.length
+        mobileSearch.setSelectionRange(len, len)
+      }
+      let mobileSearchTimer: ReturnType<typeof setTimeout>
+      mobileSearch.addEventListener("input", () => {
+        clearTimeout(mobileSearchTimer)
+        mobileSearchTimer = setTimeout(() => mobileForm.requestSubmit(), 300)
+      })
+    }
+  }
+</script>
