@@ -2,7 +2,14 @@
 import IconSliders from "@/components/icons/IconSliders.astro"
 import IconChevronDown from "@/components/icons/IconChevronDown.astro"
 import IconSearch from "@/components/icons/IconSearch.astro"
-import { JOB_TYPES, JOB_FIELDS, WORK_MODES } from "@/utils/api"
+import {
+  JOB_TYPES,
+  JOB_FIELDS,
+  WORK_MODES,
+  type JobType,
+  type JobField,
+  type WorkMode,
+} from "@/utils/api"
 import { useTranslations } from "@/i18n/translations"
 
 interface Props {
@@ -10,21 +17,17 @@ interface Props {
   activeFilterCount: number
   sort: string
   search: string
-  mobileType: string
-  mobileField: string
-  mobileWorkMode: string
+  types: JobType[]
+  fields: JobField[]
+  workModes: WorkMode[]
 }
 
-const {
-  hasActiveFilter,
-  activeFilterCount,
-  sort,
-  search,
-  mobileType,
-  mobileField,
-  mobileWorkMode,
-} = Astro.props
+const { hasActiveFilter, activeFilterCount, sort, search, types, fields, workModes } = Astro.props
 const t = useTranslations(Astro.locals.locale)
+
+const mobileType = types.length === 1 ? types[0] : "all"
+const mobileField = fields.length === 1 ? fields[0] : "all"
+const mobileWorkMode = workModes.length === 1 ? workModes[0] : "all"
 ---
 
 <form class="mb-4 lg:hidden" id="mobile-filter-form" method="get">
@@ -65,7 +68,11 @@ const t = useTranslations(Astro.locals.locale)
           <label class="text-xs font-medium text-base-content/40" for="mobile-filter-type">
             {t.jobs.filterType}
           </label>
-          <select class="select select-bordered w-full" id="mobile-filter-type" name="type">
+          <select
+            class="select select-bordered w-full"
+            id="mobile-filter-type"
+            name={types.length <= 1 ? "type" : undefined}
+          >
             <option selected={mobileType === "all"} value="all">{t.jobs.filterAll}</option>
             {
               JOB_TYPES.map((jt) => (
@@ -80,7 +87,11 @@ const t = useTranslations(Astro.locals.locale)
           <label class="text-xs font-medium text-base-content/40" for="mobile-filter-field">
             {t.jobs.filterField}
           </label>
-          <select class="select select-bordered w-full" id="mobile-filter-field" name="field">
+          <select
+            class="select select-bordered w-full"
+            id="mobile-filter-field"
+            name={fields.length <= 1 ? "field" : undefined}
+          >
             <option selected={mobileField === "all"} value="all">{t.jobs.filterAll}</option>
             {
               JOB_FIELDS.map((jf) => (
@@ -98,7 +109,7 @@ const t = useTranslations(Astro.locals.locale)
           <select
             class="select select-bordered w-full"
             id="mobile-filter-work-mode"
-            name="work_mode"
+            name={workModes.length <= 1 ? "work_mode" : undefined}
           >
             <option selected={mobileWorkMode === "all"} value="all">{t.jobs.filterAll}</option>
             {
@@ -121,9 +132,18 @@ const t = useTranslations(Astro.locals.locale)
     mobileForm.addEventListener("submit", (e) => {
       e.preventDefault()
       const data = new FormData(mobileForm)
-      const params = new URLSearchParams()
+      const params = new URLSearchParams(window.location.search)
+      params.delete("page")
       for (const [key, value] of data) {
-        if (value !== "all" && value !== "") params.set(key, value as string)
+        const val = typeof value === "string" ? value : ""
+        if (key === "sort") {
+          if (val === "newest") params.delete("sort")
+          else params.set("sort", val)
+        } else if (val === "all" || val === "") {
+          params.delete(key)
+        } else {
+          params.set(key, val)
+        }
       }
       const qs = params.toString()
       window.location.href = qs ? `?${qs}` : window.location.pathname
