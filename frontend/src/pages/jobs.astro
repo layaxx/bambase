@@ -42,18 +42,20 @@ const currentPage = isNaN(rawPage) || rawPage < 1 ? 1 : rawPage
 const hasActiveFilter =
   types.length > 0 || fields.length > 0 || workModes.length > 0 || search !== ""
 
-const [{ data, apiDown }, { data: allJobs }] = await Promise.all([
-  fetchJobOffersPaginated({
-    types,
-    fields,
-    workModes,
-    search,
-    sort,
-    page: currentPage,
-    pageSize: PAGE_SIZE,
-  }),
-  fetchJobOffers(),
-])
+const [{ data, apiDown: jobsApiDown }, { data: allJobs, apiDown: countsApiDown }] =
+  await Promise.all([
+    fetchJobOffersPaginated({
+      types,
+      fields,
+      workModes,
+      search,
+      sort,
+      page: currentPage,
+      pageSize: PAGE_SIZE,
+    }),
+    fetchJobOffers(),
+  ])
+const apiDown = jobsApiDown || countsApiDown
 const { jobs, total, page: actualPage, pageCount } = data
 
 if (!apiDown && jobs.length === 0 && total > 0) {
@@ -118,12 +120,12 @@ const workModeItems = WORK_MODES.map((wm) => ({
 
   <JobFilterMobile
     activeFilterCount={types.length + fields.length + workModes.length}
+    fields={fields}
     hasActiveFilter={hasActiveFilter}
-    mobileField={fields.length === 1 ? fields[0] : "all"}
-    mobileType={types.length === 1 ? types[0] : "all"}
-    mobileWorkMode={workModes.length === 1 ? workModes[0] : "all"}
     search={search}
     sort={sort}
+    types={types}
+    workModes={workModes}
   />
 
   <div class="flex flex-col gap-6 lg:grid lg:grid-cols-[256px_1fr] lg:items-start lg:gap-8">
@@ -164,7 +166,7 @@ const workModeItems = WORK_MODES.map((wm) => ({
       />
 
       <p aria-live="polite" class="mb-4 text-sm text-base-content/40">
-        {t.jobs.showingResults(jobs.length, total)}
+        {t.jobs.showingResults((actualPage - 1) * PAGE_SIZE + jobs.length, total)}
       </p>
 
       {
@@ -173,7 +175,9 @@ const workModeItems = WORK_MODES.map((wm) => ({
             <div class="rounded-xl border border-base-300 py-16 text-center">
               <IconBriefcase class="mx-auto mb-4 h-10 w-10 text-base-content/40" />
               <p class="mb-1 font-medium">{t.jobs.noJobsFoundTitle}</p>
-              <p class="mb-4 text-sm text-base-content/70">{t.jobs.noJobsFoundHint}</p>
+              <p class="mb-4 text-sm text-base-content/70">
+                {hasActiveFilter ? t.jobs.noJobsFoundHint : t.jobs.noJobs}
+              </p>
               {hasActiveFilter && (
                 <a class="btn btn-outline btn-sm" href={clearUrl}>
                   {t.jobs.clearFilters}
