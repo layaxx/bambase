@@ -10,7 +10,7 @@ const { title, description, ogImage } = Astro.props
 ---
 
 <AppLayout description={description} ogImage={ogImage} title={title}>
-  <main class="max-w-7xl mx-auto px-4 py-8 block grow w-full" id="main-content">
+  <main class="max-w-7xl mx-auto px-4 md:py-8 py-4 block grow w-full" id="main-content">
     <slot />
   </main>
 </AppLayout>
