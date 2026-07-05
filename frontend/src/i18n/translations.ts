@@ -578,7 +578,7 @@ const en: SetAtPath<
     clearFilters: "Clear filters",
     resultSingular: "job listing",
     resultPlural: "job listings",
-    showingResults: (shown: number, total: number) => `Showing ${shown} results of ${total}`,
+    showingResults: (shown: number, total: number) => `Showing ${shown} of ${total} results`,
     sortNewest: "Newest first",
     sortOldest: "Oldest first",
     paginationPrev: "Previous",

@@ -28,7 +28,8 @@ const rawTypes = Astro.url.searchParams.get("type")?.split(",").filter(Boolean) 
 const rawFields = Astro.url.searchParams.get("field")?.split(",").filter(Boolean) ?? []
 const rawWorkModes = Astro.url.searchParams.get("work_mode")?.split(",").filter(Boolean) ?? []
 const search = Astro.url.searchParams.get("search") ?? ""
-const sort = Astro.url.searchParams.get("sort") ?? "newest"
+const rawSort = Astro.url.searchParams.get("sort")
+const sort = rawSort === "oldest" ? "oldest" : "newest"
 const rawPage = parseInt(Astro.url.searchParams.get("page") ?? "1", 10)
 
 const types = rawTypes.filter((v) => (JOB_TYPES as readonly string[]).includes(v)) as JobType[]
@@ -66,8 +67,10 @@ function buildToggleUrl(param: string, value: string, current: string[]): string
   const params = new URLSearchParams(Astro.url.searchParams)
   params.delete("page")
   const next = current.includes(value) ? current.filter((v) => v !== value) : [...current, value]
-  if (next.length === 0) params.delete(param)
-  else params.set(param, next.join(","))
+
+  const normalized = Array.from(new Set(next)).sort()
+  if (normalized.length === 0) params.delete(param)
+  else params.set(param, normalized.join(","))
   const qs = params.toString()
   return qs ? `?${qs}` : Astro.url.pathname
 }
