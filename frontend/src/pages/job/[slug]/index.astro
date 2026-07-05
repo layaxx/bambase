@@ -57,6 +57,8 @@ if (archiveResult?.data !== undefined && !archiveResult.error) {
   return Astro.redirect(Astro.url.pathname)
 }
 
+const toExternalUrl = (url: string) => (/^https?:\/\//i.test(url) ? url : `https://${url}`)
+
 const description = job
   ? `${job.company}${job.description ? ` – ${job.description.slice(0, 120)}` : ""}`
   : undefined
@@ -80,7 +82,7 @@ const ogImage =
       </div>
     ) : (
       <>
-        <div class="mb-6 flex items-center justify-between gap-4">
+        <div class="mb-4 md:mb-6 flex items-center justify-between gap-4">
           <a class="btn btn-ghost btn-sm gap-1 pl-0" href="/jobs">
             <IconArrowLeft class="h-4 w-4" />
             {t.jobs.backToJobs}
@@ -215,7 +217,7 @@ const ogImage =
             {job.external_url && (
               <a
                 class="btn btn-primary w-full"
-                href={job.external_url}
+                href={toExternalUrl(job.external_url)}
                 rel="noopener noreferrer"
                 target="_blank"
               >
