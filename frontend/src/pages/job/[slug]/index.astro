@@ -155,8 +155,12 @@ const ogImage =
             <h1 class="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">{job.title}</h1>
 
             <div class="mb-4 flex flex-wrap gap-2">
-              <JobTypeBadge jobType={job.job_type} />
-              <span class="badge badge-ghost">{t.jobs.jobFields[job.field]}</span>
+              <a href={`/jobs?type=${job.job_type}`}>
+                <JobTypeBadge jobType={job.job_type} />
+              </a>
+              <a href={`/jobs?field=${job.field}`}>
+                <span class="badge badge-ghost">{t.jobs.jobFields[job.field]}</span>
+              </a>
             </div>
 
             <div class="mb-6 flex flex-wrap gap-4 text-sm text-base-content/70">
