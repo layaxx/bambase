@@ -1,6 +1,7 @@
 import { defineAction, ActionError } from "astro:actions"
 import { z } from "astro/zod"
 import { JOB_TYPES, JOB_FIELDS, WORK_MODES } from "@/utils/api/job-offers"
+import { invalidateCacheByPrefix } from "@/utils/api/cache"
 import { STRAPI_URL } from "astro:env/client"
 
 const httpUrl = z
@@ -42,6 +43,7 @@ export const jobs = {
         throw new ActionError({ code: "FORBIDDEN", message: "Löschen fehlgeschlagen." })
       }
 
+      invalidateCacheByPrefix("job-offers:")
       return {}
     },
   }),
@@ -65,26 +67,16 @@ export const jobs = {
         throw new ActionError({ code: "FORBIDDEN", message: "Archivieren fehlgeschlagen." })
       }
 
+      invalidateCacheByPrefix("job-offers:")
       return {}
     },
   }),
 
   update: defineAction({
     accept: "form",
-    input: z.object({
+    input: jobCreateSchema.extend({
       documentId: z.string().min(1),
-      title: z.string().min(1, "Bitte Stellenbezeichnung eingeben.").max(200),
-      company: z.string().min(1, "Bitte Unternehmen eingeben.").max(200),
-      location: z.string().min(1, "Bitte Ort eingeben.").max(200),
-      working_hours: z.coerce.number().int().min(0, "Bitte gültige Stundenzahl eingeben."),
-      description: z.string().min(1, "Bitte Beschreibung eingeben."),
-      job_type: z.enum(JOB_TYPES).default("other"),
-      field: z.enum(JOB_FIELDS).default("other"),
-      work_mode: z.enum(WORK_MODES).default("on_site"),
       contact_name: z.string().max(200).optional(),
-      contact_mail: z.email().max(254).optional(),
-      contact_phone: z.string().max(50).optional(),
-      external_url: httpUrl.optional(),
     }),
     handler: async ({ documentId, ...fields }, context) => {
       const token = context.locals.token
@@ -128,6 +120,7 @@ export const jobs = {
       }
 
       const data = await res.json()
+      invalidateCacheByPrefix("job-offers:")
       return { slug: String(data.data.slug) }
     },
   }),

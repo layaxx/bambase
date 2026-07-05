@@ -1,6 +1,6 @@
 import { STRAPI_URL } from "astro:env/client"
 import { client, withTimeout, fetchWithTimeout } from "./client"
-import { withCache, CACHE_TTL_MS } from "./cache"
+import { withCache } from "./cache"
 import type { ApiResult } from "./types"
 import type { MapLocation } from "./locations"
 
@@ -46,7 +46,7 @@ export type Event = {
 }
 
 export async function fetchEvents(limit = 100): Promise<ApiResult<Event[]>> {
-  const key = `events:all:${limit}:${Math.floor(Date.now() / CACHE_TTL_MS)}`
+  const key = `events:all:${limit}`
   try {
     const result = await withCache(key, () =>
       withTimeout(
@@ -65,7 +65,7 @@ export async function fetchEvents(limit = 100): Promise<ApiResult<Event[]>> {
 }
 
 export async function fetchOngoingOrUpcomingEvents(limit = 100): Promise<ApiResult<Event[]>> {
-  const key = `events:ongoing-or-upcoming:${limit}:${Math.floor(Date.now() / CACHE_TTL_MS)}`
+  const key = `events:ongoing-or-upcoming:${limit}`
   try {
     const result = await withCache(key, () =>
       withTimeout(
@@ -99,7 +99,7 @@ export async function fetchOngoingOrUpcomingEvents(limit = 100): Promise<ApiResu
 
 /** Fetch all future events with their map_location populated (used by the map page). */
 export async function fetchUpcomingMapEvents(limit = 200): Promise<ApiResult<Event[]>> {
-  const key = `events:upcoming-map:${limit}:${Math.floor(Date.now() / CACHE_TTL_MS)}`
+  const key = `events:upcoming-map:${limit}`
   try {
     const result = await withCache(key, () =>
       withTimeout(

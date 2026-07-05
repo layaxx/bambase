@@ -1,4 +1,5 @@
 import { client, withTimeout } from "./client"
+import { withCache } from "./cache"
 import type { ApiResult } from "./types"
 
 export type StudentGroup = {
@@ -13,12 +14,15 @@ export type StudentGroup = {
 }
 
 export async function fetchStudentGroups(limit = 200): Promise<ApiResult<StudentGroup[]>> {
+  const key = `student-groups:${limit}`
   try {
-    const result = await withTimeout(
-      client.collection("student-groups").find({
-        sort: ["name:asc"],
-        pagination: { limit },
-      })
+    const result = await withCache(key, () =>
+      withTimeout(
+        client.collection("student-groups").find({
+          sort: ["name:asc"],
+          pagination: { limit },
+        })
+      )
     )
     return { data: (result.data ?? []) as unknown as StudentGroup[], apiDown: false }
   } catch (error) {
