@@ -11,7 +11,6 @@ import ApiDownBanner from "@/components/ApiDownBanner.astro"
 import Pagination from "@/components/Pagination.astro"
 import {
   fetchJobOffersPaginated,
-  fetchJobOffers,
   JOB_TYPES,
   JOB_FIELDS,
   WORK_MODES,
@@ -42,20 +41,15 @@ const currentPage = isNaN(rawPage) || rawPage < 1 ? 1 : rawPage
 const hasActiveFilter =
   types.length > 0 || fields.length > 0 || workModes.length > 0 || search !== ""
 
-const [{ data, apiDown: jobsApiDown }, { data: allJobs, apiDown: countsApiDown }] =
-  await Promise.all([
-    fetchJobOffersPaginated({
-      types,
-      fields,
-      workModes,
-      search,
-      sort,
-      page: currentPage,
-      pageSize: PAGE_SIZE,
-    }),
-    fetchJobOffers(),
-  ])
-const apiDown = jobsApiDown || countsApiDown
+const { data, apiDown } = await fetchJobOffersPaginated({
+  types,
+  fields,
+  workModes,
+  search,
+  sort,
+  page: currentPage,
+  pageSize: PAGE_SIZE,
+})
 const { jobs, total, page: actualPage, pageCount } = data
 
 if (!apiDown && jobs.length === 0 && total > 0) {
@@ -79,23 +73,17 @@ function buildToggleUrl(param: string, value: string, current: string[]): string
 }
 
 const typeItems = JOB_TYPES.map((jt) => ({
-  value: jt,
   label: t.jobs.jobTypes[jt],
-  count: allJobs.filter((j) => j.job_type === jt).length,
   checked: types.includes(jt),
   url: buildToggleUrl("type", jt, types),
 }))
 const fieldItems = JOB_FIELDS.map((jf) => ({
-  value: jf,
   label: t.jobs.jobFields[jf],
-  count: allJobs.filter((j) => j.field === jf).length,
   checked: fields.includes(jf),
   url: buildToggleUrl("field", jf, fields),
 }))
 const workModeItems = WORK_MODES.map((wm) => ({
-  value: wm,
   label: t.jobs.workModes[wm],
-  count: allJobs.filter((j) => j.work_mode === wm).length,
   checked: workModes.includes(wm),
   url: buildToggleUrl("work_mode", wm, workModes),
 }))
@@ -206,8 +194,8 @@ const workModeItems = WORK_MODES.map((wm) => ({
 <script>
   const searchInput = document.getElementById("search-input") as HTMLInputElement | null
   if (searchInput) {
+    searchInput.focus()
     if (searchInput.value) {
-      searchInput.focus()
       const len = searchInput.value.length
       searchInput.setSelectionRange(len, len)
     }

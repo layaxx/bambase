@@ -3,12 +3,11 @@ import IconCheck from "@/components/icons/IconCheck.astro"
 
 interface Props {
   label: string
-  count: number
   checked: boolean
   url: string
 }
 
-const { label, count, checked, url } = Astro.props
+const { label, checked, url } = Astro.props
 ---
 
 <a
@@ -32,5 +31,4 @@ const { label, count, checked, url } = Astro.props
     </span>
     <span>{label}</span>
   </div>
-  <span class="text-xs text-base-content/40">{count}</span>
 </a>
