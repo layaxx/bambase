@@ -263,6 +263,8 @@ const initialLocationType = initialValues.locationType ?? "none"
 </form>
 
 <script>
+  import { initDraftPersistence } from "@/utils/form-draft"
+
   const FIELDS = [
     "title",
     "organizer",
@@ -279,7 +281,6 @@ const initialLocationType = initialValues.locationType ?? "none"
   ]
 
   const form = document.querySelector<HTMLFormElement>("form")
-  const draftKey = form?.dataset.draftKey
 
   function updateLocationVisibility() {
     const locationType = (form?.elements.namedItem("location_type") as RadioNodeList)?.value
@@ -289,55 +290,11 @@ const initialLocationType = initialValues.locationType ?? "none"
     customSection?.classList.toggle("hidden", locationType !== "custom")
   }
 
-  if (draftKey) {
-    const saved = sessionStorage.getItem(draftKey)
-    if (saved) {
-      const draft = JSON.parse(saved) as Record<string, string>
-      for (const name of FIELDS) {
-        const el = form.elements.namedItem(name) as
-          | HTMLInputElement
-          | HTMLTextAreaElement
-          | HTMLSelectElement
-          | RadioNodeList
-          | null
-        if (el && draft[name]) (el as HTMLInputElement).value = draft[name]
-      }
-    }
-  }
+  if (form) initDraftPersistence(form, FIELDS)
 
   updateLocationVisibility()
 
   document.querySelectorAll('[name="location_type"]').forEach((radio) => {
     radio.addEventListener("change", updateLocationVisibility)
   })
-
-  if (draftKey) {
-    let submitting = false
-    const submitBtn = form.querySelector<HTMLButtonElement>('[type="submit"]')
-
-    form.addEventListener("submit", () => {
-      submitting = true
-      if (submitBtn) {
-        submitBtn.disabled = true
-        submitBtn.classList.add("loading")
-      }
-      const draft: Record<string, string> = {}
-      for (const name of FIELDS) {
-        const el = form.elements.namedItem(name) as
-          | HTMLInputElement
-          | HTMLTextAreaElement
-          | HTMLSelectElement
-          | RadioNodeList
-          | null
-        if (el) draft[name] = (el as HTMLInputElement).value
-      }
-      sessionStorage.setItem(draftKey, JSON.stringify(draft))
-    })
-
-    window.addEventListener("pagehide", () => {
-      if (!submitting) {
-        sessionStorage.removeItem(draftKey)
-      }
-    })
-  }
 </script>

@@ -8,6 +8,7 @@ import IconExternalLink from "../icons/IconExternalLink.astro"
 import IconSliders from "../icons/IconSliders.astro"
 import IconUsers from "../icons/IconUsers.astro"
 import ReportModal from "../ReportModal.astro"
+import Alert from "../Alert.astro"
 import EventCategoryBadge from "./EventCategoryBadge.astro"
 import type { Event } from "@/utils/api/events"
 import IconMapPin from "../icons/IconMapPin.astro"
@@ -59,27 +60,13 @@ const location = event?.map_location ?? event?.custom_location
 
   {
     hasReports && (
-      <div class="alert alert-warning alert-outline mb-6" role="alert">
-        <span>{t.reports.warningHint}</span>
-      </div>
+      <Alert outline variant="warning">
+        {t.reports.warningHint}
+      </Alert>
     )
   }
-
-  {
-    hasBeenReported === "success" && (
-      <div class="alert alert-success mb-6" role="alert">
-        <span>{t.reports.successMessage}</span>
-      </div>
-    )
-  }
-
-  {
-    hasBeenReported === "error" && (
-      <div class="alert alert-error mb-6" role="alert">
-        <span>{t.reports.errorMessage}</span>
-      </div>
-    )
-  }
+  {hasBeenReported === "success" && <Alert variant="success">{t.reports.successMessage}</Alert>}
+  {hasBeenReported === "error" && <Alert variant="error">{t.reports.errorMessage}</Alert>}
 
   <div class="grid gap-8 lg:grid-cols-3">
     <div class="lg:col-span-2">

@@ -2,6 +2,15 @@ import type { JobType } from "./api/job-offers"
 
 export type JobStatus = "submitted" | "published" | "expired" | "rejected" | "archived"
 
+export type AlertVariant = "success" | "error" | "warning" | "neutral" | "info"
+
+export const JOB_STATUS_ALERT_VARIANT: Partial<Record<JobStatus, AlertVariant>> = {
+  submitted: "warning",
+  expired: "neutral",
+  rejected: "error",
+  archived: "info",
+}
+
 export const JOB_TYPE_BADGE_CLASS: Record<JobType, string> = {
   part_time: "badge-primary",
   internship: "badge-secondary",
@@ -10,13 +19,6 @@ export const JOB_TYPE_BADGE_CLASS: Record<JobType, string> = {
   thesis: "badge-accent",
   volunteer: "badge-success",
   other: "badge-ghost",
-}
-
-export const JOB_STATUS_ALERT_CLASS: Partial<Record<JobStatus, string>> = {
-  submitted: "alert-warning",
-  expired: "alert-neutral",
-  rejected: "alert-error",
-  archived: "alert-info",
 }
 
 export const JOB_STATUS_BADGE_CLASS: Record<JobStatus, string> = {

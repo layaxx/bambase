@@ -10,6 +10,10 @@ vi.mock("./client", () => ({
   withTimeout: (p: Promise<unknown>) => p,
 }))
 
+vi.mock("./cache", () => ({
+  withCache: (_key: string, fn: () => Promise<unknown>) => fn(),
+}))
+
 const sampleGroup = {
   documentId: "grp-1",
   slug: "asta",
