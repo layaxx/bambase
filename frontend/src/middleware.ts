@@ -2,6 +2,7 @@ import { defineMiddleware } from "astro:middleware"
 import { STRAPI_URL } from "astro:env/client"
 import type { Locale } from "@/i18n/translations"
 import { deleteAuthCookies, updateJwtCookie, updateRefreshTokenCookie } from "@/utils/auth-cookies"
+import { auth } from "./utils/auth"
 
 const SUPPORTED_LOCALES: Locale[] = ["de", "en"]
 const DEFAULT_LOCALE: Locale = "de"
@@ -103,6 +104,16 @@ export const onRequest = defineMiddleware(async (context, next) => {
       sameSite: "strict",
       path: "/",
     })
+  }
+
+  const isAuthed = await auth.api.getSession({
+    headers: context.request.headers,
+  })
+  if (isAuthed) {
+    context.locals.userNew = isAuthed.user
+    context.locals.session = isAuthed.session
+
+    return next()
   }
 
   const token = context.cookies.get("auth_token")?.value
