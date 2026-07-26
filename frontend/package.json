@@ -35,6 +35,7 @@
     "daisyui": "^5.0.0",
     "dayjs": "^1.11.20",
     "leaflet": "^1.9.4",
+    "node-cron": "^4.6.0",
     "satori": "^0.26.0",
     "tailwindcss": "^4.0.0"
   },

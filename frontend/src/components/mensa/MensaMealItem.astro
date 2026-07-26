@@ -37,9 +37,7 @@ const { meal, id } = Astro.props
         </summary>
         <div class="mt-1.5 flex flex-wrap gap-1">
           {meal.allergens.map((a) => (
-            <span class="rounded bg-base-200 px-1.5 py-0.5 text-xs text-base-content/70">
-              {a.name}
-            </span>
+            <span class="rounded bg-base-200 px-1.5 py-0.5 text-xs text-base-content/70">{a}</span>
           ))}
         </div>
       </details>

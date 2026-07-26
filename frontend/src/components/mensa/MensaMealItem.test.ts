@@ -73,7 +73,7 @@ describe("MensaMealItem", () => {
 
   it("shows allergen toggle when allergens are present", async () => {
     const html = await container.renderToString(MensaMealItem, {
-      props: { meal: { ...baseMeal, allergens: [{ name: "Gluten" }, { name: "Laktose" }] } },
+      props: { meal: { ...baseMeal, allergens: ["Gluten", "Laktose"] } },
     })
     expect(html).toContain("Gluten")
     expect(html).toContain("Laktose")

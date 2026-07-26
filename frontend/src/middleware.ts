@@ -4,6 +4,9 @@ import type { Locale } from "@/i18n/translations"
 import { deleteAuthCookies, updateJwtCookie, updateRefreshTokenCookie } from "@/utils/auth-cookies"
 import { auth } from "./utils/auth"
 
+// load cron jobs
+import "@/utils/mensa-cron"
+
 const SUPPORTED_LOCALES: Locale[] = ["de", "en"]
 const DEFAULT_LOCALE: Locale = "de"
 const COOKIE_NAME = "locale"

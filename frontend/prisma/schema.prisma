@@ -66,3 +66,22 @@ model Verification {
 
   @@map("verification")
 }
+
+model MensaMeal {
+  id            String   @id @default(cuid())
+  name          String
+  priceStudents Float
+  priceStaff    Float?
+  priceOther    Float?
+  date          DateTime @db.Date
+  location      String
+  isVegan       Boolean  @default(false)
+  isVegetarian  Boolean  @default(false)
+  allergens     String[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([name, date, location])
+  @@index([date])
+  @@map("mensa_meal")
+}
