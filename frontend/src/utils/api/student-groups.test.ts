@@ -1,63 +1,80 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { fetchStudentGroups } from "./student-groups"
 
-const mockFind = vi.hoisted(() => vi.fn())
+const mockFindMany = vi.hoisted(() => vi.fn())
 
-vi.mock("./client", () => ({
-  client: {
-    collection: vi.fn().mockReturnValue({ find: mockFind }),
+vi.mock("../prisma", () => ({
+  default: {
+    studentGroup: { findMany: mockFindMany },
   },
-  withTimeout: (p: Promise<unknown>) => p,
 }))
 
 vi.mock("./cache", () => ({
   withCache: (_key: string, fn: () => Promise<unknown>) => fn(),
 }))
 
-const sampleGroup = {
-  documentId: "grp-1",
+const sampleGroupRow = {
+  id: "grp-1",
   slug: "asta",
   name: "AStA",
   description: "Student union",
+  website: null,
+  email: null,
+  facebook: null,
+  instagram: null,
 }
 
 describe("fetchStudentGroups", () => {
-  beforeEach(() => mockFind.mockReset())
+  beforeEach(() => mockFindMany.mockReset())
 
   it("sorts results by name ascending", async () => {
-    mockFind.mockResolvedValue({ data: [] })
+    mockFindMany.mockResolvedValue([])
 
     await fetchStudentGroups()
 
-    expect(mockFind).toHaveBeenCalledWith(expect.objectContaining({ sort: ["name:asc"] }))
+    expect(mockFindMany).toHaveBeenCalledWith(expect.objectContaining({ orderBy: { name: "asc" } }))
   })
 
   it("uses the default limit of 200", async () => {
-    mockFind.mockResolvedValue({ data: [] })
+    mockFindMany.mockResolvedValue([])
 
     await fetchStudentGroups()
 
-    expect(mockFind).toHaveBeenCalledWith(expect.objectContaining({ pagination: { limit: 200 } }))
+    expect(mockFindMany).toHaveBeenCalledWith(expect.objectContaining({ take: 200 }))
   })
 
   it("respects a custom limit", async () => {
-    mockFind.mockResolvedValue({ data: [] })
+    mockFindMany.mockResolvedValue([])
 
     await fetchStudentGroups(50)
 
-    expect(mockFind).toHaveBeenCalledWith(expect.objectContaining({ pagination: { limit: 50 } }))
+    expect(mockFindMany).toHaveBeenCalledWith(expect.objectContaining({ take: 50 }))
   })
 
-  it("returns the data array from the response", async () => {
-    mockFind.mockResolvedValue({ data: [sampleGroup] })
+  it("maps rows to StudentGroup, turning null fields into undefined", async () => {
+    mockFindMany.mockResolvedValue([sampleGroupRow])
 
     const result = await fetchStudentGroups()
 
-    expect(result).toEqual({ data: [sampleGroup], apiDown: false })
+    expect(result).toEqual({
+      data: [
+        {
+          id: "grp-1",
+          slug: "asta",
+          name: "AStA",
+          description: "Student union",
+          website: undefined,
+          email: undefined,
+          facebook: undefined,
+          instagram: undefined,
+        },
+      ],
+      apiDown: false,
+    })
   })
 
-  it("returns an empty array when data is null", async () => {
-    mockFind.mockResolvedValue({ data: null })
+  it("returns an empty array when no rows are found", async () => {
+    mockFindMany.mockResolvedValue([])
 
     const result = await fetchStudentGroups()
 
@@ -66,7 +83,7 @@ describe("fetchStudentGroups", () => {
 
   it("logs an error and returns an empty array when the API response is unexpected", async () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
-    mockFind.mockResolvedValue(null)
+    mockFindMany.mockResolvedValue(null)
 
     const result = await fetchStudentGroups()
 

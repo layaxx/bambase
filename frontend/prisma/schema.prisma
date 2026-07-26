@@ -85,3 +85,18 @@ model MensaMeal {
   @@index([date])
   @@map("mensa_meal")
 }
+
+model StudentGroup {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  description String
+  website     String?
+  instagram   String?
+  facebook    String?
+  email       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("student_group")
+}
