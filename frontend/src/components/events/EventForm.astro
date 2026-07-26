@@ -1,13 +1,13 @@
 ---
 import type { actions } from "astro:actions"
-import type { MapLocation } from "@/utils/api"
+import type { LinkableLocation } from "@/utils/api"
 import { useTranslations } from "@/i18n/translations"
 
 interface Props {
   action: typeof actions.events.create | typeof actions.events.update
   submitLabel: string
   cancelHref: string
-  allLocations: MapLocation[]
+  allLocations: LinkableLocation[]
   inputErrors: Record<string, string[] | undefined>
   documentId?: string
   enableDraft?: boolean

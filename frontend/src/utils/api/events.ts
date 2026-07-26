@@ -2,7 +2,7 @@ import { STRAPI_URL } from "astro:env/client"
 import { client, withTimeout, fetchWithTimeout } from "./client"
 import { withCache } from "./cache"
 import type { ApiResult } from "./types"
-import type { MapLocation } from "./locations"
+import type { LinkableLocation } from "./linkable-locations"
 
 export const EVENT_CATEGORIES = [
   "university",
@@ -16,10 +16,10 @@ export const EVENT_CATEGORIES = [
 export type EventCategory = (typeof EVENT_CATEGORIES)[number]
 
 export type EventMapLocation = Pick<
-  MapLocation,
+  LinkableLocation,
   "documentId" | "slug" | "name" | "lat" | "lon" | "category"
 > & {
-  address?: MapLocation["address"]
+  address?: LinkableLocation["address"]
 }
 
 export type EventCustomLocation = {

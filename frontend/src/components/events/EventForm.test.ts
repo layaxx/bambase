@@ -1,7 +1,7 @@
 import { describe, expect, it, beforeAll } from "vitest"
 import { experimental_AstroContainer as AstroContainer } from "astro/container"
 import EventForm from "./EventForm.astro"
-import type { MapLocation } from "@/utils/api"
+import type { LinkableLocation } from "@/utils/api"
 
 let container: AstroContainer
 
@@ -13,9 +13,11 @@ const locals = {
   locale: "de" as const,
   user: { id: 1, email: "user@example.com", createdAt: new Date().toISOString() },
   token: null,
+  userNew: null,
+  session: null,
 }
 
-const sampleLocations: MapLocation[] = [
+const sampleLocations: LinkableLocation[] = [
   {
     documentId: "loc-1",
     slug: "uni-bamberg",

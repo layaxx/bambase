@@ -1,9 +1,9 @@
-import { client, withTimeout } from "./client"
+import prisma from "../prisma"
 import { withCache } from "./cache"
 import type { ApiResult } from "./types"
 
 export type MapLocation = {
-  documentId: string
+  id: string
   slug: string
   name: string
   description?: string
@@ -19,22 +19,59 @@ export type MapLocation = {
   }
 }
 
+function toMapLocation(row: {
+  id: string
+  slug: string
+  name: string
+  description: string | null
+  lat: number
+  lon: number
+  category: string
+  externalUrl: string | null
+  addressStreet: string | null
+  addressStreetNumber: string | null
+  addressCity: string | null
+  addressZip: number | null
+}): MapLocation {
+  const hasAddress =
+    row.addressStreet != null ||
+    row.addressStreetNumber != null ||
+    row.addressCity != null ||
+    row.addressZip != null
+
+  return {
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    description: row.description ?? undefined,
+    lat: row.lat,
+    lon: row.lon,
+    category: row.category as MapLocation["category"],
+    external_url: row.externalUrl ?? undefined,
+    address: hasAddress
+      ? {
+          street: row.addressStreet ?? undefined,
+          streetNumber: row.addressStreetNumber ?? undefined,
+          city: row.addressCity ?? undefined,
+          zip: row.addressZip ?? undefined,
+        }
+      : undefined,
+  }
+}
+
 export async function fetchLocations(
   category?: MapLocation["category"]
 ): Promise<ApiResult<MapLocation[]>> {
   const key = `locations:${category ?? "all"}`
   try {
-    const result = await withCache(key, () =>
-      withTimeout(
-        client.collection("locations").find({
-          sort: ["name:asc"],
-          pagination: { limit: 500 },
-          populate: ["address"],
-          ...(category ? { filters: { category: { $eq: category } } } : {}),
-        })
-      )
+    const rows = await withCache(key, () =>
+      prisma.location.findMany({
+        where: category ? { category } : undefined,
+        orderBy: { name: "asc" },
+        take: 500,
+      })
     )
-    return { data: (result.data ?? []) as unknown as MapLocation[], apiDown: false }
+    return { data: rows.map(toMapLocation), apiDown: false }
   } catch (error) {
     console.error("Error fetching locations", error)
     return { data: [], apiDown: true }

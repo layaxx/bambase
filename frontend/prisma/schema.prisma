@@ -100,3 +100,23 @@ model StudentGroup {
 
   @@map("student_group")
 }
+
+model Location {
+  id                  String   @id @default(cuid())
+  slug                String   @unique
+  name                String
+  description         String?
+  lat                 Float
+  lon                 Float
+  category            String
+  externalUrl         String?
+  addressStreet       String?
+  addressStreetNumber String?
+  addressCity         String?
+  addressZip          Int?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([category])
+  @@map("location")
+}
