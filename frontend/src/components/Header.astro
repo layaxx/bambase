@@ -19,7 +19,7 @@ const navItems = [
 const pathname = Astro.url.pathname
 const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`)
 
-const authUser = Astro.locals.user
+const authUser = Astro.locals.userNew
 
 const switchLang = t.language.switchLang
 const switchLabel = t.language.switchLabel

@@ -32,7 +32,12 @@ const emailConfirmed = Astro.url.searchParams.get("confirmed") === "true"
         <span></span>
       </div>
 
-      <form action={actions.auth.login} class="flex flex-col" id="signin-form">
+      <form
+        action={actions.auth.login}
+        class="flex flex-col"
+        data-locale={Astro.locals.locale}
+        id="signin-form"
+      >
         <fieldset class="fieldset">
           <legend class="fieldset-legend">{t.auth.emailLabel}</legend>
           <input
@@ -68,17 +73,20 @@ const emailConfirmed = Astro.url.searchParams.get("confirmed") === "true"
   <script>
     import { authClient } from "@/utils/auth-client"
 
-    document.getElementById("signin-form")?.addEventListener("submit", async (event) => {
+    const form = document.getElementById("signin-form")
+
+    const locale: "de" | "en" = form?.dataset.locale === "en" ? "en" : "de"
+
+    form?.addEventListener("submit", async (event) => {
       event.preventDefault()
       const formData = new FormData(event.target as HTMLFormElement)
       const email = formData.get("identifier") as string
       const password = formData.get("password") as string
-      console.log(email, password)
-      const tmp = await authClient.signIn.email({
+      const authResponse = await authClient.signIn.email({
         email,
         password,
       })
-      if (Boolean(tmp.error) === false) {
+      if (Boolean(authResponse.error) === false) {
         window.location.href = new URLSearchParams(window.location.search).get("redirect") || "/"
       } else {
         const errorDiv = document.getElementById("signin-error")
@@ -86,7 +94,23 @@ const emailConfirmed = Astro.url.searchParams.get("confirmed") === "true"
           errorDiv.classList.remove("hidden")
           const textElem = errorDiv.querySelector("span")
           if (textElem) {
-            textElem.textContent = String(tmp.error?.message)
+            let msg = {
+              en: "Ein unbekannter Fehler ist aufgetreten.",
+              de: "An unknown error occurred.",
+            }
+
+            if (authResponse.error?.status === 500) {
+              msg = {
+                de: "Serverfehler. Bitte später erneut versuchen.",
+                en: "Server Error. Please try again later.",
+              }
+            } else if (authResponse.error?.code === "INVALID_EMAIL_OR_PASSWORD") {
+              msg = {
+                en: "Invalid email or password.",
+                de: "E-Mail oder Passwort ungültig.",
+              }
+            }
+            textElem.textContent = msg[locale]
           }
         }
       }

@@ -1,30 +1,11 @@
 ---
 import PageLayout from "@/layouts/PageLayout.astro"
 import { useTranslations } from "@/i18n/translations"
-import { STRAPI_URL } from "astro:env/client"
-import { deleteAuthCookies } from "@/utils/auth-cookies"
 
 const t = useTranslations(Astro.locals.locale)
 
-const user = Astro.locals.user
-const token = Astro.locals.token
-if (!user || !token) return Astro.redirect("/login?redirect=/account")
-
-const profileRes = await fetch(`${STRAPI_URL}/api/users/me`, {
-  headers: { Authorization: `Bearer ${token}` },
-  signal: AbortSignal.timeout(3000),
-})
-if (!profileRes.ok) {
-  if (profileRes.status === 401 || profileRes.status === 403) {
-    deleteAuthCookies(Astro.cookies)
-
-    console.warn("Unauthorized access to profile, logging user out")
-  } else {
-    throw new Error(`Failed to fetch profile: ${profileRes.status} ${profileRes.statusText}`)
-  }
-  return Astro.redirect("/login?redirect=/account")
-}
-const profile: { email: string; createdAt: string } = await profileRes.json()
+const user = Astro.locals.userNew
+if (!user) return Astro.redirect("/login?redirect=/account")
 ---
 
 <PageLayout title={t.auth.accountTitle}>
@@ -36,7 +17,7 @@ const profile: { email: string; createdAt: string } = await profileRes.json()
         <span class="text-xs text-base-content/40 uppercase tracking-wide"
           >{t.auth.emailFieldLabel}</span
         >
-        <span class="font-medium">{profile.email}</span>
+        <span class="font-medium">{user.email}</span>
       </div>
       <div class="divider my-0"></div>
       <div class="flex flex-col gap-1">
@@ -45,7 +26,7 @@ const profile: { email: string; createdAt: string } = await profileRes.json()
         >
         <span class="font-medium">
           {
-            new Date(profile.createdAt).toLocaleDateString(t.auth.dateLocale, {
+            new Date(user.createdAt).toLocaleDateString(t.auth.dateLocale, {
               day: "numeric",
               month: "long",
               year: "numeric",

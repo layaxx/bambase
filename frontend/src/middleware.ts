@@ -6,6 +6,7 @@ import { auth } from "./utils/auth"
 
 // load cron jobs
 import "@/utils/mensa-cron"
+import "@/utils/event-sync-cron"
 
 const SUPPORTED_LOCALES: Locale[] = ["de", "en"]
 const DEFAULT_LOCALE: Locale = "de"
@@ -109,14 +110,18 @@ export const onRequest = defineMiddleware(async (context, next) => {
     })
   }
 
-  const isAuthed = await auth.api.getSession({
-    headers: context.request.headers,
-  })
-  if (isAuthed) {
-    context.locals.userNew = isAuthed.user
-    context.locals.session = isAuthed.session
+  try {
+    const isAuthed = await auth.api.getSession({
+      headers: context.request.headers,
+    })
+    if (isAuthed) {
+      context.locals.userNew = isAuthed.user
+      context.locals.session = isAuthed.session
 
-    return next()
+      return next()
+    }
+  } catch (e) {
+    console.error("auth.api.getSession Error", e)
   }
 
   const token = context.cookies.get("auth_token")?.value
