@@ -13,22 +13,33 @@ vi.mock("astro:actions", () => ({
 
 vi.mock("astro/zod", async () => await import("zod"))
 
-vi.mock("@/utils/api", () => ({ strapiUrl: "http://localhost:1337" }))
-
 vi.mock("@/utils/api/events", () => ({
   EVENT_CATEGORIES: ["university", "sport", "party", "culture", "social", "other"] as const,
 }))
 
-import { events } from "./events"
-import { getFetchBody, makeContext } from "./test-helpers"
+const mockFindUnique = vi.hoisted(() => vi.fn())
+const mockCreate = vi.hoisted(() => vi.fn())
+const mockUpdate = vi.hoisted(() => vi.fn())
+const mockDelete = vi.hoisted(() => vi.fn())
 
-afterEach(() => {
-  vi.restoreAllMocks()
-  vi.unstubAllGlobals()
-})
+vi.mock("@/utils/prisma", () => ({
+  default: {
+    event: {
+      findUnique: mockFindUnique,
+      create: mockCreate,
+      update: mockUpdate,
+      delete: mockDelete,
+    },
+  },
+}))
+
+import { events } from "./events"
+
+function makeContext(userId?: string) {
+  return { locals: { userNew: userId ? { id: userId } : null } }
+}
 
 const baseEventInput = {
-  documentId: "doc-ev-1",
   title: "Test Event",
   organizer: "Uni",
   description: "A test event",
@@ -38,66 +49,60 @@ const baseEventInput = {
   location_type: "none",
 }
 
-describe("events.create — location data in request body", () => {
-  beforeEach(() => vi.stubGlobal("fetch", vi.fn()))
+beforeEach(() => {
+  mockFindUnique.mockReset()
+  mockCreate.mockReset()
+  mockUpdate.mockReset()
+  mockDelete.mockReset()
+})
 
-  it("location_type 'none' → map_location and custom_location are both null", async () => {
-    vi.mocked(fetch).mockResolvedValue({
-      ok: true,
-      json: async () => ({ data: { slug: "s" } }),
-    } as Response)
+afterEach(() => {
+  vi.restoreAllMocks()
+})
 
+describe("events.create — location data written to Prisma", () => {
+  beforeEach(() => {
+    mockFindUnique.mockResolvedValue(null) // slug is always free
+    mockCreate.mockResolvedValue({ slug: "test-event" })
+  })
+
+  it("location_type 'none' → mapLocationId and custom location fields are all null", async () => {
     await events.create(
       { ...baseEventInput, location_type: "none" },
       // @ts-expect-error - needed because of mocked defineAction function
-      makeContext("token")
+      makeContext("user-1")
     )
 
-    const body = getFetchBody().data
-    expect(body.map_location).toBeNull()
-    expect(body.custom_location).toBeNull()
+    const data = mockCreate.mock.calls[0][0].data
+    expect(data.mapLocationId).toBeNull()
+    expect(data.customLocationName).toBeNull()
   })
 
-  it("location_type 'linked' with map_location_id → sets map_location.connect", async () => {
-    vi.mocked(fetch).mockResolvedValue({
-      ok: true,
-      json: async () => ({ data: { slug: "s" } }),
-    } as Response)
-
+  it("location_type 'linked' with map_location_id → sets mapLocationId", async () => {
     await events.create(
-      { ...baseEventInput, location_type: "linked", map_location_id: "loc-doc-1" },
+      { ...baseEventInput, location_type: "linked", map_location_id: "loc-1" },
       // @ts-expect-error - needed because of mocked defineAction function
-      makeContext("token")
+      makeContext("user-1")
     )
 
-    const body = getFetchBody().data
-    expect(body.map_location).toEqual({ connect: [{ documentId: "loc-doc-1" }] })
-    expect(body.custom_location).toBeNull()
+    const data = mockCreate.mock.calls[0][0].data
+    expect(data.mapLocationId).toBe("loc-1")
+    expect(data.customLocationName).toBeNull()
   })
 
   it("location_type 'linked' without map_location_id → falls back to null for both", async () => {
-    vi.mocked(fetch).mockResolvedValue({
-      ok: true,
-      json: async () => ({ data: { slug: "s" } }),
-    } as Response)
-
     await events.create(
       { ...baseEventInput, location_type: "linked", map_location_id: undefined },
       // @ts-expect-error - needed because of mocked defineAction function
-      makeContext("token")
+      makeContext("user-1")
     )
 
-    const body = getFetchBody().data
-    expect(body.map_location).toBeNull()
-    expect(body.custom_location).toBeNull()
+    const data = mockCreate.mock.calls[0][0].data
+    expect(data.mapLocationId).toBeNull()
+    expect(data.customLocationName).toBeNull()
   })
 
-  it("location_type 'custom' with name → sets custom_location object", async () => {
-    vi.mocked(fetch).mockResolvedValue({
-      ok: true,
-      json: async () => ({ data: { slug: "s" } }),
-    } as Response)
-
+  it("location_type 'custom' with name → sets custom location fields", async () => {
     await events.create(
       {
         ...baseEventInput,
@@ -107,196 +112,36 @@ describe("events.create — location data in request body", () => {
         custom_location_city: "Bamberg",
       },
       // @ts-expect-error - needed because of mocked defineAction function
-      makeContext("token")
+      makeContext("user-1")
     )
 
-    const body = getFetchBody().data
-    expect(body.custom_location).toEqual({
-      name: "Main Hall",
-      address: "Hauptstraße 1",
-      city: "Bamberg",
-    })
-    expect(body.map_location).toBeNull()
+    const data = mockCreate.mock.calls[0][0].data
+    expect(data.customLocationName).toBe("Main Hall")
+    expect(data.customLocationAddress).toBe("Hauptstraße 1")
+    expect(data.customLocationCity).toBe("Bamberg")
+    expect(data.mapLocationId).toBeNull()
   })
 
   it("location_type 'custom' without name → falls back to null for both", async () => {
-    vi.mocked(fetch).mockResolvedValue({
-      ok: true,
-      json: async () => ({ data: { slug: "s" } }),
-    } as Response)
-
     await events.create(
       { ...baseEventInput, location_type: "custom", custom_location_name: undefined },
       // @ts-expect-error - needed because of mocked defineAction function
-      makeContext("token")
+      makeContext("user-1")
     )
 
-    const body = getFetchBody().data
-    expect(body.map_location).toBeNull()
-    expect(body.custom_location).toBeNull()
-  })
-
-  it("location_type 'custom' with name but no address or city → omits optional fields", async () => {
-    vi.mocked(fetch).mockResolvedValue({
-      ok: true,
-      json: async () => ({ data: { slug: "s" } }),
-    } as Response)
-
-    await events.create(
-      { ...baseEventInput, location_type: "custom", custom_location_name: "Hall" },
-      // @ts-expect-error - needed because of mocked defineAction function
-      makeContext("token")
-    )
-
-    const body = getFetchBody().data
-    expect(body.custom_location.name).toBe("Hall")
-    expect(body.custom_location.address).toBeUndefined()
-    expect(body.custom_location.city).toBeUndefined()
-  })
-})
-
-describe("events.delete", () => {
-  beforeEach(() => vi.stubGlobal("fetch", vi.fn()))
-
-  it("throws UNAUTHORIZED when no token cookie", async () => {
-    await expect(
-      events.delete(
-        { documentId: "ev-1" },
-        // @ts-expect-error - needed because of mocked defineAction function
-        makeContext()
-      )
-    ).rejects.toMatchObject({ code: "UNAUTHORIZED" })
-  })
-
-  it("sends DELETE to the correct endpoint URL", async () => {
-    vi.mocked(fetch).mockResolvedValue({ ok: true } as Response)
-
-    await events.delete(
-      { documentId: "ev-abc" },
-      // @ts-expect-error - needed because of mocked defineAction function
-      makeContext("token")
-    )
-
-    expect(fetch).toHaveBeenCalledWith(
-      "http://localhost:1337/api/events/ev-abc",
-      expect.objectContaining({ method: "DELETE" })
-    )
-  })
-
-  it("includes the Authorization header", async () => {
-    vi.mocked(fetch).mockResolvedValue({ ok: true } as Response)
-
-    await events.delete(
-      { documentId: "ev-1" },
-      // @ts-expect-error - needed because of mocked defineAction function
-      makeContext("my-token")
-    )
-
-    expect(fetch).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({
-        headers: expect.objectContaining({ Authorization: "Bearer my-token" }),
-      })
-    )
-  })
-
-  it("throws FORBIDDEN when the API returns a non-ok response", async () => {
-    vi.spyOn(console, "error").mockImplementation(() => {})
-    vi.mocked(fetch).mockResolvedValue({
-      ok: false,
-      json: async () => ({ error: {} }),
-    } as Response)
-
-    await expect(
-      events.delete(
-        { documentId: "ev-1" },
-        // @ts-expect-error - needed because of mocked defineAction function
-        makeContext("token")
-      )
-    ).rejects.toMatchObject({ code: "FORBIDDEN" })
-  })
-
-  it("returns {} on success", async () => {
-    vi.mocked(fetch).mockResolvedValue({ ok: true } as Response)
-
-    const result = await events.delete(
-      { documentId: "ev-1" },
-      // @ts-expect-error - needed because of mocked defineAction function
-      makeContext("token")
-    )
-    expect(result).toEqual({})
-  })
-})
-
-describe("events.update", () => {
-  beforeEach(() => vi.stubGlobal("fetch", vi.fn()))
-
-  it("throws UNAUTHORIZED when no token cookie", async () => {
-    await expect(
-      events.update(
-        baseEventInput,
-        // @ts-expect-error - needed because of mocked defineAction function
-        makeContext()
-      )
-    ).rejects.toMatchObject({
-      code: "UNAUTHORIZED",
-    })
-  })
-
-  it("sends PUT to the correct documentId URL", async () => {
-    vi.mocked(fetch).mockResolvedValue({
-      ok: true,
-      json: async () => ({ data: { slug: "updated-slug" } }),
-    } as Response)
-
-    await events.update(
-      baseEventInput,
-      // @ts-expect-error - needed because of mocked defineAction function
-      makeContext("token")
-    )
-
-    expect(fetch).toHaveBeenCalledWith(
-      "http://localhost:1337/api/events/doc-ev-1",
-      expect.objectContaining({ method: "PUT" })
-    )
-  })
-
-  it("returns slug from the API response", async () => {
-    vi.mocked(fetch).mockResolvedValue({
-      ok: true,
-      json: async () => ({ data: { slug: "my-event-slug" } }),
-    } as Response)
-
-    const result = await events.update(
-      baseEventInput,
-      // @ts-expect-error - needed because of mocked defineAction function
-      makeContext("token")
-    )
-
-    expect(result).toEqual({ slug: "my-event-slug" })
-  })
-
-  it("throws BAD_REQUEST when the API returns an error", async () => {
-    vi.spyOn(console, "error").mockImplementation(() => {})
-    vi.mocked(fetch).mockResolvedValue({
-      ok: false,
-      json: async () => ({ error: {} }),
-    } as Response)
-
-    await expect(
-      events.update(
-        baseEventInput,
-        // @ts-expect-error - needed because of mocked defineAction function
-        makeContext("token")
-      )
-    ).rejects.toMatchObject({ code: "BAD_REQUEST" })
+    const data = mockCreate.mock.calls[0][0].data
+    expect(data.mapLocationId).toBeNull()
+    expect(data.customLocationName).toBeNull()
   })
 })
 
 describe("events.create", () => {
-  beforeEach(() => vi.stubGlobal("fetch", vi.fn()))
+  beforeEach(() => {
+    mockFindUnique.mockResolvedValue(null)
+    mockCreate.mockResolvedValue({ slug: "test-event" })
+  })
 
-  it("throws UNAUTHORIZED when no token cookie", async () => {
+  it("throws UNAUTHORIZED when not logged in", async () => {
     await expect(
       events.create(
         baseEventInput,
@@ -306,74 +151,194 @@ describe("events.create", () => {
     ).rejects.toMatchObject({ code: "UNAUTHORIZED" })
   })
 
-  it("sends POST to /api/events", async () => {
-    vi.mocked(fetch).mockResolvedValue({
-      ok: true,
-      json: async () => ({ data: { slug: "new-slug" } }),
-    } as Response)
+  it("sets ownerId to the current user's id", async () => {
+    await events.create(
+      baseEventInput,
+      // @ts-expect-error - needed because of mocked defineAction function
+      makeContext("user-1")
+    )
+
+    expect(mockCreate.mock.calls[0][0].data.ownerId).toBe("user-1")
+  })
+
+  it("appends -2 to the slug when the base slug is already taken", async () => {
+    mockFindUnique.mockResolvedValueOnce({ id: "other-event" }).mockResolvedValueOnce(null)
 
     await events.create(
       baseEventInput,
       // @ts-expect-error - needed because of mocked defineAction function
-      makeContext("token")
+      makeContext("user-1")
     )
 
-    expect(fetch).toHaveBeenCalledWith(
-      "http://localhost:1337/api/events",
-      expect.objectContaining({ method: "POST" })
-    )
+    expect(mockCreate.mock.calls[0][0].data.slug).toBe("test-event-2")
   })
 
-  it("returns slug from the API response", async () => {
-    vi.mocked(fetch).mockResolvedValue({
-      ok: true,
-      json: async () => ({ data: { slug: "created-slug" } }),
-    } as Response)
+  it("returns slug from the created event", async () => {
+    mockCreate.mockResolvedValue({ slug: "created-slug" })
 
     const result = await events.create(
       baseEventInput,
       // @ts-expect-error - needed because of mocked defineAction function
-      makeContext("token")
+      makeContext("user-1")
     )
 
     expect(result).toEqual({ slug: "created-slug" })
   })
 
-  it("throws BAD_REQUEST when the API rejects", async () => {
+  it("throws BAD_REQUEST when the create fails", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {})
-    vi.mocked(fetch).mockResolvedValue({
-      ok: false,
-      json: async () => ({ error: {} }),
-    } as Response)
+    mockCreate.mockRejectedValue(new Error("db error"))
 
     await expect(
       events.create(
         baseEventInput,
         // @ts-expect-error - needed because of mocked defineAction function
-        makeContext("token")
+        makeContext("user-1")
       )
     ).rejects.toMatchObject({ code: "BAD_REQUEST" })
   })
 
-  it("includes title, organizer, start, end, and category in the body", async () => {
-    vi.mocked(fetch).mockResolvedValue({
-      ok: true,
-      json: async () => ({ data: { slug: "s" } }),
-    } as Response)
-
+  it("includes title, organizer, start, end, and category in the data", async () => {
     await events.create(
       { ...baseEventInput, category: "sport" },
       // @ts-expect-error - needed because of mocked defineAction function
-      makeContext("token")
+      makeContext("user-1")
     )
 
-    const body = getFetchBody().data
-    expect(body).toMatchObject({
+    const data = mockCreate.mock.calls[0][0].data
+    expect(data).toMatchObject({
       title: "Test Event",
       organizer: "Uni",
-      start: "2026-06-01T10:00:00Z",
-      end: "2026-06-01T12:00:00Z",
       category: "sport",
     })
+    expect(data.start).toBeInstanceOf(Date)
+    expect(data.end).toBeInstanceOf(Date)
+  })
+})
+
+describe("events.update", () => {
+  it("throws UNAUTHORIZED when not logged in", async () => {
+    await expect(
+      events.update(
+        { ...baseEventInput, id: "ev-1" },
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext()
+      )
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" })
+  })
+
+  it("throws NOT_FOUND when the event doesn't exist", async () => {
+    mockFindUnique.mockResolvedValue(null)
+
+    await expect(
+      events.update(
+        { ...baseEventInput, id: "ev-1" },
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext("user-1")
+      )
+    ).rejects.toMatchObject({ code: "NOT_FOUND" })
+  })
+
+  it("throws FORBIDDEN when the current user does not own the event", async () => {
+    mockFindUnique.mockResolvedValue({ ownerId: "someone-else" })
+
+    await expect(
+      events.update(
+        { ...baseEventInput, id: "ev-1" },
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext("user-1")
+      )
+    ).rejects.toMatchObject({ code: "FORBIDDEN" })
+  })
+
+  it("updates the event and returns its slug when the user is the owner", async () => {
+    mockFindUnique.mockResolvedValue({ ownerId: "user-1" })
+    mockUpdate.mockResolvedValue({ slug: "updated-slug" })
+
+    const result = await events.update(
+      { ...baseEventInput, id: "ev-1" },
+      // @ts-expect-error - needed because of mocked defineAction function
+      makeContext("user-1")
+    )
+
+    expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ where: { id: "ev-1" } }))
+    expect(result).toEqual({ slug: "updated-slug" })
+  })
+
+  it("throws BAD_REQUEST when the update fails", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {})
+    mockFindUnique.mockResolvedValue({ ownerId: "user-1" })
+    mockUpdate.mockRejectedValue(new Error("db error"))
+
+    await expect(
+      events.update(
+        { ...baseEventInput, id: "ev-1" },
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext("user-1")
+      )
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" })
+  })
+})
+
+describe("events.delete", () => {
+  it("throws UNAUTHORIZED when not logged in", async () => {
+    await expect(
+      events.delete(
+        { id: "ev-1" },
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext()
+      )
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" })
+  })
+
+  it("throws NOT_FOUND when the event doesn't exist", async () => {
+    mockFindUnique.mockResolvedValue(null)
+
+    await expect(
+      events.delete(
+        { id: "ev-1" },
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext("user-1")
+      )
+    ).rejects.toMatchObject({ code: "NOT_FOUND" })
+  })
+
+  it("throws FORBIDDEN when the current user does not own the event", async () => {
+    mockFindUnique.mockResolvedValue({ ownerId: "someone-else" })
+
+    await expect(
+      events.delete(
+        { id: "ev-1" },
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext("user-1")
+      )
+    ).rejects.toMatchObject({ code: "FORBIDDEN" })
+  })
+
+  it("deletes the event and returns {} when the user is the owner", async () => {
+    mockFindUnique.mockResolvedValue({ ownerId: "user-1" })
+
+    const result = await events.delete(
+      { id: "ev-1" },
+      // @ts-expect-error - needed because of mocked defineAction function
+      makeContext("user-1")
+    )
+
+    expect(mockDelete).toHaveBeenCalledWith({ where: { id: "ev-1" } })
+    expect(result).toEqual({})
+  })
+
+  it("throws INTERNAL_SERVER_ERROR when the delete fails", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {})
+    mockFindUnique.mockResolvedValue({ ownerId: "user-1" })
+    mockDelete.mockRejectedValue(new Error("db error"))
+
+    await expect(
+      events.delete(
+        { id: "ev-1" },
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext("user-1")
+      )
+    ).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" })
   })
 })

@@ -2,7 +2,8 @@ import { defineAction, ActionError } from "astro:actions"
 import { z } from "astro/zod"
 import { EVENT_CATEGORIES } from "@/utils/api/events"
 import { invalidateCacheByPrefix } from "@/utils/api/cache"
-import { STRAPI_URL } from "astro:env/client"
+import { slugify, uniqueSlug } from "@/utils/slugify"
+import prisma from "@/utils/prisma"
 
 const locationFieldsShape = {
   location_type: z.enum(["none", "linked", "custom"]).default("none"),
@@ -17,21 +18,26 @@ type LocationFields = z.infer<z.ZodObject<typeof locationFieldsShape>>
 function buildLocationData(input: LocationFields) {
   if (input.location_type === "linked" && input.map_location_id) {
     return {
-      map_location: { connect: [{ documentId: input.map_location_id }] },
-      custom_location: null,
+      mapLocationId: input.map_location_id,
+      customLocationName: null,
+      customLocationAddress: null,
+      customLocationCity: null,
     }
   }
   if (input.location_type === "custom" && input.custom_location_name) {
     return {
-      map_location: null,
-      custom_location: {
-        name: input.custom_location_name,
-        address: input.custom_location_address || undefined,
-        city: input.custom_location_city || undefined,
-      },
+      mapLocationId: null,
+      customLocationName: input.custom_location_name,
+      customLocationAddress: input.custom_location_address || null,
+      customLocationCity: input.custom_location_city || null,
     }
   }
-  return { custom_location: null, map_location: null }
+  return {
+    mapLocationId: null,
+    customLocationName: null,
+    customLocationAddress: null,
+    customLocationCity: null,
+  }
 }
 
 const eventBaseSchema = z
@@ -59,20 +65,22 @@ const eventCreateSchema = eventBaseSchema.refine(startBeforeEnd, startBeforeEndM
 export const events = {
   delete: defineAction({
     accept: "form",
-    input: z.object({ documentId: z.string().min(1) }),
-    handler: async ({ documentId }, context) => {
-      const token = context.locals.token
-      if (!token) throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
+    input: z.object({ id: z.string().min(1) }),
+    handler: async ({ id }, context) => {
+      const userId = context.locals.userNew?.id
+      if (!userId) throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
 
-      const res = await fetch(`${STRAPI_URL}/api/events/${documentId}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      })
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        console.error("Event delete failed:", data?.error)
+      const event = await prisma.event.findUnique({ where: { id }, select: { ownerId: true } })
+      if (!event) throw new ActionError({ code: "NOT_FOUND", message: "Event nicht gefunden." })
+      if (event.ownerId !== userId) {
         throw new ActionError({ code: "FORBIDDEN", message: "Löschen fehlgeschlagen." })
+      }
+
+      try {
+        await prisma.event.delete({ where: { id } })
+      } catch (error) {
+        console.error("Event delete failed:", error)
+        throw new ActionError({ code: "INTERNAL_SERVER_ERROR", message: "Löschen fehlgeschlagen." })
       }
 
       invalidateCacheByPrefix("events:")
@@ -83,46 +91,40 @@ export const events = {
   update: defineAction({
     accept: "form",
     input: eventBaseSchema
-      .extend({ documentId: z.string().min(1) })
+      .extend({ id: z.string().min(1) })
       .refine(startBeforeEnd, startBeforeEndMsg),
-    handler: async ({ documentId, ...fields }, context) => {
-      const token = context.locals.token
-      if (!token) throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
+    handler: async ({ id, ...fields }, context) => {
+      const userId = context.locals.userNew?.id
+      if (!userId) throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
 
-      let res: Response
-      try {
-        res = await fetch(`${STRAPI_URL}/api/events/${documentId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({
-            data: {
-              title: fields.title,
-              organizer: fields.organizer,
-              description: fields.description,
-              start: fields.start,
-              end: fields.end,
-              category: fields.category,
-              external_url: fields.external_url || undefined,
-              ...buildLocationData(fields),
-            },
-          }),
-        })
-      } catch {
-        throw new ActionError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Server nicht erreichbar. Bitte versuche es später erneut.",
-        })
+      const existing = await prisma.event.findUnique({ where: { id }, select: { ownerId: true } })
+      if (!existing) throw new ActionError({ code: "NOT_FOUND", message: "Event nicht gefunden." })
+      if (existing.ownerId !== userId) {
+        throw new ActionError({ code: "FORBIDDEN", message: "Aktualisierung fehlgeschlagen." })
       }
 
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}))
-        console.error("Event update failed:", errData?.error)
+      let updated: { slug: string }
+      try {
+        updated = await prisma.event.update({
+          where: { id },
+          data: {
+            title: fields.title,
+            organizer: fields.organizer,
+            description: fields.description,
+            start: new Date(fields.start),
+            end: new Date(fields.end),
+            category: fields.category,
+            externalUrl: fields.external_url || null,
+            ...buildLocationData(fields),
+          },
+        })
+      } catch (error) {
+        console.error("Event update failed:", error)
         throw new ActionError({ code: "BAD_REQUEST", message: "Aktualisierung fehlgeschlagen." })
       }
 
-      const data = await res.json()
       invalidateCacheByPrefix("events:")
-      return { slug: data.data.slug as string }
+      return { slug: updated.slug }
     },
   }),
 
@@ -130,48 +132,40 @@ export const events = {
     accept: "form",
     input: eventCreateSchema,
     handler: async (input, context) => {
-      const token = context.locals.token
-      if (!token) {
+      const userId = context.locals.userNew?.id
+      if (!userId) {
         throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
       }
 
-      let res: Response
+      let created: { slug: string }
       try {
-        res = await fetch(`${STRAPI_URL}/api/events`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            data: {
-              title: input.title,
-              organizer: input.organizer,
-              description: input.description,
-              start: input.start,
-              end: input.end,
-              category: input.category,
-              external_url: input.external_url || undefined,
-              ...buildLocationData(input),
-            },
-          }),
-        })
-      } catch {
-        throw new ActionError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Server nicht erreichbar. Bitte versuche es später erneut.",
-        })
-      }
+        const slug = await uniqueSlug(
+          slugify(input.title),
+          async (candidate) =>
+            (await prisma.event.findUnique({ where: { slug: candidate } })) != null
+        )
 
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}))
-        console.error("Event create failed:", errData?.error)
+        created = await prisma.event.create({
+          data: {
+            slug,
+            title: input.title,
+            organizer: input.organizer,
+            description: input.description,
+            start: new Date(input.start),
+            end: new Date(input.end),
+            category: input.category,
+            externalUrl: input.external_url || null,
+            ownerId: userId,
+            ...buildLocationData(input),
+          },
+        })
+      } catch (error) {
+        console.error("Event create failed:", error)
         throw new ActionError({ code: "BAD_REQUEST", message: "Einreichung fehlgeschlagen." })
       }
 
-      const data = await res.json()
       invalidateCacheByPrefix("events:")
-      return { slug: data.data.slug }
+      return { slug: created.slug }
     },
   }),
 }

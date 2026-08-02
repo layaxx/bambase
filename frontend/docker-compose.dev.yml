@@ -1,0 +1,25 @@
+# Local dev database only — not used in production.
+# Matches DATABASE_URL in frontend/.env.
+# Usage: docker compose -f docker-compose.dev.yml up -d
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    container_name: bambase_frontend_dev_db
+    environment:
+      POSTGRES_DB: backend
+      POSTGRES_USER: backend
+      POSTGRES_PASSWORD: backend
+    ports:
+      - "5432:5432"
+    volumes:
+      - dev_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U backend -d backend"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  dev_db_data:

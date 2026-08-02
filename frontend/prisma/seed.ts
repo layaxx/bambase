@@ -1,20 +1,10 @@
 import "dotenv/config"
 import { PrismaPg } from "@prisma/adapter-pg"
 import { PrismaClient } from "../src/generated/prisma/client.ts"
+import { slugify } from "../src/utils/slugify.ts"
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL })
 const prisma = new PrismaClient({ adapter })
-
-function slugify(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/ß/g, "ss")
-    .replace(/[äöü]/g, (c) => ({ ä: "ae", ö: "oe", ü: "ue" })[c] ?? c)
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-}
 
 const STUDENT_GROUPS = [
   {
@@ -688,6 +678,134 @@ const LOCATIONS: SeedLocation[] = [
   },
 ]
 
+type SeedEvent = {
+  title: string
+  description: string
+  organizer: string
+  start: Date
+  end: Date
+  externalId: string
+  category: "university" | "sport" | "party" | "culture" | "social" | "other"
+  mapLocationName?: string
+  customLocation?: { name: string; address?: string; city?: string }
+}
+
+function offsetFromNow(days: number, hours: number, minutes = 0): Date {
+  return new Date(Date.now() + ((days * 24 + hours) * 60 + minutes) * 60 * 1000)
+}
+
+const EVENTS: SeedEvent[] = [
+  {
+    title: "Filmvorführung im Kino",
+    description:
+      "Gemeinsamer Kinoabend mit einem aktuellen Film. Eintritt für Studierende ermäßigt.",
+    organizer: "Kino Bamberg",
+    start: offsetFromNow(1, 20),
+    end: offsetFromNow(1, 22),
+    externalId: "filmvorfuehrung-im-kino",
+    category: "culture",
+    customLocation: { name: "Kino Bamberg", address: "Hautpwachstraße 6", city: "Bamberg" },
+  },
+  {
+    title: "Stadtführung durch Bamberg",
+    description:
+      "Entdecke die Altstadt Bambergs mit einer geführten Tour durch die UNESCO-Welterbestätten.",
+    organizer: "Tourist-Information Bamberg",
+    start: offsetFromNow(2, 14),
+    end: offsetFromNow(2, 16),
+    externalId: "stadtfuehrung-durch-bamberg",
+    category: "other",
+    customLocation: { name: "Altes Rathaus", address: "Obere Brücke 1", city: "Bamberg" },
+  },
+  {
+    title: "Besuch des Bamberger Doms",
+    description:
+      "Geführte Besichtigung des Bamberger Doms mit Erklärungen zur Geschichte und Architektur.",
+    organizer: "Bistum Bamberg",
+    start: offsetFromNow(3, 16),
+    end: offsetFromNow(3, 18),
+    externalId: "besuch-des-bamberger-doms",
+    category: "other",
+    customLocation: { name: "Bamberger Dom", address: "Domplatz 5", city: "Bamberg" },
+  },
+  {
+    title: "Hochschulsport: Volleyball",
+    description:
+      "Offenes Volleyballtraining für alle Studierenden. Vorkenntnisse nicht erforderlich.",
+    organizer: "Hochschulsport Bamberg",
+    start: offsetFromNow(1, 18),
+    end: offsetFromNow(1, 20),
+    externalId: "hochschulsport-volleyball",
+    category: "sport",
+    mapLocationName: "Hochschulsport (FEKI)",
+  },
+  {
+    title: "Hochschulsport: Yoga für Anfänger",
+    description: "Entspannter Yoga-Kurs für Einsteiger. Matte bitte selbst mitbringen.",
+    organizer: "Hochschulsport Bamberg",
+    start: offsetFromNow(4, 9),
+    end: offsetFromNow(4, 10, 30),
+    externalId: "hochschulsport-yoga",
+    category: "sport",
+    mapLocationName: "Hochschulsport (FEKI)",
+  },
+  {
+    title: "Livekonzert: Indie Night",
+    description:
+      "Lokale Indie-Bands spielen live. Eintritt frei für alle Studierenden mit Ausweis.",
+    organizer: "Live-Club Bamberg",
+    start: offsetFromNow(1, 21),
+    end: offsetFromNow(1, 24),
+    externalId: "live-club-konzert",
+    category: "culture",
+    mapLocationName: "Live-Club Bamberg",
+  },
+  {
+    title: "Gastvortrag: KI im Alltag",
+    description:
+      "Renommierte Forscherin hält einen Vortrag über den Einfluss von Künstlicher Intelligenz auf unseren Alltag.",
+    organizer: "Universität Bamberg",
+    start: offsetFromNow(5, 18),
+    end: offsetFromNow(5, 20),
+    externalId: "uni-vortrag-ki",
+    category: "university",
+    mapLocationName: "WE5 (ERBA) – An der Weberei 5",
+  },
+  {
+    title: "Ersti-Party",
+    description:
+      "Die große Willkommensparty für alle Erstsemester. Lernt euch kennen und feiert den Start ins Studium!",
+    organizer: "Studierendenvertretung Uni Bamberg",
+    start: offsetFromNow(7, 20),
+    end: offsetFromNow(8, 2),
+    externalId: "uni-ersti-party",
+    category: "party",
+    mapLocationName: "DO2A/AULA – Aula/Dominikanerbau",
+  },
+  {
+    title: "Bibliotheksführung für Erstsemester",
+    description:
+      "Lernt die Universitätsbibliothek kennen: Ausleihe, Datenbanken, Lernräume und mehr.",
+    organizer: "Universitätsbibliothek Bamberg",
+    start: offsetFromNow(3, 11),
+    end: offsetFromNow(3, 12),
+    externalId: "bibliothek-fuehrung",
+    category: "university",
+    mapLocationName: "Teilbibliothek 3 (SOWi) / Zentralbibliothek",
+  },
+  {
+    title: "Offene Sozialberatung",
+    description:
+      "Kostenlose Beratung zu BAföG, Wohnen, Finanzen und sozialen Fragen für Studierende.",
+    organizer: "Studentenwerk Bamberg",
+    start: offsetFromNow(1, 10),
+    end: offsetFromNow(1, 12),
+    externalId: "studentenwerk-beratung",
+    category: "social",
+    mapLocationName: "SWerk Würzburg – Außenstelle Bamberg",
+  },
+]
+
 async function main() {
   await Promise.all(
     STUDENT_GROUPS.map((group) => {
@@ -700,7 +818,7 @@ async function main() {
     })
   )
 
-  await Promise.all(
+  const locations = await Promise.all(
     LOCATIONS.map((location) => {
       const { address, ...rest } = location
       const slug = slugify(location.name)
@@ -714,6 +832,28 @@ async function main() {
       }
       return prisma.location.upsert({
         where: { slug },
+        create: data,
+        update: data,
+      })
+    })
+  )
+
+  const locationIdByName = new Map(locations.map((location) => [location.name, location.id]))
+
+  await Promise.all(
+    EVENTS.map((event) => {
+      const { mapLocationName, customLocation, ...rest } = event
+      const slug = slugify(event.title)
+      const data = {
+        ...rest,
+        slug,
+        mapLocationId: mapLocationName ? locationIdByName.get(mapLocationName) : undefined,
+        customLocationName: customLocation?.name,
+        customLocationAddress: customLocation?.address,
+        customLocationCity: customLocation?.city,
+      }
+      return prisma.event.upsert({
+        where: { externalId: event.externalId },
         create: data,
         update: data,
       })

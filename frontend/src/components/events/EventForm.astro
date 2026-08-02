@@ -1,15 +1,15 @@
 ---
 import type { actions } from "astro:actions"
-import type { LinkableLocation } from "@/utils/api"
+import type { MapLocation } from "@/utils/api"
 import { useTranslations } from "@/i18n/translations"
 
 interface Props {
   action: typeof actions.events.create | typeof actions.events.update
   submitLabel: string
   cancelHref: string
-  allLocations: LinkableLocation[]
+  allLocations: MapLocation[]
   inputErrors: Record<string, string[] | undefined>
-  documentId?: string
+  id?: string
   enableDraft?: boolean
   initialValues?: {
     title?: string
@@ -20,7 +20,7 @@ interface Props {
     description?: string
     external_url?: string
     locationType?: "linked" | "custom" | "none"
-    map_location_documentId?: string
+    map_location_id?: string
     custom_location_name?: string
     custom_location_address?: string
     custom_location_city?: string
@@ -33,7 +33,7 @@ const {
   cancelHref,
   allLocations,
   inputErrors,
-  documentId,
+  id,
   enableDraft = false,
   initialValues = {},
 } = Astro.props
@@ -49,7 +49,7 @@ const initialLocationType = initialValues.locationType ?? "none"
   data-draft-key={enableDraft ? "event-new-draft" : undefined}
   method="POST"
 >
-  {documentId && <input name="documentId" type="hidden" value={documentId} />}
+  {id && <input name="id" type="hidden" value={id} />}
 
   <div class="flex flex-col">
     <fieldset class="fieldset">
@@ -203,10 +203,7 @@ const initialLocationType = initialValues.locationType ?? "none"
           <option value="">— {t.events.locationTypeLinked} —</option>
           {
             allLocations.map((loc) => (
-              <option
-                selected={initialValues.map_location_documentId === loc.documentId}
-                value={loc.documentId}
-              >
+              <option selected={initialValues.map_location_id === loc.id} value={loc.id}>
                 {loc.name}
                 {loc.address?.city ? ` · ${loc.address.city}` : ""}
               </option>

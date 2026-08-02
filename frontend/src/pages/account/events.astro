@@ -6,12 +6,10 @@ import { useTranslations } from "@/i18n/translations"
 
 const t = useTranslations(Astro.locals.locale)
 
-const user = Astro.locals.user
+const user = Astro.locals.userNew
+if (!user) return Astro.redirect("/login?redirect=/account/events")
 
-const token = Astro.locals.token
-if (!user || !token) return Astro.redirect("/login?redirect=/account/events")
-
-const { data: events } = await fetchMyEvents(token, user.id)
+const { data: events } = await fetchMyEvents(user.id)
 const dateLocale = t.mensa.dateLocale
 
 function formatDateTime(iso: string) {

@@ -1,24 +1,24 @@
 ---
 import { actions, isInputError } from "astro:actions"
 import PageLayout from "@/layouts/PageLayout.astro"
-import { fetchEvent, fetchLinkableLocations } from "@/utils/api"
+import { fetchEvent, fetchLocations } from "@/utils/api"
 import { useTranslations } from "@/i18n/translations"
 import IconArrowLeft from "@/components/icons/IconArrowLeft.astro"
 import EventForm from "@/components/events/EventForm.astro"
 
 const t = useTranslations(Astro.locals.locale)
 
-const me = Astro.locals.user
+const me = Astro.locals.userNew
 if (!me) return Astro.redirect(`/login?redirect=/event/${Astro.params.slug}/edit`)
 
 const { slug } = Astro.params
 const [{ data: event }, { data: allLocations }] = await Promise.all([
   slug ? fetchEvent(slug) : Promise.resolve({ data: null }),
-  fetchLinkableLocations(),
+  fetchLocations(),
 ])
 
 if (!event) return Astro.redirect("/events")
-if (event.owner?.id !== me.id) return Astro.redirect(`/event/${slug}`)
+if (event.ownerId !== me.id) return Astro.redirect(`/event/${slug}`)
 
 const result = Astro.getActionResult(actions.events.update)
 if (result?.data) return Astro.redirect(`/event/${result.data.slug}`)
@@ -58,7 +58,7 @@ function toLocalInput(iso: string) {
     action={actions.events.update}
     allLocations={allLocations}
     cancelHref={`/event/${slug}`}
-    documentId={event.documentId}
+    id={event.id}
     initialValues={{
       title: event.title,
       organizer: event.organizer,
@@ -68,7 +68,7 @@ function toLocalInput(iso: string) {
       description: event.description,
       external_url: event.external_url,
       locationType: event.map_location ? "linked" : event.custom_location ? "custom" : "none",
-      map_location_documentId: event.map_location?.documentId,
+      map_location_id: event.map_location?.id,
       custom_location_name: event.custom_location?.name,
       custom_location_address: event.custom_location?.address,
       custom_location_city: event.custom_location?.city,

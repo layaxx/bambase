@@ -42,7 +42,7 @@ const mapEvents: MapEvent[] = upcomingEvents
     title: ev.title,
     slug: ev.slug,
     start: ev.start,
-    locationId: ev.map_location.slug,
+    locationId: ev.map_location.id,
   }))
 
 const allCategoryLabels = Object.fromEntries(
@@ -264,10 +264,10 @@ const apiDownMessage = t.apiDown.message
   function buildListItemHtml(loc: MapLocation): string {
     const addr = formatAddress(loc.address)
     const label = categoryLabels[loc.category] ?? loc.category
-    return `<button class="cursor-pointer border-b border-base-200 px-3 py-2.5 text-left transition-colors last:border-b-0 hover:bg-base-200" data-id="${escHtml(loc.slug)}">
+    return `<button class="cursor-pointer border-b border-base-200 px-3 py-2.5 text-left transition-colors last:border-b-0 hover:bg-base-200" data-id="${escHtml(loc.id)}">
       <div class="flex items-center justify-between gap-2">
         <div class="text-sm font-medium leading-snug text-base-content">${escHtml(loc.name)}</div>
-        <span class="badge badge-sm badge-primary hidden shrink-0" data-event-badge="${escHtml(loc.slug)}"></span>
+        <span class="badge badge-sm badge-primary hidden shrink-0" data-event-badge="${escHtml(loc.id)}"></span>
       </div>
       ${loc.description ? `<div class="mt-0.5 text-xs text-base-content/70">${escHtml(loc.description)}</div>` : ""}
       ${addr ? `<div class="mt-0.5 text-xs text-base-content/40">${escHtml(addr)}</div>` : ""}
@@ -342,7 +342,7 @@ const apiDownMessage = t.apiDown.message
       const marker = L.marker([loc.lat, loc.lon], { icon: makeIcon(loc.category, 0) })
         .addTo(map)
         .bindPopup("")
-      markerMap[loc.slug] = { marker, category: loc.category, loc }
+      markerMap[loc.id] = { marker, category: loc.category, loc }
     })
 
     // ── time-filter ───────────────────────────────────────────────────────────
@@ -408,13 +408,13 @@ const apiDownMessage = t.apiDown.message
         const byLoc = groupByLocation(filterEventsByTime(mapEvents, currentTimeKey))
         newLocations.forEach((loc) => {
           if (loc.lat == null || loc.lon == null) return
-          const locEvents = byLoc[loc.slug] ?? []
+          const locEvents = byLoc[loc.id] ?? []
           const marker = L.marker([loc.lat, loc.lon], {
             icon: makeIcon(loc.category, locEvents.length),
           })
             .addTo(map)
             .bindPopup(buildPopupHtml(loc, locEvents))
-          markerMap[loc.slug] = { marker, category: loc.category, loc }
+          markerMap[loc.id] = { marker, category: loc.category, loc }
         })
 
         if (list) {

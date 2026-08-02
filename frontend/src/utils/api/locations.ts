@@ -19,7 +19,7 @@ export type MapLocation = {
   }
 }
 
-function toMapLocation(row: {
+export function toMapLocation(row: {
   id: string
   slug: string
   name: string

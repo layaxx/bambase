@@ -29,8 +29,6 @@ export {
 } from "./events"
 export type { MapLocation } from "./locations"
 export { fetchLocations } from "./locations"
-export type { LinkableLocation } from "./linkable-locations"
-export { fetchLinkableLocations } from "./linkable-locations"
 export type { StudentGroup } from "./student-groups"
 export { fetchStudentGroups } from "./student-groups"
 export type { MensaMeal } from "./mensa"

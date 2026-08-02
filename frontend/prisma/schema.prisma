@@ -17,6 +17,7 @@ model User {
   updatedAt     DateTime
   sessions      Session[]
   accounts      Account[]
+  events        Event[]
 
   @@unique([email])
   @@map("user")
@@ -116,7 +117,50 @@ model Location {
   addressZip          Int?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
+  events              Event[]
 
   @@index([category])
   @@map("location")
+}
+
+model Event {
+  id                    String    @id @default(cuid())
+  slug                  String    @unique
+  title                 String
+  description           String
+  category              String
+  start                 DateTime
+  end                   DateTime
+  organizer             String
+  externalUrl           String?
+  externalId            String?   @unique
+  hidden                Boolean   @default(false)
+  ownerId               String?
+  owner                 User?     @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  mapLocationId         String?
+  mapLocation           Location? @relation(fields: [mapLocationId], references: [id], onDelete: SetNull)
+  customLocationName    String?
+  customLocationAddress String?
+  customLocationCity    String?
+  reports               Report[]
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([start])
+  @@index([hidden])
+  @@map("event")
+}
+
+model Report {
+  id           String   @id @default(cuid())
+  reason       String
+  details      String?
+  reviewStatus String   @default("open")
+  eventId      String?
+  event        Event?   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  jobOfferId   String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("report")
 }

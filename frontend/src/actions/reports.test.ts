@@ -15,9 +15,9 @@ vi.mock("astro:actions", () => ({
 
 vi.mock("astro/zod", async () => await import("zod"))
 
-vi.mock("@/utils/api", () => ({
-  client: {
-    collection: vi.fn().mockReturnValue({ create: mockCreate }),
+vi.mock("@/utils/prisma", () => ({
+  default: {
+    report: { create: mockCreate },
   },
 }))
 
@@ -26,44 +26,48 @@ import { reports } from "./reports"
 describe("reports.submit", () => {
   beforeEach(() => mockCreate.mockClear())
 
-  it("passes target_id as 'event' field when target_type is 'event'", async () => {
+  it("passes target_id as eventId when target_type is 'event'", async () => {
     mockCreate.mockResolvedValue({})
 
     await reports.submit({
       // @ts-expect-error - needed because of mocked defineAction
       target_type: "event",
-      target_id: "event-doc-123",
+      target_id: "event-1",
       reason: "spam",
     })
 
-    expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({ event: "event-doc-123" }))
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ eventId: "event-1" }) })
+    )
   })
 
-  it("passes target_id as 'job_offer' field when target_type is 'job'", async () => {
+  it("passes target_id as jobOfferId when target_type is 'job'", async () => {
     mockCreate.mockResolvedValue({})
 
     await reports.submit({
       // @ts-expect-error - needed because of mocked defineAction
       target_type: "job",
-      target_id: "job-doc-456",
+      target_id: "job-456",
       reason: "inappropriate",
     })
 
-    expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({ job_offer: "job-doc-456" }))
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ jobOfferId: "job-456" }) })
+    )
   })
 
-  it("does NOT include an 'event' field when target_type is 'job'", async () => {
+  it("does NOT include eventId when target_type is 'job'", async () => {
     mockCreate.mockResolvedValue({})
 
     await reports.submit({
       // @ts-expect-error - needed because of mocked defineAction
       target_type: "job",
-      target_id: "job-doc-456",
+      target_id: "job-456",
       reason: "spam",
     })
 
-    const call = mockCreate.mock.calls[0][0]
-    expect(call.event).toBeUndefined()
+    const data = mockCreate.mock.calls[0][0].data
+    expect(data.eventId).toBeUndefined()
   })
 
   it("includes reason in the create payload", async () => {
@@ -76,7 +80,9 @@ describe("reports.submit", () => {
       reason: "outdated",
     })
 
-    expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({ reason: "outdated" }))
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ reason: "outdated" }) })
+    )
   })
 
   it("passes details when provided", async () => {
@@ -91,7 +97,7 @@ describe("reports.submit", () => {
     })
 
     expect(mockCreate).toHaveBeenCalledWith(
-      expect.objectContaining({ details: "Suspicious content" })
+      expect.objectContaining({ data: expect.objectContaining({ details: "Suspicious content" }) })
     )
   })
 
@@ -105,8 +111,8 @@ describe("reports.submit", () => {
       reason: "spam",
     })
 
-    const call = mockCreate.mock.calls[0][0]
-    expect(call.details).toBeUndefined()
+    const data = mockCreate.mock.calls[0][0].data
+    expect(data.details).toBeUndefined()
   })
 
   it("returns { success: true } on success", async () => {
@@ -122,7 +128,7 @@ describe("reports.submit", () => {
     expect(result).toEqual({ success: true })
   })
 
-  it("throws ActionError with INTERNAL_SERVER_ERROR when client.create rejects", async () => {
+  it("throws ActionError with INTERNAL_SERVER_ERROR when the create fails", async () => {
     mockCreate.mockRejectedValueOnce(new Error("DB error"))
 
     await expect(

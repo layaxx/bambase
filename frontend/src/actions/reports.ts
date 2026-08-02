@@ -1,6 +1,6 @@
 import { defineAction, ActionError } from "astro:actions"
 import { z } from "astro/zod"
-import { client } from "@/utils/api"
+import prisma from "@/utils/prisma"
 
 export const reports = {
   submit: defineAction({
@@ -12,13 +12,14 @@ export const reports = {
       details: z.string().optional(),
     }),
     handler: async ({ target_type, target_id, reason, details }) => {
-      const target = target_type === "event" ? { event: target_id } : { job_offer: target_id }
-
       try {
-        await client.collection("reports").create({
-          reason,
-          details: details || undefined,
-          ...target,
+        await prisma.report.create({
+          data: {
+            reason,
+            details: details || undefined,
+            eventId: target_type === "event" ? target_id : undefined,
+            jobOfferId: target_type === "job" ? target_id : undefined,
+          },
         })
       } catch {
         throw new ActionError({ code: "INTERNAL_SERVER_ERROR", message: "Meldung fehlgeschlagen." })
