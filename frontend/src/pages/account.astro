@@ -43,6 +43,20 @@ if (!user) return Astro.redirect("/login?redirect=/account")
   </div>
 
   <div class="mt-4">
-    <a class="btn btn-ghost btn-sm" href="/logout">{t.auth.logout}</a>
+    <button class="btn btn-ghost btn-sm" id="logout-button">{t.auth.logout}</button>
   </div>
+
+  <script>
+    import { authClient } from "@/utils/auth-client"
+
+    document.querySelector("#logout-button")?.addEventListener("click", async () => {
+      await authClient.signOut({
+        fetchOptions: {
+          onSuccess: () => {
+            window.location.pathname = "/"
+          },
+        },
+      })
+    })
+  </script>
 </PageLayout>
