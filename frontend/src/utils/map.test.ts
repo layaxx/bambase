@@ -29,13 +29,13 @@ describe("formatAddress", () => {
         street: "Feldkirchenstraße",
         streetNumber: "21",
         city: "Bamberg",
-        zip: 96052,
+        zip: "96052",
       })
     ).toBe("Feldkirchenstraße 21, 96052 Bamberg")
   })
 
   it("omits missing street number", () => {
-    expect(formatAddress({ street: "Ludwigstraße", city: "Bamberg", zip: 96052 })).toBe(
+    expect(formatAddress({ street: "Ludwigstraße", city: "Bamberg", zip: "96052" })).toBe(
       "Ludwigstraße, 96052 Bamberg"
     )
   })

@@ -1,5 +1,6 @@
 import type { Dayjs } from "dayjs"
 import type { ApiResult } from "./types"
+import type { Prisma } from "@/generated/prisma/client"
 import prisma from "../prisma"
 
 export type MensaMeal = {
@@ -20,7 +21,7 @@ function toDateOnly(date: Dayjs): Date {
 function toMensaMeal(row: {
   id: string
   name: string
-  priceStudents: number
+  priceStudents: Prisma.Decimal
   date: Date
   location: string
   isVegan: boolean
@@ -30,7 +31,7 @@ function toMensaMeal(row: {
   return {
     id: row.id,
     name: row.name,
-    priceStudents: row.priceStudents,
+    priceStudents: row.priceStudents.toNumber(),
     date: row.date.toISOString().slice(0, 10),
     location: row.location as MensaMeal["location"],
     isVegan: row.isVegan,

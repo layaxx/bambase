@@ -1,5 +1,6 @@
 import { defineAction, ActionError } from "astro:actions"
 import { z } from "astro/zod"
+import { ReportReason } from "@/generated/prisma/enums"
 import prisma from "@/utils/prisma"
 
 export const reports = {
@@ -8,7 +9,7 @@ export const reports = {
     input: z.object({
       target_type: z.enum(["event", "job"]),
       target_id: z.string().min(1),
-      reason: z.enum(["spam", "inappropriate", "outdated", "other"]),
+      reason: z.enum(ReportReason),
       details: z.string().optional(),
     }),
     handler: async ({ target_type, target_id, reason, details }) => {

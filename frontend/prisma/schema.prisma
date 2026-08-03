@@ -7,8 +7,89 @@ datasource db {
   provider = "postgresql"
 }
 
+enum EventCategory {
+  university
+  sport
+  party
+  culture
+  social
+  other
+
+  @@map("event_category")
+}
+
+enum LocationCategory {
+  university
+  mensa
+  library
+  sport
+  venues
+  other
+
+  @@map("location_category")
+}
+
+enum JobType {
+  part_time
+  internship
+  working_student
+  research_assistant
+  thesis
+  volunteer
+  other
+
+  @@map("job_type")
+}
+
+enum JobField {
+  it
+  marketing
+  administration
+  research
+  gastronomy
+  retail
+  education
+  other
+
+  @@map("job_field")
+}
+
+enum WorkMode {
+  on_site
+  hybrid
+  remote
+
+  @@map("work_mode")
+}
+
+enum JobOnlineStatus {
+  submitted
+  published
+  expired
+  rejected
+  archived
+
+  @@map("job_online_status")
+}
+
+enum ReportReason {
+  spam
+  inappropriate
+  outdated
+  other
+
+  @@map("report_reason")
+}
+
+enum ReportReviewStatus {
+  open
+  dismissed
+
+  @@map("report_review_status")
+}
+
 model User {
-  id            String    @id
+  id            String     @id
   name          String
   email         String
   emailVerified Boolean
@@ -72,9 +153,9 @@ model Verification {
 model MensaMeal {
   id            String   @id @default(cuid())
   name          String
-  priceStudents Float
-  priceStaff    Float?
-  priceOther    Float?
+  priceStudents Decimal  @db.Decimal(6, 2)
+  priceStaff    Decimal? @db.Decimal(6, 2)
+  priceOther    Decimal? @db.Decimal(6, 2)
   date          DateTime @db.Date
   location      String
   isVegan       Boolean  @default(false)
@@ -104,20 +185,20 @@ model StudentGroup {
 }
 
 model Location {
-  id                  String   @id @default(cuid())
-  slug                String   @unique
+  id                  String           @id @default(cuid())
+  slug                String           @unique
   name                String
   description         String?
   lat                 Float
   lon                 Float
-  category            String
+  category            LocationCategory
   externalUrl         String?
   addressStreet       String?
   addressStreetNumber String?
   addressCity         String?
-  addressZip          Int?
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  addressZip          String?
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
   events              Event[]
 
   @@index([category])
@@ -125,27 +206,27 @@ model Location {
 }
 
 model Event {
-  id                    String    @id @default(cuid())
-  slug                  String    @unique
+  id                    String        @id @default(cuid())
+  slug                  String        @unique
   title                 String
   description           String
-  category              String
+  category              EventCategory
   start                 DateTime
   end                   DateTime
   organizer             String
   externalUrl           String?
-  externalId            String?   @unique
-  hidden                Boolean   @default(false)
+  externalId            String?       @unique
+  hidden                Boolean       @default(false)
   ownerId               String?
-  owner                 User?     @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  owner                 User?         @relation(fields: [ownerId], references: [id], onDelete: SetNull)
   mapLocationId         String?
-  mapLocation           Location? @relation(fields: [mapLocationId], references: [id], onDelete: SetNull)
+  mapLocation           Location?     @relation(fields: [mapLocationId], references: [id], onDelete: SetNull)
   customLocationName    String?
   customLocationAddress String?
   customLocationCity    String?
   reports               Report[]
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
 
   @@index([start])
   @@index([hidden])
@@ -153,42 +234,42 @@ model Event {
 }
 
 model JobOffer {
-  id           String    @id @default(cuid())
-  slug         String    @unique
+  id           String          @id @default(cuid())
+  slug         String          @unique
   title        String
   description  String
   company      String
   location     String
-  onlineStatus String    @default("submitted")
+  onlineStatus JobOnlineStatus @default(submitted)
   workingHours Int
   externalUrl  String?
-  jobType      String
-  field        String
-  workMode     String
+  jobType      JobType
+  field        JobField
+  workMode     WorkMode
   contactName  String?
   contactMail  String?
   contactPhone String?
   ownerId      String?
-  owner        User?     @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  owner        User?           @relation(fields: [ownerId], references: [id], onDelete: SetNull)
   reports      Report[]
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
 
   @@index([onlineStatus])
   @@map("job_offer")
 }
 
 model Report {
-  id           String    @id @default(cuid())
-  reason       String
+  id           String             @id @default(cuid())
+  reason       ReportReason
   details      String?
-  reviewStatus String    @default("open")
+  reviewStatus ReportReviewStatus @default(open)
   eventId      String?
-  event        Event?    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  event        Event?             @relation(fields: [eventId], references: [id], onDelete: Cascade)
   jobOfferId   String?
-  jobOffer     JobOffer? @relation(fields: [jobOfferId], references: [id], onDelete: Cascade)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  jobOffer     JobOffer?          @relation(fields: [jobOfferId], references: [id], onDelete: Cascade)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
 
   @@map("report")
 }

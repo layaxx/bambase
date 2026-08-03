@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import dayjs from "dayjs"
+import { Decimal } from "@/generated/prisma/internal/prismaNamespace"
 import { fetchMensaMeals, fetchMensaMealsRange } from "./mensa"
 
 const mockFindMany = vi.hoisted(() => vi.fn())
@@ -16,7 +17,7 @@ function makeRow(overrides: Partial<Record<string, unknown>> = {}) {
     name: "Pasta",
     date: new Date("2026-04-15T00:00:00.000Z"),
     location: "Feki",
-    priceStudents: 2.5,
+    priceStudents: new Decimal(2.5),
     isVegan: false,
     isVegetarian: true,
     allergens: [],

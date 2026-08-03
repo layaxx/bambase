@@ -1,35 +1,13 @@
 import prisma from "../prisma"
 import { withCache } from "./cache"
 import type { ApiResult } from "./types"
+import { JobType, JobField, WorkMode, JobOnlineStatus } from "@/generated/prisma/enums"
 
-export const JOB_TYPES = [
-  "part_time",
-  "internship",
-  "working_student",
-  "research_assistant",
-  "thesis",
-  "volunteer",
-  "other",
-] as const
+export const JOB_TYPES = Object.values(JobType)
+export const JOB_FIELDS = Object.values(JobField)
+export const WORK_MODES = Object.values(WorkMode)
 
-export type JobType = (typeof JOB_TYPES)[number]
-
-export const JOB_FIELDS = [
-  "it",
-  "marketing",
-  "administration",
-  "research",
-  "gastronomy",
-  "retail",
-  "education",
-  "other",
-] as const
-
-export type JobField = (typeof JOB_FIELDS)[number]
-
-export const WORK_MODES = ["on_site", "hybrid", "remote"] as const
-
-export type WorkMode = (typeof WORK_MODES)[number]
+export type { JobType, JobField, WorkMode }
 
 export type JobOffer = {
   id: string
@@ -38,7 +16,7 @@ export type JobOffer = {
   description: string
   company: string
   location: string
-  online_status: "submitted" | "published" | "expired" | "rejected" | "archived"
+  online_status: JobOnlineStatus
   working_hours: number
   external_url?: string
   job_type: JobType
@@ -55,9 +33,9 @@ export type JobOffer = {
 }
 
 export type JobOffersFilter = {
-  types?: string[]
-  fields?: string[]
-  workModes?: string[]
+  types?: JobType[]
+  fields?: JobField[]
+  workModes?: WorkMode[]
   search?: string
   sort?: string
   page?: number
@@ -78,12 +56,12 @@ type JobOfferRow = {
   description: string
   company: string
   location: string
-  onlineStatus: string
+  onlineStatus: JobOnlineStatus
   workingHours: number
   externalUrl: string | null
-  jobType: string
-  field: string
-  workMode: string
+  jobType: JobType
+  field: JobField
+  workMode: WorkMode
   contactName: string | null
   contactMail: string | null
   contactPhone: string | null
@@ -99,12 +77,12 @@ function toJobOffer(row: JobOfferRow, extra?: { reports?: { id: string }[] }): J
     description: row.description,
     company: row.company,
     location: row.location,
-    online_status: row.onlineStatus as JobOffer["online_status"],
+    online_status: row.onlineStatus,
     working_hours: row.workingHours,
     external_url: row.externalUrl ?? undefined,
-    job_type: row.jobType as JobType,
-    field: row.field as JobField,
-    work_mode: row.workMode as WorkMode,
+    job_type: row.jobType,
+    field: row.field,
+    work_mode: row.workMode,
     contact: {
       name: row.contactName ?? undefined,
       mail: row.contactMail ?? undefined,
@@ -121,11 +99,11 @@ export async function fetchJobOffersPaginated(
 ): Promise<ApiResult<JobOfferPage>> {
   const { types, fields, workModes, search, sort = "newest", page = 1, pageSize = 12 } = filter
 
-  const where = { onlineStatus: "published" } as {
-    onlineStatus: string
-    jobType?: { in: string[] }
-    field?: { in: string[] }
-    workMode?: { in: string[] }
+  const where = { onlineStatus: JobOnlineStatus.published } as {
+    onlineStatus: JobOnlineStatus
+    jobType?: { in: JobType[] }
+    field?: { in: JobField[] }
+    workMode?: { in: WorkMode[] }
     OR?: { title?: object; company?: object }[]
   }
   if (types && types.length > 0) where.jobType = { in: types }

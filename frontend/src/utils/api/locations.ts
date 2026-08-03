@@ -1,6 +1,7 @@
 import prisma from "../prisma"
 import { withCache } from "./cache"
 import type { ApiResult } from "./types"
+import type { LocationCategory } from "@/generated/prisma/enums"
 
 export type MapLocation = {
   id: string
@@ -9,13 +10,13 @@ export type MapLocation = {
   description?: string
   lat: number
   lon: number
-  category: "university" | "mensa" | "library" | "sport" | "venues" | "other"
+  category: LocationCategory
   external_url?: string
   address?: {
     street?: string
     streetNumber?: string
     city?: string
-    zip?: number
+    zip?: string
   }
 }
 
@@ -26,12 +27,12 @@ export function toMapLocation(row: {
   description: string | null
   lat: number
   lon: number
-  category: string
+  category: LocationCategory
   externalUrl: string | null
   addressStreet: string | null
   addressStreetNumber: string | null
   addressCity: string | null
-  addressZip: number | null
+  addressZip: string | null
 }): MapLocation {
   const hasAddress =
     row.addressStreet != null ||
@@ -46,7 +47,7 @@ export function toMapLocation(row: {
     description: row.description ?? undefined,
     lat: row.lat,
     lon: row.lon,
-    category: row.category as MapLocation["category"],
+    category: row.category,
     external_url: row.externalUrl ?? undefined,
     address: hasAddress
       ? {

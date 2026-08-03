@@ -1,6 +1,7 @@
 import { UnivISClient } from "univis-api"
 import he from "he"
 import removeMd from "remove-markdown"
+import { EventCategory } from "@/generated/prisma/enums"
 import prisma from "./prisma"
 import { slugify, uniqueSlug } from "./slugify"
 
@@ -92,7 +93,7 @@ export async function syncUnivisEvents() {
       const data = {
         title: parse(event.title) || `Veranstaltung von ${organizer}`,
         description: parse(event.description ?? "") || `Veranstaltung von ${organizer}`,
-        category: "university",
+        category: EventCategory.university,
         start: toDateTime(event.startdate, event.starttime),
         end: toDateTime(event.enddate, event.endtime),
         organizer,

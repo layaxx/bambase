@@ -1,6 +1,14 @@
 import "dotenv/config"
 import { PrismaPg } from "@prisma/adapter-pg"
 import { PrismaClient } from "../src/generated/prisma/client.ts"
+import type {
+  LocationCategory,
+  EventCategory,
+  JobType,
+  JobField,
+  WorkMode,
+  JobOnlineStatus,
+} from "../src/generated/prisma/enums.ts"
 import { slugify } from "../src/utils/slugify.ts"
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL })
@@ -291,9 +299,9 @@ type SeedLocation = {
   name: string
   lat: number
   lon: number
-  category: string
+  category: LocationCategory
   description: string
-  address?: { street?: string; streetNumber?: string; city?: string; zip?: number }
+  address?: { street?: string; streetNumber?: string; city?: string; zip?: string }
 }
 
 const LOCATIONS: SeedLocation[] = [
@@ -304,7 +312,7 @@ const LOCATIONS: SeedLocation[] = [
     lon: 10.887644,
     category: "university",
     description: "Teilbereiche der Fakultät GuK, Teilbibliothek 1",
-    address: { street: "An der Universität", streetNumber: "2", city: "Bamberg", zip: 96047 },
+    address: { street: "An der Universität", streetNumber: "2", city: "Bamberg", zip: "96047" },
   },
   {
     name: "U5 – An der Universität 5",
@@ -312,7 +320,7 @@ const LOCATIONS: SeedLocation[] = [
     lon: 10.887191,
     category: "university",
     description: "Teilbereiche der Fakultät GuK, Multimedia-Sprachlabor",
-    address: { street: "An der Universität", streetNumber: "5", city: "Bamberg", zip: 96047 },
+    address: { street: "An der Universität", streetNumber: "5", city: "Bamberg", zip: "96047" },
   },
   {
     name: "U7 – An der Universität 7",
@@ -320,7 +328,7 @@ const LOCATIONS: SeedLocation[] = [
     lon: 10.887376,
     category: "university",
     description: "Hörsaal, Bibliotheksmagazin",
-    address: { street: "An der Universität", streetNumber: "7", city: "Bamberg", zip: 96047 },
+    address: { street: "An der Universität", streetNumber: "7", city: "Bamberg", zip: "96047" },
   },
   {
     name: "U11 – An der Universität 11",
@@ -328,7 +336,7 @@ const LOCATIONS: SeedLocation[] = [
     lon: 10.887255,
     category: "university",
     description: "Teilbereiche der Fakultät GuK",
-    address: { street: "An der Universität", streetNumber: "11", city: "Bamberg", zip: 96047 },
+    address: { street: "An der Universität", streetNumber: "11", city: "Bamberg", zip: "96047" },
   },
   {
     name: "DO2A/AULA – Aula/Dominikanerbau",
@@ -336,7 +344,7 @@ const LOCATIONS: SeedLocation[] = [
     lon: 10.885482,
     category: "university",
     description: "Aula im Dominikanerbau",
-    address: { street: "Dominikanerstraße", streetNumber: "2", city: "Bamberg", zip: 96049 },
+    address: { street: "Dominikanerstraße", streetNumber: "2", city: "Bamberg", zip: "96049" },
   },
   {
     name: "WE5 (ERBA) – An der Weberei 5",
@@ -345,7 +353,7 @@ const LOCATIONS: SeedLocation[] = [
     category: "university",
     description:
       "Fakultät WIAI, Teilbereiche der Fakultäten GuK und HuWi, ERBA-Bibliothek, Cafeteria ",
-    address: { street: "An der Weberei", streetNumber: "5", city: "Bamberg", zip: 96049 },
+    address: { street: "An der Weberei", streetNumber: "5", city: "Bamberg", zip: "96049" },
   },
   {
     name: "F21 (Feki) – Feldkirchenstraße 21",
@@ -353,7 +361,7 @@ const LOCATIONS: SeedLocation[] = [
     lon: 10.904843,
     category: "university",
     description: "Fakultät SoWi, Audimax, Mensa & Cafeteria",
-    address: { street: "Feldkirchenstraße", streetNumber: "21", city: "Bamberg", zip: 96052 },
+    address: { street: "Feldkirchenstraße", streetNumber: "21", city: "Bamberg", zip: "96052" },
   },
   {
     name: "KR12 – Am Kranen 12",
@@ -361,7 +369,7 @@ const LOCATIONS: SeedLocation[] = [
     lon: 10.886834,
     category: "university",
     description: "Teilbereiche der Fakultät GuK",
-    address: { street: "Am Kranen", streetNumber: "12", city: "Bamberg", zip: 96047 },
+    address: { street: "Am Kranen", streetNumber: "12", city: "Bamberg", zip: "96047" },
   },
   {
     name: "Kä7 – Kärntenstraße 7",
@@ -369,7 +377,7 @@ const LOCATIONS: SeedLocation[] = [
     lon: 10.900366,
     category: "university",
     description: "Teilbereiche der Fakultät SoWi",
-    address: { street: "Kärntenstraße", streetNumber: "7", city: "Bamberg", zip: 96052 },
+    address: { street: "Kärntenstraße", streetNumber: "7", city: "Bamberg", zip: "96052" },
   },
   {
     name: "KS13 – Kapellenstraße 13",
@@ -377,7 +385,7 @@ const LOCATIONS: SeedLocation[] = [
     lon: 10.90845,
     category: "university",
     description: "Prüfungsraum",
-    address: { street: "Kapellenstraße", streetNumber: "13", city: "Bamberg", zip: 96050 },
+    address: { street: "Kapellenstraße", streetNumber: "13", city: "Bamberg", zip: "96050" },
   },
   {
     name: "LU19 – Luitpoldstraße 19",
@@ -385,7 +393,7 @@ const LOCATIONS: SeedLocation[] = [
     lon: 10.894291,
     category: "university",
     description: "Seminarräume, Zentrum für Lehrerinnen- und Lehrerbildung",
-    address: { street: "Luitpoldstraße", streetNumber: "19", city: "Bamberg", zip: 96050 },
+    address: { street: "Luitpoldstraße", streetNumber: "19", city: "Bamberg", zip: "96050" },
   },
   {
     name: "M3 (Marcushaus) – Markusplatz 3",
@@ -393,7 +401,7 @@ const LOCATIONS: SeedLocation[] = [
     lon: 10.883903,
     category: "university",
     description: "Fakultät HuWi, Teilbibliothek 2",
-    address: { street: "Markusplatz", streetNumber: "3", city: "Bamberg", zip: 96047 },
+    address: { street: "Markusplatz", streetNumber: "3", city: "Bamberg", zip: "96047" },
   },
   {
     name: "MG1/MG2 – Markusstraße 8a",
@@ -401,7 +409,7 @@ const LOCATIONS: SeedLocation[] = [
     lon: 10.882857,
     category: "university",
     description: "Teilbereiche der Fakultäten HuWi, Hörsäle, Cafeteria",
-    address: { street: "Markusstraße", streetNumber: "8a", city: "Bamberg", zip: 96047 },
+    address: { street: "Markusstraße", streetNumber: "8a", city: "Bamberg", zip: "96047" },
   },
   {
     name: "RZ (Rechenzentrum/IT-Service) – An der Universität 19, RZ-Gebäude",
@@ -409,7 +417,7 @@ const LOCATIONS: SeedLocation[] = [
     lon: 10.9048,
     category: "university",
     description: "IT-Service (vormals Rechenzentrum), Serverräume, PC-Pools",
-    address: { street: "Feldkirchenstraße", streetNumber: "21", city: "Bamberg", zip: 96052 },
+    address: { street: "Feldkirchenstraße", streetNumber: "21", city: "Bamberg", zip: "96052" },
   },
   {
     name: "GU13 – Gutenbergstraße 13",
@@ -417,7 +425,7 @@ const LOCATIONS: SeedLocation[] = [
     lon: 10.927057,
     category: "university",
     description: "Teilbereiche der Fakultät WIAI",
-    address: { street: "Gutenbergstraße", streetNumber: "13", city: "Bamberg", zip: 96050 },
+    address: { street: "Gutenbergstraße", streetNumber: "13", city: "Bamberg", zip: "96050" },
   },
 
   // Mensa & Cafeteria
@@ -427,7 +435,7 @@ const LOCATIONS: SeedLocation[] = [
     lon: 10.9051,
     category: "mensa",
     description: "Mensa Feldkirchenstraße",
-    address: { street: "Feldkirchenstraße", streetNumber: "21", city: "Bamberg", zip: 96052 },
+    address: { street: "Feldkirchenstraße", streetNumber: "21", city: "Bamberg", zip: "96052" },
   },
   {
     name: "Mensa Austraße",
@@ -435,7 +443,7 @@ const LOCATIONS: SeedLocation[] = [
     lon: 10.887,
     category: "mensa",
     description: "Austraße 37, Mensa in der Innenstadt",
-    address: { street: "Austraße", streetNumber: "37", city: "Bamberg", zip: 96047 },
+    address: { street: "Austraße", streetNumber: "37", city: "Bamberg", zip: "96047" },
   },
   {
     name: "Cafeteria ERBA",
@@ -443,7 +451,7 @@ const LOCATIONS: SeedLocation[] = [
     lon: 10.8699,
     category: "mensa",
     description: "An der Weberei 5, Cafeteria am ERBA-Campus",
-    address: { street: "An der Weberei", streetNumber: "5", city: "Bamberg", zip: 96047 },
+    address: { street: "An der Weberei", streetNumber: "5", city: "Bamberg", zip: "96047" },
   },
   {
     name: "Cafeteria Markusplatz",
@@ -451,7 +459,7 @@ const LOCATIONS: SeedLocation[] = [
     lon: 10.8838,
     category: "mensa",
     description: "Markusplatz 3, Cafeteria in der Altstadt",
-    address: { street: "Markusplatz", streetNumber: "3", city: "Bamberg", zip: 96047 },
+    address: { street: "Markusplatz", streetNumber: "3", city: "Bamberg", zip: "96047" },
   },
 
   // Libraries
@@ -461,7 +469,7 @@ const LOCATIONS: SeedLocation[] = [
     lon: 10.9046,
     category: "library",
     description: "Feldkirchenstraße 21, Zentral- & Teilbibliothek 3",
-    address: { street: "Feldkirchenstraße", streetNumber: "21", city: "Bamberg", zip: 96052 },
+    address: { street: "Feldkirchenstraße", streetNumber: "21", city: "Bamberg", zip: "96052" },
   },
   {
     name: "Teilbibliothek 1 (Theologie und Philosophie)",
@@ -469,7 +477,7 @@ const LOCATIONS: SeedLocation[] = [
     lon: 10.8879,
     category: "library",
     description: "An der Universität 2",
-    address: { street: "An der Universität", streetNumber: "2", city: "Bamberg", zip: 96047 },
+    address: { street: "An der Universität", streetNumber: "2", city: "Bamberg", zip: "96047" },
   },
   {
     name: "Teilbibliothek 2 (Humanwissenschaften)",
@@ -477,7 +485,7 @@ const LOCATIONS: SeedLocation[] = [
     lon: 10.8838,
     category: "library",
     description: "Markusplatz 3",
-    address: { street: "Markusplatz", streetNumber: "3", city: "Bamberg", zip: 96047 },
+    address: { street: "Markusplatz", streetNumber: "3", city: "Bamberg", zip: "96047" },
   },
   {
     name: "Teilbibliothek 4 (Sprach- und Literaturwissenschaften)",
@@ -485,7 +493,7 @@ const LOCATIONS: SeedLocation[] = [
     lon: 10.8864,
     category: "library",
     description: "Heumarkt 2",
-    address: { street: "Heumarkt", streetNumber: "2", city: "Bamberg", zip: 96047 },
+    address: { street: "Heumarkt", streetNumber: "2", city: "Bamberg", zip: "96047" },
   },
   {
     name: "Teilbibliothek 5 (Geschichts- und Geowissenschaften)",
@@ -493,7 +501,7 @@ const LOCATIONS: SeedLocation[] = [
     lon: 10.8861,
     category: "library",
     description: "Am Kranen 3",
-    address: { street: "Am Kranen", streetNumber: "3", city: "Bamberg", zip: 96047 },
+    address: { street: "Am Kranen", streetNumber: "3", city: "Bamberg", zip: "96047" },
   },
   {
     name: "ERBA-Bibliothek (WIAI)",
@@ -501,7 +509,7 @@ const LOCATIONS: SeedLocation[] = [
     lon: 10.8699,
     category: "library",
     description: "An der Weberei 5, ERBA-Campus",
-    address: { street: "An der Weberei", streetNumber: "5", city: "Bamberg", zip: 96047 },
+    address: { street: "An der Weberei", streetNumber: "5", city: "Bamberg", zip: "96047" },
   },
   {
     name: "Staatsbibliothek Bamberg",
@@ -509,7 +517,7 @@ const LOCATIONS: SeedLocation[] = [
     lon: 10.8823,
     category: "library",
     description: "Domplatz 8, Neue Residenz – historische Landesbibliothek",
-    address: { street: "Domplatz", streetNumber: "8", city: "Bamberg", zip: 96049 },
+    address: { street: "Domplatz", streetNumber: "8", city: "Bamberg", zip: "96049" },
   },
 
   // Sport
@@ -519,7 +527,7 @@ const LOCATIONS: SeedLocation[] = [
     lon: 10.9046,
     category: "sport",
     description: "Feldkirchenstraße 21, Verwaltung & Sporthallen",
-    address: { street: "Feldkirchenstraße", streetNumber: "21", city: "Bamberg", zip: 96052 },
+    address: { street: "Feldkirchenstraße", streetNumber: "21", city: "Bamberg", zip: "96052" },
   },
   {
     name: "Hochschulsportanlage Volkspark",
@@ -527,7 +535,7 @@ const LOCATIONS: SeedLocation[] = [
     lon: 10.9304,
     category: "sport",
     description: "Armeestraße 47, Außensportanlagen der Universität",
-    address: { street: "Armeestraße", streetNumber: "47", city: "Bamberg", zip: 96050 },
+    address: { street: "Armeestraße", streetNumber: "47", city: "Bamberg", zip: "96050" },
   },
   {
     name: "brose Arena",
@@ -535,7 +543,7 @@ const LOCATIONS: SeedLocation[] = [
     lon: 10.920169,
     category: "sport",
     description: "Heimspielstätte der Brose Bamberg Basketball GmbH",
-    address: { street: "Forchheimer Straße", streetNumber: "15", city: "Bamberg", zip: 96050 },
+    address: { street: "Forchheimer Straße", streetNumber: "15", city: "Bamberg", zip: "96050" },
   },
   {
     name: "Fuchs-Park Stadion",
@@ -543,7 +551,7 @@ const LOCATIONS: SeedLocation[] = [
     lon: 10.927711,
     category: "sport",
     description: "Fuchs-Park-Straße 1, Fußballstadion",
-    address: { street: "Pödeldorfer Straße", streetNumber: "180", city: "Bamberg", zip: 96050 },
+    address: { street: "Pödeldorfer Straße", streetNumber: "180", city: "Bamberg", zip: "96050" },
   },
 
   // Venues
@@ -553,7 +561,7 @@ const LOCATIONS: SeedLocation[] = [
     lon: 10.885,
     category: "venues",
     description: "Dominikanerstraße 6, Traditionsbrauerei mit Rauchbier",
-    address: { street: "Dominikanerstraße", streetNumber: "6", city: "Bamberg", zip: 96049 },
+    address: { street: "Dominikanerstraße", streetNumber: "6", city: "Bamberg", zip: "96049" },
   },
   {
     name: "Brauerei Spezial",
@@ -561,7 +569,7 @@ const LOCATIONS: SeedLocation[] = [
     lon: 10.8928,
     category: "venues",
     description: "Obere Königstraße 10, Brauerei & Gaststätte",
-    address: { street: "Obere Königstraße", streetNumber: "10", city: "Bamberg", zip: 96052 },
+    address: { street: "Obere Königstraße", streetNumber: "10", city: "Bamberg", zip: "96052" },
   },
   {
     name: "Brauerei Fässla",
@@ -569,7 +577,7 @@ const LOCATIONS: SeedLocation[] = [
     lon: 10.8928,
     category: "venues",
     description: "Obere Königstraße 19–21, Brauerei & Hotel",
-    address: { street: "Obere Königstraße", streetNumber: "19", city: "Bamberg", zip: 96052 },
+    address: { street: "Obere Königstraße", streetNumber: "19", city: "Bamberg", zip: "96052" },
   },
   {
     name: "Mahrs Bräu",
@@ -577,7 +585,7 @@ const LOCATIONS: SeedLocation[] = [
     lon: 10.9064,
     category: "venues",
     description: "Wunderburg 10, beliebte Brauereikneipe",
-    address: { street: "Wunderburg", streetNumber: "10", city: "Bamberg", zip: 96050 },
+    address: { street: "Wunderburg", streetNumber: "10", city: "Bamberg", zip: "96050" },
   },
   {
     name: "Zapfhahn",
@@ -585,7 +593,7 @@ const LOCATIONS: SeedLocation[] = [
     lon: 10.8821,
     category: "venues",
     description: "Untere Sandstraße 14, Bar & Restaurant",
-    address: { street: "Untere Sandstraße", streetNumber: "14", city: "Bamberg", zip: 96049 },
+    address: { street: "Untere Sandstraße", streetNumber: "14", city: "Bamberg", zip: "96049" },
   },
   {
     name: "Kachelofen",
@@ -593,7 +601,7 @@ const LOCATIONS: SeedLocation[] = [
     lon: 10.8844,
     category: "venues",
     description: "Obere Sandstraße 1, fränkische Gaststätte",
-    address: { street: "Obere Sandstraße", streetNumber: "1", city: "Bamberg", zip: 96049 },
+    address: { street: "Obere Sandstraße", streetNumber: "1", city: "Bamberg", zip: "96049" },
   },
   {
     name: "Zum Sternla",
@@ -601,7 +609,7 @@ const LOCATIONS: SeedLocation[] = [
     lon: 10.8914,
     category: "venues",
     description: "Lange Straße, fränkische Gaststätte",
-    address: { street: "Lange Straße", city: "Bamberg", zip: 96047 },
+    address: { street: "Lange Straße", city: "Bamberg", zip: "96047" },
   },
   {
     name: "Café Abseits",
@@ -609,7 +617,7 @@ const LOCATIONS: SeedLocation[] = [
     lon: 10.9076,
     category: "venues",
     description: "Pödeldorfer Straße 39, Bar & Bierspezialitäten",
-    address: { street: "Pödeldorfer Straße", streetNumber: "39", city: "Bamberg", zip: 96052 },
+    address: { street: "Pödeldorfer Straße", streetNumber: "39", city: "Bamberg", zip: "96052" },
   },
   {
     name: "Live-Club Bamberg",
@@ -617,7 +625,7 @@ const LOCATIONS: SeedLocation[] = [
     lon: 10.8839,
     category: "venues",
     description: "Untere Sandstraße, Club & Konzertveranstaltungen",
-    address: { street: "Untere Sandstraße", city: "Bamberg", zip: 96049 },
+    address: { street: "Untere Sandstraße", city: "Bamberg", zip: "96049" },
   },
   {
     name: "Wilde Rose Keller",
@@ -625,7 +633,7 @@ const LOCATIONS: SeedLocation[] = [
     lon: 10.8869,
     category: "venues",
     description: "Sternwartstraße, Bierkeller & Biergarten",
-    address: { street: "Sternwartstraße", city: "Bamberg", zip: 96049 },
+    address: { street: "Sternwartstraße", city: "Bamberg", zip: "96049" },
   },
   {
     name: "Spezial-Keller",
@@ -633,7 +641,7 @@ const LOCATIONS: SeedLocation[] = [
     lon: 10.8872,
     category: "venues",
     description: "Sternwartstraße, Bierkeller auf dem Berg",
-    address: { street: "Sternwartstraße", city: "Bamberg", zip: 96049 },
+    address: { street: "Sternwartstraße", city: "Bamberg", zip: "96049" },
   },
 
   // Other
@@ -643,7 +651,7 @@ const LOCATIONS: SeedLocation[] = [
     lon: 10.8997,
     category: "other",
     description: "Ludwigstraße, Zug, Regionalbahn & Fernbus",
-    address: { street: "Ludwigstraße", city: "Bamberg", zip: 96052 },
+    address: { street: "Ludwigstraße", city: "Bamberg", zip: "96052" },
   },
   {
     name: "ZOB Bamberg",
@@ -658,7 +666,7 @@ const LOCATIONS: SeedLocation[] = [
     lon: 10.8906,
     category: "other",
     description: "Buger Straße 80, Krankenhaus der Sozialstiftung Bamberg",
-    address: { street: "Buger Straße", streetNumber: "80", city: "Bamberg", zip: 96049 },
+    address: { street: "Buger Straße", streetNumber: "80", city: "Bamberg", zip: "96049" },
   },
   {
     name: "Agentur für Arbeit Bamberg",
@@ -666,7 +674,7 @@ const LOCATIONS: SeedLocation[] = [
     lon: 10.9087,
     category: "other",
     description: "Ludwigstraße, Jobcenter & Berufsberatung",
-    address: { street: "Ludwigstraße", city: "Bamberg", zip: 96052 },
+    address: { street: "Ludwigstraße", city: "Bamberg", zip: "96052" },
   },
   {
     name: "SWerk Würzburg – Außenstelle Bamberg",
@@ -674,7 +682,7 @@ const LOCATIONS: SeedLocation[] = [
     lon: 10.887,
     category: "other",
     description: "Austraße 37, BAföG, Sozialberatung & Wohnheime",
-    address: { street: "Austraße", streetNumber: "37", city: "Bamberg", zip: 96047 },
+    address: { street: "Austraße", streetNumber: "37", city: "Bamberg", zip: "96047" },
   },
 ]
 
@@ -685,7 +693,7 @@ type SeedEvent = {
   start: Date
   end: Date
   externalId: string
-  category: "university" | "sport" | "party" | "culture" | "social" | "other"
+  category: EventCategory
   mapLocationName?: string
   customLocation?: { name: string; address?: string; city?: string }
 }
@@ -812,10 +820,10 @@ type SeedJobOffer = {
   location: string
   description: string
   workingHours: number
-  jobType: string
-  field: string
-  workMode: string
-  onlineStatus?: string
+  jobType: JobType
+  field: JobField
+  workMode: WorkMode
+  onlineStatus?: JobOnlineStatus
   externalUrl?: string
   contactName?: string
   contactMail?: string

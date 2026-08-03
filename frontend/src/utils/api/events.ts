@@ -2,17 +2,11 @@ import prisma from "../prisma"
 import { withCache } from "./cache"
 import type { ApiResult } from "./types"
 import { toMapLocation, type MapLocation } from "./locations"
+import { EventCategory } from "@/generated/prisma/enums"
 
-export const EVENT_CATEGORIES = [
-  "university",
-  "sport",
-  "party",
-  "culture",
-  "social",
-  "other",
-] as const
+export const EVENT_CATEGORIES = Object.values(EventCategory)
 
-export type EventCategory = (typeof EVENT_CATEGORIES)[number]
+export type { EventCategory }
 
 export type EventMapLocation = Pick<
   MapLocation,
@@ -49,7 +43,7 @@ type EventRow = {
   slug: string
   title: string
   description: string
-  category: string
+  category: EventCategory
   start: Date
   end: Date
   organizer: string
@@ -76,7 +70,7 @@ function toEvent(
     start: row.start.toISOString(),
     end: row.end.toISOString(),
     organizer: row.organizer,
-    category: row.category as EventCategory,
+    category: row.category,
     external_url: row.externalUrl ?? undefined,
     external_id: row.externalId ?? undefined,
     ownerId: row.ownerId,
