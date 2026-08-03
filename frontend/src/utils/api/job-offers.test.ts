@@ -1,14 +1,19 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { fetchJobOffers, fetchJobOffer, fetchMyJobOffers } from "./job-offers"
+import { beforeEach, describe, expect, it, vi } from "vitest"
+import {
+  fetchJobOffers,
+  fetchJobOffersPaginated,
+  fetchJobOffer,
+  fetchMyJobOffers,
+} from "./job-offers"
 
-const mockFind = vi.hoisted(() => vi.fn())
-const mockCollection = vi.hoisted(() => vi.fn())
+const mockFindMany = vi.hoisted(() => vi.fn())
+const mockFindFirst = vi.hoisted(() => vi.fn())
+const mockCount = vi.hoisted(() => vi.fn())
 
-vi.mock("./client", () => ({
-  client: { collection: mockCollection },
-  withTimeout: (p: Promise<unknown>) => p,
-  fetchWithTimeout: (url: string, opts: RequestInit) => fetch(url, opts),
-  strapiUrl: "http://localhost:1337",
+vi.mock("../prisma", () => ({
+  default: {
+    jobOffer: { findMany: mockFindMany, findFirst: mockFindFirst, count: mockCount },
+  },
 }))
 
 vi.mock("./cache", () => ({
@@ -16,69 +21,91 @@ vi.mock("./cache", () => ({
 }))
 
 beforeEach(() => {
-  mockFind.mockReset()
-  mockCollection.mockReturnValue({ find: mockFind })
+  mockFindMany.mockReset()
+  mockFindFirst.mockReset()
+  mockCount.mockReset()
 })
 
-afterEach(() => {
-  vi.restoreAllMocks()
-  vi.unstubAllGlobals()
-})
+function makeRow(overrides: Partial<Record<string, unknown>> = {}) {
+  return {
+    id: "job-123",
+    slug: "developer-1",
+    title: "Developer",
+    description: "Build things",
+    company: "ACME",
+    location: "Remote",
+    onlineStatus: "published",
+    workingHours: 20,
+    externalUrl: null,
+    jobType: "other",
+    field: "it",
+    workMode: "on_site",
+    contactName: "HR",
+    contactMail: "hr@acme.com",
+    contactPhone: null,
+    ownerId: null,
+    createdAt: new Date("2026-04-15T10:00:00Z"),
+    ...overrides,
+  }
+}
 
-const STRAPI_URL = "http://localhost:1337"
-
-const sampleJob = {
-  documentId: "job-123",
+const mappedSampleJob = {
+  id: "job-123",
   slug: "developer-1",
   title: "Developer",
   description: "Build things",
   company: "ACME",
   location: "Remote",
-  online_status: "published" as const,
+  online_status: "published",
   working_hours: 20,
-  contact: { name: "HR", mail: "hr@acme.com" },
+  external_url: undefined,
+  job_type: "other",
+  field: "it",
+  work_mode: "on_site",
+  contact: { name: "HR", mail: "hr@acme.com", phone: undefined },
+  ownerId: null,
+  reports: undefined,
+  createdAt: "2026-04-15T10:00:00.000Z",
 }
 
 describe("fetchJobOffers", () => {
   it("filters by published status", async () => {
-    mockFind.mockResolvedValue({ data: [] })
+    mockFindMany.mockResolvedValue([])
 
     await fetchJobOffers()
 
-    expect(mockFind).toHaveBeenCalledWith(
-      expect.objectContaining({
-        filters: { online_status: { $eq: "published" } },
-      })
+    expect(mockFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { onlineStatus: "published" } })
     )
   })
 
   it("uses the default limit of 100", async () => {
-    mockFind.mockResolvedValue({ data: [] })
+    mockFindMany.mockResolvedValue([])
 
     await fetchJobOffers()
 
-    expect(mockFind).toHaveBeenCalledWith(expect.objectContaining({ pagination: { limit: 100 } }))
+    expect(mockFindMany).toHaveBeenCalledWith(expect.objectContaining({ take: 100 }))
   })
 
   it("respects a custom limit", async () => {
-    mockFind.mockResolvedValue({ data: [] })
+    mockFindMany.mockResolvedValue([])
 
     await fetchJobOffers(10)
 
-    expect(mockFind).toHaveBeenCalledWith(expect.objectContaining({ pagination: { limit: 10 } }))
+    expect(mockFindMany).toHaveBeenCalledWith(expect.objectContaining({ take: 10 }))
   })
 
-  it("returns the data array from the response", async () => {
-    mockFind.mockResolvedValue({ data: [sampleJob] })
+  it("returns mapped job offers from the response", async () => {
+    mockFindMany.mockResolvedValue([makeRow()])
 
     const result = await fetchJobOffers()
 
-    expect(result).toEqual({ data: [sampleJob], apiDown: false })
+    expect(result).toEqual({ data: [mappedSampleJob], apiDown: false })
   })
 
-  it("logs an error and returns an empty array when the API response is unexpected", async () => {
+  it("logs an error and returns an empty array when the query fails", async () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
-    mockFind.mockResolvedValue(null) // null.data throws TypeError inside the try block
+    mockFindMany.mockResolvedValue(null) // null.map throws TypeError inside the try block
 
     const result = await fetchJobOffers()
 
@@ -87,195 +114,173 @@ describe("fetchJobOffers", () => {
   })
 })
 
-describe("fetchJobOffer", () => {
+describe("fetchJobOffersPaginated", () => {
   beforeEach(() => {
-    vi.stubGlobal("fetch", vi.fn())
+    mockFindMany.mockResolvedValue([])
+    mockCount.mockResolvedValue(0)
   })
 
-  it("URL-encodes the slug in the query string", async () => {
-    vi.mocked(fetch).mockResolvedValue({
-      ok: true,
-      json: async () => ({ data: [sampleJob] }),
-    } as Response)
-    const slugWithSpecialChars = "test slug & more"
+  it("filters by published status", async () => {
+    await fetchJobOffersPaginated()
 
-    await fetchJobOffer(slugWithSpecialChars, "token")
-
-    expect(fetch).toHaveBeenCalledWith(
-      expect.stringContaining(encodeURIComponent(slugWithSpecialChars)),
-      expect.any(Object)
+    expect(mockFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: expect.objectContaining({ onlineStatus: "published" }) })
     )
   })
 
-  it("includes the Authorization header", async () => {
-    vi.mocked(fetch).mockResolvedValue({
-      ok: true,
-      json: async () => ({ data: [sampleJob] }),
-    } as Response)
+  it("filters by job type when provided", async () => {
+    await fetchJobOffersPaginated({ types: ["internship"] })
 
-    await fetchJobOffer("some-slug", "my-token")
+    const call = mockFindMany.mock.calls[0][0]
+    expect(call.where.jobType).toEqual({ in: ["internship"] })
+  })
 
-    expect(fetch).toHaveBeenCalledWith(
-      expect.any(String),
+  it("filters by field and work mode when provided", async () => {
+    await fetchJobOffersPaginated({ fields: ["it"], workModes: ["remote"] })
+
+    const call = mockFindMany.mock.calls[0][0]
+    expect(call.where.field).toEqual({ in: ["it"] })
+    expect(call.where.workMode).toEqual({ in: ["remote"] })
+  })
+
+  it("filters by title/company search when provided", async () => {
+    await fetchJobOffersPaginated({ search: "acme" })
+
+    const call = mockFindMany.mock.calls[0][0]
+    expect(call.where.OR).toEqual([
+      { title: { contains: "acme", mode: "insensitive" } },
+      { company: { contains: "acme", mode: "insensitive" } },
+    ])
+  })
+
+  it("sorts by createdAt descending by default", async () => {
+    await fetchJobOffersPaginated()
+
+    expect(mockFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({ orderBy: { createdAt: "desc" } })
+    )
+  })
+
+  it("sorts by createdAt ascending when sort is 'oldest'", async () => {
+    await fetchJobOffersPaginated({ sort: "oldest" })
+
+    expect(mockFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({ orderBy: { createdAt: "asc" } })
+    )
+  })
+
+  it("paginates using page and pageSize", async () => {
+    await fetchJobOffersPaginated({ page: 3, pageSize: 5 })
+
+    expect(mockFindMany).toHaveBeenCalledWith(expect.objectContaining({ skip: 10, take: 5 }))
+  })
+
+  it("returns total, page, and pageCount from the count query", async () => {
+    mockFindMany.mockResolvedValue([makeRow()])
+    mockCount.mockResolvedValue(25)
+
+    const result = await fetchJobOffersPaginated({ page: 2, pageSize: 12 })
+
+    expect(result).toEqual({
+      data: { jobs: [mappedSampleJob], total: 25, page: 2, pageCount: 3 },
+      apiDown: false,
+    })
+  })
+
+  it("logs an error and returns an empty page when the query fails", async () => {
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+    mockFindMany.mockRejectedValue(new Error("db error"))
+
+    const result = await fetchJobOffersPaginated()
+
+    expect(result).toEqual({
+      data: { jobs: [], total: 0, page: 1, pageCount: 1 },
+      apiDown: true,
+    })
+    expect(consoleSpy).toHaveBeenCalledWith(
+      "Error fetching job offers (paginated)",
+      expect.any(Error)
+    )
+  })
+})
+
+describe("fetchJobOffer", () => {
+  it("filters by the given slug", async () => {
+    mockFindFirst.mockResolvedValue(makeRow())
+
+    await fetchJobOffer("developer-1")
+
+    expect(mockFindFirst).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { slug: "developer-1" } })
+    )
+  })
+
+  it("filters reports to non-dismissed", async () => {
+    mockFindFirst.mockResolvedValue(makeRow())
+
+    await fetchJobOffer("developer-1")
+
+    expect(mockFindFirst).toHaveBeenCalledWith(
       expect.objectContaining({
-        headers: expect.objectContaining({ Authorization: "Bearer my-token" }),
+        include: {
+          reports: { where: { reviewStatus: { not: "dismissed" } }, select: { id: true } },
+        },
       })
     )
   })
 
-  it("queries the correct Strapi endpoint", async () => {
-    vi.mocked(fetch).mockResolvedValue({
-      ok: true,
-      json: async () => ({ data: [sampleJob] }),
-    } as Response)
+  it("returns the mapped job offer", async () => {
+    mockFindFirst.mockResolvedValue(makeRow())
 
-    await fetchJobOffer("some-slug", "token")
+    const result = await fetchJobOffer("developer-1")
 
-    expect(fetch).toHaveBeenCalledWith(
-      expect.stringContaining(`${STRAPI_URL}/api/job-offers`),
-      expect.any(Object)
-    )
+    expect(result).toEqual({ data: mappedSampleJob, apiDown: false })
   })
 
-  it("filters reports to non-dismissed in the URL", async () => {
-    vi.mocked(fetch).mockResolvedValue({
-      ok: true,
-      json: async () => ({ data: [sampleJob] }),
-    } as Response)
+  it("returns null when no job offer matches", async () => {
+    mockFindFirst.mockResolvedValue(null)
 
-    await fetchJobOffer("some-slug", "token")
-
-    expect(fetch).toHaveBeenCalledWith(
-      expect.stringContaining("populate[reports][filters][review_status][$ne]=dismissed"),
-      expect.any(Object)
-    )
-  })
-
-  it("returns the first job from the response", async () => {
-    vi.mocked(fetch).mockResolvedValue({
-      ok: true,
-      json: async () => ({ data: [sampleJob] }),
-    } as Response)
-
-    const result = await fetchJobOffer("some-slug", "token")
-
-    expect(result).toEqual({ data: sampleJob, apiDown: false })
-  })
-
-  it("returns null when the response is not ok", async () => {
-    vi.mocked(fetch).mockResolvedValue({ ok: false } as Response)
-
-    const result = await fetchJobOffer("some-slug", "token")
+    const result = await fetchJobOffer("no-such-job")
 
     expect(result).toEqual({ data: null, apiDown: false })
   })
 
-  it("returns null when the data array is empty", async () => {
-    vi.mocked(fetch).mockResolvedValue({
-      ok: true,
-      json: async () => ({ data: [] }),
-    } as Response)
-
-    const result = await fetchJobOffer("no-such-slug", "token")
-
-    expect(result).toEqual({ data: null, apiDown: false })
-  })
-
-  it("logs an error and returns null when fetch throws", async () => {
+  it("logs an error and returns null when the query fails", async () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
-    vi.mocked(fetch).mockRejectedValue(new Error("network error"))
+    mockFindFirst.mockRejectedValue(new Error("connection refused"))
 
-    const result = await fetchJobOffer("some-slug", "token")
+    const result = await fetchJobOffer("developer-1")
 
     expect(result).toEqual({ data: null, apiDown: true })
     expect(consoleSpy).toHaveBeenCalledWith("Error fetching job offer", expect.any(Error))
   })
-
-  it("retries with the public token when a custom token returns 401", async () => {
-    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
-    vi.mocked(fetch)
-      .mockResolvedValueOnce({ ok: false, status: 401 } as Response)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ data: [sampleJob] }),
-      } as Response)
-
-    const result = await fetchJobOffer("some-slug", "custom-token")
-
-    expect(fetch).toHaveBeenCalledTimes(2)
-    expect(result).toEqual({ data: sampleJob, apiDown: false })
-    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("retrying"))
-  })
-
-  it("does NOT retry when the default public token itself returns 401", async () => {
-    vi.mocked(fetch).mockResolvedValue({ ok: false, status: 401 } as Response)
-
-    const result = await fetchJobOffer("some-slug")
-
-    expect(fetch).toHaveBeenCalledTimes(1)
-    expect(result).toEqual({ data: null, apiDown: false })
-  })
 })
 
 describe("fetchMyJobOffers", () => {
-  beforeEach(() => {
-    vi.stubGlobal("fetch", vi.fn())
+  it("filters by the given ownerId and sorts by createdAt descending", async () => {
+    mockFindMany.mockResolvedValue([])
+
+    await fetchMyJobOffers("user-42")
+
+    expect(mockFindMany).toHaveBeenCalledWith({
+      where: { ownerId: "user-42" },
+      orderBy: { createdAt: "desc" },
+    })
   })
 
-  it("filters by the given userId", async () => {
-    vi.mocked(fetch).mockResolvedValue({
-      ok: true,
-      json: async () => ({ data: [] }),
-    } as Response)
+  it("returns mapped job offers from the response", async () => {
+    mockFindMany.mockResolvedValue([makeRow()])
 
-    await fetchMyJobOffers("token-abc", 42)
+    const result = await fetchMyJobOffers("user-42")
 
-    expect(fetch).toHaveBeenCalledWith(
-      expect.stringContaining("filters[owner][id][$eq]=42"),
-      expect.any(Object)
-    )
+    expect(result).toEqual({ data: [mappedSampleJob], apiDown: false })
   })
 
-  it("includes the Authorization header", async () => {
-    vi.mocked(fetch).mockResolvedValue({
-      ok: true,
-      json: async () => ({ data: [] }),
-    } as Response)
-
-    await fetchMyJobOffers("my-token", 1)
-
-    expect(fetch).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({
-        headers: expect.objectContaining({ Authorization: "Bearer my-token" }),
-      })
-    )
-  })
-
-  it("returns the data array on success", async () => {
-    vi.mocked(fetch).mockResolvedValue({
-      ok: true,
-      json: async () => ({ data: [sampleJob] }),
-    } as Response)
-
-    const result = await fetchMyJobOffers("token", 1)
-
-    expect(result).toEqual({ data: [sampleJob], apiDown: false })
-  })
-
-  it("returns an empty array when the response is not ok", async () => {
-    vi.mocked(fetch).mockResolvedValue({ ok: false, text: async () => "Unauthorized" } as Response)
-
-    const result = await fetchMyJobOffers("bad-token", 1)
-
-    expect(result).toEqual({ data: [], apiDown: false })
-  })
-
-  it("logs an error and returns an empty array when fetch throws", async () => {
+  it("logs an error and returns an empty array when the query fails", async () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
-    vi.mocked(fetch).mockRejectedValue(new Error("network error"))
+    mockFindMany.mockRejectedValue(new Error("connection refused"))
 
-    const result = await fetchMyJobOffers("token", 1)
+    const result = await fetchMyJobOffers("user-42")
 
     expect(result).toEqual({ data: [], apiDown: true })
     expect(consoleSpy).toHaveBeenCalledWith("Error fetching own job offers", expect.any(Error))

@@ -12,6 +12,8 @@ const locals = {
   locale: "de" as const,
   user: { id: 1, email: "user@example.com", createdAt: new Date().toISOString() },
   token: null,
+  userNew: null,
+  session: null,
 }
 
 const baseProps = {
@@ -249,20 +251,20 @@ describe("JobForm", () => {
     })
   })
 
-  describe("documentId hidden input", () => {
-    it("renders a hidden documentId input when documentId prop is provided", async () => {
+  describe("id hidden input", () => {
+    it("renders a hidden id input when id prop is provided", async () => {
       const html = await container.renderToString(JobForm, {
-        props: { ...baseProps, documentId: "job-doc-xyz" },
+        props: { ...baseProps, id: "job-doc-xyz" },
         locals,
       })
-      expect(html).toContain('name="documentId"')
+      expect(html).toContain('name="id"')
       expect(html).toContain('value="job-doc-xyz"')
       expect(html).toContain('type="hidden"')
     })
 
-    it("does not render a documentId input when documentId is not provided", async () => {
+    it("does not render an id input when id is not provided", async () => {
       const html = await container.renderToString(JobForm, { props: baseProps, locals })
-      expect(html).not.toContain('name="documentId"')
+      expect(html).not.toContain('name="id"')
     })
   })
 })

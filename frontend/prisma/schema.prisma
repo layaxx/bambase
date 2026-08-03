@@ -18,6 +18,7 @@ model User {
   sessions      Session[]
   accounts      Account[]
   events        Event[]
+  jobOffers     JobOffer[]
 
   @@unique([email])
   @@map("user")
@@ -151,16 +152,43 @@ model Event {
   @@map("event")
 }
 
+model JobOffer {
+  id           String    @id @default(cuid())
+  slug         String    @unique
+  title        String
+  description  String
+  company      String
+  location     String
+  onlineStatus String    @default("submitted")
+  workingHours Int
+  externalUrl  String?
+  jobType      String
+  field        String
+  workMode     String
+  contactName  String?
+  contactMail  String?
+  contactPhone String?
+  ownerId      String?
+  owner        User?     @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  reports      Report[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([onlineStatus])
+  @@map("job_offer")
+}
+
 model Report {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   reason       String
   details      String?
-  reviewStatus String   @default("open")
+  reviewStatus String    @default("open")
   eventId      String?
-  event        Event?   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  event        Event?    @relation(fields: [eventId], references: [id], onDelete: Cascade)
   jobOfferId   String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  jobOffer     JobOffer? @relation(fields: [jobOfferId], references: [id], onDelete: Cascade)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   @@map("report")
 }

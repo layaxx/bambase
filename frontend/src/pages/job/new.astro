@@ -7,7 +7,7 @@ import JobForm from "@/components/jobs/JobForm.astro"
 
 const t = useTranslations(Astro.locals.locale)
 
-if (!Astro.locals.user) {
+if (!Astro.locals.userNew) {
   return Astro.redirect(`/login?redirect=/job/new`)
 }
 

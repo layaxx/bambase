@@ -806,6 +806,118 @@ const EVENTS: SeedEvent[] = [
   },
 ]
 
+type SeedJobOffer = {
+  title: string
+  company: string
+  location: string
+  description: string
+  workingHours: number
+  jobType: string
+  field: string
+  workMode: string
+  onlineStatus?: string
+  externalUrl?: string
+  contactName?: string
+  contactMail?: string
+  contactPhone?: string
+}
+
+const JOB_OFFERS: SeedJobOffer[] = [
+  {
+    title: "Werkstudent:in Softwareentwicklung",
+    company: "Feki.de e. V.",
+    location: "Bamberg",
+    description:
+      "Zur Unterstützung unseres Website-Teams suchen wir eine:n Werkstudent:in, die/der uns bei der Weiterentwicklung unserer Jobbörse und unseres Eventkalenders hilft. Kenntnisse in JavaScript/TypeScript sind von Vorteil.",
+    workingHours: 10,
+    jobType: "working_student",
+    field: "it",
+    workMode: "hybrid",
+    contactName: "Feki.de Team",
+    contactMail: "jobs@feki.de",
+  },
+  {
+    title: "Praktikum Marketing & Social Media",
+    company: "BamBuS e. V.",
+    location: "Bamberg",
+    description:
+      "Du unterstützt uns bei der Planung und Umsetzung unserer Social-Media-Kampagnen rund um das BamBuS Dinner und weitere Events. Erfahrung mit Instagram und Canva wünschenswert.",
+    workingHours: 15,
+    jobType: "internship",
+    field: "marketing",
+    workMode: "on_site",
+    contactName: "BamBuS Marketingteam",
+    contactMail: "bambusev.org@gmail.com",
+  },
+  {
+    title: "Aushilfe Service & Küche",
+    company: "Schlenkerla",
+    location: "Dominikanerstraße 6, Bamberg",
+    description:
+      "Wir suchen ab sofort Unterstützung im Service und in der Küche für Wochenendschichten. Erfahrung in der Gastronomie ist von Vorteil, aber keine Voraussetzung.",
+    workingHours: 12,
+    jobType: "part_time",
+    field: "gastronomy",
+    workMode: "on_site",
+    contactName: "Schlenkerla Personalbüro",
+    contactPhone: "0951 56060",
+  },
+  {
+    title: "Hilfskraft am Lehrstuhl für Wirtschaftsinformatik",
+    company: "Universität Bamberg",
+    location: "An der Weberei 5, Bamberg",
+    description:
+      "Am Lehrstuhl für Wirtschaftsinformatik ist ab sofort eine Stelle als studentische Hilfskraft zu besetzen. Aufgaben umfassen die Unterstützung bei Lehrveranstaltungen und Literaturrecherche.",
+    workingHours: 8,
+    jobType: "research_assistant",
+    field: "research",
+    workMode: "on_site",
+    contactName: "Lehrstuhlsekretariat",
+    contactMail: "sekretariat.wi@uni-bamberg.de",
+  },
+  {
+    title: "Remote Junior Consultant (m/w/d)",
+    company: "cogita! e. V.",
+    location: "Bamberg",
+    description:
+      "Im Rahmen unserer studentischen Beratungsprojekte suchen wir engagierte Studierende, die bei der Analyse und Umsetzung von Projekten für kleine und mittelständische Unternehmen mitwirken möchten.",
+    workingHours: 6,
+    jobType: "volunteer",
+    field: "administration",
+    workMode: "remote",
+    externalUrl: "https://www.linkedin.com/company/cogitaev/posts/?feedView=all",
+    contactName: "cogita! Vorstand",
+    contactMail: "info@cogita-beratung.de",
+  },
+  {
+    title: "Bachelor-/Masterarbeit im Bereich Data Science",
+    company: "Universität Bamberg",
+    location: "Feldkirchenstraße 21, Bamberg",
+    description:
+      "Für eine Abschlussarbeit im Bereich Data Science / Machine Learning bieten wir Betreuung und Zugang zu realen Datensätzen. Interesse an Statistik und Python wird vorausgesetzt.",
+    workingHours: 0,
+    jobType: "thesis",
+    field: "research",
+    workMode: "on_site",
+    onlineStatus: "submitted",
+    contactName: "Prof. Dr. Beispiel",
+    contactMail: "abschlussarbeiten@uni-bamberg.de",
+  },
+  {
+    title: "Nachhilfelehrer:in gesucht (Vergangene Stelle)",
+    company: "Nachhilfeinstitut Bamberg",
+    location: "Bamberg",
+    description:
+      "Diese Stelle ist bereits besetzt und dient nur als Beispiel für archivierte Stellenanzeigen.",
+    workingHours: 5,
+    jobType: "part_time",
+    field: "education",
+    workMode: "on_site",
+    onlineStatus: "archived",
+    contactName: "Institutsleitung",
+  },
+]
+
 async function main() {
   await Promise.all(
     STUDENT_GROUPS.map((group) => {
@@ -854,6 +966,19 @@ async function main() {
       }
       return prisma.event.upsert({
         where: { externalId: event.externalId },
+        create: data,
+        update: data,
+      })
+    })
+  )
+
+  await Promise.all(
+    JOB_OFFERS.map((job) => {
+      const { onlineStatus, ...rest } = job
+      const slug = slugify(`${job.title} ${job.company}`)
+      const data = { ...rest, slug, onlineStatus: onlineStatus ?? "published" }
+      return prisma.jobOffer.upsert({
+        where: { slug },
         create: data,
         update: data,
       })
