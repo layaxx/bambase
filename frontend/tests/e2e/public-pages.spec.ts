@@ -47,7 +47,7 @@ test.describe("Jobs listing (/jobs)", () => {
   test("seeded published jobs are listed (not submitted/expired)", async ({ page }) => {
     await page.goto("/jobs")
     // The seed data has these published jobs — at least one of them should show
-    await expect(page.locator("body")).toContainText("Backend Engineer")
+    await expect(page.locator("body")).toContainText("Werkstudent")
   })
 })
 
@@ -106,7 +106,8 @@ test.describe("Sitemap (/sitemap.xml)", () => {
     const response = await request.get("/sitemap.xml")
 
     const body = await response.text()
-    expect(body).not.toContain('/devops-engineer"') // This job is expired in the seed data
+    // "Bachelor-/Masterarbeit im Bereich Data Science" is seeded with onlineStatus "submitted"
+    expect(body).not.toContain("/job/bachelor-masterarbeit-im-bereich-data-science")
   })
 
   test("includes published jobs", async ({ request }) => {
@@ -114,8 +115,9 @@ test.describe("Sitemap (/sitemap.xml)", () => {
 
     const body = await response.text()
 
-    expect(body).toContain("/job/backend-engineer")
-    expect(body).toContain("/job/frontend-developer-owned-by-seed-user")
+    expect(body).toContain("/job/werkstudent-in-softwareentwicklung-feki-de-e-v")
+    // Owned by the seed user, but still public once published
+    expect(body).toContain("/job/praktikum-marketing-social-media-bambus-e-v")
   })
 
   test("includes published events", async ({ request }) => {

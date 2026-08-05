@@ -61,6 +61,9 @@ jobs:
           cache-dependency-path: frontend/yarn.lock
       - run: yarn install --frozen-lockfile
         working-directory: frontend
+      - name: Generate Prisma Client
+        run: npx prisma generate
+        working-directory: frontend
       - run: yarn test
         working-directory: frontend
         env:
@@ -96,6 +99,25 @@ jobs:
   e2e:
     name: E2E tests
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: backend
+          POSTGRES_USER: backend
+          POSTGRES_PASSWORD: backend
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U backend -d backend"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://backend:backend@localhost:5432/backend?schema=public
+      BETTER_AUTH_SECRET: only-for-ci-testing
+      BETTER_AUTH_URL: http://localhost:4321
+      STRAPI_TOKEN: irrelevant-but-must-be-set
     steps:
       - uses: actions/checkout@v4
 
@@ -103,13 +125,7 @@ jobs:
         with:
           node-version: 22
           cache: yarn
-          cache-dependency-path: |
-            api/yarn.lock
-            frontend/yarn.lock
-
-      - name: Install API dependencies
-        run: yarn install --frozen-lockfile
-        working-directory: api
+          cache-dependency-path: frontend/yarn.lock
 
       - name: Install frontend dependencies
         run: yarn install --frozen-lockfile
@@ -119,54 +135,37 @@ jobs:
         run: npx playwright install --with-deps chromium
         working-directory: frontend
 
-      - name: Build API
-        run: yarn build
-        working-directory: api
+      - name: Generate Prisma Client
+        run: npx prisma generate
+        working-directory: frontend
 
-      - name: Start API
-        run: yarn start &
-        working-directory: api
-        env:
-          NODE_ENV: test
-          SEED: "true"
-          SEED_API_TOKEN: CICD-TEST-TOKEN
-          API_TOKEN_SALT: CICD-TEST-SALT
-          PORT: 1337
-          HOST: 0.0.0.0
-          APP_KEYS: only-for-ci-testing1,only-for-ci-testing2
-          ADMIN_JWT_SECRET: only-for-ci-testing
-          TRANSFER_TOKEN_SALT: also-only-for-ci-testing
-          JWT_SECRET: again-only-for-ci-testing
-          FRONTEND_URL: https://example.com
-          MAILGUN_API_KEY: "ignored-for-ci-testing"
-          MAILGUN_DOMAIN: "https://example.com"
+      - name: Apply database migrations
+        run: npx prisma migrate deploy
+        working-directory: frontend
+
+      - name: Seed database
+        run: npx prisma db seed
+        working-directory: frontend
 
       - name: Build frontend
         run: yarn build
         working-directory: frontend
-        env:
-          STRAPI_URL: http://localhost:1337
-          STRAPI_TOKEN: CICD-TEST-TOKEN
 
       - name: Start frontend
         run: node ./dist/server/entry.mjs &
         working-directory: frontend
         env:
-          STRAPI_TOKEN: CICD-TEST-TOKEN
           PORT: 4321
           HOST: localhost
 
       - name: Wait for stack to be healthy
-        run: |
-          timeout 180 bash -c 'until curl -sf http://localhost:1337/_health; do sleep 3; done'
-          timeout 60 bash -c 'until curl -sf http://localhost:4321; do sleep 3; done'
+        run: timeout 60 bash -c 'until curl -sf http://localhost:4321; do sleep 3; done'
 
       - name: Run E2E tests
         run: yarn test:e2e
         working-directory: frontend
         env:
           CI: "true"
-          STRAPI_URL: "http://localhost:1337"
 
       - name: Upload Playwright report
         if: failure()

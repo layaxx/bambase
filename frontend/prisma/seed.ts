@@ -1,5 +1,7 @@
 import "dotenv/config"
 import { PrismaPg } from "@prisma/adapter-pg"
+import { betterAuth } from "better-auth"
+import { prismaAdapter } from "better-auth/adapters/prisma"
 import { PrismaClient } from "../src/generated/prisma/client.ts"
 import type {
   LocationCategory,
@@ -13,6 +15,18 @@ import { slugify } from "../src/utils/slugify.ts"
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL })
 const prisma = new PrismaClient({ adapter })
+
+// A standalone better-auth instance mirroring src/utils/auth.ts — duplicated
+// here because this script runs under plain Node, which can't resolve that
+// module's extensionless imports the way Vite/Astro can.
+const auth = betterAuth({
+  database: prismaAdapter(prisma, { provider: "postgresql" }),
+  emailAndPassword: { enabled: true },
+})
+
+const SEED_USER = { email: "seed@example.com", password: "Seed1234!" }
+// A second user with no owned content — used by e2e tests for the empty-state UI.
+const CLEAN_USER = { email: "clean@example.com", password: "Clean1234!" }
 
 const STUDENT_GROUPS = [
   {
@@ -696,6 +710,8 @@ type SeedEvent = {
   category: EventCategory
   mapLocationName?: string
   customLocation?: { name: string; address?: string; city?: string }
+  /** Owned by SEED_USER — gives /account/events a non-empty listing in e2e tests. */
+  ownedBySeedUser?: boolean
 }
 
 function offsetFromNow(days: number, hours: number, minutes = 0): Date {
@@ -746,6 +762,7 @@ const EVENTS: SeedEvent[] = [
     externalId: "hochschulsport-volleyball",
     category: "sport",
     mapLocationName: "Hochschulsport (FEKI)",
+    ownedBySeedUser: true,
   },
   {
     title: "Hochschulsport: Yoga für Anfänger",
@@ -828,6 +845,8 @@ type SeedJobOffer = {
   contactName?: string
   contactMail?: string
   contactPhone?: string
+  /** Owned by SEED_USER — gives /account/jobs a non-empty listing in e2e tests. */
+  ownedBySeedUser?: boolean
 }
 
 const JOB_OFFERS: SeedJobOffer[] = [
@@ -856,6 +875,7 @@ const JOB_OFFERS: SeedJobOffer[] = [
     workMode: "on_site",
     contactName: "BamBuS Marketingteam",
     contactMail: "bambusev.org@gmail.com",
+    ownedBySeedUser: true,
   },
   {
     title: "Aushilfe Service & Küche",
@@ -927,6 +947,21 @@ const JOB_OFFERS: SeedJobOffer[] = [
 ]
 
 async function main() {
+  let seedUser = await prisma.user.findUnique({ where: { email: SEED_USER.email } })
+  if (!seedUser) {
+    const result = await auth.api.signUpEmail({
+      body: { email: SEED_USER.email, password: SEED_USER.password, name: SEED_USER.email },
+    })
+    seedUser = await prisma.user.findUniqueOrThrow({ where: { id: result.user.id } })
+  }
+
+  const existingCleanUser = await prisma.user.findUnique({ where: { email: CLEAN_USER.email } })
+  if (!existingCleanUser) {
+    await auth.api.signUpEmail({
+      body: { email: CLEAN_USER.email, password: CLEAN_USER.password, name: CLEAN_USER.email },
+    })
+  }
+
   await Promise.all(
     STUDENT_GROUPS.map((group) => {
       const slug = slugify(group.name)
@@ -962,7 +997,7 @@ async function main() {
 
   await Promise.all(
     EVENTS.map((event) => {
-      const { mapLocationName, customLocation, ...rest } = event
+      const { mapLocationName, customLocation, ownedBySeedUser, ...rest } = event
       const slug = slugify(event.title)
       const data = {
         ...rest,
@@ -971,6 +1006,7 @@ async function main() {
         customLocationName: customLocation?.name,
         customLocationAddress: customLocation?.address,
         customLocationCity: customLocation?.city,
+        ownerId: ownedBySeedUser ? seedUser.id : null,
       }
       return prisma.event.upsert({
         where: { externalId: event.externalId },
@@ -982,9 +1018,14 @@ async function main() {
 
   await Promise.all(
     JOB_OFFERS.map((job) => {
-      const { onlineStatus, ...rest } = job
+      const { onlineStatus, ownedBySeedUser, ...rest } = job
       const slug = slugify(`${job.title} ${job.company}`)
-      const data = { ...rest, slug, onlineStatus: onlineStatus ?? "published" }
+      const data = {
+        ...rest,
+        slug,
+        onlineStatus: onlineStatus ?? "published",
+        ownerId: ownedBySeedUser ? seedUser.id : null,
+      }
       return prisma.jobOffer.upsert({
         where: { slug },
         create: data,

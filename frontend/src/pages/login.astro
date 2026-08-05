@@ -1,5 +1,4 @@
 ---
-import { actions } from "astro:actions"
 import AppLayout from "@/layouts/AppLayout.astro"
 import { useTranslations } from "@/i18n/translations"
 
@@ -32,12 +31,7 @@ const emailConfirmed = Astro.url.searchParams.get("confirmed") === "true"
         <span></span>
       </div>
 
-      <form
-        action={actions.auth.login}
-        class="flex flex-col"
-        data-locale={Astro.locals.locale}
-        id="signin-form"
-      >
+      <form class="flex flex-col" data-locale={Astro.locals.locale} id="signin-form">
         <fieldset class="fieldset">
           <legend class="fieldset-legend">{t.auth.emailLabel}</legend>
           <input

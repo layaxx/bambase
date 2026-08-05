@@ -6,7 +6,8 @@ import { expect, test } from "@playwright/test"
  *
  * Seeded data used:
  *   Events:  ersti-party (published)
- *   Jobs:    backend-engineer (published), devops-engineer (expired)
+ *   Jobs:    werkstudent-in-softwareentwicklung-feki-de-e-v (published),
+ *            bachelor-masterarbeit-im-bereich-data-science-universitaet-bamberg (submitted, not yet published)
  */
 
 test.describe("Event OG image (/api/og/event/[slug].png)", () => {
@@ -30,7 +31,9 @@ test.describe("Event OG image (/api/og/event/[slug].png)", () => {
 
 test.describe("Job OG image (/api/og/job/[slug].png)", () => {
   test("returns a PNG with correct headers for a valid published job", async ({ request }) => {
-    const response = await request.get("/api/og/job/backend-engineer.png")
+    const response = await request.get(
+      "/api/og/job/werkstudent-in-softwareentwicklung-feki-de-e-v.png"
+    )
 
     expect(response.status()).toBe(200)
     expect(response.headers()["content-type"]).toContain("image/png")
@@ -46,8 +49,10 @@ test.describe("Job OG image (/api/og/job/[slug].png)", () => {
   })
 
   test("redirects to fallback image for a non-published job", async ({ request }) => {
-    // devops-engineer is expired in the seed data
-    const response = await request.get("/api/og/job/devops-engineer.png")
+    // This job is seeded with onlineStatus "submitted" (not yet published)
+    const response = await request.get(
+      "/api/og/job/bachelor-masterarbeit-im-bereich-data-science-universitaet-bamberg.png"
+    )
 
     expect(response.url()).toContain("/og-image.png")
     expect(response.status()).toBe(200)

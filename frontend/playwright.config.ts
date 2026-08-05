@@ -4,19 +4,22 @@ import { defineConfig, devices } from "@playwright/test"
  * E2E test config for BamBase.
  *
  * Prerequisites before running:
- *   1. Start the full stack:  SEED=true docker-compose up --build -d
- *   2. Wait until http://localhost:4321 is healthy
- *   3. Run:  yarn test:e2e
+ *   1. Start the database:  docker compose -f docker-compose.dev.yml up -d
+ *   2. Apply migrations and seed data:  yarn prisma migrate deploy && yarn prisma db seed
+ *   3. Start the app:  yarn dev  (or `yarn build && yarn preview` against a prod build)
+ *   4. Wait until http://localhost:4321 is healthy
+ *   5. Run:  yarn test:e2e
  *
- * The "setup" project logs in as the seed user and saves cookies to
- * tests/e2e/.auth/seed-user.json.  Specs that need auth reference that file
- * via `test.use({ storageState: AUTH_FILE })`.
+ * The "setup" project logs in as the seed user (seeded via better-auth in
+ * prisma/seed.ts) and saves cookies to tests/e2e/.auth/seed-user.json. Specs
+ * that need auth reference that file via `test.use({ storageState: AUTH_FILE })`.
  */
 
 export const AUTH_FILE = "tests/e2e/.auth/seed-user.json"
-export const STRAPI_URL = process.env.STRAPI_URL ?? "http://localhost:1337"
 
 export default defineConfig({
+  timeout: 10 * 1000,
+
   testDir: "./tests/e2e",
   retries: process.env.CI ? 2 : 0,
   reporter: process.env.CI ? "github" : "list",
@@ -58,13 +61,6 @@ export default defineConfig({
         "**/reports.spec.ts",
         "**/og-images.spec.ts",
       ],
-    },
-
-    /* 4. Token-refresh flow – does its own login to obtain a real refresh_token */
-    {
-      name: "token-refresh",
-      use: { ...devices["Desktop Chrome"] },
-      testMatch: "**/token-refresh.spec.ts",
     },
   ],
 })

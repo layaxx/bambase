@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test"
-import { AUTH_FILE, STRAPI_URL } from "../../playwright.config"
+import { AUTH_FILE } from "../../playwright.config"
 
 /**
  * Job offer CRUD flows — all tests run as the authenticated seed user.
@@ -9,6 +9,10 @@ import { AUTH_FILE, STRAPI_URL } from "../../playwright.config"
  */
 
 test.use({ storageState: AUTH_FILE })
+
+// One of the seeded job offers — unowned (ownerId is null), so it's never
+// owned by the seed user and is safe to use for non-owner assertions.
+const SEEDED_JOB_URL = "/job/werkstudent-in-softwareentwicklung-feki-de-e-v"
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
@@ -114,7 +118,7 @@ test("create job without required fields stays on /job/new (browser validation)"
 })
 
 test("no owner controls shown for seed non-owner authenticated user", async ({ page }) => {
-  await page.goto("/job/werkstudent-marketing")
+  await page.goto(SEEDED_JOB_URL)
 
   await expect(page.getByRole("button", { name: "Löschen" })).not.toBeVisible()
   await expect(page.getByRole("button", { name: "Archivieren" })).not.toBeVisible()
@@ -147,36 +151,57 @@ test("job draft is cleared when navigating away without submitting", async ({ pa
 
 // ─── Privilege escalation ───────────────────────────────────────────────────
 
+/**
+ * Astro Actions invoked via a plain <form action={actions.x.y}> render as a
+ * POST to the current page URL with a `?_action=x.y` query param. Ownership
+ * is enforced inside the action handler itself (src/actions/jobs.ts), which
+ * throws ActionError({ code: "FORBIDDEN" }) — Astro maps that to HTTP 403.
+ * Requests need an Origin/Referer matching the app's own origin, or Astro's
+ * CSRF protection rejects them before the handler ever runs.
+ */
 test.describe("Ownership enforcement — job offers", () => {
-  let documentId: string
-  let authToken: string
+  let jobId: string
 
   test.beforeAll(async ({ browser }) => {
     const ctx = await browser.newContext({ storageState: AUTH_FILE })
     const pg = await ctx.newPage()
-    await pg.goto("/job/werkstudent-marketing")
-    // Report modal exposes the documentId as a hidden input for non-owner viewers
-    documentId = await pg.locator('input[name="target_id"]').inputValue()
-    const cookies = await ctx.cookies()
-    authToken = cookies.find((c) => c.name === "auth_token")?.value ?? ""
+    await pg.goto(SEEDED_JOB_URL)
+    // Report modal exposes the job's id as a hidden input for non-owner viewers.
+    jobId = await pg.locator('input[name="target_id"]').inputValue()
     await ctx.close()
-    expect(documentId).toBeTruthy()
-    expect(authToken).toBeTruthy()
+    expect(jobId).toBeTruthy()
   })
 
-  test("cannot DELETE another user's job offer — Strapi returns 403", async ({ page }) => {
-    const res = await page.request.fetch(`${STRAPI_URL}/api/job-offers/${documentId}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${authToken}` },
+  function sameOriginHeaders(page: Page) {
+    const origin = new URL(page.url()).origin
+    return { Origin: origin, Referer: `${origin}${SEEDED_JOB_URL}` }
+  }
+
+  test("cannot delete another user's job offer — jobs.delete returns FORBIDDEN", async ({
+    page,
+  }) => {
+    await page.goto(SEEDED_JOB_URL)
+    const res = await page.request.post(`${SEEDED_JOB_URL}?_action=jobs.delete`, {
+      form: { id: jobId },
+      headers: sameOriginHeaders(page),
     })
     expect(res.status()).toBe(403)
   })
 
-  test("cannot PUT (update) another user's job offer — Strapi returns 403", async ({ page }) => {
-    const res = await page.request.fetch(`${STRAPI_URL}/api/job-offers/${documentId}`, {
-      method: "PUT",
-      headers: { Authorization: `Bearer ${authToken}`, "Content-Type": "application/json" },
-      data: JSON.stringify({ data: { title: "Hijacked title" } }),
+  test("cannot update another user's job offer — jobs.update returns FORBIDDEN", async ({
+    page,
+  }) => {
+    await page.goto(SEEDED_JOB_URL)
+    const res = await page.request.post(`${SEEDED_JOB_URL}?_action=jobs.update`, {
+      form: {
+        id: jobId,
+        title: "Hijacked title",
+        company: "Hijacked Co",
+        location: "Nowhere",
+        working_hours: "10",
+        description: "hijack attempt",
+      },
+      headers: sameOriginHeaders(page),
     })
     expect(res.status()).toBe(403)
   })

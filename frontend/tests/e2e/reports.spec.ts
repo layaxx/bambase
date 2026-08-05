@@ -11,18 +11,21 @@ import { AUTH_FILE } from "../../playwright.config"
  * been submitted for a given listing, a warning alert is displayed to all
  * subsequent visitors.
  *
- * Seeded jobs/events with isOwned: false have no owner, so the seed user can
- * always report them.
+ * The seeded job/event below have no owner (ownerId is null), so the seed
+ * user can always report them.
  *
  * Note: Each test run accumulates reports on the seeded slugs used here; these
  * are benign in a seeded test environment and do not need cleanup.
  */
 
+const UNOWNED_JOB_URL = "/job/werkstudent-in-softwareentwicklung-feki-de-e-v"
+const UNOWNED_EVENT_URL = "/event/ersti-party"
+
 // ─── Anonymous visitor ──────────────────────────────────────────────────────
 
 test.describe("Report — anonymous visitor", () => {
   test("can submit a job report and see success alert", async ({ page }) => {
-    await page.goto("/job/backend-engineer")
+    await page.goto(UNOWNED_JOB_URL)
 
     await page.getByRole("button", { name: "Job melden" }).click()
     await expect(page.locator("#reportModal")).toBeVisible()
@@ -34,7 +37,7 @@ test.describe("Report — anonymous visitor", () => {
   })
 
   test("can submit an event report and see success alert", async ({ page }) => {
-    await page.goto("/event/ersti-party")
+    await page.goto(UNOWNED_EVENT_URL)
 
     await page.getByRole("button", { name: "Veranstaltung melden" }).click()
     await expect(page.locator("#reportModal")).toBeVisible()
@@ -46,7 +49,7 @@ test.describe("Report — anonymous visitor", () => {
   })
 
   test("report modal contains all four reason options", async ({ page }) => {
-    await page.goto("/job/backend-engineer")
+    await page.goto(UNOWNED_JOB_URL)
 
     await page.getByRole("button", { name: "Job melden" }).click()
     await expect(page.locator("#reportModal")).toBeVisible()
@@ -65,7 +68,7 @@ test.describe("Report — authenticated seed user", () => {
   test.use({ storageState: AUTH_FILE })
 
   test("can submit a job report and see success alert", async ({ page }) => {
-    await page.goto("/job/werkstudent-marketing")
+    await page.goto(UNOWNED_JOB_URL)
 
     const reportBtn = page.getByRole("button", { name: "Job melden" })
     await expect(reportBtn).toBeVisible()
@@ -80,7 +83,7 @@ test.describe("Report — authenticated seed user", () => {
   })
 
   test("can submit an event report and see success alert", async ({ page }) => {
-    await page.goto("/event/ersti-party")
+    await page.goto(UNOWNED_EVENT_URL)
 
     const reportBtn = page.getByRole("button", { name: "Veranstaltung melden" })
     await expect(reportBtn).toBeVisible()

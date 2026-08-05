@@ -1,7 +1,7 @@
 {
   "extends": "astro/tsconfigs/strict",
   "include": [".astro/types.d.ts", "**/*"],
-  "exclude": ["dist", "tests", "playwright.config.ts"],
+  "exclude": ["dist", "tests"],
   "compilerOptions": {
     "resolveJsonModule": true,
     "lib": ["ESNext"],
