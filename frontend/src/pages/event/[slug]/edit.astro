@@ -8,7 +8,7 @@ import EventForm from "@/components/events/EventForm.astro"
 
 const t = useTranslations(Astro.locals.locale)
 
-const me = Astro.locals.userNew
+const me = Astro.locals.user
 if (!me) return Astro.redirect(`/login?redirect=/event/${Astro.params.slug}/edit`)
 
 const { slug } = Astro.params

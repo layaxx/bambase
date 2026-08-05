@@ -4,21 +4,6 @@ on:
   pull_request:
 
 jobs:
-  lint-api:
-    name: Lint (api)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: yarn
-          cache-dependency-path: api/yarn.lock
-      - run: yarn install --frozen-lockfile
-        working-directory: api
-      - run: yarn lint && yarn format:check
-        working-directory: api
-
   lint-frontend:
     name: Lint (frontend)
     runs-on: ubuntu-latest
@@ -33,21 +18,6 @@ jobs:
         working-directory: frontend
       - run: yarn lint && yarn format:check
         working-directory: frontend
-
-  test-api:
-    name: Unit tests (api)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: yarn
-          cache-dependency-path: api/yarn.lock
-      - run: yarn install --frozen-lockfile
-        working-directory: api
-      - run: yarn test
-        working-directory: api
 
   test-frontend:
     name: Unit tests (frontend)
@@ -66,21 +36,6 @@ jobs:
         working-directory: frontend
       - run: yarn test
         working-directory: frontend
-        env:
-          STRAPI_TOKEN: "irrelevant-but-must-be-set"
-
-  docker-build-api:
-    name: Docker build (api)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/build-push-action@v6
-        with:
-          context: ./api
-          push: false
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
   docker-build-frontend:
     name: Docker build (frontend)
@@ -92,7 +47,6 @@ jobs:
         with:
           context: ./frontend
           push: false
-          build-args: STRAPI_URL=http://api:1337
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -117,7 +71,6 @@ jobs:
       DATABASE_URL: postgresql://backend:backend@localhost:5432/backend?schema=public
       BETTER_AUTH_SECRET: only-for-ci-testing
       BETTER_AUTH_URL: http://localhost:4321
-      STRAPI_TOKEN: irrelevant-but-must-be-set
     steps:
       - uses: actions/checkout@v4
 

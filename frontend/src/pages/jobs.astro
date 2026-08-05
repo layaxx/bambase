@@ -60,7 +60,7 @@ if (!apiDown && jobs.length === 0 && total > 0) {
   return Astro.redirect(qs ? `?${qs}` : Astro.url.pathname)
 }
 
-const isLoggedIn = !!Astro.locals.userNew
+const isLoggedIn = !!Astro.locals.user
 const clearUrl = Astro.url.pathname
 
 function buildToggleUrl(param: string, value: string, current: string[]): string {

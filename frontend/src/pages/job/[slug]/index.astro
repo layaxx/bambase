@@ -23,7 +23,7 @@ const jobResult = slug
   : { data: null as JobOffer | null, apiDown: false }
 const job = jobResult.data
 const apiDown = jobResult.apiDown
-const me = Astro.locals.userNew
+const me = Astro.locals.user
 const isOwner = !!(me && job?.ownerId === me.id)
 
 const hasReports = (job?.reports?.length ?? 0) >= REPORT_WARNING_THRESHOLD

@@ -30,7 +30,7 @@ export const jobs = {
     accept: "form",
     input: z.object({ id: z.string().min(1) }),
     handler: async ({ id }, context) => {
-      const userId = context.locals.userNew?.id
+      const userId = context.locals.user?.id
       if (!userId) throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
 
       const job = await prisma.jobOffer.findUnique({ where: { id }, select: { ownerId: true } })
@@ -55,7 +55,7 @@ export const jobs = {
     accept: "form",
     input: z.object({ id: z.string().min(1) }),
     handler: async ({ id }, context) => {
-      const userId = context.locals.userNew?.id
+      const userId = context.locals.user?.id
       if (!userId) throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
 
       const job = await prisma.jobOffer.findUnique({ where: { id }, select: { ownerId: true } })
@@ -86,7 +86,7 @@ export const jobs = {
       contact_name: z.string().max(200).optional(),
     }),
     handler: async ({ id, ...fields }, context) => {
-      const userId = context.locals.userNew?.id
+      const userId = context.locals.user?.id
       if (!userId) throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
 
       const existing = await prisma.jobOffer.findUnique({
@@ -131,7 +131,7 @@ export const jobs = {
     accept: "form",
     input: jobCreateSchema,
     handler: async (input, context) => {
-      const userId = context.locals.userNew?.id
+      const userId = context.locals.user?.id
       if (!userId) {
         throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
       }

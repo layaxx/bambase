@@ -243,6 +243,7 @@ model JobOffer {
   onlineStatus JobOnlineStatus @default(submitted)
   workingHours Int
   externalUrl  String?
+  externalId   String?         @unique
   jobType      JobType
   field        JobField
   workMode     WorkMode

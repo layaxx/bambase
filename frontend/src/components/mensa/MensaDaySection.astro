@@ -15,17 +15,15 @@ const { id, heading, meals } = Astro.props
 const t = useTranslations(Astro.locals.locale)
 
 const locations = [
-  { id: "feki", label: "Feki", strapiName: "Feki" },
-  { id: "austrasse", label: "Austraße", strapiName: "Austraße" },
-  { id: "erba", label: "Erba", strapiName: "Erba" },
+  { id: "feki", label: "Feki" },
+  { id: "austrasse", label: "Austraße" },
+  { id: "erba", label: "Erba" },
 ] as const
 
 const mealsByLocation = Object.fromEntries(
   locations.map((loc) => [
     loc.id,
-    meals
-      .filter((m) => m.location === loc.strapiName)
-      .sort((a, b) => a.priceStudents - b.priceStudents),
+    meals.filter((m) => m.location === loc.label).sort((a, b) => a.priceStudents - b.priceStudents),
   ])
 )
 ---

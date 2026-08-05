@@ -13,7 +13,7 @@ const { slug } = Astro.params
 const { data: event, apiDown } = slug
   ? await fetchEvent(slug)
   : { data: null as Event | null, apiDown: false }
-const me = Astro.locals.userNew
+const me = Astro.locals.user
 const isOwner = !!(me && event?.ownerId === me.id)
 
 const deleteResult = Astro.getActionResult(actions.events.delete)

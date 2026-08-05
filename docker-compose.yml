@@ -1,81 +1,60 @@
 services:
-  db:
+  frontend_db:
     image: postgres:16-alpine
     restart: unless-stopped
-    container_name: bambase_db
+    container_name: bambase_frontend_db
     environment:
       TZ: Europe/Berlin
-      POSTGRES_DB: ${DATABASE_NAME:-strapi}
-      POSTGRES_USER: ${DATABASE_USERNAME:-strapi}
-      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-strapi}
+      POSTGRES_DB: backend
+      POSTGRES_USER: backend
+      POSTGRES_PASSWORD: backend
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - frontend_db_data:/var/lib/postgresql/data
     networks:
       - internal_network
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "pg_isready -U ${DATABASE_USERNAME:-strapi} -d ${DATABASE_NAME:-strapi}",
-        ]
+      test: ["CMD-SHELL", "pg_isready -U backend -d backend"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  api:
+  # One-off job: applies pending migrations and (if SEED=true) seeds sample
+  # data, then exits. Uses the `builder` stage, which still has the full
+  # source tree and the Prisma CLI (dropped from the slim runtime image).
+  frontend-migrate:
     build:
-      context: ./api
-    restart: unless-stopped
-    container_name: bambase_api
+      context: ./frontend
+      target: builder
     environment:
-      TZ: Europe/Berlin
-      HOST: 0.0.0.0
-      PORT: 1337
-      APP_KEYS: ${APP_KEYS}
-      API_TOKEN_SALT: ${API_TOKEN_SALT}
-      ADMIN_JWT_SECRET: ${ADMIN_JWT_SECRET}
-      TRANSFER_TOKEN_SALT: ${TRANSFER_TOKEN_SALT}
-      JWT_SECRET: ${JWT_SECRET}
-      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      DATABASE_URL: postgresql://backend:backend@frontend_db:5432/backend?schema=public
       SEED: ${SEED:-false}
-      DATABASE_CLIENT: "postgres"
-      DATABASE_HOST: ${DATABASE_HOST:-db}
-      DATABASE_PORT: ${DATABASE_PORT:-5432}
-      DATABASE_NAME: ${DATABASE_NAME:-strapi}
-      DATABASE_USERNAME: ${DATABASE_USERNAME:-strapi}
-      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-strapi}
-      MAILGUN_API_KEY: ${MAILGUN_API_KEY}
-      MAILGUN_DOMAIN: ${MAILGUN_DOMAIN}
-      FRONTEND_URL: ${FRONTEND_URL}
-      JOB_OFFER_MIGRATION_COOKIE: ${JOB_OFFER_MIGRATION_COOKIE}
-    volumes:
-      - api_uploads:/opt/app/public/uploads
+    command: >
+      sh -c "npx prisma migrate deploy && if [ \"$$SEED\" = \"true\" ]; then npx prisma db seed; fi"
     depends_on:
-      db:
+      frontend_db:
         condition: service_healthy
     networks:
-      - proxy
       - internal_network
 
   frontend:
     build:
       context: ./frontend
-      args:
-        STRAPI_URL: http://api:1337
     container_name: bambase_frontend
     environment:
       TZ: Europe/Berlin
-      STRAPI_TOKEN: ${STRAPI_TOKEN}
+      DATABASE_URL: postgresql://backend:backend@frontend_db:5432/backend?schema=public
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      BETTER_AUTH_URL: ${FRONTEND_URL}
     restart: unless-stopped
     depends_on:
-      - api
+      frontend-migrate:
+        condition: service_completed_successfully
     networks:
       - proxy
       - internal_network
 
 volumes:
-  db_data:
-  api_uploads:
+  frontend_db_data:
 
 networks:
   internal_network:

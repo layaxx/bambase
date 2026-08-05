@@ -1,4 +1,3 @@
-export { client } from "./client"
 export type { ApiResult } from "./types"
 export type {
   JobOffer,

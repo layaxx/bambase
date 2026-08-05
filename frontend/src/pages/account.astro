@@ -4,7 +4,7 @@ import { useTranslations } from "@/i18n/translations"
 
 const t = useTranslations(Astro.locals.locale)
 
-const user = Astro.locals.userNew
+const user = Astro.locals.user
 if (!user) return Astro.redirect("/login?redirect=/account")
 ---
 

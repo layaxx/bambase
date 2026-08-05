@@ -1,5 +1,5 @@
 // @ts-check
-import { defineConfig, envField, fontProviders } from "astro/config"
+import { defineConfig, fontProviders } from "astro/config"
 import tailwindcss from "@tailwindcss/vite"
 import node from "@astrojs/node"
 import { fileURLToPath } from "node:url"
@@ -44,20 +44,6 @@ export default defineConfig({
       alias: {
         "@": fileURLToPath(new URL("./src", import.meta.url)),
       },
-    },
-  },
-  env: {
-    schema: {
-      STRAPI_URL: envField.string({
-        context: "client",
-        access: "public",
-        default: "http://localhost:1337",
-        url: true,
-      }),
-      STRAPI_TOKEN: envField.string({
-        context: "server",
-        access: "secret",
-      }),
     },
   },
 })

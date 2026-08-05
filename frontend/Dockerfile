@@ -12,7 +12,6 @@ RUN yarn install --frozen-lockfile --production=true
 
 FROM deps AS builder
 COPY . .
-ARG STRAPI_URL
 RUN npx prisma generate
 RUN yarn build
 

@@ -36,7 +36,7 @@ vi.mock("@/utils/prisma", () => ({
 import { events } from "./events"
 
 function makeContext(userId?: string) {
-  return { locals: { userNew: userId ? { id: userId } : null } }
+  return { locals: { user: userId ? { id: userId } : null } }
 }
 
 const baseEventInput = {

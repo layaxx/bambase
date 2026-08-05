@@ -67,7 +67,7 @@ export const events = {
     accept: "form",
     input: z.object({ id: z.string().min(1) }),
     handler: async ({ id }, context) => {
-      const userId = context.locals.userNew?.id
+      const userId = context.locals.user?.id
       if (!userId) throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
 
       const event = await prisma.event.findUnique({ where: { id }, select: { ownerId: true } })
@@ -94,7 +94,7 @@ export const events = {
       .extend({ id: z.string().min(1) })
       .refine(startBeforeEnd, startBeforeEndMsg),
     handler: async ({ id, ...fields }, context) => {
-      const userId = context.locals.userNew?.id
+      const userId = context.locals.user?.id
       if (!userId) throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
 
       const existing = await prisma.event.findUnique({ where: { id }, select: { ownerId: true } })
@@ -132,7 +132,7 @@ export const events = {
     accept: "form",
     input: eventCreateSchema,
     handler: async (input, context) => {
-      const userId = context.locals.userNew?.id
+      const userId = context.locals.user?.id
       if (!userId) {
         throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
       }

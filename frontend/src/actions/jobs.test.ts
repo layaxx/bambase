@@ -55,7 +55,7 @@ vi.mock("@/utils/prisma", () => ({
 import { jobs } from "./jobs"
 
 function makeContext(userId?: string) {
-  return { locals: { userNew: userId ? { id: userId } : null } }
+  return { locals: { user: userId ? { id: userId } : null } }
 }
 
 const baseInput = {

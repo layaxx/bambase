@@ -11,9 +11,7 @@ beforeAll(async () => {
 
 const locals = {
   locale: "de" as const,
-  user: { id: 1, email: "user@example.com", createdAt: new Date().toISOString() },
-  token: null,
-  userNew: null,
+  user: null,
   session: null,
 }
 
