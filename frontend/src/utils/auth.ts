@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth"
 import { prismaAdapter } from "better-auth/adapters/prisma"
 import prisma from "./prisma"
+import { sendMail } from "./mail"
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
@@ -8,5 +9,20 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
+    sendResetPassword: async ({ user, url }) => {
+      await sendMail({
+        to: user.email,
+        subject: "Passwort zurücksetzen",
+        text: `Klicke auf den folgenden Link, um dein Passwort zurückzusetzen:\n\n${url}\n\nWenn du das nicht warst, kannst du diese E-Mail ignorieren.`,
+      })
+    },
+  },
+  session: {
+    // Avoids a DB round trip on every request; session changes are picked up
+    // again within maxAge seconds.
+    cookieCache: {
+      enabled: true,
+      maxAge: 60,
+    },
   },
 })

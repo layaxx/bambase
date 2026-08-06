@@ -105,7 +105,7 @@ test.describe("Protected routes (unauthenticated)", () => {
   })
 })
 
-test.describe.skip("Forgot password", () => {
+test.describe("Forgot password", () => {
   test("submitting any email shows the success message and hides the form", async ({ page }) => {
     await page.goto("/forgot-password")
     await page.fill('[name="email"]', "anyone@example.com")
@@ -125,15 +125,15 @@ test.describe.skip("Forgot password", () => {
 })
 
 test.describe("Reset password", () => {
-  test("visiting without a code shows an error and no form", async ({ page }) => {
+  test("visiting without a token shows an error and no form", async ({ page }) => {
     await page.goto("/reset-password")
 
     await expect(page.locator(".alert-error")).toBeVisible()
     await expect(page.locator("form")).not.toBeVisible()
   })
 
-  test("visiting with a code shows the reset form", async ({ page }) => {
-    await page.goto("/reset-password?code=some-code")
+  test("visiting with a token shows the reset form", async ({ page }) => {
+    await page.goto("/reset-password?token=some-token")
 
     await expect(page.locator("form")).toBeVisible()
     await expect(page.locator('[name="password"]')).toBeVisible()
@@ -141,7 +141,7 @@ test.describe("Reset password", () => {
   })
 
   test("submitting mismatched passwords shows a validation error", async ({ page }) => {
-    await page.goto("/reset-password?code=some-code")
+    await page.goto("/reset-password?token=some-token")
     await page.fill('[name="password"]', "validpassword1")
     await page.fill('[name="passwordConfirm"]', "differentpassword2")
     await page.click('button[type="submit"]')
@@ -149,8 +149,8 @@ test.describe("Reset password", () => {
     await expect(page.locator(".alert-error")).toBeVisible()
   })
 
-  test("submitting an invalid code shows an error", async ({ page }) => {
-    await page.goto("/reset-password?code=invalid-code")
+  test("submitting an invalid token shows an error", async ({ page }) => {
+    await page.goto("/reset-password?token=invalid-token")
     await page.fill('[name="password"]', "validpassword1")
     await page.fill('[name="passwordConfirm"]', "validpassword1")
     await page.click('button[type="submit"]')
