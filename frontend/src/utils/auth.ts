@@ -17,6 +17,18 @@ export const auth = betterAuth({
       })
     },
   },
+  emailVerification: {
+    sendOnSignUp: true,
+    autoSignInAfterVerification: true,
+    expiresIn: 3600,
+    sendVerificationEmail: async ({ user, url }) => {
+      await sendMail({
+        to: user.email,
+        subject: "E-Mail-Adresse bestätigen",
+        text: `Klicke auf den folgenden Link, um deine E-Mail-Adresse zu bestätigen:\n\n${url}\n\nDer Link ist eine Stunde gültig. Wenn du das nicht warst, kannst du diese E-Mail ignorieren.`,
+      })
+    },
+  },
   session: {
     // Avoids a DB round trip on every request; session changes are picked up
     // again within maxAge seconds.

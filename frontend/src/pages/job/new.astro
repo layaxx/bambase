@@ -11,6 +11,8 @@ if (!Astro.locals.user) {
   return Astro.redirect(`/login?redirect=/job/new`)
 }
 
+const emailVerified = Astro.locals.user.emailVerified
+
 const result = Astro.getActionResult(actions.jobs.create)
 
 if (result?.data) {
@@ -42,11 +44,53 @@ const generalError = result?.error && !isInputError(result.error) ? result.error
     )
   }
 
-  <JobForm
-    action={actions.jobs.create}
-    cancelHref="/jobs"
-    enableDraft={true}
-    inputErrors={inputErrors}
-    submitLabel={t.jobs.submitJob}
-  />
+  {
+    !emailVerified && (
+      <div
+        class="alert alert-warning mb-6 flex-col items-start sm:flex-row sm:items-center"
+        role="alert"
+      >
+        <div>
+          <h3 class="font-bold">{t.auth.verifyEmailRequiredTitle}</h3>
+          <p>{t.auth.verifyEmailRequiredText}</p>
+        </div>
+        <button
+          class="btn btn-sm mt-2 sm:mt-0"
+          data-email={Astro.locals.user.email}
+          data-sent-label={t.auth.resendVerificationSent}
+          id="resend-verification-btn"
+          type="button"
+        >
+          {t.auth.resendVerificationBtn}
+        </button>
+      </div>
+    )
+  }
+
+  {
+    emailVerified && (
+      <JobForm
+        action={actions.jobs.create}
+        cancelHref="/jobs"
+        enableDraft={true}
+        inputErrors={inputErrors}
+        submitLabel={t.jobs.submitJob}
+      />
+    )
+  }
 </PageLayout>
+
+<script>
+  import { authClient } from "@/utils/auth-client"
+
+  const resendButton = document.getElementById("resend-verification-btn")
+
+  resendButton?.addEventListener("click", async () => {
+    const email = resendButton.dataset.email
+    if (!email) return
+
+    resendButton.setAttribute("disabled", "true")
+    await authClient.sendVerificationEmail({ email, callbackURL: "/login?confirmed=true" })
+    resendButton.textContent = resendButton.dataset.sentLabel ?? resendButton.textContent
+  })
+</script>

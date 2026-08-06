@@ -135,6 +135,12 @@ export const jobs = {
       if (!userId) {
         throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
       }
+      if (!context.locals.user?.emailVerified) {
+        throw new ActionError({
+          code: "FORBIDDEN",
+          message: "Bitte bestätige zuerst deine E-Mail-Adresse, bevor du eine Stelle einreichst.",
+        })
+      }
 
       let created: { slug: string }
       try {

@@ -292,6 +292,11 @@ const de = {
     emailConfirmed: "E-Mail-Adresse bestätigt!",
     emailConfirmedYouCanLogin:
       "Deine E-Mail-Adresse wurde erfolgreich bestätigt. Du kannst dich jetzt anmelden.",
+    verifyEmailRequiredTitle: "E-Mail-Adresse nicht bestätigt",
+    verifyEmailRequiredText:
+      "Bitte bestätige deine E-Mail-Adresse, um Stellenangebote einreichen zu können.",
+    resendVerificationBtn: "Bestätigungs-E-Mail erneut senden",
+    resendVerificationSent: "E-Mail wurde gesendet",
     forgotPasswordTitle: "Passwort vergessen",
     forgotPasswordInstruction:
       "Gib deine E-Mail-Adresse ein. Falls ein Konto mit dieser Adresse existiert, senden wir dir einen Link zum Zurücksetzen deines Passworts.",
@@ -659,6 +664,10 @@ const en: SetAtPath<
     emailConfirmed: "Email address confirmed!",
     emailConfirmedYouCanLogin:
       "Your email address has been successfully confirmed. You can now log in.",
+    verifyEmailRequiredTitle: "Email address not verified",
+    verifyEmailRequiredText: "Please verify your email address to be able to submit job listings.",
+    resendVerificationBtn: "Resend verification email",
+    resendVerificationSent: "Email sent",
     forgotPasswordTitle: "Forgot password",
     forgotPasswordInstruction:
       "Enter your email address. If an account exists for that address, we will send you a link to reset your password.",

@@ -103,6 +103,7 @@ const t = useTranslations(Astro.locals.locale)
         name: email,
         email,
         password,
+        callbackURL: "/login?confirmed=true",
       })
 
       console.error(authResponse)

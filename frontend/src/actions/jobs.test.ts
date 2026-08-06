@@ -54,8 +54,8 @@ vi.mock("@/utils/prisma", () => ({
 
 import { jobs } from "./jobs"
 
-function makeContext(userId?: string) {
-  return { locals: { user: userId ? { id: userId } : null } }
+function makeContext(userId?: string, emailVerified = true) {
+  return { locals: { user: userId ? { id: userId, emailVerified } : null } }
 }
 
 const baseInput = {
@@ -95,6 +95,16 @@ describe("jobs.create", () => {
         makeContext()
       )
     ).rejects.toMatchObject({ code: "UNAUTHORIZED" })
+  })
+
+  it("throws FORBIDDEN when the current user's email is not verified", async () => {
+    await expect(
+      jobs.create(
+        baseInput,
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext("user-1", false)
+      )
+    ).rejects.toMatchObject({ code: "FORBIDDEN" })
   })
 
   it("sets ownerId to the current user's id", async () => {

@@ -962,6 +962,13 @@ async function main() {
     })
   }
 
+  // Seed users are pre-verified — e2e tests exercise job/event submission,
+  // not the email-verification flow itself, which is covered separately.
+  await prisma.user.updateMany({
+    where: { email: { in: [SEED_USER.email, CLEAN_USER.email] }, emailVerified: false },
+    data: { emailVerified: true },
+  })
+
   await Promise.all(
     STUDENT_GROUPS.map((group) => {
       const slug = slugify(group.name)
