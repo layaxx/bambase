@@ -12,6 +12,7 @@ export {
   fetchJobOffersPaginated,
   fetchJobOffer,
   fetchMyJobOffers,
+  fetchSubmittedJobOffers,
   JOB_TYPES,
   JOB_FIELDS,
   WORK_MODES,

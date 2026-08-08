@@ -187,3 +187,16 @@ export async function fetchMyJobOffers(ownerId: string): Promise<ApiResult<JobOf
     return { data: [], apiDown: true }
   }
 }
+
+export async function fetchSubmittedJobOffers(): Promise<ApiResult<JobOffer[]>> {
+  try {
+    const rows = await prisma.jobOffer.findMany({
+      where: { onlineStatus: "submitted" },
+      orderBy: { createdAt: "asc" },
+    })
+    return { data: rows.map((row) => toJobOffer(row)), apiDown: false }
+  } catch (error) {
+    console.error("Error fetching submitted job offers", error)
+    return { data: [], apiDown: true }
+  }
+}

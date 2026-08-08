@@ -1,0 +1,64 @@
+---
+import { actions } from "astro:actions"
+import PageLayout from "@/layouts/PageLayout.astro"
+import { fetchSubmittedJobOffers } from "@/utils/api"
+import { canModerateJobOffers } from "@/utils/authz"
+import { useTranslations } from "@/i18n/translations"
+
+const t = useTranslations(Astro.locals.locale)
+
+const user = Astro.locals.user
+if (!user) return Astro.redirect("/login?redirect=/admin/jobs")
+if (!(await canModerateJobOffers(user.role))) return Astro.redirect("/")
+
+const approveResult = Astro.getActionResult(actions.jobs.approve)
+const rejectResult = Astro.getActionResult(actions.jobs.reject)
+if (
+  (approveResult?.data !== undefined && !approveResult.error) ||
+  (rejectResult?.data !== undefined && !rejectResult.error)
+) {
+  return Astro.redirect(Astro.url.pathname)
+}
+
+const { data: jobs } = await fetchSubmittedJobOffers()
+---
+
+<PageLayout title={t.admin.jobsQueueTitle}>
+  <h1 class="text-3xl font-bold tracking-tight sm:text-4xl mb-6">{t.admin.jobsQueueTitle}</h1>
+
+  {
+    jobs.length === 0 ? (
+      <p class="rounded-xl border border-base-300 bg-base-100 p-6 text-base-content/70">
+        {t.admin.noSubmittedJobs}
+      </p>
+    ) : (
+      <div class="flex flex-col gap-3">
+        {jobs.map((job) => (
+          <div class="flex flex-col gap-3 rounded-xl border border-base-300 bg-base-100 p-4">
+            <div>
+              <h2 class="font-semibold leading-snug text-base-content">{job.title}</h2>
+              <p class="text-sm text-base-content/70">
+                {job.company} · {job.location}
+              </p>
+              <p class="line-clamp-2 text-sm text-base-content/40">{job.description}</p>
+            </div>
+            <div class="flex gap-2">
+              <form action={actions.jobs.approve} method="POST">
+                <input name="id" type="hidden" value={job.id} />
+                <button class="btn btn-success btn-sm" type="submit">
+                  {t.admin.approveJob}
+                </button>
+              </form>
+              <form action={actions.jobs.reject} method="POST">
+                <input name="id" type="hidden" value={job.id} />
+                <button class="btn btn-outline btn-error btn-sm" type="submit">
+                  {t.admin.rejectJob}
+                </button>
+              </form>
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+</PageLayout>

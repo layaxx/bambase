@@ -26,6 +26,7 @@ const de = {
     closeMenu: "Menü schließen",
     about_us: "Über uns",
     skipToContent: "Zum Inhalt springen",
+    admin: "Admin",
   },
   events: {
     title: "Heutige Veranstaltungen",
@@ -379,6 +380,12 @@ const de = {
     switchAccessibleLabel: "Switch to English",
     switchLang: "en" as Locale,
   },
+  admin: {
+    jobsQueueTitle: "Stellenangebote prüfen",
+    noSubmittedJobs: "Keine Stellenangebote warten aktuell auf Prüfung.",
+    approveJob: "Genehmigen",
+    rejectJob: "Ablehnen",
+  },
 }
 
 const en: SetAtPath<
@@ -399,6 +406,7 @@ const en: SetAtPath<
     closeMenu: "Close menu",
     about_us: "About us",
     skipToContent: "Skip to content",
+    admin: "Admin",
   },
   events: {
     title: "Today's Events",
@@ -749,6 +757,12 @@ const en: SetAtPath<
     switchLabel: "DE",
     switchAccessibleLabel: "Zu Deutsch wechseln",
     switchLang: "de" as Locale,
+  },
+  admin: {
+    jobsQueueTitle: "Review job offers",
+    noSubmittedJobs: "No job offers are currently awaiting review.",
+    approveJob: "Approve",
+    rejectJob: "Reject",
   },
 }
 

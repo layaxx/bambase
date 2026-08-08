@@ -52,10 +52,16 @@ vi.mock("@/utils/prisma", () => ({
   },
 }))
 
+const mockCanModerateJobOffers = vi.hoisted(() => vi.fn())
+
+vi.mock("@/utils/authz", () => ({
+  canModerateJobOffers: mockCanModerateJobOffers,
+}))
+
 import { jobs } from "./jobs"
 
-function makeContext(userId?: string, emailVerified = true) {
-  return { locals: { user: userId ? { id: userId, emailVerified } : null } }
+function makeContext(userId?: string, emailVerified = true, role: string | null = null) {
+  return { locals: { user: userId ? { id: userId, emailVerified, role } : null } }
 }
 
 const baseInput = {
@@ -75,6 +81,7 @@ beforeEach(() => {
   mockCreate.mockReset()
   mockUpdate.mockReset()
   mockDelete.mockReset()
+  mockCanModerateJobOffers.mockReset()
 })
 
 afterEach(() => {
@@ -355,6 +362,116 @@ describe("jobs.archive", () => {
         { id: "job-1" },
         // @ts-expect-error - needed because of mocked defineAction function
         makeContext("user-1")
+      )
+    ).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" })
+  })
+})
+
+describe("jobs.approve", () => {
+  it("throws UNAUTHORIZED when not logged in", async () => {
+    await expect(
+      jobs.approve(
+        { id: "job-1" },
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext()
+      )
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" })
+  })
+
+  it("throws FORBIDDEN when the user cannot moderate job offers", async () => {
+    mockCanModerateJobOffers.mockResolvedValue(false)
+
+    await expect(
+      jobs.approve(
+        { id: "job-1" },
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext("user-1")
+      )
+    ).rejects.toMatchObject({ code: "FORBIDDEN" })
+  })
+
+  it("sets onlineStatus to 'published' when the user can moderate job offers", async () => {
+    mockCanModerateJobOffers.mockResolvedValue(true)
+    mockUpdate.mockResolvedValue({})
+
+    const result = await jobs.approve(
+      { id: "job-1" },
+      // @ts-expect-error - needed because of mocked defineAction function
+      makeContext("moderator-1", true, "moderator")
+    )
+
+    expect(mockUpdate).toHaveBeenCalledWith({
+      where: { id: "job-1" },
+      data: { onlineStatus: "published" },
+    })
+    expect(result).toEqual({})
+  })
+
+  it("throws INTERNAL_SERVER_ERROR when the update fails", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {})
+    mockCanModerateJobOffers.mockResolvedValue(true)
+    mockUpdate.mockRejectedValue(new Error("db error"))
+
+    await expect(
+      jobs.approve(
+        { id: "job-1" },
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext("moderator-1", true, "moderator")
+      )
+    ).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" })
+  })
+})
+
+describe("jobs.reject", () => {
+  it("throws UNAUTHORIZED when not logged in", async () => {
+    await expect(
+      jobs.reject(
+        { id: "job-1" },
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext()
+      )
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" })
+  })
+
+  it("throws FORBIDDEN when the user cannot moderate job offers", async () => {
+    mockCanModerateJobOffers.mockResolvedValue(false)
+
+    await expect(
+      jobs.reject(
+        { id: "job-1" },
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext("user-1")
+      )
+    ).rejects.toMatchObject({ code: "FORBIDDEN" })
+  })
+
+  it("sets onlineStatus to 'rejected' when the user can moderate job offers", async () => {
+    mockCanModerateJobOffers.mockResolvedValue(true)
+    mockUpdate.mockResolvedValue({})
+
+    const result = await jobs.reject(
+      { id: "job-1" },
+      // @ts-expect-error - needed because of mocked defineAction function
+      makeContext("moderator-1", true, "moderator")
+    )
+
+    expect(mockUpdate).toHaveBeenCalledWith({
+      where: { id: "job-1" },
+      data: { onlineStatus: "rejected" },
+    })
+    expect(result).toEqual({})
+  })
+
+  it("throws INTERNAL_SERVER_ERROR when the update fails", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {})
+    mockCanModerateJobOffers.mockResolvedValue(true)
+    mockUpdate.mockRejectedValue(new Error("db error"))
+
+    await expect(
+      jobs.reject(
+        { id: "job-1" },
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext("moderator-1", true, "moderator")
       )
     ).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" })
   })

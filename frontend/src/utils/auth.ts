@@ -1,7 +1,21 @@
 import { betterAuth } from "better-auth"
 import { prismaAdapter } from "better-auth/adapters/prisma"
+import { admin } from "better-auth/plugins"
+import { createAccessControl } from "better-auth/plugins/access"
+import { defaultStatements } from "better-auth/plugins/admin/access"
 import prisma from "./prisma"
 import { sendMail } from "./mail"
+
+const statement = {
+  ...defaultStatements,
+  jobOffer: ["moderate"],
+} as const
+
+const ac = createAccessControl(statement)
+
+const userRole = ac.newRole({})
+const moderatorRole = ac.newRole({ jobOffer: ["moderate"] })
+const adminRole = ac.newRole({ ...defaultStatements, jobOffer: ["moderate"] })
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
@@ -37,4 +51,10 @@ export const auth = betterAuth({
       maxAge: 60,
     },
   },
+  plugins: [
+    admin({
+      ac,
+      roles: { user: userRole, moderator: moderatorRole, admin: adminRole },
+    }),
+  ],
 })

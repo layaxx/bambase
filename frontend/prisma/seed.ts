@@ -27,6 +27,9 @@ const auth = betterAuth({
 const SEED_USER = { email: "seed@example.com", password: "Seed1234!" }
 // A second user with no owned content — used by e2e tests for the empty-state UI.
 const CLEAN_USER = { email: "clean@example.com", password: "Clean1234!" }
+// A separate account (not SEED_USER/CLEAN_USER) so granting it the "admin" role
+// doesn't affect existing e2e assertions about ownership/empty-state UI.
+const ADMIN_USER = { email: "admin@example.com", password: "Admin1234!" }
 
 const STUDENT_GROUPS = [
   {
@@ -962,11 +965,27 @@ async function main() {
     })
   }
 
+  const existingAdminUser = await prisma.user.findUnique({ where: { email: ADMIN_USER.email } })
+  if (!existingAdminUser) {
+    await auth.api.signUpEmail({
+      body: { email: ADMIN_USER.email, password: ADMIN_USER.password, name: ADMIN_USER.email },
+    })
+  }
+
   // Seed users are pre-verified — e2e tests exercise job/event submission,
   // not the email-verification flow itself, which is covered separately.
   await prisma.user.updateMany({
-    where: { email: { in: [SEED_USER.email, CLEAN_USER.email] }, emailVerified: false },
+    where: {
+      email: { in: [SEED_USER.email, CLEAN_USER.email, ADMIN_USER.email] },
+      emailVerified: false,
+    },
     data: { emailVerified: true },
+  })
+
+  // Bootstrap the first admin — a real deployment grants this via a one-off DB update.
+  await prisma.user.updateMany({
+    where: { email: ADMIN_USER.email, role: null },
+    data: { role: "admin" },
   })
 
   await Promise.all(

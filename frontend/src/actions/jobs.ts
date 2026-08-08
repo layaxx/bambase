@@ -3,6 +3,7 @@ import { z } from "astro/zod"
 import { JOB_TYPES, JOB_FIELDS, WORK_MODES } from "@/utils/api/job-offers"
 import { invalidateCacheByPrefix } from "@/utils/api/cache"
 import { slugify, uniqueSlug } from "@/utils/slugify"
+import { canModerateJobOffers } from "@/utils/authz"
 import prisma from "@/utils/prisma"
 
 const httpUrl = z
@@ -71,6 +72,58 @@ export const jobs = {
         throw new ActionError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Archivieren fehlgeschlagen.",
+        })
+      }
+
+      invalidateCacheByPrefix("job-offers:")
+      return {}
+    },
+  }),
+
+  approve: defineAction({
+    accept: "form",
+    input: z.object({ id: z.string().min(1) }),
+    handler: async ({ id }, context) => {
+      if (!context.locals.user) {
+        throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
+      }
+      if (!(await canModerateJobOffers(context.locals.user.role))) {
+        throw new ActionError({ code: "FORBIDDEN", message: "Keine Berechtigung." })
+      }
+
+      try {
+        await prisma.jobOffer.update({ where: { id }, data: { onlineStatus: "published" } })
+      } catch (error) {
+        console.error("Job approve failed:", error)
+        throw new ActionError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Genehmigen fehlgeschlagen.",
+        })
+      }
+
+      invalidateCacheByPrefix("job-offers:")
+      return {}
+    },
+  }),
+
+  reject: defineAction({
+    accept: "form",
+    input: z.object({ id: z.string().min(1) }),
+    handler: async ({ id }, context) => {
+      if (!context.locals.user) {
+        throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
+      }
+      if (!(await canModerateJobOffers(context.locals.user.role))) {
+        throw new ActionError({ code: "FORBIDDEN", message: "Keine Berechtigung." })
+      }
+
+      try {
+        await prisma.jobOffer.update({ where: { id }, data: { onlineStatus: "rejected" } })
+      } catch (error) {
+        console.error("Job reject failed:", error)
+        throw new ActionError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Ablehnen fehlgeschlagen.",
         })
       }
 

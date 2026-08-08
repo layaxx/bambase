@@ -9,10 +9,12 @@ declare module "*.astro" {
 declare module "@fontsource-variable/archivo" {}
 declare module "@fontsource-variable/inter" {}
 
+type UserWithRole = import("better-auth").User & { role?: string | null }
+
 declare namespace App {
   interface Locals {
     locale: import("./i18n/translations").Locale
-    user: import("better-auth").User | null
+    user: UserWithRole | null
     session: import("better-auth").Session | null
   }
 }

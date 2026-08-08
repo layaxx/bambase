@@ -60,6 +60,7 @@ export default defineConfig({
         "**/map.spec.ts",
         "**/reports.spec.ts",
         "**/og-images.spec.ts",
+        "**/admin.spec.ts",
       ],
     },
   ],
