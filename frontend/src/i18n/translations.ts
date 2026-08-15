@@ -384,6 +384,7 @@ const de = {
   admin: {
     jobsQueueTitle: "Stellenangebote prüfen",
     noSubmittedJobs: "Keine Stellenangebote warten aktuell auf Prüfung.",
+    editJob: "Bearbeiten",
     approveJob: "Genehmigen",
     rejectJob: "Ablehnen",
     usersTitle: "Nutzerverwaltung",
@@ -774,6 +775,7 @@ const en: SetAtPath<
   admin: {
     jobsQueueTitle: "Review job offers",
     noSubmittedJobs: "No job offers are currently awaiting review.",
+    editJob: "Edit",
     approveJob: "Approve",
     rejectJob: "Reject",
     usersTitle: "User management",

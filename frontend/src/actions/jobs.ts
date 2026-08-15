@@ -147,7 +147,7 @@ export const jobs = {
         select: { ownerId: true },
       })
       if (!existing) throw new ActionError({ code: "NOT_FOUND", message: "Stelle nicht gefunden." })
-      if (existing.ownerId !== userId) {
+      if (existing.ownerId !== userId && !(await canModerateJobOffers(context.locals.user?.role))) {
         throw new ActionError({ code: "FORBIDDEN", message: "Aktualisierung fehlgeschlagen." })
       }
 
