@@ -1,0 +1,47 @@
+---
+import PageLayout from "@/layouts/PageLayout.astro"
+import { fetchAllEventsForAdmin } from "@/utils/api"
+import { canModerateEvents } from "@/utils/authz"
+import { useTranslations } from "@/i18n/translations"
+
+const t = useTranslations(Astro.locals.locale)
+
+const user = Astro.locals.user
+if (!user) return Astro.redirect("/login?redirect=/admin/events")
+if (!(await canModerateEvents(user.role))) return Astro.redirect("/")
+
+const { data: events } = await fetchAllEventsForAdmin()
+---
+
+<PageLayout title={t.admin.eventsTitle}>
+  <h1 class="text-3xl font-bold tracking-tight sm:text-4xl mb-6">{t.admin.eventsTitle}</h1>
+
+  {
+    events.length === 0 ? (
+      <p class="rounded-xl border border-base-300 bg-base-100 p-6 text-base-content/70">
+        {t.admin.noEvents}
+      </p>
+    ) : (
+      <div class="flex flex-col gap-3">
+        {events.map((event) => (
+          <div class="flex flex-col gap-3 rounded-xl border border-base-300 bg-base-100 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 class="font-semibold leading-snug text-base-content">{event.title}</h2>
+              <p class="text-sm text-base-content/70">
+                {event.organizer} ·{" "}
+                {new Date(event.start).toLocaleDateString(t.auth.dateLocale, {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                })}
+              </p>
+            </div>
+            <a class="btn btn-outline btn-sm" href={`/admin/events/${event.slug}/edit`}>
+              {t.admin.editEvent}
+            </a>
+          </div>
+        ))}
+      </div>
+    )
+  }
+</PageLayout>

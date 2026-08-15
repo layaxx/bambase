@@ -9,13 +9,18 @@ import { sendMail } from "./mail"
 const statement = {
   ...defaultStatements,
   jobOffer: ["moderate"],
+  event: ["moderate"],
 } as const
 
 const ac = createAccessControl(statement)
 
 const userRole = ac.newRole({})
-const moderatorRole = ac.newRole({ jobOffer: ["moderate"] })
-const adminRole = ac.newRole({ ...defaultStatements, jobOffer: ["moderate"] })
+const moderatorRole = ac.newRole({ jobOffer: ["moderate"], event: ["moderate"] })
+const adminRole = ac.newRole({
+  ...defaultStatements,
+  jobOffer: ["moderate"],
+  event: ["moderate"],
+})
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {

@@ -26,6 +26,8 @@ export {
   fetchUpcomingMapEvents,
   fetchMyEvents,
   fetchAllPublishedEventSlugs,
+  fetchEventForAdmin,
+  fetchAllEventsForAdmin,
   EVENT_CATEGORIES,
 } from "./events"
 export type { MapLocation } from "./locations"

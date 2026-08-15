@@ -201,3 +201,33 @@ export async function fetchMyEvents(ownerId: string): Promise<ApiResult<Event[]>
     return { data: [], apiDown: true }
   }
 }
+
+/** Fetch a single event regardless of hidden status, for admin editing. */
+export async function fetchEventForAdmin(slug: string): Promise<ApiResult<Event | null>> {
+  try {
+    const row = await prisma.event.findFirst({
+      where: { slug },
+      include: { mapLocation: true },
+    })
+    if (!row) return { data: null, apiDown: false }
+
+    return { data: toEvent(row, { mapLocation: row.mapLocation }), apiDown: false }
+  } catch (error) {
+    console.error("Error fetching event for admin", error)
+    return { data: null, apiDown: true }
+  }
+}
+
+/** Fetch all events regardless of hidden status, for the admin overview. */
+export async function fetchAllEventsForAdmin(limit = 100): Promise<ApiResult<Event[]>> {
+  try {
+    const rows = await prisma.event.findMany({
+      orderBy: { start: "desc" },
+      take: limit,
+    })
+    return { data: rows.map((row) => toEvent(row)), apiDown: false }
+  } catch (error) {
+    console.error("Error fetching events for admin", error)
+    return { data: [], apiDown: true }
+  }
+}

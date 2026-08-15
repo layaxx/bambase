@@ -3,6 +3,7 @@ import { z } from "astro/zod"
 import { EVENT_CATEGORIES } from "@/utils/api/events"
 import { invalidateCacheByPrefix } from "@/utils/api/cache"
 import { slugify, uniqueSlug } from "@/utils/slugify"
+import { canModerateEvents } from "@/utils/authz"
 import prisma from "@/utils/prisma"
 
 const locationFieldsShape = {
@@ -99,7 +100,7 @@ export const events = {
 
       const existing = await prisma.event.findUnique({ where: { id }, select: { ownerId: true } })
       if (!existing) throw new ActionError({ code: "NOT_FOUND", message: "Event nicht gefunden." })
-      if (existing.ownerId !== userId) {
+      if (existing.ownerId !== userId && !(await canModerateEvents(context.locals.user?.role))) {
         throw new ActionError({ code: "FORBIDDEN", message: "Aktualisierung fehlgeschlagen." })
       }
 
