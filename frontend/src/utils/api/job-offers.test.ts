@@ -45,6 +45,7 @@ function makeRow(overrides: Partial<Record<string, unknown>> = {}) {
     contactPhone: null,
     ownerId: null,
     createdAt: new Date("2026-04-15T10:00:00Z"),
+    updatedAt: new Date("2026-04-16T09:30:00Z"),
     ...overrides,
   }
 }
@@ -66,6 +67,7 @@ const mappedSampleJob = {
   ownerId: null,
   reports: undefined,
   createdAt: "2026-04-15T10:00:00.000Z",
+  updatedAt: "2026-04-16T09:30:00.000Z",
 }
 
 describe("fetchJobOffers", () => {
