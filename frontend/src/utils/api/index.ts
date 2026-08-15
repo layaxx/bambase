@@ -13,6 +13,7 @@ export {
   fetchJobOffer,
   fetchMyJobOffers,
   fetchSubmittedJobOffers,
+  fetchRecentlyModeratedJobOffers,
   JOB_TYPES,
   JOB_FIELDS,
   WORK_MODES,

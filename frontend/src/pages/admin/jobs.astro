@@ -1,8 +1,9 @@
 ---
 import { actions } from "astro:actions"
 import PageLayout from "@/layouts/PageLayout.astro"
-import { fetchSubmittedJobOffers } from "@/utils/api"
+import { fetchSubmittedJobOffers, fetchRecentlyModeratedJobOffers } from "@/utils/api"
 import { canModerateJobOffers } from "@/utils/authz"
+import { JOB_STATUS_BADGE_CLASS } from "@/utils/job-status"
 import { useTranslations } from "@/i18n/translations"
 
 const t = useTranslations(Astro.locals.locale)
@@ -21,6 +22,12 @@ if (
 }
 
 const { data: jobs } = await fetchSubmittedJobOffers()
+const { data: recentlyModerated } = await fetchRecentlyModeratedJobOffers()
+
+const statusLabel: Record<string, string> = {
+  published: t.auth.statusPublished,
+  rejected: t.auth.statusRejected,
+}
 ---
 
 <PageLayout title={t.admin.jobsQueueTitle}>
@@ -59,6 +66,51 @@ const { data: jobs } = await fetchSubmittedJobOffers()
                 </button>
               </form>
             </div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  <h2 class="text-2xl font-bold tracking-tight mt-12 mb-6">{t.admin.recentDecisionsTitle}</h2>
+
+  {
+    recentlyModerated.length === 0 ? (
+      <p class="rounded-xl border border-base-300 bg-base-100 p-6 text-base-content/70">
+        {t.admin.noRecentDecisions}
+      </p>
+    ) : (
+      <div class="flex flex-col gap-3">
+        {recentlyModerated.map((job) => (
+          <div class="flex flex-col gap-3 rounded-xl border border-base-300 bg-base-100 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="font-semibold leading-snug text-base-content">{job.title}</h3>
+                <span
+                  class:list={[
+                    "badge badge-sm",
+                    JOB_STATUS_BADGE_CLASS[job.online_status] ?? "badge-neutral",
+                  ]}
+                >
+                  {statusLabel[job.online_status] ?? job.online_status}
+                </span>
+              </div>
+              <p class="text-sm text-base-content/70">
+                {job.company} · {job.location}
+              </p>
+              <p class="text-xs text-base-content/40">
+                {t.admin.decidedAt(
+                  new Date(job.updatedAt).toLocaleDateString(t.auth.dateLocale, {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })
+                )}
+              </p>
+            </div>
+            <a class="btn btn-outline btn-sm" href={`/admin/jobs/${job.slug}/edit`}>
+              {t.admin.editJob}
+            </a>
           </div>
         ))}
       </div>

@@ -30,6 +30,7 @@ export type JobOffer = {
   ownerId?: string | null
   reports?: { id: string }[]
   createdAt: string
+  updatedAt: string
 }
 
 export type JobOffersFilter = {
@@ -67,6 +68,7 @@ type JobOfferRow = {
   contactPhone: string | null
   ownerId: string | null
   createdAt: Date
+  updatedAt: Date
 }
 
 function toJobOffer(row: JobOfferRow, extra?: { reports?: { id: string }[] }): JobOffer {
@@ -91,6 +93,7 @@ function toJobOffer(row: JobOfferRow, extra?: { reports?: { id: string }[] }): J
     ownerId: row.ownerId,
     reports: extra?.reports,
     createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
   }
 }
 
@@ -197,6 +200,20 @@ export async function fetchSubmittedJobOffers(): Promise<ApiResult<JobOffer[]>> 
     return { data: rows.map((row) => toJobOffer(row)), apiDown: false }
   } catch (error) {
     console.error("Error fetching submitted job offers", error)
+    return { data: [], apiDown: true }
+  }
+}
+
+export async function fetchRecentlyModeratedJobOffers(limit = 10): Promise<ApiResult<JobOffer[]>> {
+  try {
+    const rows = await prisma.jobOffer.findMany({
+      where: { onlineStatus: { in: [JobOnlineStatus.published, JobOnlineStatus.rejected] } },
+      orderBy: { updatedAt: "desc" },
+      take: limit,
+    })
+    return { data: rows.map((row) => toJobOffer(row)), apiDown: false }
+  } catch (error) {
+    console.error("Error fetching recently moderated job offers", error)
     return { data: [], apiDown: true }
   }
 }
