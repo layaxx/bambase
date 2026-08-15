@@ -35,11 +35,14 @@ const statusLabel: Record<string, string> = {
 
   {
     jobs.length === 0 ? (
-      <p class="rounded-xl border border-base-300 bg-base-100 p-6 text-base-content/70">
+      <p
+        class="rounded-xl border border-base-300 bg-base-100 p-6 text-base-content/70"
+        data-testid="job-queue"
+      >
         {t.admin.noSubmittedJobs}
       </p>
     ) : (
-      <div class="flex flex-col gap-3">
+      <div class="flex flex-col gap-3" data-testid="job-queue">
         {jobs.map((job) => (
           <div class="flex flex-col gap-3 rounded-xl border border-base-300 bg-base-100 p-4">
             <div>
@@ -76,11 +79,14 @@ const statusLabel: Record<string, string> = {
 
   {
     recentlyModerated.length === 0 ? (
-      <p class="rounded-xl border border-base-300 bg-base-100 p-6 text-base-content/70">
+      <p
+        class="rounded-xl border border-base-300 bg-base-100 p-6 text-base-content/70"
+        data-testid="recent-decisions"
+      >
         {t.admin.noRecentDecisions}
       </p>
     ) : (
-      <div class="flex flex-col gap-3">
+      <div class="flex flex-col gap-3" data-testid="recent-decisions">
         {recentlyModerated.map((job) => (
           <div class="flex flex-col gap-3 rounded-xl border border-base-300 bg-base-100 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div>

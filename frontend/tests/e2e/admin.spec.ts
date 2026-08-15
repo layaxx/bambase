@@ -57,7 +57,11 @@ test("moderator can approve a submitted job", async ({ page, browser }) => {
   await expect(jobCard).toBeVisible()
   await jobCard.getByRole("button", { name: "Genehmigen" }).click()
 
-  await expect(adminPage.locator("body")).not.toContainText(title)
+  await expect(adminPage.getByTestId("job-queue")).not.toContainText(title)
+  const decidedCard = adminPage.getByTestId("recent-decisions").locator(".rounded-xl", {
+    hasText: title,
+  })
+  await expect(decidedCard).toContainText("Veröffentlicht")
   await adminContext.close()
 
   await page.goto(jobUrl)
@@ -81,7 +85,11 @@ test("moderator can reject a submitted job", async ({ page, browser }) => {
   await expect(jobCard).toBeVisible()
   await jobCard.getByRole("button", { name: "Ablehnen" }).click()
 
-  await expect(adminPage.locator("body")).not.toContainText(title)
+  await expect(adminPage.getByTestId("job-queue")).not.toContainText(title)
+  const decidedCard = adminPage.getByTestId("recent-decisions").locator(".rounded-xl", {
+    hasText: title,
+  })
+  await expect(decidedCard).toContainText("Abgelehnt")
   await adminContext.close()
 
   await page.goto(jobUrl)
