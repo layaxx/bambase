@@ -1,0 +1,110 @@
+---
+import { actions } from "astro:actions"
+import type { UserWithRole } from "better-auth/plugins"
+import PageLayout from "@/layouts/PageLayout.astro"
+import { canManageUsers } from "@/utils/authz"
+import { useTranslations } from "@/i18n/translations"
+import { auth } from "@/utils/auth"
+
+const t = useTranslations(Astro.locals.locale)
+
+const currentUser = Astro.locals.user
+if (!currentUser) return Astro.redirect("/login?redirect=/admin/users")
+if (!(await canManageUsers(currentUser.role))) return Astro.redirect("/")
+
+const banResult = Astro.getActionResult(actions.users.ban)
+const unbanResult = Astro.getActionResult(actions.users.unban)
+if (
+  (banResult?.data !== undefined && !banResult.error) ||
+  (unbanResult?.data !== undefined && !unbanResult.error)
+) {
+  return Astro.redirect(Astro.url.pathname)
+}
+
+const { users }: { users: UserWithRole[] } = await auth.api.listUsers({
+  headers: Astro.request.headers,
+  query: { sortBy: "createdAt", sortDirection: "desc", limit: 200 },
+})
+---
+
+<PageLayout title={t.admin.usersTitle}>
+  <h1 class="text-3xl font-bold tracking-tight sm:text-4xl mb-6">{t.admin.usersTitle}</h1>
+
+  {
+    users.length === 0 ? (
+      <p class="rounded-xl border border-base-300 bg-base-100 p-6 text-base-content/70">
+        {t.admin.noUsers}
+      </p>
+    ) : (
+      <div class="flex flex-col gap-3">
+        {users.map((user) => (
+          <div class="flex flex-col gap-3 rounded-xl border border-base-300 bg-base-100 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p class="font-semibold leading-snug text-base-content">
+                {user.name || user.email}
+                {user.id === currentUser.id && (
+                  <span class="text-base-content/40"> {t.admin.bannedYou}</span>
+                )}
+              </p>
+              <p class="text-sm text-base-content/70">{user.email}</p>
+              <div class="mt-1 flex flex-wrap items-center gap-2">
+                <span class="badge badge-sm badge-neutral">{user.role || "user"}</span>
+                <span
+                  class:list={[
+                    "badge badge-sm",
+                    { "badge-error": user.banned, "badge-success": !user.banned },
+                  ]}
+                >
+                  {user.banned ? t.admin.statusBanned : t.admin.statusActive}
+                </span>
+                {user.banned && user.banExpires && (
+                  <span class="text-xs text-base-content/70">
+                    {t.admin.bannedUntil(
+                      new Date(user.banExpires).toLocaleDateString(t.auth.dateLocale, {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })
+                    )}
+                  </span>
+                )}
+                {user.banned && !user.banExpires && (
+                  <span class="text-xs text-base-content/70">{t.admin.bannedIndefinitely}</span>
+                )}
+                {user.banned && user.banReason && (
+                  <span class="text-xs text-base-content/70">{user.banReason}</span>
+                )}
+              </div>
+            </div>
+            {user.id === currentUser.id ? null : user.banned ? (
+              <form action={actions.users.unban} method="POST">
+                <input name="id" type="hidden" value={user.id} />
+                <button class="btn btn-outline btn-sm" type="submit">
+                  {t.admin.unbanAction}
+                </button>
+              </form>
+            ) : (
+              <form
+                action={actions.users.ban}
+                class="flex flex-col gap-2 sm:flex-row sm:items-center"
+                method="POST"
+              >
+                <input name="id" type="hidden" value={user.id} />
+                <input
+                  class="input input-sm input-bordered"
+                  maxlength="500"
+                  name="reason"
+                  placeholder={t.admin.banReasonPlaceholder}
+                  type="text"
+                />
+                <button class="btn btn-outline btn-error btn-sm" type="submit">
+                  {t.admin.banAction}
+                </button>
+              </form>
+            )}
+          </div>
+        ))}
+      </div>
+    )
+  }
+</PageLayout>

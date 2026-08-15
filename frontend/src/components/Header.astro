@@ -5,7 +5,7 @@ import IconMenu from "./icons/IconMenu.astro"
 import IconX from "./icons/IconX.astro"
 import IconGitHub from "./icons/IconGitHub.astro"
 import { useTranslations } from "@/i18n/translations"
-import { canModerateJobOffers } from "@/utils/authz"
+import { canModerateJobOffers, canManageUsers } from "@/utils/authz"
 
 const locale = Astro.locals.locale
 const t = useTranslations(locale)
@@ -22,6 +22,7 @@ const isActive = (href: string) => pathname === href || pathname.startsWith(`${h
 
 const authUser = Astro.locals.user
 const isModerator = authUser ? await canModerateJobOffers(authUser.role) : false
+const isUserManager = authUser ? await canManageUsers(authUser.role) : false
 
 const switchLang = t.language.switchLang
 const switchLabel = t.language.switchLabel
@@ -71,6 +72,13 @@ const switchUrl = `/set-locale?lang=${switchLang}&redirect=${encodeURIComponent(
           isModerator && (
             <a class="btn btn-sm btn-ghost hidden md:inline-flex" href="/admin/jobs">
               {t.nav.admin}
+            </a>
+          )
+        }
+        {
+          isUserManager && (
+            <a class="btn btn-sm btn-ghost hidden md:inline-flex" href="/admin/users">
+              {t.nav.adminUsers}
             </a>
           )
         }
@@ -153,6 +161,13 @@ const switchUrl = `/set-locale?lang=${switchLang}&redirect=${encodeURIComponent(
         isModerator && (
           <a class="btn btn-sm btn-ghost w-full" href="/admin/jobs">
             {t.nav.admin}
+          </a>
+        )
+      }
+      {
+        isUserManager && (
+          <a class="btn btn-sm btn-ghost w-full" href="/admin/users">
+            {t.nav.adminUsers}
           </a>
         )
       }

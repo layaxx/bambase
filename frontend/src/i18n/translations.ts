@@ -27,6 +27,7 @@ const de = {
     about_us: "Über uns",
     skipToContent: "Zum Inhalt springen",
     admin: "Admin",
+    adminUsers: "Nutzer",
   },
   events: {
     title: "Heutige Veranstaltungen",
@@ -385,6 +386,17 @@ const de = {
     noSubmittedJobs: "Keine Stellenangebote warten aktuell auf Prüfung.",
     approveJob: "Genehmigen",
     rejectJob: "Ablehnen",
+    usersTitle: "Nutzerverwaltung",
+    noUsers: "Keine Nutzer gefunden.",
+    roleLabel: "Rolle",
+    statusActive: "Aktiv",
+    statusBanned: "Gesperrt",
+    banReasonPlaceholder: "Grund (optional)",
+    banAction: "Sperren",
+    unbanAction: "Entsperren",
+    bannedUntil: (date: string) => `Gesperrt bis ${date}`,
+    bannedIndefinitely: "Dauerhaft gesperrt",
+    bannedYou: "(du)",
   },
 }
 
@@ -407,6 +419,7 @@ const en: SetAtPath<
     about_us: "About us",
     skipToContent: "Skip to content",
     admin: "Admin",
+    adminUsers: "Users",
   },
   events: {
     title: "Today's Events",
@@ -763,6 +776,17 @@ const en: SetAtPath<
     noSubmittedJobs: "No job offers are currently awaiting review.",
     approveJob: "Approve",
     rejectJob: "Reject",
+    usersTitle: "User management",
+    noUsers: "No users found.",
+    roleLabel: "Role",
+    statusActive: "Active",
+    statusBanned: "Banned",
+    banReasonPlaceholder: "Reason (optional)",
+    banAction: "Ban",
+    unbanAction: "Unban",
+    bannedUntil: (date: string) => `Banned until ${date}`,
+    bannedIndefinitely: "Banned indefinitely",
+    bannedYou: "(you)",
   },
 }
 

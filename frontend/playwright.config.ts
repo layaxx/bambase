@@ -61,6 +61,7 @@ export default defineConfig({
         "**/reports.spec.ts",
         "**/og-images.spec.ts",
         "**/admin.spec.ts",
+        "**/admin-users.spec.ts",
       ],
     },
   ],
