@@ -4,6 +4,7 @@ import PageLayout from "@/layouts/PageLayout.astro"
 import { fetchJobOffer, REPORT_WARNING_THRESHOLD, type JobOffer } from "@/utils/api"
 import ApiDownBanner from "@/components/ApiDownBanner.astro"
 import { JOB_STATUS_ALERT_VARIANT } from "@/utils/job-status"
+import { canModerateJobOffers } from "@/utils/authz"
 import { useTranslations } from "@/i18n/translations"
 import IconArrowLeft from "@/components/icons/IconArrowLeft.astro"
 import IconStore from "@/components/icons/IconStore.astro"
@@ -17,13 +18,14 @@ import JobTypeBadge from "@/components/jobs/JobTypeBadge.astro"
 
 const t = useTranslations(Astro.locals.locale)
 
+const me = Astro.locals.user
+const isModerator = me ? await canModerateJobOffers(me.role) : false
 const { slug } = Astro.params
 const jobResult = slug
-  ? await fetchJobOffer(slug)
+  ? await fetchJobOffer(slug, { userId: me?.id, isModerator })
   : { data: null as JobOffer | null, apiDown: false }
 const job = jobResult.data
 const apiDown = jobResult.apiDown
-const me = Astro.locals.user
 const isOwner = !!(me && job?.ownerId === me.id)
 
 const hasReports = (job?.reports?.length ?? 0) >= REPORT_WARNING_THRESHOLD

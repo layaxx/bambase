@@ -11,7 +11,7 @@ const t = useTranslations(Astro.locals.locale)
 const me = Astro.locals.user
 if (!me) return Astro.redirect(`/login?redirect=/job/${Astro.params.slug}/edit`)
 const { slug } = Astro.params
-const { data: job } = slug ? await fetchJobOffer(slug) : { data: null }
+const { data: job } = slug ? await fetchJobOffer(slug, { userId: me.id }) : { data: null }
 
 if (!job) return Astro.redirect("/jobs")
 if (job.ownerId !== me.id) return Astro.redirect(`/job/${job.slug}`)

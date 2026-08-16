@@ -256,6 +256,38 @@ describe("fetchJobOffer", () => {
     expect(result).toEqual({ data: null, apiDown: true })
     expect(consoleSpy).toHaveBeenCalledWith("Error fetching job offer", expect.any(Error))
   })
+
+  it("hides a non-published job offer from an anonymous visitor", async () => {
+    mockFindFirst.mockResolvedValue(makeRow({ onlineStatus: "submitted" }))
+
+    const result = await fetchJobOffer("developer-1")
+
+    expect(result).toEqual({ data: null, apiDown: false })
+  })
+
+  it("hides a non-published job offer from a logged-in non-owner", async () => {
+    mockFindFirst.mockResolvedValue(makeRow({ onlineStatus: "submitted", ownerId: "owner-1" }))
+
+    const result = await fetchJobOffer("developer-1", { userId: "someone-else" })
+
+    expect(result).toEqual({ data: null, apiDown: false })
+  })
+
+  it("shows a non-published job offer to its owner", async () => {
+    mockFindFirst.mockResolvedValue(makeRow({ onlineStatus: "submitted", ownerId: "owner-1" }))
+
+    const result = await fetchJobOffer("developer-1", { userId: "owner-1" })
+
+    expect(result.data?.slug).toBe("developer-1")
+  })
+
+  it("shows a non-published job offer to a moderator", async () => {
+    mockFindFirst.mockResolvedValue(makeRow({ onlineStatus: "rejected", ownerId: "owner-1" }))
+
+    const result = await fetchJobOffer("developer-1", { userId: "mod-1", isModerator: true })
+
+    expect(result.data?.slug).toBe("developer-1")
+  })
 })
 
 describe("fetchMyJobOffers", () => {

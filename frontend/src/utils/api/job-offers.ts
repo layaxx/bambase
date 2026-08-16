@@ -161,7 +161,10 @@ export async function fetchJobOffers(limit = 100): Promise<ApiResult<JobOffer[]>
   }
 }
 
-export async function fetchJobOffer(slug: string): Promise<ApiResult<JobOffer | null>> {
+export async function fetchJobOffer(
+  slug: string,
+  viewer?: { userId?: string | null; isModerator?: boolean }
+): Promise<ApiResult<JobOffer | null>> {
   try {
     const row = await prisma.jobOffer.findFirst({
       where: { slug },
@@ -170,6 +173,11 @@ export async function fetchJobOffer(slug: string): Promise<ApiResult<JobOffer | 
       },
     })
     if (!row) return { data: null, apiDown: false }
+
+    const isOwner = !!viewer?.userId && row.ownerId === viewer.userId
+    if (row.onlineStatus !== "published" && !isOwner && !viewer?.isModerator) {
+      return { data: null, apiDown: false }
+    }
 
     return { data: toJobOffer(row, { reports: row.reports }), apiDown: false }
   } catch (error) {

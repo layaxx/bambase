@@ -14,7 +14,9 @@ if (!user) return Astro.redirect(`/login?redirect=/admin/jobs/${Astro.params.slu
 if (!(await canModerateJobOffers(user.role))) return Astro.redirect("/")
 
 const { slug } = Astro.params
-const { data: job } = slug ? await fetchJobOffer(slug) : { data: null }
+const { data: job } = slug
+  ? await fetchJobOffer(slug, { userId: user.id, isModerator: true })
+  : { data: null }
 if (!job) return Astro.redirect("/admin/jobs")
 
 const result = Astro.getActionResult(actions.jobs.update)
