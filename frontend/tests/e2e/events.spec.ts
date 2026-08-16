@@ -37,6 +37,16 @@ async function createEvent(page: Page, title: string): Promise<string> {
   return page.url()
 }
 
+/**
+ * The /events listing is paginated and sorted by start date ascending, and
+ * FUTURE_START (2099) sorts after every other event, so a freshly created
+ * test event lands on the last page rather than the first.
+ */
+async function goToLastEventsPage(page: Page) {
+  const lastPageLink = page.locator(".join a.join-item", { hasText: /^\d+$/ }).last()
+  if (await lastPageLink.count()) await lastPageLink.click()
+}
+
 async function deleteEvent(page: Page) {
   await page.getByRole("button", { name: "Löschen" }).click()
   await page.getByRole("dialog").getByRole("button", { name: "Löschen" }).click()
@@ -294,6 +304,7 @@ test("created event appears on the /events listing page", async ({ page }) => {
   const eventUrl = await createEvent(page, title)
 
   await page.goto("/events")
+  await goToLastEventsPage(page)
   await expect(page.locator("body")).toContainText(title)
 
   await page.goto(eventUrl)

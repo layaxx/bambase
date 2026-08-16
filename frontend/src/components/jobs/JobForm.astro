@@ -257,6 +257,6 @@ const t = useTranslations(Astro.locals.locale)
     "contact_phone",
   ]
 
-  const form = document.querySelector<HTMLFormElement>("form[data-draft-key]")
+  const form = document.querySelector<HTMLFormElement>("form")
   if (form) initDraftPersistence(form, FIELDS)
 </script>

@@ -193,3 +193,10 @@ const t = useTranslations(Astro.locals.locale)
     <a class="btn btn-ghost" href={cancelHref}>{t.ui.cancel}</a>
   </div>
 </form>
+
+<script>
+  import { disableSubmitOnSubmit } from "@/utils/form-draft"
+
+  const form = document.querySelector<HTMLFormElement>("form")
+  if (form) disableSubmitOnSubmit(form)
+</script>

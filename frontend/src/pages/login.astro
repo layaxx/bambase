@@ -73,6 +73,10 @@ const emailConfirmed = Astro.url.searchParams.get("confirmed") === "true"
 
     form?.addEventListener("submit", async (event) => {
       event.preventDefault()
+
+      const submitButton = form.querySelector<HTMLButtonElement>('[type="submit"]')
+      if (submitButton) submitButton.disabled = true
+
       const formData = new FormData(event.target as HTMLFormElement)
       const email = formData.get("identifier") as string
       const password = formData.get("password") as string
@@ -83,14 +87,16 @@ const emailConfirmed = Astro.url.searchParams.get("confirmed") === "true"
       if (Boolean(authResponse.error) === false) {
         window.location.href = new URLSearchParams(window.location.search).get("redirect") || "/"
       } else {
+        if (submitButton) submitButton.disabled = false
+
         const errorDiv = document.getElementById("signin-error")
         if (errorDiv) {
           errorDiv.classList.remove("hidden")
           const textElem = errorDiv.querySelector("span")
           if (textElem) {
             let msg = {
-              en: "Ein unbekannter Fehler ist aufgetreten.",
-              de: "An unknown error occurred.",
+              de: "Ein unbekannter Fehler ist aufgetreten.",
+              en: "An unknown error occurred.",
             }
 
             if (authResponse.error?.status === 500) {

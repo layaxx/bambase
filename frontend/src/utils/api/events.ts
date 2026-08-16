@@ -104,6 +104,63 @@ export async function fetchEvents(limit = 100): Promise<ApiResult<Event[]>> {
   }
 }
 
+export type EventDateFilter = "upcoming" | "week" | "month"
+
+export type EventsFilter = {
+  category?: EventCategory
+  dateFilter?: EventDateFilter
+  page?: number
+  pageSize?: number
+}
+
+export type EventPage = {
+  events: Event[]
+  total: number
+  page: number
+  pageCount: number
+}
+
+export async function fetchEventsPaginated(
+  filter: EventsFilter = {}
+): Promise<ApiResult<EventPage>> {
+  const { category, dateFilter = "upcoming", page = 1, pageSize = 15 } = filter
+
+  const now = new Date()
+  const where = { hidden: false, end: { gte: now } } as {
+    hidden: boolean
+    end: { gte: Date }
+    category?: EventCategory
+    start?: { lte: Date }
+  }
+  if (category) where.category = category
+  if (dateFilter === "week") where.start = { lte: new Date(now.getTime() + 7 * 86_400_000) }
+  else if (dateFilter === "month") where.start = { lte: new Date(now.getTime() + 31 * 86_400_000) }
+
+  const key = `events:paginated:${JSON.stringify({ category, dateFilter, page, pageSize })}`
+  try {
+    const { rows, total } = await withCache(key, async () => {
+      const [rows, total] = await Promise.all([
+        prisma.event.findMany({
+          where,
+          orderBy: { start: "asc" },
+          skip: (page - 1) * pageSize,
+          take: pageSize,
+        }),
+        prisma.event.count({ where }),
+      ])
+      return { rows, total }
+    })
+    const pageCount = Math.max(1, Math.ceil(total / pageSize))
+    return {
+      data: { events: rows.map((row) => toEvent(row)), total, page, pageCount },
+      apiDown: false,
+    }
+  } catch (error) {
+    console.error("Error fetching events (paginated)", error)
+    return { data: { events: [], total: 0, page: 1, pageCount: 1 }, apiDown: true }
+  }
+}
+
 export async function fetchOngoingOrUpcomingEvents(limit = 100): Promise<ApiResult<Event[]>> {
   const key = `events:ongoing-or-upcoming:${limit}`
   try {

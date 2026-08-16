@@ -48,10 +48,11 @@ const t = useTranslations(Astro.locals.locale)
             class="input w-full"
             minlength="10"
             name="password"
-            placeholder={t.auth.passwordMinHint}
+            placeholder={t.auth.passwordPlaceholder}
             required
             type="password"
           />
+          <p class="fieldset-label">{t.auth.passwordMinHint}</p>
         </fieldset>
 
         <fieldset class="fieldset">
@@ -117,7 +118,7 @@ const t = useTranslations(Astro.locals.locale)
         return { error: undefined }
       } else {
         let msg = {
-          de: "Ein Fehler ist aufgetreten. Bitter später erneut versuchen.",
+          de: "Ein Fehler ist aufgetreten. Bitte später erneut versuchen.",
           en: "An unknown error has occurred. Please try again later.",
         }
 
@@ -144,11 +145,16 @@ const t = useTranslations(Astro.locals.locale)
     form?.addEventListener("submit", async (event) => {
       event.preventDefault()
 
+      const submitButton = form.querySelector<HTMLButtonElement>('[type="submit"]')
+      if (submitButton) submitButton.disabled = true
+
       errorElement?.classList.add("hidden")
 
       const { error } = await trySignup(event, locale)
 
       if (error) {
+        if (submitButton) submitButton.disabled = false
+
         errorElement?.classList.remove("hidden")
         const textElem = errorElement?.querySelector("span")
 

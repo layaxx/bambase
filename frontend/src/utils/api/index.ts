@@ -18,9 +18,18 @@ export {
   JOB_FIELDS,
   WORK_MODES,
 } from "./job-offers"
-export type { Event, EventMapLocation, EventCustomLocation, EventCategory } from "./events"
+export type {
+  Event,
+  EventMapLocation,
+  EventCustomLocation,
+  EventCategory,
+  EventsFilter,
+  EventPage,
+  EventDateFilter,
+} from "./events"
 export {
   fetchEvents,
+  fetchEventsPaginated,
   fetchOngoingOrUpcomingEvents,
   fetchEvent,
   fetchUpcomingMapEvents,
