@@ -11,6 +11,7 @@ const statement = {
   jobOffer: ["moderate"],
   event: ["moderate"],
   location: ["manage"],
+  studentGroup: ["manage"],
   system: ["view"],
 } as const
 
@@ -23,6 +24,7 @@ const adminRole = ac.newRole({
   jobOffer: ["moderate"],
   event: ["moderate"],
   location: ["manage"],
+  studentGroup: ["manage"],
   system: ["view"],
 })
 

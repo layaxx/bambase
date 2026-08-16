@@ -1,0 +1,133 @@
+---
+import type { actions } from "astro:actions"
+import { useTranslations } from "@/i18n/translations"
+
+interface Props {
+  action: typeof actions.studentGroups.create | typeof actions.studentGroups.update
+  submitLabel: string
+  cancelHref: string
+  inputErrors: Record<string, string[] | undefined>
+  id?: string
+  initialValues?: {
+    name?: string
+    description?: string
+    website?: string
+    instagram?: string
+    facebook?: string
+    email?: string
+  }
+}
+
+const { action, submitLabel, cancelHref, inputErrors, id, initialValues = {} } = Astro.props
+
+const t = useTranslations(Astro.locals.locale)
+---
+
+<form action={action} class="flex max-w-2xl flex-col gap-6" method="POST">
+  {id && <input name="id" type="hidden" value={id} />}
+
+  <div class="flex flex-col">
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend font-medium">{t.studentGroups.fieldName}</legend>
+      <input
+        class:list={["input w-full", inputErrors.name && "input-error"]}
+        id="name"
+        name="name"
+        required
+        type="text"
+        value={initialValues.name}
+      />
+      {inputErrors.name && <p class="fieldset-label text-error">{inputErrors.name[0]}</p>}
+    </fieldset>
+
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend font-medium">{t.studentGroups.fieldDescription}</legend>
+      <textarea
+        class:list={[
+          "textarea textarea-bordered w-full resize-y",
+          inputErrors.description && "textarea-error",
+        ]}
+        id="description"
+        name="description"
+        required
+        rows="4">{initialValues.description}</textarea
+      >
+      {
+        inputErrors.description && (
+          <p class="fieldset-label text-error">{inputErrors.description[0]}</p>
+        )
+      }
+    </fieldset>
+
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend font-medium">
+        {t.studentGroups.fieldWebsite}
+        <span class="font-normal text-base-content/40"> {t.studentGroups.optionalLabel}</span>
+      </legend>
+      <input
+        class:list={["input w-full", inputErrors.website && "input-error"]}
+        id="website"
+        name="website"
+        type="url"
+        value={initialValues.website ?? ""}
+      />
+      {inputErrors.website && <p class="fieldset-label text-error">{inputErrors.website[0]}</p>}
+    </fieldset>
+
+    <div class="grid sm:grid-cols-2">
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend font-medium">
+          {t.studentGroups.fieldInstagram}
+          <span class="font-normal text-base-content/40"> {t.studentGroups.optionalLabel}</span>
+        </legend>
+        <input
+          class:list={["input w-full", inputErrors.instagram && "input-error"]}
+          id="instagram"
+          name="instagram"
+          type="url"
+          value={initialValues.instagram ?? ""}
+        />
+        {
+          inputErrors.instagram && (
+            <p class="fieldset-label text-error">{inputErrors.instagram[0]}</p>
+          )
+        }
+      </fieldset>
+
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend font-medium">
+          {t.studentGroups.fieldFacebook}
+          <span class="font-normal text-base-content/40"> {t.studentGroups.optionalLabel}</span>
+        </legend>
+        <input
+          class:list={["input w-full", inputErrors.facebook && "input-error"]}
+          id="facebook"
+          name="facebook"
+          type="url"
+          value={initialValues.facebook ?? ""}
+        />
+        {inputErrors.facebook && <p class="fieldset-label text-error">{inputErrors.facebook[0]}</p>}
+      </fieldset>
+    </div>
+
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend font-medium">
+        {t.studentGroups.fieldEmail}
+        <span class="font-normal text-base-content/40"> {t.studentGroups.optionalLabel}</span>
+      </legend>
+      <input
+        class:list={["input w-full", inputErrors.email && "input-error"]}
+        id="email"
+        name="email"
+        type="email"
+        value={initialValues.email ?? ""}
+      />
+      {inputErrors.email && <p class="fieldset-label text-error">{inputErrors.email[0]}</p>}
+    </fieldset>
+  </div>
+
+  <div class="flex items-center gap-3">
+    <button class="btn btn-primary" type="submit">{submitLabel}</button>
+    <a class="btn btn-ghost" href={cancelHref}>{t.ui.cancel}</a>
+  </div>
+</form>

@@ -4,6 +4,7 @@ import {
   canModerateJobOffers,
   canModerateEvents,
   canManageLocations,
+  canManageStudentGroups,
   canManageUsers,
   canViewSystemStatus,
 } from "@/utils/authz"
@@ -14,14 +15,21 @@ const t = useTranslations(Astro.locals.locale)
 const user = Astro.locals.user
 if (!user) return Astro.redirect("/login?redirect=/admin")
 
-const [isJobModerator, isEventModerator, isLocationManager, isUserManager, isSystemViewer] =
-  await Promise.all([
-    canModerateJobOffers(user.role),
-    canModerateEvents(user.role),
-    canManageLocations(user.role),
-    canManageUsers(user.role),
-    canViewSystemStatus(user.role),
-  ])
+const [
+  isJobModerator,
+  isEventModerator,
+  isLocationManager,
+  isStudentGroupManager,
+  isUserManager,
+  isSystemViewer,
+] = await Promise.all([
+  canModerateJobOffers(user.role),
+  canModerateEvents(user.role),
+  canManageLocations(user.role),
+  canManageStudentGroups(user.role),
+  canManageUsers(user.role),
+  canViewSystemStatus(user.role),
+])
 
 const sections = [
   {
@@ -41,6 +49,12 @@ const sections = [
     title: t.admin.locationsTitle,
     description: t.admin.overviewLocationsDescription,
     visible: isLocationManager,
+  },
+  {
+    href: "/admin/student-groups",
+    title: t.admin.studentGroupsTitle,
+    description: t.admin.overviewStudentGroupsDescription,
+    visible: isStudentGroupManager,
   },
   {
     href: "/admin/users",

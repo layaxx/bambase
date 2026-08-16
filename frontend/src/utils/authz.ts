@@ -18,6 +18,7 @@ type Permissions = {
   jobOffer?: "moderate"[]
   event?: "moderate"[]
   location?: "manage"[]
+  studentGroup?: "manage"[]
   user?: UserAction[]
   session?: SessionAction[]
   system?: "view"[]
@@ -46,6 +47,10 @@ export function canModerateEvents(role: string | null | undefined): Promise<bool
 
 export function canManageLocations(role: string | null | undefined): Promise<boolean> {
   return hasPermission(role, { location: ["manage"] })
+}
+
+export function canManageStudentGroups(role: string | null | undefined): Promise<boolean> {
+  return hasPermission(role, { studentGroup: ["manage"] })
 }
 
 export function canManageUsers(role: string | null | undefined): Promise<boolean> {

@@ -38,7 +38,11 @@ export {
   LOCATION_CATEGORIES,
 } from "./locations"
 export type { StudentGroup } from "./student-groups"
-export { fetchStudentGroups } from "./student-groups"
+export {
+  fetchStudentGroups,
+  fetchStudentGroupForAdmin,
+  fetchAllStudentGroupsForAdmin,
+} from "./student-groups"
 export type { MensaMeal } from "./mensa"
 export { fetchMensaMeals, fetchMensaMealsRange } from "./mensa"
 export type { CronJobKey } from "@/utils/cron-tracking"
