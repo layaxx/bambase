@@ -24,6 +24,7 @@ describe("fetchCronJobStatuses", () => {
       { key: "mensa-sync", schedule: "0 5,8,10,11,12,14,16 * * *", lastRun: null },
       { key: "event-sync", schedule: "0 2 * * *", lastRun: null },
       { key: "job-offer-sync", schedule: "0 3 * * *", lastRun: null },
+      { key: "job-offer-expiry", schedule: "0 1 * * *", lastRun: null },
     ])
   })
 

@@ -172,6 +172,7 @@ export async function syncJobOffers(): Promise<void> {
           contactMail: he.decode(job.contact_mail),
           contactPhone: job.contact_tel,
           onlineStatus: getStatus(job, now),
+          offlineAfter: new Date(job.offline_date),
         },
       })
       created++

@@ -4,6 +4,7 @@ export const CRON_JOB_DEFINITIONS = {
   "mensa-sync": { schedule: "0 5,8,10,11,12,14,16 * * *" },
   "event-sync": { schedule: "0 2 * * *" },
   "job-offer-sync": { schedule: "0 3 * * *" },
+  "job-offer-expiry": { schedule: "0 1 * * *" },
 } as const
 
 export type CronJobKey = keyof typeof CRON_JOB_DEFINITIONS

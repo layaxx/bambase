@@ -5,17 +5,21 @@ import { runTrackedCronJob, type CronJobKey } from "@/utils/cron-tracking"
 import { syncMensaMeals } from "@/utils/mensa-sync"
 import { syncUnivisEvents } from "@/utils/event-sync"
 import { syncJobOffers } from "@/utils/job-offer-sync"
+import { expireJobOffers } from "@/utils/job-offer-expiry"
 
 const JOB_RUNNERS: Record<CronJobKey, () => Promise<unknown>> = {
   "mensa-sync": syncMensaMeals,
   "event-sync": syncUnivisEvents,
   "job-offer-sync": syncJobOffers,
+  "job-offer-expiry": expireJobOffers,
 }
 
 export const cron = {
   run: defineAction({
     accept: "form",
-    input: z.object({ key: z.enum(["mensa-sync", "event-sync", "job-offer-sync"]) }),
+    input: z.object({
+      key: z.enum(["mensa-sync", "event-sync", "job-offer-sync", "job-offer-expiry"]),
+    }),
     handler: async ({ key }, context) => {
       if (!context.locals.user) {
         throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })

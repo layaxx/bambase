@@ -29,6 +29,8 @@ const mockSyncUnivisEvents = vi.hoisted(() => vi.fn())
 vi.mock("@/utils/event-sync", () => ({ syncUnivisEvents: mockSyncUnivisEvents }))
 const mockSyncJobOffers = vi.hoisted(() => vi.fn())
 vi.mock("@/utils/job-offer-sync", () => ({ syncJobOffers: mockSyncJobOffers }))
+const mockExpireJobOffers = vi.hoisted(() => vi.fn())
+vi.mock("@/utils/job-offer-expiry", () => ({ expireJobOffers: mockExpireJobOffers }))
 
 import { cron } from "./cron"
 
@@ -75,6 +77,20 @@ describe("cron.run", () => {
     )
 
     expect(mockRunTrackedCronJob).toHaveBeenCalledWith("event-sync", mockSyncUnivisEvents)
+    expect(result).toEqual({})
+  })
+
+  it("runs the job offer expiry job", async () => {
+    mockCanViewSystemStatus.mockResolvedValue(true)
+    mockRunTrackedCronJob.mockResolvedValue({ status: "success" })
+
+    const result = await cron.run(
+      { key: "job-offer-expiry" },
+      // @ts-expect-error - needed because of mocked defineAction function
+      makeContext("admin-1", "admin")
+    )
+
+    expect(mockRunTrackedCronJob).toHaveBeenCalledWith("job-offer-expiry", mockExpireJobOffers)
     expect(result).toEqual({})
   })
 

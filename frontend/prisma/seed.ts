@@ -1051,6 +1051,7 @@ async function main() {
         slug,
         onlineStatus: onlineStatus ?? "published",
         ownerId: ownedBySeedUser ? seedUser.id : null,
+        offlineAfter: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       }
       return prisma.jobOffer.upsert({
         where: { slug },

@@ -6,6 +6,8 @@ import { slugify, uniqueSlug } from "@/utils/slugify"
 import { canModerateJobOffers } from "@/utils/authz"
 import prisma from "@/utils/prisma"
 
+const JOB_OFFER_LIFETIME_DAYS = 30
+
 const httpUrl = z
   .url()
   .max(2048)
@@ -219,6 +221,7 @@ export const jobs = {
             contactMail: input.contact_mail || null,
             contactPhone: input.contact_phone || null,
             ownerId: userId,
+            offlineAfter: new Date(Date.now() + JOB_OFFER_LIFETIME_DAYS * 24 * 60 * 60 * 1000),
           },
         })
       } catch (error) {

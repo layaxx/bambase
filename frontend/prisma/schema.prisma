@@ -265,10 +265,11 @@ model JobOffer {
   ownerId      String?
   owner        User?           @relation(fields: [ownerId], references: [id], onDelete: SetNull)
   reports      Report[]
+  offlineAfter DateTime
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
 
-  @@index([onlineStatus])
+  @@index([onlineStatus, offlineAfter])
   @@map("job_offer")
 }
 

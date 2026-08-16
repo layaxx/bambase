@@ -124,6 +124,19 @@ describe("jobs.create", () => {
     expect(mockCreate.mock.calls[0][0].data.ownerId).toBe("user-1")
   })
 
+  it("sets offlineAfter to roughly 30 days from now", async () => {
+    await jobs.create(
+      baseInput,
+      // @ts-expect-error - needed because of mocked defineAction function
+      makeContext("user-1")
+    )
+
+    const offlineAfter: Date = mockCreate.mock.calls[0][0].data.offlineAfter
+    const expected = Date.now() + 30 * 24 * 60 * 60 * 1000
+    expect(offlineAfter.getTime()).toBeGreaterThan(expected - 5000)
+    expect(offlineAfter.getTime()).toBeLessThanOrEqual(expected + 5000)
+  })
+
   it("appends -2 to the slug when the base slug is already taken", async () => {
     mockFindUnique.mockResolvedValueOnce({ id: "other-job" }).mockResolvedValueOnce(null)
 

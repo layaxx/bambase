@@ -6,6 +6,7 @@ import { auth } from "./utils/auth"
 import "@/utils/mensa-cron"
 import "@/utils/event-sync-cron"
 import "@/utils/job-offer-sync-cron"
+import "@/utils/job-offer-expiry-cron"
 
 const SUPPORTED_LOCALES: Locale[] = ["de", "en"]
 const DEFAULT_LOCALE: Locale = "de"
