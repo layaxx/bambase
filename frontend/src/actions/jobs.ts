@@ -2,8 +2,9 @@ import { defineAction, ActionError } from "astro:actions"
 import { z } from "astro/zod"
 import { JOB_TYPES, JOB_FIELDS, WORK_MODES } from "@/utils/api/job-offers"
 import { invalidateCacheByPrefix } from "@/utils/api/cache"
-import { slugify, uniqueSlug } from "@/utils/slugify"
+import { createUniqueSlug } from "@/utils/slugify"
 import { canModerateJobOffers } from "@/utils/authz"
+import { requireUserId, requirePermission, assertOwnerOrPermission } from "@/utils/action-guards"
 import prisma from "@/utils/prisma"
 
 const JOB_OFFER_LIFETIME_DAYS = 30
@@ -33,14 +34,17 @@ export const jobs = {
     accept: "form",
     input: z.object({ id: z.string().min(1) }),
     handler: async ({ id }, context) => {
-      const userId = context.locals.user?.id
-      if (!userId) throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
+      const userId = requireUserId(context)
 
       const job = await prisma.jobOffer.findUnique({ where: { id }, select: { ownerId: true } })
       if (!job) throw new ActionError({ code: "NOT_FOUND", message: "Stelle nicht gefunden." })
-      if (job.ownerId !== userId) {
-        throw new ActionError({ code: "FORBIDDEN", message: "Löschen fehlgeschlagen." })
-      }
+      await assertOwnerOrPermission(
+        context,
+        userId,
+        job.ownerId,
+        undefined,
+        "Löschen fehlgeschlagen."
+      )
 
       try {
         await prisma.jobOffer.delete({ where: { id } })
@@ -58,14 +62,17 @@ export const jobs = {
     accept: "form",
     input: z.object({ id: z.string().min(1) }),
     handler: async ({ id }, context) => {
-      const userId = context.locals.user?.id
-      if (!userId) throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
+      const userId = requireUserId(context)
 
       const job = await prisma.jobOffer.findUnique({ where: { id }, select: { ownerId: true } })
       if (!job) throw new ActionError({ code: "NOT_FOUND", message: "Stelle nicht gefunden." })
-      if (job.ownerId !== userId) {
-        throw new ActionError({ code: "FORBIDDEN", message: "Archivieren fehlgeschlagen." })
-      }
+      await assertOwnerOrPermission(
+        context,
+        userId,
+        job.ownerId,
+        undefined,
+        "Archivieren fehlgeschlagen."
+      )
 
       try {
         await prisma.jobOffer.update({ where: { id }, data: { onlineStatus: "archived" } })
@@ -86,12 +93,7 @@ export const jobs = {
     accept: "form",
     input: z.object({ id: z.string().min(1) }),
     handler: async ({ id }, context) => {
-      if (!context.locals.user) {
-        throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
-      }
-      if (!(await canModerateJobOffers(context.locals.user.role))) {
-        throw new ActionError({ code: "FORBIDDEN", message: "Keine Berechtigung." })
-      }
+      await requirePermission(context, canModerateJobOffers)
 
       try {
         await prisma.jobOffer.update({ where: { id }, data: { onlineStatus: "published" } })
@@ -112,12 +114,7 @@ export const jobs = {
     accept: "form",
     input: z.object({ id: z.string().min(1) }),
     handler: async ({ id }, context) => {
-      if (!context.locals.user) {
-        throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
-      }
-      if (!(await canModerateJobOffers(context.locals.user.role))) {
-        throw new ActionError({ code: "FORBIDDEN", message: "Keine Berechtigung." })
-      }
+      await requirePermission(context, canModerateJobOffers)
 
       try {
         await prisma.jobOffer.update({ where: { id }, data: { onlineStatus: "rejected" } })
@@ -141,17 +138,20 @@ export const jobs = {
       contact_name: z.string().max(200).optional(),
     }),
     handler: async ({ id, ...fields }, context) => {
-      const userId = context.locals.user?.id
-      if (!userId) throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
+      const userId = requireUserId(context)
 
       const existing = await prisma.jobOffer.findUnique({
         where: { id },
         select: { ownerId: true },
       })
       if (!existing) throw new ActionError({ code: "NOT_FOUND", message: "Stelle nicht gefunden." })
-      if (existing.ownerId !== userId && !(await canModerateJobOffers(context.locals.user?.role))) {
-        throw new ActionError({ code: "FORBIDDEN", message: "Aktualisierung fehlgeschlagen." })
-      }
+      await assertOwnerOrPermission(
+        context,
+        userId,
+        existing.ownerId,
+        canModerateJobOffers,
+        "Aktualisierung fehlgeschlagen."
+      )
 
       let updated: { slug: string }
       try {
@@ -186,10 +186,7 @@ export const jobs = {
     accept: "form",
     input: jobCreateSchema,
     handler: async (input, context) => {
-      const userId = context.locals.user?.id
-      if (!userId) {
-        throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
-      }
+      const userId = requireUserId(context)
       if (!context.locals.user?.emailVerified) {
         throw new ActionError({
           code: "FORBIDDEN",
@@ -199,10 +196,9 @@ export const jobs = {
 
       let created: { slug: string }
       try {
-        const slug = await uniqueSlug(
-          slugify(input.title),
-          async (candidate) =>
-            (await prisma.jobOffer.findUnique({ where: { slug: candidate } })) != null
+        const slug = await createUniqueSlug(
+          (slug) => prisma.jobOffer.findUnique({ where: { slug } }),
+          input.title
         )
 
         created = await prisma.jobOffer.create({

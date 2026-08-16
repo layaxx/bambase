@@ -2,15 +2,14 @@
 import { actions } from "astro:actions"
 import PageLayout from "@/layouts/PageLayout.astro"
 import { fetchSubmittedJobOffers, fetchRecentlyModeratedJobOffers } from "@/utils/api"
-import { canModerateJobOffers } from "@/utils/authz"
+import { canModerateJobOffers, requireRole } from "@/utils/authz"
 import { JOB_STATUS_BADGE_CLASS } from "@/utils/job-status"
 import { useTranslations } from "@/i18n/translations"
 
 const t = useTranslations(Astro.locals.locale)
 
-const user = Astro.locals.user
-if (!user) return Astro.redirect("/login?redirect=/admin/jobs")
-if (!(await canModerateJobOffers(user.role))) return Astro.redirect("/")
+const guard = await requireRole(Astro, canModerateJobOffers, "/admin/jobs")
+if (guard instanceof Response) return guard
 
 const approveResult = Astro.getActionResult(actions.jobs.approve)
 const rejectResult = Astro.getActionResult(actions.jobs.reject)

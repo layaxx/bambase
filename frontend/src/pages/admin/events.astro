@@ -1,14 +1,13 @@
 ---
 import PageLayout from "@/layouts/PageLayout.astro"
 import { fetchAllEventsForAdmin } from "@/utils/api"
-import { canModerateEvents } from "@/utils/authz"
+import { canModerateEvents, requireRole } from "@/utils/authz"
 import { useTranslations } from "@/i18n/translations"
 
 const t = useTranslations(Astro.locals.locale)
 
-const user = Astro.locals.user
-if (!user) return Astro.redirect("/login?redirect=/admin/events")
-if (!(await canModerateEvents(user.role))) return Astro.redirect("/")
+const guard = await requireRole(Astro, canModerateEvents, "/admin/events")
+if (guard instanceof Response) return guard
 
 const { data: events } = await fetchAllEventsForAdmin()
 ---

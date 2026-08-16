@@ -1,8 +1,9 @@
 import { defineAction, ActionError } from "astro:actions"
 import { z } from "astro/zod"
 import { invalidateCacheByPrefix } from "@/utils/api/cache"
-import { slugify, uniqueSlug } from "@/utils/slugify"
+import { createUniqueSlug } from "@/utils/slugify"
 import { canManageStudentGroups } from "@/utils/authz"
+import { requirePermission } from "@/utils/action-guards"
 import prisma from "@/utils/prisma"
 
 const httpUrl = z
@@ -24,12 +25,7 @@ export const studentGroups = {
     accept: "form",
     input: z.object({ id: z.string().min(1) }),
     handler: async ({ id }, context) => {
-      if (!context.locals.user) {
-        throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
-      }
-      if (!(await canManageStudentGroups(context.locals.user.role))) {
-        throw new ActionError({ code: "FORBIDDEN", message: "Keine Berechtigung." })
-      }
+      await requirePermission(context, canManageStudentGroups)
 
       const group = await prisma.studentGroup.findUnique({ where: { id }, select: { id: true } })
       if (!group) throw new ActionError({ code: "NOT_FOUND", message: "Gruppe nicht gefunden." })
@@ -50,12 +46,7 @@ export const studentGroups = {
     accept: "form",
     input: studentGroupBaseSchema.extend({ id: z.string().min(1) }),
     handler: async ({ id, ...fields }, context) => {
-      if (!context.locals.user) {
-        throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
-      }
-      if (!(await canManageStudentGroups(context.locals.user.role))) {
-        throw new ActionError({ code: "FORBIDDEN", message: "Keine Berechtigung." })
-      }
+      await requirePermission(context, canManageStudentGroups)
 
       const existing = await prisma.studentGroup.findUnique({
         where: { id },
@@ -92,19 +83,13 @@ export const studentGroups = {
     accept: "form",
     input: studentGroupBaseSchema,
     handler: async (input, context) => {
-      if (!context.locals.user) {
-        throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
-      }
-      if (!(await canManageStudentGroups(context.locals.user.role))) {
-        throw new ActionError({ code: "FORBIDDEN", message: "Keine Berechtigung." })
-      }
+      await requirePermission(context, canManageStudentGroups)
 
       let created: { slug: string }
       try {
-        const slug = await uniqueSlug(
-          slugify(input.name),
-          async (candidate) =>
-            (await prisma.studentGroup.findUnique({ where: { slug: candidate } })) != null
+        const slug = await createUniqueSlug(
+          (slug) => prisma.studentGroup.findUnique({ where: { slug } }),
+          input.name
         )
 
         created = await prisma.studentGroup.create({

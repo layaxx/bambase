@@ -2,15 +2,15 @@
 import { actions } from "astro:actions"
 import type { UserWithRole } from "better-auth/plugins"
 import PageLayout from "@/layouts/PageLayout.astro"
-import { canManageUsers } from "@/utils/authz"
+import { canManageUsers, requireRole } from "@/utils/authz"
 import { useTranslations } from "@/i18n/translations"
 import { auth } from "@/utils/auth"
 
 const t = useTranslations(Astro.locals.locale)
 
-const currentUser = Astro.locals.user
-if (!currentUser) return Astro.redirect("/login?redirect=/admin/users")
-if (!(await canManageUsers(currentUser.role))) return Astro.redirect("/")
+const guard = await requireRole(Astro, canManageUsers, "/admin/users")
+if (guard instanceof Response) return guard
+const { user: currentUser } = guard
 
 const banResult = Astro.getActionResult(actions.users.ban)
 const unbanResult = Astro.getActionResult(actions.users.unban)

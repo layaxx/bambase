@@ -27,3 +27,13 @@ export async function uniqueSlug(
   }
   return slug
 }
+
+/**
+ * Slugifies `name` and appends -2, -3, ... until `findBySlug` reports no match.
+ */
+export async function createUniqueSlug(
+  findBySlug: (slug: string) => Promise<unknown>,
+  name: string
+): Promise<string> {
+  return uniqueSlug(slugify(name), async (candidate) => (await findBySlug(candidate)) != null)
+}

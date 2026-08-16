@@ -2,16 +2,8 @@ import { defineAction, ActionError } from "astro:actions"
 import { z } from "astro/zod"
 import { APIError } from "better-auth"
 import { canManageUsers } from "@/utils/authz"
+import { requirePermission } from "@/utils/action-guards"
 import { auth } from "@/utils/auth"
-
-async function requireUserManager(context: { locals: { user: { role?: string | null } | null } }) {
-  if (!context.locals.user) {
-    throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
-  }
-  if (!(await canManageUsers(context.locals.user.role))) {
-    throw new ActionError({ code: "FORBIDDEN", message: "Keine Berechtigung." })
-  }
-}
 
 export const users = {
   ban: defineAction({
@@ -21,7 +13,7 @@ export const users = {
       reason: z.string().max(500).optional(),
     }),
     handler: async ({ id, reason }, context) => {
-      await requireUserManager(context)
+      await requirePermission(context, canManageUsers)
 
       try {
         await auth.api.banUser({
@@ -47,7 +39,7 @@ export const users = {
     accept: "form",
     input: z.object({ id: z.string().min(1) }),
     handler: async ({ id }, context) => {
-      await requireUserManager(context)
+      await requirePermission(context, canManageUsers)
 
       try {
         await auth.api.unbanUser({

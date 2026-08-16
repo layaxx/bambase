@@ -2,16 +2,20 @@
 import { actions, isInputError } from "astro:actions"
 import PageLayout from "@/layouts/PageLayout.astro"
 import { fetchJobOffer } from "@/utils/api"
-import { canModerateJobOffers } from "@/utils/authz"
+import { canModerateJobOffers, requireRole } from "@/utils/authz"
 import { useTranslations } from "@/i18n/translations"
 import IconArrowLeft from "@/components/icons/IconArrowLeft.astro"
 import JobForm from "@/components/jobs/JobForm.astro"
 
 const t = useTranslations(Astro.locals.locale)
 
-const user = Astro.locals.user
-if (!user) return Astro.redirect(`/login?redirect=/admin/jobs/${Astro.params.slug}/edit`)
-if (!(await canModerateJobOffers(user.role))) return Astro.redirect("/")
+const guard = await requireRole(
+  Astro,
+  canModerateJobOffers,
+  `/admin/jobs/${Astro.params.slug}/edit`
+)
+if (guard instanceof Response) return guard
+const { user } = guard
 
 const { slug } = Astro.params
 const { data: job } = slug

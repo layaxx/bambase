@@ -2,8 +2,9 @@ import { defineAction, ActionError } from "astro:actions"
 import { z } from "astro/zod"
 import { LOCATION_CATEGORIES } from "@/utils/api/locations"
 import { invalidateCacheByPrefix } from "@/utils/api/cache"
-import { slugify, uniqueSlug } from "@/utils/slugify"
+import { createUniqueSlug } from "@/utils/slugify"
 import { canManageLocations } from "@/utils/authz"
+import { requirePermission } from "@/utils/action-guards"
 import prisma from "@/utils/prisma"
 
 const httpUrl = z
@@ -29,12 +30,7 @@ export const locations = {
     accept: "form",
     input: z.object({ id: z.string().min(1) }),
     handler: async ({ id }, context) => {
-      if (!context.locals.user) {
-        throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
-      }
-      if (!(await canManageLocations(context.locals.user.role))) {
-        throw new ActionError({ code: "FORBIDDEN", message: "Keine Berechtigung." })
-      }
+      await requirePermission(context, canManageLocations)
 
       const location = await prisma.location.findUnique({ where: { id }, select: { id: true } })
       if (!location) throw new ActionError({ code: "NOT_FOUND", message: "Ort nicht gefunden." })
@@ -55,12 +51,7 @@ export const locations = {
     accept: "form",
     input: locationBaseSchema.extend({ id: z.string().min(1) }),
     handler: async ({ id, ...fields }, context) => {
-      if (!context.locals.user) {
-        throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
-      }
-      if (!(await canManageLocations(context.locals.user.role))) {
-        throw new ActionError({ code: "FORBIDDEN", message: "Keine Berechtigung." })
-      }
+      await requirePermission(context, canManageLocations)
 
       const existing = await prisma.location.findUnique({ where: { id }, select: { id: true } })
       if (!existing) throw new ActionError({ code: "NOT_FOUND", message: "Ort nicht gefunden." })
@@ -96,19 +87,13 @@ export const locations = {
     accept: "form",
     input: locationBaseSchema,
     handler: async (input, context) => {
-      if (!context.locals.user) {
-        throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
-      }
-      if (!(await canManageLocations(context.locals.user.role))) {
-        throw new ActionError({ code: "FORBIDDEN", message: "Keine Berechtigung." })
-      }
+      await requirePermission(context, canManageLocations)
 
       let created: { slug: string }
       try {
-        const slug = await uniqueSlug(
-          slugify(input.name),
-          async (candidate) =>
-            (await prisma.location.findUnique({ where: { slug: candidate } })) != null
+        const slug = await createUniqueSlug(
+          (slug) => prisma.location.findUnique({ where: { slug } }),
+          input.name
         )
 
         created = await prisma.location.create({

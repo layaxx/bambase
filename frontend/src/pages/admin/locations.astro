@@ -2,15 +2,14 @@
 import { actions } from "astro:actions"
 import PageLayout from "@/layouts/PageLayout.astro"
 import { fetchAllLocationsForAdmin } from "@/utils/api"
-import { canManageLocations } from "@/utils/authz"
+import { canManageLocations, requireRole } from "@/utils/authz"
 import { useTranslations } from "@/i18n/translations"
 import ConfirmModal from "@/components/ConfirmModal.astro"
 
 const t = useTranslations(Astro.locals.locale)
 
-const user = Astro.locals.user
-if (!user) return Astro.redirect("/login?redirect=/admin/locations")
-if (!(await canManageLocations(user.role))) return Astro.redirect("/")
+const guard = await requireRole(Astro, canManageLocations, "/admin/locations")
+if (guard instanceof Response) return guard
 
 const deleteResult = Astro.getActionResult(actions.locations.delete)
 if (deleteResult?.data !== undefined && !deleteResult.error) {

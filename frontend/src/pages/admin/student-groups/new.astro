@@ -1,16 +1,15 @@
 ---
 import { actions, isInputError } from "astro:actions"
 import PageLayout from "@/layouts/PageLayout.astro"
-import { canManageStudentGroups } from "@/utils/authz"
+import { canManageStudentGroups, requireRole } from "@/utils/authz"
 import { useTranslations } from "@/i18n/translations"
 import IconArrowLeft from "@/components/icons/IconArrowLeft.astro"
 import StudentGroupForm from "@/components/student-groups/StudentGroupForm.astro"
 
 const t = useTranslations(Astro.locals.locale)
 
-const user = Astro.locals.user
-if (!user) return Astro.redirect("/login?redirect=/admin/student-groups/new")
-if (!(await canManageStudentGroups(user.role))) return Astro.redirect("/")
+const guard = await requireRole(Astro, canManageStudentGroups, "/admin/student-groups/new")
+if (guard instanceof Response) return guard
 
 const result = Astro.getActionResult(actions.studentGroups.create)
 if (result?.data) return Astro.redirect("/admin/student-groups")

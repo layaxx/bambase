@@ -1,3 +1,4 @@
+import type { AstroGlobal } from "astro"
 import { auth } from "./auth"
 
 type ConfiguredRole = "user" | "moderator" | "admin"
@@ -59,4 +60,21 @@ export function canManageUsers(role: string | null | undefined): Promise<boolean
 
 export function canViewSystemStatus(role: string | null | undefined): Promise<boolean> {
   return hasPermission(role, { system: ["view"] })
+}
+
+type LocalUser = App.Locals["user"]
+
+/**
+ * Redirects to login if unauthenticated, or to "/" if the user's role fails
+ * `check`. Callers must `return` the result when it's a `Response`.
+ */
+export async function requireRole(
+  Astro: AstroGlobal,
+  check: (role: string | null | undefined) => Promise<boolean>,
+  redirectPath: string
+): Promise<{ user: NonNullable<LocalUser> } | Response> {
+  const user = Astro.locals.user
+  if (!user) return Astro.redirect(`/login?redirect=${redirectPath}`)
+  if (!(await check(user.role))) return Astro.redirect("/")
+  return { user }
 }

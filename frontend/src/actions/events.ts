@@ -2,8 +2,9 @@ import { defineAction, ActionError } from "astro:actions"
 import { z } from "astro/zod"
 import { EVENT_CATEGORIES } from "@/utils/api/events"
 import { invalidateCacheByPrefix } from "@/utils/api/cache"
-import { slugify, uniqueSlug } from "@/utils/slugify"
+import { createUniqueSlug } from "@/utils/slugify"
 import { canModerateEvents } from "@/utils/authz"
+import { requireUserId, assertOwnerOrPermission } from "@/utils/action-guards"
 import prisma from "@/utils/prisma"
 
 const locationFieldsShape = {
@@ -68,14 +69,17 @@ export const events = {
     accept: "form",
     input: z.object({ id: z.string().min(1) }),
     handler: async ({ id }, context) => {
-      const userId = context.locals.user?.id
-      if (!userId) throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
+      const userId = requireUserId(context)
 
       const event = await prisma.event.findUnique({ where: { id }, select: { ownerId: true } })
       if (!event) throw new ActionError({ code: "NOT_FOUND", message: "Event nicht gefunden." })
-      if (event.ownerId !== userId) {
-        throw new ActionError({ code: "FORBIDDEN", message: "Löschen fehlgeschlagen." })
-      }
+      await assertOwnerOrPermission(
+        context,
+        userId,
+        event.ownerId,
+        undefined,
+        "Löschen fehlgeschlagen."
+      )
 
       try {
         await prisma.event.delete({ where: { id } })
@@ -95,14 +99,17 @@ export const events = {
       .extend({ id: z.string().min(1) })
       .refine(startBeforeEnd, startBeforeEndMsg),
     handler: async ({ id, ...fields }, context) => {
-      const userId = context.locals.user?.id
-      if (!userId) throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
+      const userId = requireUserId(context)
 
       const existing = await prisma.event.findUnique({ where: { id }, select: { ownerId: true } })
       if (!existing) throw new ActionError({ code: "NOT_FOUND", message: "Event nicht gefunden." })
-      if (existing.ownerId !== userId && !(await canModerateEvents(context.locals.user?.role))) {
-        throw new ActionError({ code: "FORBIDDEN", message: "Aktualisierung fehlgeschlagen." })
-      }
+      await assertOwnerOrPermission(
+        context,
+        userId,
+        existing.ownerId,
+        canModerateEvents,
+        "Aktualisierung fehlgeschlagen."
+      )
 
       let updated: { slug: string }
       try {
@@ -133,17 +140,13 @@ export const events = {
     accept: "form",
     input: eventCreateSchema,
     handler: async (input, context) => {
-      const userId = context.locals.user?.id
-      if (!userId) {
-        throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
-      }
+      const userId = requireUserId(context)
 
       let created: { slug: string }
       try {
-        const slug = await uniqueSlug(
-          slugify(input.title),
-          async (candidate) =>
-            (await prisma.event.findUnique({ where: { slug: candidate } })) != null
+        const slug = await createUniqueSlug(
+          (slug) => prisma.event.findUnique({ where: { slug } }),
+          input.title
         )
 
         created = await prisma.event.create({

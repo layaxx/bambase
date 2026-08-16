@@ -2,16 +2,15 @@
 import { actions } from "astro:actions"
 import PageLayout from "@/layouts/PageLayout.astro"
 import { fetchCronJobStatuses, type CronJobStatus } from "@/utils/api"
-import { canViewSystemStatus } from "@/utils/authz"
+import { canViewSystemStatus, requireRole } from "@/utils/authz"
 import { useTranslations } from "@/i18n/translations"
 import ApiDownBanner from "@/components/ApiDownBanner.astro"
 import Alert from "@/components/Alert.astro"
 
 const t = useTranslations(Astro.locals.locale)
 
-const user = Astro.locals.user
-if (!user) return Astro.redirect("/login?redirect=/admin/cron")
-if (!(await canViewSystemStatus(user.role))) return Astro.redirect("/")
+const guard = await requireRole(Astro, canViewSystemStatus, "/admin/cron")
+if (guard instanceof Response) return guard
 
 const runResult = Astro.getActionResult(actions.cron.run)
 if (runResult?.data !== undefined && !runResult.error) {

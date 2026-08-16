@@ -2,16 +2,19 @@
 import { actions, isInputError } from "astro:actions"
 import PageLayout from "@/layouts/PageLayout.astro"
 import { fetchLocationForAdmin } from "@/utils/api"
-import { canManageLocations } from "@/utils/authz"
+import { canManageLocations, requireRole } from "@/utils/authz"
 import { useTranslations } from "@/i18n/translations"
 import IconArrowLeft from "@/components/icons/IconArrowLeft.astro"
 import LocationForm from "@/components/locations/LocationForm.astro"
 
 const t = useTranslations(Astro.locals.locale)
 
-const user = Astro.locals.user
-if (!user) return Astro.redirect(`/login?redirect=/admin/locations/${Astro.params.slug}/edit`)
-if (!(await canManageLocations(user.role))) return Astro.redirect("/")
+const guard = await requireRole(
+  Astro,
+  canManageLocations,
+  `/admin/locations/${Astro.params.slug}/edit`
+)
+if (guard instanceof Response) return guard
 
 const { slug } = Astro.params
 const { data: location } = slug ? await fetchLocationForAdmin(slug) : { data: null }
