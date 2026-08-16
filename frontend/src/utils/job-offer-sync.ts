@@ -120,10 +120,9 @@ export async function syncJobOffers(): Promise<void> {
   try {
     allJobs = await fetchAllJobs(cookie)
   } catch (error) {
-    console.error(
-      `[feki] Failed to fetch job offers: ${error instanceof Error ? error.message : String(error)}`
-    )
-    return
+    const message = error instanceof Error ? error.message : String(error)
+    console.error(`[feki] Failed to fetch job offers: ${message}`)
+    throw new Error(`Failed to fetch job offers: ${message}`, { cause: error })
   }
 
   console.warn(`[feki] Fetched ${allJobs.length} job offers`)

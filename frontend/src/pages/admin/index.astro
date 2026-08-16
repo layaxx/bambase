@@ -5,6 +5,7 @@ import {
   canModerateEvents,
   canManageLocations,
   canManageUsers,
+  canViewSystemStatus,
 } from "@/utils/authz"
 import { useTranslations } from "@/i18n/translations"
 
@@ -13,12 +14,14 @@ const t = useTranslations(Astro.locals.locale)
 const user = Astro.locals.user
 if (!user) return Astro.redirect("/login?redirect=/admin")
 
-const [isJobModerator, isEventModerator, isLocationManager, isUserManager] = await Promise.all([
-  canModerateJobOffers(user.role),
-  canModerateEvents(user.role),
-  canManageLocations(user.role),
-  canManageUsers(user.role),
-])
+const [isJobModerator, isEventModerator, isLocationManager, isUserManager, isSystemViewer] =
+  await Promise.all([
+    canModerateJobOffers(user.role),
+    canModerateEvents(user.role),
+    canManageLocations(user.role),
+    canManageUsers(user.role),
+    canViewSystemStatus(user.role),
+  ])
 
 const sections = [
   {
@@ -44,6 +47,12 @@ const sections = [
     title: t.admin.usersTitle,
     description: t.admin.overviewUsersDescription,
     visible: isUserManager,
+  },
+  {
+    href: "/admin/cron",
+    title: t.admin.cronTitle,
+    description: t.admin.overviewCronDescription,
+    visible: isSystemViewer,
   },
 ].filter((section) => section.visible)
 

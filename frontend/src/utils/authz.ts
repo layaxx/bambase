@@ -20,6 +20,7 @@ type Permissions = {
   location?: "manage"[]
   user?: UserAction[]
   session?: SessionAction[]
+  system?: "view"[]
 }
 
 async function hasPermission(
@@ -49,4 +50,8 @@ export function canManageLocations(role: string | null | undefined): Promise<boo
 
 export function canManageUsers(role: string | null | undefined): Promise<boolean> {
   return hasPermission(role, { user: ["list", "ban"] })
+}
+
+export function canViewSystemStatus(role: string | null | undefined): Promise<boolean> {
+  return hasPermission(role, { system: ["view"] })
 }

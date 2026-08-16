@@ -172,7 +172,7 @@ function sumDaySummaries(summaries: DaySummary[]): DaySummary {
 
 export async function syncMensaMeals(): Promise<Record<Location, DaySummary | null>> {
   const entries = await Promise.all(
-    mensas.map(async (mensa): Promise<[Location, DaySummary | null]> => {
+    mensas.map(async (mensa): Promise<[Location, DaySummary | null, string | null]> => {
       try {
         const apiResponse = await fetchFromAPI(mensa)
         const transformed = transformApiResponse(apiResponse, mensa.location)
@@ -181,15 +181,24 @@ export async function syncMensaMeals(): Promise<Record<Location, DaySummary | nu
           Object.keys(transformed).map((day) => upsertDay(day, transformed[day], mensa.location))
         )
 
-        return [mensa.location, sumDaySummaries(dayResults)]
+        return [mensa.location, sumDaySummaries(dayResults), null]
       } catch (error) {
-        console.error(
-          `Failed to sync mensa data for ${mensa.location}: ${error instanceof Error ? error.message : String(error)}`
-        )
-        return [mensa.location, null]
+        const message = error instanceof Error ? error.message : String(error)
+        console.error(`Failed to sync mensa data for ${mensa.location}: ${message}`)
+        return [mensa.location, null, message]
       }
     })
   )
 
-  return Object.fromEntries(entries) as Record<Location, DaySummary | null>
+  const failures = entries.filter(([, , error]) => error !== null)
+  const result = Object.fromEntries(
+    entries.map(([location, summary]) => [location, summary])
+  ) as Record<Location, DaySummary | null>
+
+  if (failures.length > 0) {
+    const details = failures.map(([location, , message]) => `${location} (${message})`).join(", ")
+    throw new Error(`Failed to sync ${failures.length}/${mensas.length} canteen(s): ${details}`)
+  }
+
+  return result
 }

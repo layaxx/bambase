@@ -11,6 +11,7 @@ const statement = {
   jobOffer: ["moderate"],
   event: ["moderate"],
   location: ["manage"],
+  system: ["view"],
 } as const
 
 const ac = createAccessControl(statement)
@@ -22,6 +23,7 @@ const adminRole = ac.newRole({
   jobOffer: ["moderate"],
   event: ["moderate"],
   location: ["manage"],
+  system: ["view"],
 })
 
 export const auth = betterAuth({

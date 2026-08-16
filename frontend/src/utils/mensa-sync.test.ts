@@ -146,7 +146,7 @@ describe("syncMensaMeals", () => {
     expect(result.Feki).toEqual({ created: 0, updated: 0, deleted: 1 })
   })
 
-  it("continues syncing the remaining canteens if one request fails", async () => {
+  it("syncs the remaining canteens but rejects if one request fails", async () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
     vi.mocked(fetch).mockImplementation(async (url) => {
       if (String(url).includes(`/canteen/${CANTEEN_IDS.Erba}`)) {
@@ -170,11 +170,19 @@ describe("syncMensaMeals", () => {
       return jsonResponse(emptyResponse()) as never
     })
 
-    const result = await syncMensaMeals()
+    await expect(syncMensaMeals()).rejects.toThrow(/Erba/)
 
-    expect(result.Erba).toBeNull()
-    expect(result.Feki).toEqual({ created: 1, updated: 0, deleted: 0 })
+    expect(mockUpsert).toHaveBeenCalledWith(
+      expect.objectContaining({ create: expect.objectContaining({ name: "Soup" }) })
+    )
     expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("Erba"))
     consoleSpy.mockRestore()
+  })
+
+  it("rejects when all canteens fail", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {})
+    vi.mocked(fetch).mockResolvedValue(jsonResponse(null, false) as never)
+
+    await expect(syncMensaMeals()).rejects.toThrow(/3\/3 canteen/)
   })
 })

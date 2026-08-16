@@ -50,10 +50,9 @@ export async function syncUnivisEvents() {
   try {
     univisEvents = await client.getCalendar({ start, end })
   } catch (error) {
-    console.error(
-      `[univis] Failed to fetch from UniVis: ${error instanceof Error ? error.message : String(error)}`
-    )
-    return
+    const message = error instanceof Error ? error.message : String(error)
+    console.error(`[univis] Failed to fetch from UniVis: ${message}`)
+    throw new Error(`Failed to fetch from UniVis: ${message}`, { cause: error })
   }
 
   console.warn(`[univis] Received ${univisEvents.length} events`)

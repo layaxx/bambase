@@ -431,6 +431,21 @@ const de = {
     bannedUntil: (date: string) => `Gesperrt bis ${date}`,
     bannedIndefinitely: "Dauerhaft gesperrt",
     bannedYou: "(du)",
+    overviewCronDescription: "Status der geplanten Hintergrundjobs einsehen.",
+    cronTitle: "Hintergrundjobs",
+    cronJobLabels: {
+      "mensa-sync": "Mensa-Sync",
+      "event-sync": "UniVis-Veranstaltungs-Sync",
+      "job-offer-sync": "Stellenangebote-Sync",
+    },
+    cronScheduleLabel: (schedule: string) => `Zeitplan: ${schedule}`,
+    cronNeverRun: "Noch nie ausgeführt.",
+    cronLastRunAt: (date: string) => `Zuletzt ausgeführt am ${date}`,
+    cronDuration: (seconds: string) => `Dauer: ${seconds}s`,
+    cronStatusSuccess: "Erfolgreich",
+    cronStatusError: "Fehlgeschlagen",
+    cronStatusNeverRun: "Noch nie ausgeführt",
+    cronRunNow: "Jetzt ausführen",
   },
 }
 
@@ -855,6 +870,21 @@ const en: SetAtPath<
     bannedUntil: (date: string) => `Banned until ${date}`,
     bannedIndefinitely: "Banned indefinitely",
     bannedYou: "(you)",
+    overviewCronDescription: "View the status of scheduled background jobs.",
+    cronTitle: "Background jobs",
+    cronJobLabels: {
+      "mensa-sync": "Cafeteria sync",
+      "event-sync": "UniVis event sync",
+      "job-offer-sync": "Job offer sync",
+    },
+    cronScheduleLabel: (schedule: string) => `Schedule: ${schedule}`,
+    cronNeverRun: "Never run yet.",
+    cronLastRunAt: (date: string) => `Last run on ${date}`,
+    cronDuration: (seconds: string) => `Duration: ${seconds}s`,
+    cronStatusSuccess: "Success",
+    cronStatusError: "Failed",
+    cronStatusNeverRun: "Never run",
+    cronRunNow: "Run now",
   },
 }
 

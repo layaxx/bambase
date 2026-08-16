@@ -88,6 +88,13 @@ enum ReportReviewStatus {
   @@map("report_review_status")
 }
 
+enum CronJobStatus {
+  success
+  error
+
+  @@map("cron_job_status")
+}
+
 model User {
   id            String     @id
   name          String
@@ -263,6 +270,20 @@ model JobOffer {
 
   @@index([onlineStatus])
   @@map("job_offer")
+}
+
+model CronJobRun {
+  id         String        @id @default(cuid())
+  jobName    String
+  status     CronJobStatus
+  startedAt  DateTime
+  finishedAt DateTime
+  durationMs Int
+  error      String?
+  createdAt  DateTime      @default(now())
+
+  @@index([jobName, startedAt])
+  @@map("cron_job_run")
 }
 
 model Report {
