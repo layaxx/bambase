@@ -30,6 +30,7 @@ const isModerator = authUser ? await canModerateJobOffers(authUser.role) : false
 const isEventModerator = authUser ? await canModerateEvents(authUser.role) : false
 const isLocationManager = authUser ? await canManageLocations(authUser.role) : false
 const isUserManager = authUser ? await canManageUsers(authUser.role) : false
+const isAdmin = isModerator || isEventModerator || isLocationManager || isUserManager
 
 const switchLang = t.language.switchLang
 const switchLabel = t.language.switchLabel
@@ -76,30 +77,9 @@ const switchUrl = `/set-locale?lang=${switchLang}&redirect=${encodeURIComponent(
 
       <div class="flex items-center gap-1 ml-auto shrink-0">
         {
-          isModerator && (
-            <a class="btn btn-sm btn-ghost hidden md:inline-flex" href="/admin/jobs">
+          isAdmin && (
+            <a class="btn btn-sm btn-ghost hidden md:inline-flex" href="/admin">
               {t.nav.admin}
-            </a>
-          )
-        }
-        {
-          isEventModerator && (
-            <a class="btn btn-sm btn-ghost hidden md:inline-flex" href="/admin/events">
-              {t.nav.adminEvents}
-            </a>
-          )
-        }
-        {
-          isLocationManager && (
-            <a class="btn btn-sm btn-ghost hidden md:inline-flex" href="/admin/locations">
-              {t.nav.adminLocations}
-            </a>
-          )
-        }
-        {
-          isUserManager && (
-            <a class="btn btn-sm btn-ghost hidden md:inline-flex" href="/admin/users">
-              {t.nav.adminUsers}
             </a>
           )
         }
@@ -179,30 +159,9 @@ const switchUrl = `/set-locale?lang=${switchLang}&redirect=${encodeURIComponent(
     </nav>
     <div class="border-t border-base-300 mt-3 pt-3 flex flex-col gap-1">
       {
-        isModerator && (
-          <a class="btn btn-sm btn-ghost w-full" href="/admin/jobs">
+        isAdmin && (
+          <a class="btn btn-sm btn-ghost w-full" href="/admin">
             {t.nav.admin}
-          </a>
-        )
-      }
-      {
-        isEventModerator && (
-          <a class="btn btn-sm btn-ghost w-full" href="/admin/events">
-            {t.nav.adminEvents}
-          </a>
-        )
-      }
-      {
-        isLocationManager && (
-          <a class="btn btn-sm btn-ghost w-full" href="/admin/locations">
-            {t.nav.adminLocations}
-          </a>
-        )
-      }
-      {
-        isUserManager && (
-          <a class="btn btn-sm btn-ghost w-full" href="/admin/users">
-            {t.nav.adminUsers}
           </a>
         )
       }

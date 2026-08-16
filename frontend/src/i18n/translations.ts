@@ -27,9 +27,6 @@ const de = {
     about_us: "Über uns",
     skipToContent: "Zum Inhalt springen",
     admin: "Admin",
-    adminEvents: "Termine",
-    adminLocations: "Orte",
-    adminUsers: "Nutzer",
   },
   events: {
     title: "Heutige Veranstaltungen",
@@ -403,6 +400,11 @@ const de = {
     switchLang: "en" as Locale,
   },
   admin: {
+    overviewTitle: "Admin-Übersicht",
+    overviewJobsDescription: "Eingereichte Stellenangebote prüfen und freigeben.",
+    overviewEventsDescription: "Veranstaltungen einsehen und bearbeiten.",
+    overviewLocationsDescription: "Orte auf der Campuskarte verwalten.",
+    overviewUsersDescription: "Nutzerkonten verwalten und sperren.",
     jobsQueueTitle: "Stellenangebote prüfen",
     noSubmittedJobs: "Keine Stellenangebote warten aktuell auf Prüfung.",
     editJob: "Bearbeiten",
@@ -451,9 +453,6 @@ const en: SetAtPath<
     about_us: "About us",
     skipToContent: "Skip to content",
     admin: "Admin",
-    adminEvents: "Events",
-    adminLocations: "Locations",
-    adminUsers: "Users",
   },
   events: {
     title: "Today's Events",
@@ -825,6 +824,11 @@ const en: SetAtPath<
     switchLang: "de" as Locale,
   },
   admin: {
+    overviewTitle: "Admin overview",
+    overviewJobsDescription: "Review and approve submitted job offers.",
+    overviewEventsDescription: "View and edit events.",
+    overviewLocationsDescription: "Manage locations on the campus map.",
+    overviewUsersDescription: "Manage and ban user accounts.",
     jobsQueueTitle: "Review job offers",
     noSubmittedJobs: "No job offers are currently awaiting review.",
     editJob: "Edit",
