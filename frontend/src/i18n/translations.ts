@@ -332,6 +332,9 @@ const de = {
       "Bitte bestätige deine E-Mail-Adresse, um Stellenangebote einreichen zu können.",
     resendVerificationBtn: "Bestätigungs-E-Mail erneut senden",
     resendVerificationSent: "E-Mail wurde gesendet",
+    checkYourEmailTitle: "Bestätige deine E-Mail-Adresse",
+    checkYourEmailText:
+      "Wir haben dir eine E-Mail mit einem Bestätigungslink geschickt. Bitte klicke auf den Link, um dein Konto zu aktivieren.",
     forgotPasswordTitle: "Passwort vergessen",
     forgotPasswordInstruction:
       "Gib deine E-Mail-Adresse ein. Falls ein Konto mit dieser Adresse existiert, senden wir dir einen Link zum Zurücksetzen deines Passworts.",
@@ -792,6 +795,9 @@ const en: SetAtPath<
     verifyEmailRequiredText: "Please verify your email address to be able to submit job listings.",
     resendVerificationBtn: "Resend verification email",
     resendVerificationSent: "Email sent",
+    checkYourEmailTitle: "Confirm your email address",
+    checkYourEmailText:
+      "We've sent you an email with a confirmation link. Please click the link to activate your account.",
     forgotPasswordTitle: "Forgot password",
     forgotPasswordInstruction:
       "Enter your email address. If an account exists for that address, we will send you a link to reset your password.",

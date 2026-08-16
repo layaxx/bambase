@@ -49,15 +49,20 @@ test.describe("Login", () => {
 })
 
 test.describe("Register", () => {
-  test("already-registered email shows error alert", async ({ page }) => {
+  test("already-registered email shows the same success message (no account enumeration)", async ({
+    page,
+  }) => {
     await page.goto("/register")
     await page.fill('[name="email"]', "seed@example.com")
     await page.fill('[name="password"]', "validpassword1")
     await page.fill('[name="passwordConfirm"]', "validpassword1")
     await page.click('button[type="submit"]')
 
-    await expect(page.locator(".alert-error")).toBeVisible()
-    await expect(page).toHaveURL(/register\??.*/)
+    // better-auth returns a generic success response for existing emails
+    // when email verification is required, so signup can't be used to probe
+    // which addresses already have an account.
+    await expect(page.locator("#signup-success")).toBeVisible()
+    await expect(page.locator(".alert-error")).toBeHidden()
   })
 
   test("mismatched passwords show error alert", async ({ page }) => {
@@ -72,7 +77,7 @@ test.describe("Register", () => {
     await expect(page).toHaveURL(/register\??.*/)
   })
 
-  test("valid credentials create the account and log the user in", async ({ page }) => {
+  test("valid credentials create the account and ask for email confirmation", async ({ page }) => {
     const email = `e2e-register-${Date.now()}@example.com`
     await page.goto("/register")
     await page.fill('[name="email"]', email)
@@ -80,11 +85,34 @@ test.describe("Register", () => {
     await page.fill('[name="passwordConfirm"]', "validpassword1")
     await page.click('button[type="submit"]')
 
-    // better-auth has no email-confirmation step — signup logs the user in immediately.
-    await expect(page).toHaveURL("/account")
+    // Sign-up requires email verification — no session is created until the
+    // user clicks the confirmation link we emailed them.
+    await expect(page.locator("#signup-success")).toBeVisible()
+    await expect(page).toHaveURL(/register\??.*/)
 
     const cookies = await page.context().cookies()
-    expect(cookies.some((c) => c.name === "better-auth.session_token")).toBe(true)
+    expect(cookies.some((c) => c.name === "better-auth.session_token")).toBe(false)
+  })
+
+  test("logging in before confirming the email shows an error", async ({ page }) => {
+    const email = `e2e-unverified-${Date.now()}@example.com`
+    await page.goto("/register")
+    await page.fill('[name="email"]', email)
+    await page.fill('[name="password"]', "validpassword1")
+    await page.fill('[name="passwordConfirm"]', "validpassword1")
+    await page.click('button[type="submit"]')
+    await expect(page.locator("#signup-success")).toBeVisible()
+
+    await page.goto("/login")
+    await page.fill('[name="identifier"]', email)
+    await page.fill('[name="password"]', "validpassword1")
+    await page.click('button[type="submit"]')
+
+    await expect(page.locator(".alert-error")).toBeVisible()
+    await expect(page).toHaveURL(/login\??.*/)
+
+    const cookies = await page.context().cookies()
+    expect(cookies.some((c) => c.name === "better-auth.session_token")).toBe(false)
   })
 })
 

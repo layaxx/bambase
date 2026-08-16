@@ -20,6 +20,13 @@ const t = useTranslations(Astro.locals.locale)
         <span></span>
       </div>
 
+      <div class="alert alert-success mb-4 hidden" id="signup-success">
+        <div>
+          <h3 class="font-bold">{t.auth.checkYourEmailTitle}</h3>
+          <p>{t.auth.checkYourEmailText}</p>
+        </div>
+      </div>
+
       <form class="flex flex-col" data-locale={Astro.locals.locale} id="signup-form">
         <input name="locale" type="hidden" value={Astro.locals.locale} />
         <fieldset class="fieldset">
@@ -106,9 +113,7 @@ const t = useTranslations(Astro.locals.locale)
         callbackURL: "/login?confirmed=true",
       })
 
-      console.error(authResponse)
       if (Boolean(authResponse.error) === false) {
-        window.location.href = "/account"
         return { error: undefined }
       } else {
         let msg = {
@@ -134,6 +139,8 @@ const t = useTranslations(Astro.locals.locale)
       }
     }
 
+    const successElement = document.getElementById("signup-success")
+
     form?.addEventListener("submit", async (event) => {
       event.preventDefault()
 
@@ -146,6 +153,9 @@ const t = useTranslations(Astro.locals.locale)
         const textElem = errorElement?.querySelector("span")
 
         if (textElem) textElem.textContent = error
+      } else {
+        form.classList.add("hidden")
+        successElement?.classList.remove("hidden")
       }
     })
   </script>

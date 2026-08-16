@@ -103,6 +103,11 @@ const emailConfirmed = Astro.url.searchParams.get("confirmed") === "true"
                 en: "Invalid email or password.",
                 de: "E-Mail oder Passwort ungültig.",
               }
+            } else if (authResponse.error?.code === "EMAIL_NOT_VERIFIED") {
+              msg = {
+                en: "Please verify your email address first. We've sent you a new verification link.",
+                de: "Bitte bestätige zuerst deine E-Mail-Adresse. Wir haben dir einen neuen Bestätigungslink gesendet.",
+              }
             }
             textElem.textContent = msg[locale]
           }
