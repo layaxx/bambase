@@ -82,8 +82,8 @@ Run from `frontend/`:
 From the project root:
 
 ```bash
-make lint      # lint both workspaces
-make format    # format both workspaces
+make lint      # lint frontend/
+make format    # format frontend/
 ```
 
 ## Contributing

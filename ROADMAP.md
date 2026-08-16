@@ -1,5 +1,15 @@
 # BamBase.de Roadmap
 
+> **Architecture note:** the backend was migrated from a separate Strapi CMS
+> (`api/`) to Prisma + better-auth running directly inside the Astro app
+> (`frontend/`) — `api/` was removed from the repository entirely (see
+> `chore: remove strapi`). Entries under **Done** describe the codebase as it
+> was at the time they were written and may reference Strapi services,
+> controllers, or content types that no longer exist — they're kept as a
+> historical record, not a guide to the current code. Entries under
+> **Upcoming** have been updated to reflect the current Prisma/Astro Actions
+> architecture.
+
 ## Upcoming
 
 
@@ -14,7 +24,7 @@ Evaluation and optional migration of `/jobs` from client-side to server-side fil
 - The client-side script (`jobs.astro:149–234`) reads URL params, then sets `display: none` on non-matching cards. Result counts and filter state are kept in DOM.
 - Full-text search runs against a `data-search` attribute on each wrapper that concatenates `title + company`.
 
-**Why it works now:** The catalog is small (under 30 published offers at launch). All data fits comfortably in a single Strapi query and the rendered HTML is under 50 KB.
+**Why it works now:** The catalog is small (under 30 published offers at launch). All data fits comfortably in a single Prisma query and the rendered HTML is under 50 KB.
 
 **Why it will degrade:** Job descriptions in the seed data are 3–6 sentences; real postings from employers routinely run 300–800 words. At 50 published offers × 400 words average, the `p.mb-3.line-clamp-2` element alone adds ~100 KB of unrendered text to the DOM (the text is present in the DOM even though CSS clips its visible height). The `data-search` attribute doubles the title+company string. Full initial parse and layout of 150 hidden cards is measurable on mid-range phones.
 
@@ -23,7 +33,7 @@ Evaluation and optional migration of `/jobs` from client-side to server-side fil
 The filter state is already in URL query params (`?type=internship&field=it&work_mode=remote&search=python`) thanks to the P6/P12 work. Moving to server-side means:
 
 1. Read params in `jobs.astro` frontmatter (`Astro.url.searchParams`).
-2. Forward them to Strapi as query filters: `{ job_type: { $eq: type }, field: { $eq: field }, work_mode: { $eq: workMode } }` plus a `_q` full-text param for the search term (Strapi supports this on string fields).
+2. Forward them to Prisma as a `where` filter: `{ jobType: type, field, workMode }` plus a `contains`/`mode: "insensitive"` clause on `title`/`company` for the search term (or a Postgres full-text index if substring search on large text gets slow).
 3. Render only the matching jobs. Remove the client-side filter script entirely.
 4. Replace `<select onChange>` / `<input onInput>` with a `<form method="get">` that submits naturally — or keep the JS but have it navigate to the new URL instead of toggling `display`.
 
@@ -36,63 +46,49 @@ The existing client-side approach is acceptable up to approximately 50 published
 **Work involved:**
 
 - [ ] Benchmark the `/jobs` page at current catalog size: measure HTML payload size and Lighthouse performance score as a baseline
-- [ ] Decide: pure server-side (form submit) vs. hybrid (JS fetch + partial render) vs. keeping client-side with a stricter `fields` projection to reduce payload (drop `description` from the list response and expand on detail page only)
-- [ ] If server-side: extend `fetchJobOffers` to accept `{ type?, field?, workMode?, search? }` filter params and forward them to Strapi; add `_q` full-text search support
+- [ ] Decide: pure server-side (form submit) vs. hybrid (JS fetch + partial render) vs. keeping client-side with a stricter `select` projection to reduce payload (drop `description` from the list query and expand on detail page only)
+- [ ] If server-side: extend `fetchJobOffers` to accept `{ type?, field?, workMode?, search? }` filter params and forward them to Prisma as a `where` clause; add a `contains`/`mode: "insensitive"` search clause on `title`/`company`
 - [ ] If server-side: update `jobs.astro` frontmatter to read `Astro.url.searchParams` and pass them to `fetchJobOffers`; replace the filter `<select>` elements with a `<form method="get">` or add JS that navigates instead of hiding
-- [ ] If client-side retained: add `fields` projection to `fetchJobOffers` to exclude `description` from the list query (description is already line-clamped and only useful on the detail page), reducing payload by ~60%
+- [ ] If client-side retained: add a `select` projection to the Prisma query in `fetchJobOffers` to exclude `description` from the list (description is already line-clamped and only useful on the detail page), reducing payload by ~60%
 - [ ] Update result-count and empty-state logic to work without client-side DOM counting when filtering moves server-side
 
 **Open questions:**
 
-- Is full-text search (`search=...`) a requirement for server-side mode? Strapi's `_q` param does a substring match across all string fields, which is less precise than the current `title + company` scope. Scoping to specific fields requires a `$or` filter.
+- Is full-text search (`search=...`) a requirement for server-side mode? A Prisma `OR` filter across `title`/`company` with `contains`/`insensitive` is precise but does a sequential scan without an index; Postgres full-text search (`tsvector`/`tsquery`) would be needed if this gets slow at scale.
 - Should the filter panel remain a `<details>` collapse, or become always-visible now that it causes a page load? A persistent filter bar (as on `/events`) is more discoverable.
 - If the page moves to server-side rendering with URL navigation, should the URL format change (e.g. `/jobs?type=internship` instead of the current JS-managed param format)? The current param keys (`type`, `field`, `work_mode`, `search`) are clean and can be kept as-is.
-- At what point should pagination be introduced alongside server-side filtering? 50 results per page is a natural default; the Strapi client already supports `pagination.page` and `pagination.pageSize`.
+- At what point should pagination be introduced alongside server-side filtering? 50 results per page is a natural default; the events listing already has a working `skip`/`take` pagination pattern (see [events.astro pagination](frontend/src/pages/events.astro)) that jobs could reuse.
 
 ### P16 Performance
 
 Audit-driven improvements to API query efficiency, rendering strategy, and asset loading. No new features — the goal is reducing latency and server load, especially as data volumes grow.
 
-**Issues identified — API over-fetching and N+1 queries:**
+> This section predates the Strapi → Prisma migration. The original audit
+> found problems in the separate Strapi HTTP API (N+1 queries, missing
+> indexes, no `Cache-Control` on public endpoints); moving the backend
+> in-process with Prisma resolved most of them by construction (no more
+> internal HTTP round-trip to fetch data at all). Below is the current state
+> of each item.
 
-- **Mensa page makes 7 serial API calls** — `mensa.astro:18–20` builds an array of 7 days then calls `fetchMensaMeals(day)` for each via `Promise.all`. Each call is a separate HTTP round-trip to Strapi with its own query. A single call filtering on `date: { $in: [...days] }` would replace all 7. Because this is SSR, it happens on every `/mensa` page load.
-- **Job offer `find()` makes 2 queries and deduplicates in JavaScript** — `controllers/job-offer.ts:14–32` runs two parallel `findMany` calls (one for published, one for the user's own offers), then merges and deduplicates in a `Set`. A single `$or` filter would produce the same result with half the database load on every authenticated job listing request.
-- ~~**`fetchLocations()` has a hard limit of 500**~~ — **Fixed.** `/map` now passes the active category as a Strapi `$eq` filter, so each page load fetches only the locations for the selected category (~15–30 records) instead of all 100+. A `/api/locations.json` endpoint serves subsequent category switches as a JSON fetch so the map updates in-place without a page reload.
-- ~~**`update` and `delete` controller methods each fetch the full job/event record just to check ownership**~~ — **Fixed in P23.** Both job-offer and event controllers already use `populate: { owner: { fields: ["id"] } }`.
+- **Mensa page N+1 queries** — resolved by construction: `fetchMensaMealsRange` (`utils/api/mensa.ts`) makes a single `prisma.mensaMeal.findMany({ where: { date: { in: [...days] } } } })` call instead of one query per day.
+- **Job offer listing double-query + JS dedup** — resolved differently: rather than merging "published + own" into one query, `fetchJobOffers` (public listing) and `fetchMyJobOffers`/`fetchJobOffer` (owner/moderator views, `utils/api/job-offers.ts`) are now separate, purpose-built Prisma queries — no merge-then-dedup step needed.
+- **`fetchLocations()` fetching everything** — resolved: `fetchLocations` accepts an optional category and forwards it as a Prisma `where` filter; `/api/locations.json` serves client-side category switches without a page reload.
+- **Ownership checks over-fetching relations** — resolved: ownership checks read `select: { ownerId: true }` only (see `src/actions/{events,jobs}.ts`), never the full record or a populated relation.
+- **No indexes on frequently filtered columns** — resolved: `frontend/prisma/schema.prisma` defines `@@index([start])` on `Event`, `@@index([onlineStatus, offlineAfter])` on `JobOffer`, and `@@index([date])` on `MensaMeal`, tracked as ordinary Prisma migrations.
+- **`mensa-meals` sync writing records one at a time** — resolved: `mensa-sync.ts` batches creates/updates/deletes with `Promise.all`.
+- **No caching layer** — partially addressed: `utils/api/cache.ts` provides an in-process `withCache(key, fn)` memoization (5-minute TTL, keyed per query shape) used by the events/jobs/locations fetch helpers, invalidated on writes via `invalidateCacheByPrefix`. This caches within a single server process only — it does not help across multiple replicas or survive a restart, and a `date >= now` filter inside a cached query can serve results up to one TTL stale.
+- **Leaflet loaded from a CDN** — resolved: `map.astro` imports `leaflet` as a bundled module.
+- **Fonts with no `font-display` override** — resolved: Astro's native fonts API (`astro.config.mjs` `fonts` array) sets `font-display: swap` by default.
 
-**Issues identified — database:**
+**Still open:**
 
-- **No indexes on frequently filtered columns** — `events.start`, `events.end` (filtered on every events list with `$gte`/`$lte`), `job-offers.online_status` (filtered on every job list and the `unpublishExpired` service), and `mensa-meals.date` (filtered 7× per mensa page load) have no custom indexes defined. Strapi does not auto-index non-primary enum or datetime fields. These will cause full table scans as row counts grow.
-- **`mensa-meals` sync writes records one at a time** — `api/src/api/mensa/services/mensa.ts:69–96` loops over meals with sequential `await` calls for each `create`/`update`/`delete`. Runs 7× daily across 3 mensa locations, causing 60+ sequential database writes per run. Batch with `Promise.all` to parallelize.
-
-**Issues identified — rendering strategy:**
-
-- **Every page is fully SSR with no caching** — `astro.config.mjs` uses `output: "server"`. Pages like `/mensa`, `/map`, and `/` fetch data that changes at most once per day (mensa data via cron at 05:30, locations almost never, events/jobs rarely within minutes). Every visitor triggers a full set of API calls to Strapi. Strapi has no `Cache-Control` headers on public GET endpoints. Adding even a 5-minute `s-maxage` on the Strapi responses, or adding `export const prerender = true` on `/map` and `/mensa`, would eliminate the majority of redundant fetches.
-- **All filtering on `/events` and `/jobs` is client-side** — both pages fetch up to 100 records, render them all to HTML, then hide/show via JavaScript. This couples page weight to dataset size. If either catalog grows to 500+ items, initial HTML will bloat proportionally. The filtering logic should eventually move to server-side query parameters; for now, the existing approach is acceptable at current scale.
-- ~~**Cached event queries used a static key with a time-sensitive `new Date()` filter**~~ — **Fixed.** `fetchEvents`, `fetchOngoingOrUpcomingEvents`, and `fetchUpcomingMapEvents` all build a `date >= now` filter inside the `withCache` callback. With a static key the filter timestamp was frozen at cache-fill time, causing events that ended within the 5-minute TTL window to remain visible. Cache keys now include a time-bucket component (`Math.floor(Date.now() / CACHE_TTL_MS)`) so the key rotates every TTL period and the `new Date()` call is never more than one TTL stale.
-
-**Issues identified — assets:**
-
-- ~~**Leaflet loaded from unpkg CDN at runtime**~~ — **Fixed.** `map.astro` now uses `import L from "leaflet"` and `import "leaflet/dist/leaflet.css"` as a bundled module import; no CDN dependency remains.
-- ~~**Font imports have no `font-display` override**~~ — **Fixed in P28.** Fonts migrated to Astro's native fonts API which injects `font-display: swap` by default.
-
-**Work involved:**
-
-- [x] Collapse the 7 `fetchMensaMeals` calls into one: added `fetchMensaMealsRange` with `date: { $in: [...] }` filter; `mensa.astro` now makes a single API call and groups results by date in the page script
-- [x] Rewrite `job-offer.ts` `find()` to use a single `$or` query instead of two `findMany` + JS dedup
-- [x] Reduce locations fetched on `/map`: `fetchLocations()` now accepts an optional category and forwards it as a Strapi `$eq` filter; `map.astro` reads `?filter=` server-side and passes the active category, fetching only the matching subset. A `GET /api/locations.json?category=` endpoint serves client-side category switches without a page reload.
-- [x] Narrow `populate: ["owner"]` in `update` and `delete` controllers to `populate: { owner: { fields: ["id"] } }` — done in P23 for both job-offer and event controllers
-- [ ] Add database indexes for `events.start`, `events.end`, `job-offers.online_status`, `mensa-meals.date` — via a Strapi database migration or by documenting as a manual PostgreSQL step in the deployment guide
-- [x] Parallelise the mensa sync loop with `Promise.all` on the create/update/delete batches
-- [x] Fix stale `new Date()` filter in cached event queries: `CACHE_TTL_MS` exported from `cache.ts`; time-bucket component added to cache keys in `fetchEvents`, `fetchOngoingOrUpcomingEvents`, `fetchUpcomingMapEvents`
-- [ ] Add `Cache-Control: public, s-maxage=300` to public Strapi GET responses (locations, published events, published jobs) via a custom middleware in `api/config/middlewares.ts`
-- [x] Replace Leaflet CDN `<script>` injection with `npm install leaflet` + a bundled import — done; `map.astro` uses `import L from "leaflet"`
-- [x] Add `font-display: swap` to font declarations — done in P28 via Astro's fonts API
+- [ ] All filtering on `/events` and `/jobs` is still client-side (fetch up to 100 records, render all, hide/show via JS). Acceptable at current scale (~300-item threshold per the original audit); tracked as its own item under P18 for jobs specifically.
+- [ ] The in-process cache in `cache.ts` doesn't scale past a single server instance — if the app is ever run with multiple replicas, either move to a shared cache (Redis) or accept that each replica independently re-fetches on its own TTL.
+- [ ] No `Cache-Control` headers are set on Astro page responses themselves (SSR pages are `no-cache` by default); worth revisiting if `/mensa` and `/map` traffic grows enough for edge/CDN caching to matter.
 
 **Open questions:**
 
-- Should `/mensa` and `/map` use Astro's `prerender = true` (static build, rebuilt on deploy) or stay SSR with a short `Cache-Control` TTL? Static build is simpler but requires a redeploy to pick up fresh mensa data; a CDN with `s-maxage=300` at the Strapi layer achieves the same result without changing the rendering mode.
-- Are database indexes best added via a Strapi migration file (keeps them tracked in version control) or via a documented `CREATE INDEX` step in the deployment runbook? Strapi's migration system supports raw SQL, which is the cleanest approach.
+- Should `/mensa` and `/map` use Astro's `export const prerender = true` (static build, rebuilt on deploy) instead of SSR + in-process cache? Static build is simpler but requires a redeploy to pick up fresh mensa data.
 - The client-side filtering on `/events` and `/jobs` was a deliberate design decision (P6). At what catalog size should it move server-side? A reasonable threshold is ~300 items, at which point the rendered HTML is noticeably large and filter latency becomes measurable.
 
 ### P7 Add data sources for events
@@ -107,11 +103,11 @@ Automatically importing events from external sources would reduce the manual eff
 
 **Work involved:**
 
-- [x] Build UniVis importer as a Strapi service (`api/src/api/event/services/univis.ts`) using the `univis-api` npm package against `univis.uni-bamberg.de`
-- [x] Map UniVis fields to the `Event` schema — title, description, organizer, start, end, external_url; category hardcoded to `university`; text cleaned via `he` (HTML entity decode) + `remove-markdown` + custom regex to collapse duplicate link text
-- [x] Deduplicate via `external_id` with a `univis:` prefix; sync window is rolling 2 months (now → +2 months); create/update/delete to keep records in sync with the source
-- [x] Schedule via cron at 02:00 daily (`api/config/cron-tasks.ts`); also runs at bootstrap when `SEED=true`
-- [x] Display sync provenance on the event detail page — `external_id` prefix (`univis:` vs other) determines the notice text; no separate `source` field needed
+- [x] Build UniVis importer (`frontend/src/utils/event-sync.ts`) using the `univis-api` npm package against `univis.uni-bamberg.de`
+- [x] Map UniVis fields to the `Event` Prisma model — title, description, organizer, start, end, external_url; category hardcoded to `university`; text cleaned via `he` (HTML entity decode) + `remove-markdown` + custom regex to collapse duplicate link text
+- [x] Deduplicate via `externalId` with a `univis:` prefix; sync window is rolling 2 months (now → +2 months); create/update/delete to keep records in sync with the source
+- [x] Schedule via cron (`frontend/src/utils/event-sync-cron.ts`, registered through the shared `registerCronJob` factory), tracked in the `/admin/cron` status page; also runs at startup when `LOAD_EVENTS_ON_STARTUP=true`
+- [x] Display sync provenance on the event detail page — `externalId` prefix (`univis:` vs other) determines the notice text; no separate `source` field needed
 - [ ] Build importer for LiveClub website
 - [ ] Build importers for additional sources as identified
 

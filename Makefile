@@ -1,6 +1,17 @@
-.PHONY: format format-write format-check install-hooks remove-hooks lint lint-fix
+.PHONY: help format format-write format-check install-hooks remove-hooks lint lint-fix pre-commit
 
 NVM_INIT = . ~/.nvm/nvm.sh && nvm use
+
+# All targets operate on frontend/ — the only workspace in this repo.
+help:
+	@echo "Available targets:"
+	@echo "  pre-commit     Run format-check and lint (used by the git pre-commit hook)"
+	@echo "  format-check   Check formatting without writing changes"
+	@echo "  format         Format all code"
+	@echo "  lint           Lint"
+	@echo "  lint-fix       Lint and auto-fix"
+	@echo "  install-hooks  Install the git pre-commit hook"
+	@echo "  remove-hooks   Remove the git pre-commit hook"
 
 pre-commit: format-check lint
 
