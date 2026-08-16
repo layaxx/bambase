@@ -4,7 +4,7 @@ import { EVENT_CATEGORIES } from "@/utils/api/events"
 import { invalidateCacheByPrefix } from "@/utils/api/cache"
 import { createUniqueSlug } from "@/utils/slugify"
 import { canModerateEvents } from "@/utils/authz"
-import { requireUserId, assertOwnerOrPermission } from "@/utils/action-guards"
+import { requireUserId, assertOwnerOrPermission, mutationError } from "@/utils/action-guards"
 import prisma from "@/utils/prisma"
 
 const locationFieldsShape = {
@@ -127,8 +127,7 @@ export const events = {
           },
         })
       } catch (error) {
-        console.error("Event update failed:", error)
-        throw new ActionError({ code: "BAD_REQUEST", message: "Aktualisierung fehlgeschlagen." })
+        throw mutationError(error, "Event update failed", "Aktualisierung fehlgeschlagen.")
       }
 
       invalidateCacheByPrefix("events:")
@@ -164,8 +163,7 @@ export const events = {
           },
         })
       } catch (error) {
-        console.error("Event create failed:", error)
-        throw new ActionError({ code: "BAD_REQUEST", message: "Einreichung fehlgeschlagen." })
+        throw mutationError(error, "Event create failed", "Einreichung fehlgeschlagen.")
       }
 
       invalidateCacheByPrefix("events:")

@@ -1,4 +1,5 @@
 import { ActionError } from "astro:actions"
+import { Prisma } from "@/generated/prisma/client"
 
 type ActionContext = { locals: Pick<App.Locals, "user"> }
 type RoleCheck = (role: string | null | undefined) => Promise<boolean>
@@ -37,4 +38,16 @@ export async function assertOwnerOrPermission(
   if (ownerId === userId) return
   if (check && (await check(context.locals.user?.role))) return
   throw new ActionError({ code: "FORBIDDEN", message })
+}
+
+/**
+ * Logs `error` and converts it to an ActionError: a known Prisma constraint violation (e.g. a
+ * bad foreign key or a duplicate unique value) means the submitted data was invalid, so it maps
+ * to BAD_REQUEST; anything else is an unexpected failure and maps to INTERNAL_SERVER_ERROR.
+ */
+export function mutationError(error: unknown, logLabel: string, message: string): ActionError {
+  console.error(`${logLabel}:`, error)
+  const code =
+    error instanceof Prisma.PrismaClientKnownRequestError ? "BAD_REQUEST" : "INTERNAL_SERVER_ERROR"
+  return new ActionError({ code, message })
 }

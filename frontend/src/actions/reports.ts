@@ -22,7 +22,8 @@ export const reports = {
             jobOfferId: target_type === "job" ? target_id : undefined,
           },
         })
-      } catch {
+      } catch (error) {
+        console.error("Report submission failed:", error)
         throw new ActionError({ code: "INTERNAL_SERVER_ERROR", message: "Meldung fehlgeschlagen." })
       }
 

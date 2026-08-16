@@ -4,7 +4,7 @@ import { LOCATION_CATEGORIES } from "@/utils/api/locations"
 import { invalidateCacheByPrefix } from "@/utils/api/cache"
 import { createUniqueSlug } from "@/utils/slugify"
 import { canManageLocations } from "@/utils/authz"
-import { requirePermission } from "@/utils/action-guards"
+import { requirePermission, mutationError } from "@/utils/action-guards"
 import prisma from "@/utils/prisma"
 
 const httpUrl = z
@@ -74,8 +74,7 @@ export const locations = {
           },
         })
       } catch (error) {
-        console.error("Location update failed:", error)
-        throw new ActionError({ code: "BAD_REQUEST", message: "Aktualisierung fehlgeschlagen." })
+        throw mutationError(error, "Location update failed", "Aktualisierung fehlgeschlagen.")
       }
 
       invalidateCacheByPrefix("locations:")
@@ -112,8 +111,7 @@ export const locations = {
           },
         })
       } catch (error) {
-        console.error("Location create failed:", error)
-        throw new ActionError({ code: "BAD_REQUEST", message: "Erstellen fehlgeschlagen." })
+        throw mutationError(error, "Location create failed", "Erstellen fehlgeschlagen.")
       }
 
       invalidateCacheByPrefix("locations:")

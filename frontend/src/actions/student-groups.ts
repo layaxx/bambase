@@ -3,7 +3,7 @@ import { z } from "astro/zod"
 import { invalidateCacheByPrefix } from "@/utils/api/cache"
 import { createUniqueSlug } from "@/utils/slugify"
 import { canManageStudentGroups } from "@/utils/authz"
-import { requirePermission } from "@/utils/action-guards"
+import { requirePermission, mutationError } from "@/utils/action-guards"
 import prisma from "@/utils/prisma"
 
 const httpUrl = z
@@ -70,8 +70,7 @@ export const studentGroups = {
           },
         })
       } catch (error) {
-        console.error("Student group update failed:", error)
-        throw new ActionError({ code: "BAD_REQUEST", message: "Aktualisierung fehlgeschlagen." })
+        throw mutationError(error, "Student group update failed", "Aktualisierung fehlgeschlagen.")
       }
 
       invalidateCacheByPrefix("student-groups:")
@@ -104,8 +103,7 @@ export const studentGroups = {
           },
         })
       } catch (error) {
-        console.error("Student group create failed:", error)
-        throw new ActionError({ code: "BAD_REQUEST", message: "Erstellen fehlgeschlagen." })
+        throw mutationError(error, "Student group create failed", "Erstellen fehlgeschlagen.")
       }
 
       invalidateCacheByPrefix("student-groups:")

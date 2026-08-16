@@ -4,7 +4,12 @@ import { JOB_TYPES, JOB_FIELDS, WORK_MODES } from "@/utils/api/job-offers"
 import { invalidateCacheByPrefix } from "@/utils/api/cache"
 import { createUniqueSlug } from "@/utils/slugify"
 import { canModerateJobOffers } from "@/utils/authz"
-import { requireUserId, requirePermission, assertOwnerOrPermission } from "@/utils/action-guards"
+import {
+  requireUserId,
+  requirePermission,
+  assertOwnerOrPermission,
+  mutationError,
+} from "@/utils/action-guards"
 import prisma from "@/utils/prisma"
 
 const JOB_OFFER_LIFETIME_DAYS = 30
@@ -173,8 +178,7 @@ export const jobs = {
           },
         })
       } catch (error) {
-        console.error("Job update failed:", error)
-        throw new ActionError({ code: "BAD_REQUEST", message: "Aktualisierung fehlgeschlagen." })
+        throw mutationError(error, "Job update failed", "Aktualisierung fehlgeschlagen.")
       }
 
       invalidateCacheByPrefix("job-offers:")
@@ -221,8 +225,7 @@ export const jobs = {
           },
         })
       } catch (error) {
-        console.error("Job create failed:", error)
-        throw new ActionError({ code: "BAD_REQUEST", message: "Einreichung fehlgeschlagen." })
+        throw mutationError(error, "Job create failed", "Einreichung fehlgeschlagen.")
       }
 
       invalidateCacheByPrefix("job-offers:")

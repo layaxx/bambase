@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { Prisma } from "@/generated/prisma/client"
 
 vi.mock("astro:actions", () => ({
   defineAction: ({ handler }: never) => handler,
@@ -185,9 +186,27 @@ describe("events.create", () => {
     expect(result).toEqual({ slug: "created-slug" })
   })
 
-  it("throws BAD_REQUEST when the create fails", async () => {
+  it("throws INTERNAL_SERVER_ERROR when the create fails unexpectedly", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {})
     mockCreate.mockRejectedValue(new Error("db error"))
+
+    await expect(
+      events.create(
+        baseEventInput,
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext("user-1")
+      )
+    ).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" })
+  })
+
+  it("throws BAD_REQUEST when the create fails due to a known constraint violation", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {})
+    mockCreate.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Foreign key constraint failed", {
+        code: "P2003",
+        clientVersion: "test",
+      })
+    )
 
     await expect(
       events.create(
@@ -265,10 +284,29 @@ describe("events.update", () => {
     expect(result).toEqual({ slug: "updated-slug" })
   })
 
-  it("throws BAD_REQUEST when the update fails", async () => {
+  it("throws INTERNAL_SERVER_ERROR when the update fails unexpectedly", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {})
     mockFindUnique.mockResolvedValue({ ownerId: "user-1" })
     mockUpdate.mockRejectedValue(new Error("db error"))
+
+    await expect(
+      events.update(
+        { ...baseEventInput, id: "ev-1" },
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext("user-1")
+      )
+    ).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" })
+  })
+
+  it("throws BAD_REQUEST when the update fails due to a known constraint violation", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {})
+    mockFindUnique.mockResolvedValue({ ownerId: "user-1" })
+    mockUpdate.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Foreign key constraint failed", {
+        code: "P2003",
+        clientVersion: "test",
+      })
+    )
 
     await expect(
       events.update(

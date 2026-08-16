@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { Prisma } from "@/generated/prisma/client"
 
 vi.mock("astro:actions", () => ({
   defineAction: ({ handler }: never) => handler,
@@ -161,9 +162,27 @@ describe("jobs.create", () => {
     expect(result).toEqual({ slug: "created-slug" })
   })
 
-  it("throws BAD_REQUEST when the create fails", async () => {
+  it("throws INTERNAL_SERVER_ERROR when the create fails unexpectedly", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {})
     mockCreate.mockRejectedValue(new Error("db error"))
+
+    await expect(
+      jobs.create(
+        baseInput,
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext("user-1")
+      )
+    ).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" })
+  })
+
+  it("throws BAD_REQUEST when the create fails due to a known constraint violation", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {})
+    mockCreate.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+        code: "P2002",
+        clientVersion: "test",
+      })
+    )
 
     await expect(
       jobs.create(
@@ -235,10 +254,29 @@ describe("jobs.update", () => {
     expect(result).toEqual({ slug: "updated-slug" })
   })
 
-  it("throws BAD_REQUEST when the update fails", async () => {
+  it("throws INTERNAL_SERVER_ERROR when the update fails unexpectedly", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {})
     mockFindUnique.mockResolvedValue({ ownerId: "user-1" })
     mockUpdate.mockRejectedValue(new Error("db error"))
+
+    await expect(
+      jobs.update(
+        { ...baseInput, id: "job-1" },
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext("user-1")
+      )
+    ).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" })
+  })
+
+  it("throws BAD_REQUEST when the update fails due to a known constraint violation", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {})
+    mockFindUnique.mockResolvedValue({ ownerId: "user-1" })
+    mockUpdate.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+        code: "P2002",
+        clientVersion: "test",
+      })
+    )
 
     await expect(
       jobs.update(
