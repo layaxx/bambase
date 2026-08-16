@@ -1,0 +1,195 @@
+---
+import type { actions } from "astro:actions"
+import { useTranslations } from "@/i18n/translations"
+
+interface Props {
+  action: typeof actions.locations.create | typeof actions.locations.update
+  submitLabel: string
+  cancelHref: string
+  inputErrors: Record<string, string[] | undefined>
+  id?: string
+  initialValues?: {
+    name?: string
+    description?: string
+    category?: string
+    lat?: number
+    lon?: number
+    external_url?: string
+    address_street?: string
+    address_street_number?: string
+    address_city?: string
+    address_zip?: string
+  }
+}
+
+const { action, submitLabel, cancelHref, inputErrors, id, initialValues = {} } = Astro.props
+
+const t = useTranslations(Astro.locals.locale)
+---
+
+<form action={action} class="flex max-w-2xl flex-col gap-6" method="POST">
+  {id && <input name="id" type="hidden" value={id} />}
+
+  <div class="flex flex-col">
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend font-medium">{t.locations.fieldName}</legend>
+      <input
+        class:list={["input w-full", inputErrors.name && "input-error"]}
+        id="name"
+        name="name"
+        required
+        type="text"
+        value={initialValues.name}
+      />
+      {inputErrors.name && <p class="fieldset-label text-error">{inputErrors.name[0]}</p>}
+    </fieldset>
+
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend font-medium">
+        {t.locations.fieldDescription}
+        <span class="font-normal text-base-content/40"> {t.locations.optionalLabel}</span>
+      </legend>
+      <textarea
+        class:list={[
+          "textarea textarea-bordered w-full resize-y",
+          inputErrors.description && "textarea-error",
+        ]}
+        id="description"
+        name="description"
+        rows="4">{initialValues.description}</textarea
+      >
+      {
+        inputErrors.description && (
+          <p class="fieldset-label text-error">{inputErrors.description[0]}</p>
+        )
+      }
+    </fieldset>
+
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend font-medium">{t.locations.fieldCategory}</legend>
+      <select class="select select-bordered w-full" id="category" name="category" required>
+        {
+          Object.entries(t.map.categories).map(([value, label]) => (
+            <option selected={initialValues.category === value} value={value}>
+              {label}
+            </option>
+          ))
+        }
+      </select>
+    </fieldset>
+
+    <div class="grid sm:grid-cols-2">
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend font-medium">{t.locations.fieldLat}</legend>
+        <input
+          class:list={["input w-full", inputErrors.lat && "input-error"]}
+          id="lat"
+          name="lat"
+          required
+          step="any"
+          type="number"
+          value={initialValues.lat}
+        />
+        {inputErrors.lat && <p class="fieldset-label text-error">{inputErrors.lat[0]}</p>}
+      </fieldset>
+
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend font-medium">{t.locations.fieldLon}</legend>
+        <input
+          class:list={["input w-full", inputErrors.lon && "input-error"]}
+          id="lon"
+          name="lon"
+          required
+          step="any"
+          type="number"
+          value={initialValues.lon}
+        />
+        {inputErrors.lon && <p class="fieldset-label text-error">{inputErrors.lon[0]}</p>}
+      </fieldset>
+    </div>
+
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend font-medium">
+        {t.locations.fieldExternalUrl}
+        <span class="font-normal text-base-content/40"> {t.locations.optionalLabel}</span>
+      </legend>
+      <input
+        class:list={["input w-full", inputErrors.external_url && "input-error"]}
+        id="external_url"
+        name="external_url"
+        type="url"
+        value={initialValues.external_url ?? ""}
+      />
+      {
+        inputErrors.external_url && (
+          <p class="fieldset-label text-error">{inputErrors.external_url[0]}</p>
+        )
+      }
+    </fieldset>
+
+    <div class="grid sm:grid-cols-2">
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend font-medium">
+          {t.locations.fieldAddressStreet}
+          <span class="font-normal text-base-content/40"> {t.locations.optionalLabel}</span>
+        </legend>
+        <input
+          class="input w-full"
+          id="address_street"
+          name="address_street"
+          type="text"
+          value={initialValues.address_street ?? ""}
+        />
+      </fieldset>
+
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend font-medium">
+          {t.locations.fieldAddressStreetNumber}
+          <span class="font-normal text-base-content/40"> {t.locations.optionalLabel}</span>
+        </legend>
+        <input
+          class="input w-full"
+          id="address_street_number"
+          name="address_street_number"
+          type="text"
+          value={initialValues.address_street_number ?? ""}
+        />
+      </fieldset>
+    </div>
+
+    <div class="grid sm:grid-cols-2">
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend font-medium">
+          {t.locations.fieldAddressCity}
+          <span class="font-normal text-base-content/40"> {t.locations.optionalLabel}</span>
+        </legend>
+        <input
+          class="input w-full"
+          id="address_city"
+          name="address_city"
+          type="text"
+          value={initialValues.address_city ?? ""}
+        />
+      </fieldset>
+
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend font-medium">
+          {t.locations.fieldAddressZip}
+          <span class="font-normal text-base-content/40"> {t.locations.optionalLabel}</span>
+        </legend>
+        <input
+          class="input w-full"
+          id="address_zip"
+          name="address_zip"
+          type="text"
+          value={initialValues.address_zip ?? ""}
+        />
+      </fieldset>
+    </div>
+  </div>
+
+  <div class="flex items-center gap-3">
+    <button class="btn btn-primary" type="submit">{submitLabel}</button>
+    <a class="btn btn-ghost" href={cancelHref}>{t.ui.cancel}</a>
+  </div>
+</form>

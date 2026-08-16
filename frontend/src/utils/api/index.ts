@@ -31,7 +31,12 @@ export {
   EVENT_CATEGORIES,
 } from "./events"
 export type { MapLocation } from "./locations"
-export { fetchLocations } from "./locations"
+export {
+  fetchLocations,
+  fetchLocationForAdmin,
+  fetchAllLocationsForAdmin,
+  LOCATION_CATEGORIES,
+} from "./locations"
 export type { StudentGroup } from "./student-groups"
 export { fetchStudentGroups } from "./student-groups"
 export type { MensaMeal } from "./mensa"

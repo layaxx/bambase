@@ -1,7 +1,9 @@
 import prisma from "../prisma"
 import { withCache } from "./cache"
 import type { ApiResult } from "./types"
-import type { LocationCategory } from "@/generated/prisma/enums"
+import { LocationCategory } from "@/generated/prisma/enums"
+
+export const LOCATION_CATEGORIES = Object.values(LocationCategory)
 
 export type MapLocation = {
   id: string
@@ -75,6 +77,31 @@ export async function fetchLocations(
     return { data: rows.map(toMapLocation), apiDown: false }
   } catch (error) {
     console.error("Error fetching locations", error)
+    return { data: [], apiDown: true }
+  }
+}
+
+export async function fetchLocationForAdmin(slug: string): Promise<ApiResult<MapLocation | null>> {
+  try {
+    const row = await prisma.location.findFirst({ where: { slug } })
+    if (!row) return { data: null, apiDown: false }
+    return { data: toMapLocation(row), apiDown: false }
+  } catch (error) {
+    console.error("Error fetching location for admin", error)
+    return { data: null, apiDown: true }
+  }
+}
+
+/** Fetch all locations for the admin overview. */
+export async function fetchAllLocationsForAdmin(limit = 500): Promise<ApiResult<MapLocation[]>> {
+  try {
+    const rows = await prisma.location.findMany({
+      orderBy: { name: "asc" },
+      take: limit,
+    })
+    return { data: rows.map(toMapLocation), apiDown: false }
+  } catch (error) {
+    console.error("Error fetching locations for admin", error)
     return { data: [], apiDown: true }
   }
 }

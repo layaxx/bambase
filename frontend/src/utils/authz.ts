@@ -17,6 +17,7 @@ type SessionAction = "list" | "revoke" | "delete"
 type Permissions = {
   jobOffer?: "moderate"[]
   event?: "moderate"[]
+  location?: "manage"[]
   user?: UserAction[]
   session?: SessionAction[]
 }
@@ -40,6 +41,10 @@ export function canModerateJobOffers(role: string | null | undefined): Promise<b
 
 export function canModerateEvents(role: string | null | undefined): Promise<boolean> {
   return hasPermission(role, { event: ["moderate"] })
+}
+
+export function canManageLocations(role: string | null | undefined): Promise<boolean> {
+  return hasPermission(role, { location: ["manage"] })
 }
 
 export function canManageUsers(role: string | null | undefined): Promise<boolean> {
