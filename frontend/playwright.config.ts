@@ -65,6 +65,7 @@ export default defineConfig({
         "**/admin-locations.spec.ts",
         "**/admin-student-groups.spec.ts",
         "**/admin-events.spec.ts",
+        "**/admin-reports.spec.ts",
         "**/admin-cron.spec.ts",
       ],
     },

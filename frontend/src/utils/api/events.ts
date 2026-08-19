@@ -32,6 +32,8 @@ export type Event = {
   category: EventCategory
   external_url?: string
   external_id?: string
+  hidden: boolean
+  rejection_reason?: string
   ownerId?: string | null
   reports?: { id: string }[]
   map_location?: EventMapLocation
@@ -49,6 +51,8 @@ type EventRow = {
   organizer: string
   externalUrl: string | null
   externalId: string | null
+  hidden: boolean
+  rejectionReason: string | null
   ownerId: string | null
   customLocationName: string | null
   customLocationAddress: string | null
@@ -73,6 +77,8 @@ function toEvent(
     category: row.category,
     external_url: row.externalUrl ?? undefined,
     external_id: row.externalId ?? undefined,
+    hidden: row.hidden,
+    rejection_reason: row.rejectionReason ?? undefined,
     ownerId: row.ownerId,
     reports: extra?.reports,
     map_location: extra?.mapLocation ? toMapLocation(extra.mapLocation) : undefined,

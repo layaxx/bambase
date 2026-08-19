@@ -83,7 +83,7 @@ describe("users.ban", () => {
       users.ban(
         { id: "user-1" },
         // @ts-expect-error - needed because of mocked defineAction function
-        makeContext("mod-1", "moderator")
+        makeContext("mod-1", "eventModerator")
       )
     ).rejects.toMatchObject({ code: "FORBIDDEN" })
   })
@@ -151,7 +151,7 @@ describe("users.unban", () => {
       users.unban(
         { id: "user-1" },
         // @ts-expect-error - needed because of mocked defineAction function
-        makeContext("mod-1", "moderator")
+        makeContext("mod-1", "eventModerator")
       )
     ).rejects.toMatchObject({ code: "FORBIDDEN" })
   })

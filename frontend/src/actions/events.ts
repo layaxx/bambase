@@ -93,6 +93,90 @@ export const events = {
     },
   }),
 
+  unpublish: defineAction({
+    accept: "form",
+    input: z.object({ id: z.string().min(1), reason: z.string().max(500).optional() }),
+    handler: async ({ id, reason }, context) => {
+      const userId = requireUserId(context)
+
+      const event = await prisma.event.findUnique({ where: { id }, select: { ownerId: true } })
+      if (!event) throw new ActionError({ code: "NOT_FOUND", message: "Event nicht gefunden." })
+      await assertOwnerOrPermission(
+        context,
+        userId,
+        event.ownerId,
+        canModerateEvents,
+        "Depublizieren fehlgeschlagen."
+      )
+
+      try {
+        await prisma.event.update({
+          where: { id },
+          data: { hidden: true, rejectionReason: reason || null },
+        })
+      } catch (error) {
+        console.error("Event unpublish failed:", error)
+        throw new ActionError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Depublizieren fehlgeschlagen.",
+        })
+      }
+
+      invalidateCacheByPrefix("events:")
+      return {}
+    },
+  }),
+
+  publish: defineAction({
+    accept: "form",
+    input: z.object({ id: z.string().min(1) }),
+    handler: async ({ id }, context) => {
+      const userId = requireUserId(context)
+
+      const event = await prisma.event.findUnique({
+        where: { id },
+        select: { ownerId: true, rejectionReason: true },
+      })
+      if (!event) throw new ActionError({ code: "NOT_FOUND", message: "Event nicht gefunden." })
+
+      // A non-null rejectionReason means a moderator unpublished this (self-unpublish via the
+      // account page leaves it unset), so only a moderator may undo that — the owner alone
+      // can't republish their way out of a moderation decision.
+      if (event.rejectionReason) {
+        if (!(await canModerateEvents(context.locals.user?.role))) {
+          throw new ActionError({
+            code: "FORBIDDEN",
+            message: "Veröffentlichen fehlgeschlagen.",
+          })
+        }
+      } else {
+        await assertOwnerOrPermission(
+          context,
+          userId,
+          event.ownerId,
+          canModerateEvents,
+          "Veröffentlichen fehlgeschlagen."
+        )
+      }
+
+      try {
+        await prisma.event.update({
+          where: { id },
+          data: { hidden: false, rejectionReason: null },
+        })
+      } catch (error) {
+        console.error("Event publish failed:", error)
+        throw new ActionError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Veröffentlichen fehlgeschlagen.",
+        })
+      }
+
+      invalidateCacheByPrefix("events:")
+      return {}
+    },
+  }),
+
   update: defineAction({
     accept: "form",
     input: eventBaseSchema

@@ -61,7 +61,7 @@ describe("cron.run", () => {
       cron.run(
         { key: "mensa-sync" },
         // @ts-expect-error - needed because of mocked defineAction function
-        makeContext("mod-1", "moderator")
+        makeContext("mod-1", "eventModerator")
       )
     ).rejects.toMatchObject({ code: "FORBIDDEN" })
   })

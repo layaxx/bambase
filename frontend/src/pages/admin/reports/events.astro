@@ -1,0 +1,60 @@
+---
+import { actions } from "astro:actions"
+import PageLayout from "@/layouts/PageLayout.astro"
+import ReportGroupList from "@/components/ReportGroupList.astro"
+import { fetchReportGroupsForAdmin } from "@/utils/api"
+import { canModerateEvents, requireRole } from "@/utils/authz"
+import { useTranslations } from "@/i18n/translations"
+
+const t = useTranslations(Astro.locals.locale)
+
+const guard = await requireRole(Astro, canModerateEvents, "/admin/reports/events")
+if (guard instanceof Response) return guard
+
+const dismissResult = Astro.getActionResult(actions.reports.dismiss)
+const reopenResult = Astro.getActionResult(actions.reports.reopen)
+const dismissGroupResult = Astro.getActionResult(actions.reports.dismissGroup)
+const reopenGroupResult = Astro.getActionResult(actions.reports.reopenGroup)
+const unpublishResult = Astro.getActionResult(actions.events.unpublish)
+const publishResult = Astro.getActionResult(actions.events.publish)
+if (
+  (dismissResult?.data !== undefined && !dismissResult.error) ||
+  (reopenResult?.data !== undefined && !reopenResult.error) ||
+  (dismissGroupResult?.data !== undefined && !dismissGroupResult.error) ||
+  (reopenGroupResult?.data !== undefined && !reopenGroupResult.error) ||
+  (unpublishResult?.data !== undefined && !unpublishResult.error) ||
+  (publishResult?.data !== undefined && !publishResult.error)
+) {
+  return Astro.redirect(Astro.url.pathname)
+}
+
+const PAGE_SIZE = 20
+
+const rawStatus = Astro.url.searchParams.get("status")
+const statusFilter: "open" | "resolved" | "all" =
+  rawStatus === "resolved" || rawStatus === "all" ? rawStatus : "open"
+
+const rawPage = parseInt(Astro.url.searchParams.get("page") ?? "1", 10)
+const currentPage = isNaN(rawPage) || rawPage < 1 ? 1 : rawPage
+
+const { data, apiDown } = await fetchReportGroupsForAdmin({
+  caseStatus: statusFilter === "all" ? undefined : statusFilter,
+  targetType: "event",
+  page: currentPage,
+  pageSize: PAGE_SIZE,
+})
+const { groups, page: actualPage, pageCount } = data
+---
+
+<PageLayout title={t.admin.reportsEventsTitle}>
+  <h1 class="text-3xl font-bold tracking-tight sm:text-4xl mb-6">{t.admin.reportsEventsTitle}</h1>
+
+  <ReportGroupList
+    actualPage={actualPage}
+    apiDown={apiDown}
+    groups={groups}
+    kind="event"
+    pageCount={pageCount}
+    statusFilter={statusFilter}
+  />
+</PageLayout>

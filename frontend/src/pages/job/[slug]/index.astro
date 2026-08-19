@@ -118,6 +118,12 @@ const ogImage =
         {job.online_status !== "published" && (
           <Alert variant={JOB_STATUS_ALERT_VARIANT[job.online_status] ?? "neutral"}>
             {statusLabel[job.online_status] ?? job.online_status} – {t.jobs.notPublishedHint}
+            {job.online_status === "rejected" && job.rejection_reason && (
+              <>
+                <br />
+                {t.jobs.rejectionReasonLabel(job.rejection_reason)}
+              </>
+            )}
           </Alert>
         )}
         {hasReports && (

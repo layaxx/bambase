@@ -18,7 +18,11 @@ const statement = {
 const ac = createAccessControl(statement)
 
 const userRole = ac.newRole({})
-const moderatorRole = ac.newRole({ jobOffer: ["moderate"], event: ["moderate"] })
+// Reports don't have their own permission: a report against an event is moderated under
+// event:moderate, a report against a job under jobOffer:moderate — so these two roles also
+// cover report moderation for their respective target type, without granting the other.
+const jobModeratorRole = ac.newRole({ jobOffer: ["moderate"] })
+const eventModeratorRole = ac.newRole({ event: ["moderate"] })
 const adminRole = ac.newRole({
   ...defaultStatements,
   jobOffer: ["moderate"],
@@ -67,7 +71,12 @@ export const auth = betterAuth({
   plugins: [
     admin({
       ac,
-      roles: { user: userRole, moderator: moderatorRole, admin: adminRole },
+      roles: {
+        user: userRole,
+        jobModerator: jobModeratorRole,
+        eventModerator: eventModeratorRole,
+        admin: adminRole,
+      },
     }),
   ],
 })

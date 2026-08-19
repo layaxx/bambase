@@ -1,7 +1,7 @@
 import type { AstroGlobal } from "astro"
 import { auth } from "./auth"
 
-type ConfiguredRole = "user" | "moderator" | "admin"
+type ConfiguredRole = "user" | "jobModerator" | "eventModerator" | "admin"
 type UserAction =
   | "create"
   | "list"
@@ -44,6 +44,24 @@ export function canModerateJobOffers(role: string | null | undefined): Promise<b
 
 export function canModerateEvents(role: string | null | undefined): Promise<boolean> {
   return hasPermission(role, { event: ["moderate"] })
+}
+
+/**
+ * Reports have no permission of their own — moderating a report against an event requires
+ * event:moderate, against a job requires jobOffer:moderate. `targetType` is undefined for
+ * orphan reports (target deleted); either moderator role may act on those.
+ */
+export function canModerateReport(
+  role: string | null | undefined,
+  targetType: "event" | "job" | undefined
+): Promise<boolean> {
+  if (targetType === "event") return canModerateEvents(role)
+  if (targetType === "job") return canModerateJobOffers(role)
+  return canModerateAnyReports(role)
+}
+
+export async function canModerateAnyReports(role: string | null | undefined): Promise<boolean> {
+  return (await canModerateJobOffers(role)) || (await canModerateEvents(role))
 }
 
 export function canManageLocations(role: string | null | undefined): Promise<boolean> {

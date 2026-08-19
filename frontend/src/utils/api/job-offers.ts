@@ -17,6 +17,7 @@ export type JobOffer = {
   company: string
   location: string
   online_status: JobOnlineStatus
+  rejection_reason?: string
   working_hours: number
   external_url?: string
   job_type: JobType
@@ -58,6 +59,7 @@ type JobOfferRow = {
   company: string
   location: string
   onlineStatus: JobOnlineStatus
+  rejectionReason: string | null
   workingHours: number
   externalUrl: string | null
   jobType: JobType
@@ -80,6 +82,7 @@ function toJobOffer(row: JobOfferRow, extra?: { reports?: { id: string }[] }): J
     company: row.company,
     location: row.location,
     online_status: row.onlineStatus,
+    rejection_reason: row.rejectionReason ?? undefined,
     working_hours: row.workingHours,
     external_url: row.externalUrl ?? undefined,
     job_type: row.jobType,

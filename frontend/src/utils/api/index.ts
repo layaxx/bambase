@@ -39,6 +39,16 @@ export {
   fetchAllEventsForAdmin,
   EVENT_CATEGORIES,
 } from "./events"
+export type {
+  Report,
+  ReportTarget,
+  ReportReason,
+  ReportReviewStatus,
+  ReportsFilter,
+  ReportGroup,
+  ReportGroupPage,
+} from "./reports"
+export { fetchReportGroupsForAdmin, REPORT_REASONS } from "./reports"
 export type { MapLocation } from "./locations"
 export {
   fetchLocations,

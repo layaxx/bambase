@@ -229,6 +229,7 @@ model Event {
   externalUrl           String?
   externalId            String?       @unique
   hidden                Boolean       @default(false)
+  rejectionReason       String?
   ownerId               String?
   owner                 User?         @relation(fields: [ownerId], references: [id], onDelete: SetNull)
   mapLocationId         String?
@@ -246,28 +247,29 @@ model Event {
 }
 
 model JobOffer {
-  id           String          @id @default(cuid())
-  slug         String          @unique
-  title        String
-  description  String
-  company      String
-  location     String
-  onlineStatus JobOnlineStatus @default(submitted)
-  workingHours Int
-  externalUrl  String?
-  externalId   String?         @unique
-  jobType      JobType
-  field        JobField
-  workMode     WorkMode
-  contactName  String?
-  contactMail  String?
-  contactPhone String?
-  ownerId      String?
-  owner        User?           @relation(fields: [ownerId], references: [id], onDelete: SetNull)
-  reports      Report[]
-  offlineAfter DateTime
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
+  id              String          @id @default(cuid())
+  slug            String          @unique
+  title           String
+  description     String
+  company         String
+  location        String
+  onlineStatus    JobOnlineStatus @default(submitted)
+  rejectionReason String?
+  workingHours    Int
+  externalUrl     String?
+  externalId      String?         @unique
+  jobType         JobType
+  field           JobField
+  workMode        WorkMode
+  contactName     String?
+  contactMail     String?
+  contactPhone    String?
+  ownerId         String?
+  owner           User?           @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  reports         Report[]
+  offlineAfter    DateTime
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
 
   @@index([onlineStatus, offlineAfter])
   @@map("job_offer")

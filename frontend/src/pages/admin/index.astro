@@ -3,6 +3,7 @@ import PageLayout from "@/layouts/PageLayout.astro"
 import {
   canModerateJobOffers,
   canModerateEvents,
+  canModerateAnyReports,
   canManageLocations,
   canManageStudentGroups,
   canManageUsers,
@@ -18,6 +19,7 @@ if (!user) return Astro.redirect("/login?redirect=/admin")
 const [
   isJobModerator,
   isEventModerator,
+  isReportModerator,
   isLocationManager,
   isStudentGroupManager,
   isUserManager,
@@ -25,6 +27,7 @@ const [
 ] = await Promise.all([
   canModerateJobOffers(user.role),
   canModerateEvents(user.role),
+  canModerateAnyReports(user.role),
   canManageLocations(user.role),
   canManageStudentGroups(user.role),
   canManageUsers(user.role),
@@ -43,6 +46,12 @@ const sections = [
     title: t.admin.eventsTitle,
     description: t.admin.overviewEventsDescription,
     visible: isEventModerator,
+  },
+  {
+    href: "/admin/reports",
+    title: t.admin.reportsTitle,
+    description: t.admin.overviewReportsDescription,
+    visible: isReportModerator,
   },
   {
     href: "/admin/locations",

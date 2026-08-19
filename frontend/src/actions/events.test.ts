@@ -34,10 +34,16 @@ vi.mock("@/utils/prisma", () => ({
   },
 }))
 
+const mockCanModerateEvents = vi.hoisted(() => vi.fn())
+
+vi.mock("@/utils/authz", () => ({
+  canModerateEvents: mockCanModerateEvents,
+}))
+
 import { events } from "./events"
 
-function makeContext(userId?: string) {
-  return { locals: { user: userId ? { id: userId } : null } }
+function makeContext(userId?: string, role: string | null = null) {
+  return { locals: { user: userId ? { id: userId, role } : null } }
 }
 
 const baseEventInput = {
@@ -55,6 +61,7 @@ beforeEach(() => {
   mockCreate.mockReset()
   mockUpdate.mockReset()
   mockDelete.mockReset()
+  mockCanModerateEvents.mockReset()
 })
 
 afterEach(() => {
@@ -373,6 +380,206 @@ describe("events.delete", () => {
 
     await expect(
       events.delete(
+        { id: "ev-1" },
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext("user-1")
+      )
+    ).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" })
+  })
+})
+
+describe("events.unpublish", () => {
+  it("throws UNAUTHORIZED when not logged in", async () => {
+    await expect(
+      events.unpublish(
+        { id: "ev-1" },
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext()
+      )
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" })
+  })
+
+  it("throws NOT_FOUND when the event doesn't exist", async () => {
+    mockFindUnique.mockResolvedValue(null)
+
+    await expect(
+      events.unpublish(
+        { id: "ev-1" },
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext("user-1")
+      )
+    ).rejects.toMatchObject({ code: "NOT_FOUND" })
+  })
+
+  it("throws FORBIDDEN when the user neither owns the event nor can moderate events", async () => {
+    mockFindUnique.mockResolvedValue({ ownerId: "someone-else" })
+    mockCanModerateEvents.mockResolvedValue(false)
+
+    await expect(
+      events.unpublish(
+        { id: "ev-1" },
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext("user-1")
+      )
+    ).rejects.toMatchObject({ code: "FORBIDDEN" })
+    expect(mockUpdate).not.toHaveBeenCalled()
+  })
+
+  it("hides the event and returns {} when the user is the owner", async () => {
+    mockFindUnique.mockResolvedValue({ ownerId: "user-1" })
+    mockUpdate.mockResolvedValue({})
+
+    const result = await events.unpublish(
+      { id: "ev-1" },
+      // @ts-expect-error - needed because of mocked defineAction function
+      makeContext("user-1")
+    )
+
+    expect(mockUpdate).toHaveBeenCalledWith({
+      where: { id: "ev-1" },
+      data: { hidden: true, rejectionReason: null },
+    })
+    expect(result).toEqual({})
+  })
+
+  it("stores the given reason", async () => {
+    mockFindUnique.mockResolvedValue({ ownerId: "user-1" })
+    mockUpdate.mockResolvedValue({})
+
+    await events.unpublish(
+      { id: "ev-1", reason: "Duplicate listing" },
+      // @ts-expect-error - needed because of mocked defineAction function
+      makeContext("user-1")
+    )
+
+    expect(mockUpdate).toHaveBeenCalledWith({
+      where: { id: "ev-1" },
+      data: { hidden: true, rejectionReason: "Duplicate listing" },
+    })
+  })
+
+  it("hides the event and returns {} when the user is a moderator (not the owner)", async () => {
+    mockFindUnique.mockResolvedValue({ ownerId: "someone-else" })
+    mockCanModerateEvents.mockResolvedValue(true)
+    mockUpdate.mockResolvedValue({})
+
+    const result = await events.unpublish(
+      { id: "ev-1" },
+      // @ts-expect-error - needed because of mocked defineAction function
+      makeContext("mod-1", "eventModerator")
+    )
+
+    expect(mockUpdate).toHaveBeenCalledWith({
+      where: { id: "ev-1" },
+      data: { hidden: true, rejectionReason: null },
+    })
+    expect(result).toEqual({})
+  })
+
+  it("throws INTERNAL_SERVER_ERROR when the update fails", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {})
+    mockFindUnique.mockResolvedValue({ ownerId: "user-1" })
+    mockUpdate.mockRejectedValue(new Error("db error"))
+
+    await expect(
+      events.unpublish(
+        { id: "ev-1" },
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext("user-1")
+      )
+    ).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" })
+  })
+})
+
+describe("events.publish", () => {
+  it("throws FORBIDDEN when the user neither owns the event nor can moderate events", async () => {
+    mockFindUnique.mockResolvedValue({ ownerId: "someone-else" })
+    mockCanModerateEvents.mockResolvedValue(false)
+
+    await expect(
+      events.publish(
+        { id: "ev-1" },
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext("user-1")
+      )
+    ).rejects.toMatchObject({ code: "FORBIDDEN" })
+    expect(mockUpdate).not.toHaveBeenCalled()
+  })
+
+  it("unhides the event and returns {} when the user is a moderator", async () => {
+    mockFindUnique.mockResolvedValue({ ownerId: "someone-else" })
+    mockCanModerateEvents.mockResolvedValue(true)
+    mockUpdate.mockResolvedValue({})
+
+    const result = await events.publish(
+      { id: "ev-1" },
+      // @ts-expect-error - needed because of mocked defineAction function
+      makeContext("mod-1", "eventModerator")
+    )
+
+    expect(mockUpdate).toHaveBeenCalledWith({
+      where: { id: "ev-1" },
+      data: { hidden: false, rejectionReason: null },
+    })
+    expect(result).toEqual({})
+  })
+
+  it("unhides the event and returns {} when the owner republishes their own, non-moderated event", async () => {
+    mockFindUnique.mockResolvedValue({ ownerId: "user-1", rejectionReason: null })
+    mockUpdate.mockResolvedValue({})
+
+    const result = await events.publish(
+      { id: "ev-1" },
+      // @ts-expect-error - needed because of mocked defineAction function
+      makeContext("user-1")
+    )
+
+    expect(mockUpdate).toHaveBeenCalledWith({
+      where: { id: "ev-1" },
+      data: { hidden: false, rejectionReason: null },
+    })
+    expect(result).toEqual({})
+  })
+
+  it("throws FORBIDDEN when the owner tries to republish an event a moderator unpublished with a reason", async () => {
+    mockFindUnique.mockResolvedValue({ ownerId: "user-1", rejectionReason: "Spam" })
+    mockCanModerateEvents.mockResolvedValue(false)
+
+    await expect(
+      events.publish(
+        { id: "ev-1" },
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext("user-1")
+      )
+    ).rejects.toMatchObject({ code: "FORBIDDEN" })
+    expect(mockUpdate).not.toHaveBeenCalled()
+  })
+
+  it("lets a moderator republish an event that was unpublished with a reason", async () => {
+    mockFindUnique.mockResolvedValue({ ownerId: "someone-else", rejectionReason: "Spam" })
+    mockCanModerateEvents.mockResolvedValue(true)
+    mockUpdate.mockResolvedValue({})
+
+    const result = await events.publish(
+      { id: "ev-1" },
+      // @ts-expect-error - needed because of mocked defineAction function
+      makeContext("mod-1", "eventModerator")
+    )
+
+    expect(mockUpdate).toHaveBeenCalledWith({
+      where: { id: "ev-1" },
+      data: { hidden: false, rejectionReason: null },
+    })
+    expect(result).toEqual({})
+  })
+
+  it("throws INTERNAL_SERVER_ERROR when the update fails", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {})
+    mockFindUnique.mockResolvedValue({ ownerId: "user-1" })
+    mockUpdate.mockRejectedValue(new Error("db error"))
+
+    await expect(
+      events.publish(
         { id: "ev-1" },
         // @ts-expect-error - needed because of mocked defineAction function
         makeContext("user-1")

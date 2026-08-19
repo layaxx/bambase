@@ -1,0 +1,75 @@
+---
+import PageLayout from "@/layouts/PageLayout.astro"
+import { fetchReportGroupsForAdmin } from "@/utils/api"
+import {
+  canModerateAnyReports,
+  canModerateEvents,
+  canModerateJobOffers,
+  requireRole,
+} from "@/utils/authz"
+import { useTranslations } from "@/i18n/translations"
+
+const t = useTranslations(Astro.locals.locale)
+
+const guard = await requireRole(Astro, canModerateAnyReports, "/admin/reports")
+if (guard instanceof Response) return guard
+const { user } = guard
+
+const [isEventModerator, isJobModerator] = await Promise.all([
+  canModerateEvents(user.role),
+  canModerateJobOffers(user.role),
+])
+
+const emptyGroupPage = { groups: [], total: 0, page: 1, pageCount: 1 }
+
+const [{ data: eventGroups }, { data: jobGroups }] = await Promise.all([
+  isEventModerator
+    ? fetchReportGroupsForAdmin({ caseStatus: "open", targetType: "event", pageSize: 1 })
+    : Promise.resolve({ data: emptyGroupPage, apiDown: false }),
+  isJobModerator
+    ? fetchReportGroupsForAdmin({ caseStatus: "open", targetType: "job", pageSize: 1 })
+    : Promise.resolve({ data: emptyGroupPage, apiDown: false }),
+])
+
+const sections = [
+  {
+    href: "/admin/reports/events",
+    title: t.admin.reportsEventsTitle,
+    description: t.admin.reportsEventsDescription,
+    count: eventGroups.total,
+    visible: isEventModerator,
+  },
+  {
+    href: "/admin/reports/jobs",
+    title: t.admin.reportsJobsTitle,
+    description: t.admin.reportsJobsDescription,
+    count: jobGroups.total,
+    visible: isJobModerator,
+  },
+].filter((section) => section.visible)
+---
+
+<PageLayout title={t.admin.reportsTitle}>
+  <h1 class="text-3xl font-bold tracking-tight sm:text-4xl mb-6">{t.admin.reportsTitle}</h1>
+
+  <div class="grid gap-4 sm:grid-cols-2">
+    {
+      sections.map((section) => (
+        <a
+          class="block rounded-xl border border-base-300 bg-base-100 p-4 no-underline transition-colors hover:bg-base-200"
+          href={section.href}
+        >
+          <div class="flex items-center justify-between gap-2">
+            <h2 class="font-semibold leading-snug text-base-content">{section.title}</h2>
+            {section.count > 0 && (
+              <span class="badge badge-sm badge-error">
+                {t.admin.reportsOpenGroupsCount(section.count)}
+              </span>
+            )}
+          </div>
+          <p class="mt-1 text-sm text-base-content/70">{section.description}</p>
+        </a>
+      ))
+    }
+  </div>
+</PageLayout>

@@ -101,7 +101,10 @@ export const jobs = {
       await requirePermission(context, canModerateJobOffers)
 
       try {
-        await prisma.jobOffer.update({ where: { id }, data: { onlineStatus: "published" } })
+        await prisma.jobOffer.update({
+          where: { id },
+          data: { onlineStatus: "published", rejectionReason: null },
+        })
       } catch (error) {
         console.error("Job approve failed:", error)
         throw new ActionError({
@@ -117,12 +120,15 @@ export const jobs = {
 
   reject: defineAction({
     accept: "form",
-    input: z.object({ id: z.string().min(1) }),
-    handler: async ({ id }, context) => {
+    input: z.object({ id: z.string().min(1), reason: z.string().max(500).optional() }),
+    handler: async ({ id, reason }, context) => {
       await requirePermission(context, canModerateJobOffers)
 
       try {
-        await prisma.jobOffer.update({ where: { id }, data: { onlineStatus: "rejected" } })
+        await prisma.jobOffer.update({
+          where: { id },
+          data: { onlineStatus: "rejected", rejectionReason: reason || null },
+        })
       } catch (error) {
         console.error("Job reject failed:", error)
         throw new ActionError({

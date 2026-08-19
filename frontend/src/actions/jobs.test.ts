@@ -448,12 +448,12 @@ describe("jobs.approve", () => {
     const result = await jobs.approve(
       { id: "job-1" },
       // @ts-expect-error - needed because of mocked defineAction function
-      makeContext("moderator-1", true, "moderator")
+      makeContext("moderator-1", true, "jobModerator")
     )
 
     expect(mockUpdate).toHaveBeenCalledWith({
       where: { id: "job-1" },
-      data: { onlineStatus: "published" },
+      data: { onlineStatus: "published", rejectionReason: null },
     })
     expect(result).toEqual({})
   })
@@ -467,7 +467,7 @@ describe("jobs.approve", () => {
       jobs.approve(
         { id: "job-1" },
         // @ts-expect-error - needed because of mocked defineAction function
-        makeContext("moderator-1", true, "moderator")
+        makeContext("moderator-1", true, "jobModerator")
       )
     ).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" })
   })
@@ -503,14 +503,30 @@ describe("jobs.reject", () => {
     const result = await jobs.reject(
       { id: "job-1" },
       // @ts-expect-error - needed because of mocked defineAction function
-      makeContext("moderator-1", true, "moderator")
+      makeContext("moderator-1", true, "jobModerator")
     )
 
     expect(mockUpdate).toHaveBeenCalledWith({
       where: { id: "job-1" },
-      data: { onlineStatus: "rejected" },
+      data: { onlineStatus: "rejected", rejectionReason: null },
     })
     expect(result).toEqual({})
+  })
+
+  it("stores the given reason", async () => {
+    mockCanModerateJobOffers.mockResolvedValue(true)
+    mockUpdate.mockResolvedValue({})
+
+    await jobs.reject(
+      { id: "job-1", reason: "Doesn't meet posting guidelines" },
+      // @ts-expect-error - needed because of mocked defineAction function
+      makeContext("moderator-1", true, "jobModerator")
+    )
+
+    expect(mockUpdate).toHaveBeenCalledWith({
+      where: { id: "job-1" },
+      data: { onlineStatus: "rejected", rejectionReason: "Doesn't meet posting guidelines" },
+    })
   })
 
   it("throws INTERNAL_SERVER_ERROR when the update fails", async () => {
@@ -522,7 +538,7 @@ describe("jobs.reject", () => {
       jobs.reject(
         { id: "job-1" },
         // @ts-expect-error - needed because of mocked defineAction function
-        makeContext("moderator-1", true, "moderator")
+        makeContext("moderator-1", true, "jobModerator")
       )
     ).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" })
   })

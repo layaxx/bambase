@@ -61,8 +61,19 @@ const statusLabel: Record<string, string> = {
                   {t.admin.approveJob}
                 </button>
               </form>
-              <form action={actions.jobs.reject} method="POST">
+              <form
+                action={actions.jobs.reject}
+                class="flex flex-wrap items-center gap-2"
+                method="POST"
+              >
                 <input name="id" type="hidden" value={job.id} />
+                <input
+                  class="input input-sm input-bordered"
+                  maxlength="500"
+                  name="reason"
+                  placeholder={t.admin.reasonPlaceholder}
+                  type="text"
+                />
                 <button class="btn btn-outline btn-error btn-sm" type="submit">
                   {t.admin.rejectJob}
                 </button>
@@ -103,6 +114,11 @@ const statusLabel: Record<string, string> = {
               <p class="text-sm text-base-content/70">
                 {job.company} · {job.location}
               </p>
+              {job.online_status === "rejected" && job.rejection_reason && (
+                <p class="text-sm text-base-content/70">
+                  {t.jobs.rejectionReasonLabel(job.rejection_reason)}
+                </p>
+              )}
               <p class="text-xs text-base-content/40">
                 {t.admin.decidedAt(
                   new Date(job.updatedAt).toLocaleDateString(t.auth.dateLocale, {
