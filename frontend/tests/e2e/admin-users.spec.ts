@@ -27,20 +27,20 @@ test("unauthenticated visitor is redirected to login", async ({ page }) => {
 
 test("admin can ban and unban a user", async ({ page }) => {
   await login(page, "admin@example.com", "Admin1234!")
-  await page.goto("/admin/users")
+  await page.goto("/admin/users?q=clean%40example.com")
 
-  const userRow = page.locator(".rounded-xl", { hasText: "clean@example.com" })
+  const userRow = page.getByRole("row", { name: /clean@example\.com/ })
   await expect(userRow).toBeVisible()
 
   await userRow.getByRole("button", { name: "Sperren" }).click()
   await expect(page).toHaveURL(/\/admin\/users/)
 
-  const bannedRow = page.locator(".rounded-xl", { hasText: "clean@example.com" })
+  const bannedRow = page.getByRole("row", { name: /clean@example\.com/ })
   await expect(bannedRow).toContainText("Gesperrt")
 
   await bannedRow.getByRole("button", { name: "Entsperren" }).click()
   await expect(page).toHaveURL(/\/admin\/users/)
 
-  const activeRow = page.locator(".rounded-xl", { hasText: "clean@example.com" })
+  const activeRow = page.getByRole("row", { name: /clean@example\.com/ })
   await expect(activeRow).toContainText("Aktiv")
 })

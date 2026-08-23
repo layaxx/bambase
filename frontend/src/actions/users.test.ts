@@ -30,20 +30,31 @@ vi.mock("better-auth", () => ({
 
 const mockBanUser = vi.hoisted(() => vi.fn())
 const mockUnbanUser = vi.hoisted(() => vi.fn())
+const mockSetRole = vi.hoisted(() => vi.fn())
+const mockCreateUser = vi.hoisted(() => vi.fn())
+const mockRequestPasswordReset = vi.hoisted(() => vi.fn())
 
 vi.mock("@/utils/auth", () => ({
   auth: {
     api: {
       banUser: mockBanUser,
       unbanUser: mockUnbanUser,
+      setRole: mockSetRole,
+      createUser: mockCreateUser,
+      requestPasswordReset: mockRequestPasswordReset,
     },
   },
 }))
 
 const mockCanManageUsers = vi.hoisted(() => vi.fn())
+const mockCanSetUserRoles = vi.hoisted(() => vi.fn())
+const mockCanInviteUsers = vi.hoisted(() => vi.fn())
 
 vi.mock("@/utils/authz", () => ({
   canManageUsers: mockCanManageUsers,
+  canSetUserRoles: mockCanSetUserRoles,
+  canInviteUsers: mockCanInviteUsers,
+  USER_ROLES: ["user", "jobModerator", "eventModerator", "admin"],
 }))
 
 import { users } from "./users"
@@ -58,7 +69,12 @@ function makeContext(userId?: string, role: string | null = null) {
 beforeEach(() => {
   mockBanUser.mockReset()
   mockUnbanUser.mockReset()
+  mockSetRole.mockReset()
+  mockCreateUser.mockReset()
+  mockRequestPasswordReset.mockReset()
   mockCanManageUsers.mockReset()
+  mockCanSetUserRoles.mockReset()
+  mockCanInviteUsers.mockReset()
 })
 
 afterEach(() => {
@@ -185,5 +201,177 @@ describe("users.unban", () => {
         makeContext("admin-1", "admin")
       )
     ).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" })
+  })
+})
+
+describe("users.setRole", () => {
+  it("throws UNAUTHORIZED when not logged in", async () => {
+    await expect(
+      users.setRole(
+        { id: "user-1", role: "admin" },
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext()
+      )
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" })
+  })
+
+  it("throws FORBIDDEN when the user cannot set roles", async () => {
+    mockCanSetUserRoles.mockResolvedValue(false)
+
+    await expect(
+      users.setRole(
+        { id: "user-1", role: "admin" },
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext("mod-1", "eventModerator")
+      )
+    ).rejects.toMatchObject({ code: "FORBIDDEN" })
+  })
+
+  it("throws BAD_REQUEST when changing your own role", async () => {
+    mockCanSetUserRoles.mockResolvedValue(true)
+
+    await expect(
+      users.setRole(
+        { id: "admin-1", role: "user" },
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext("admin-1", "admin")
+      )
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" })
+    expect(mockSetRole).not.toHaveBeenCalled()
+  })
+
+  it("sets the target user's role when the current user is allowed to", async () => {
+    mockCanSetUserRoles.mockResolvedValue(true)
+    mockSetRole.mockResolvedValue({})
+
+    const result = await users.setRole(
+      { id: "user-1", role: "jobModerator" },
+      // @ts-expect-error - needed because of mocked defineAction function
+      makeContext("admin-1", "admin")
+    )
+
+    expect(mockSetRole).toHaveBeenCalledWith({
+      headers: expect.any(Headers),
+      body: { userId: "user-1", role: "jobModerator" },
+    })
+    expect(result).toEqual({})
+  })
+
+  it("throws BAD_REQUEST when better-auth rejects the role change", async () => {
+    mockCanSetUserRoles.mockResolvedValue(true)
+    mockSetRole.mockRejectedValue(new MockAPIError("BAD_REQUEST"))
+
+    await expect(
+      users.setRole(
+        { id: "user-1", role: "admin" },
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext("admin-1", "admin")
+      )
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" })
+  })
+
+  it("throws INTERNAL_SERVER_ERROR when the role change fails unexpectedly", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {})
+    mockCanSetUserRoles.mockResolvedValue(true)
+    mockSetRole.mockRejectedValue(new Error("db error"))
+
+    await expect(
+      users.setRole(
+        { id: "user-1", role: "admin" },
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext("admin-1", "admin")
+      )
+    ).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" })
+  })
+})
+
+describe("users.invite", () => {
+  const input = { email: "new@example.com", name: "New User", role: "user" as const }
+
+  it("throws UNAUTHORIZED when not logged in", async () => {
+    await expect(
+      users.invite(
+        input,
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext()
+      )
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" })
+  })
+
+  it("throws FORBIDDEN when the user cannot invite users", async () => {
+    mockCanInviteUsers.mockResolvedValue(false)
+
+    await expect(
+      users.invite(
+        input,
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext("mod-1", "eventModerator")
+      )
+    ).rejects.toMatchObject({ code: "FORBIDDEN" })
+  })
+
+  it("creates the user and sends a password-reset email when allowed", async () => {
+    mockCanInviteUsers.mockResolvedValue(true)
+    mockCreateUser.mockResolvedValue({ user: { id: "new-1" } })
+    mockRequestPasswordReset.mockResolvedValue({ status: true })
+
+    const result = await users.invite(
+      input,
+      // @ts-expect-error - needed because of mocked defineAction function
+      makeContext("admin-1", "admin")
+    )
+
+    expect(mockCreateUser).toHaveBeenCalledWith({
+      headers: expect.any(Headers),
+      body: { email: "new@example.com", name: "New User", role: "user" },
+    })
+    expect(mockRequestPasswordReset).toHaveBeenCalledWith({
+      headers: expect.any(Headers),
+      body: { email: "new@example.com", redirectTo: "/reset-password" },
+    })
+    expect(result).toEqual({})
+  })
+
+  it("throws BAD_REQUEST when the email is already in use", async () => {
+    mockCanInviteUsers.mockResolvedValue(true)
+    mockCreateUser.mockRejectedValue(new MockAPIError("BAD_REQUEST"))
+
+    await expect(
+      users.invite(
+        input,
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext("admin-1", "admin")
+      )
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" })
+    expect(mockRequestPasswordReset).not.toHaveBeenCalled()
+  })
+
+  it("throws INTERNAL_SERVER_ERROR when user creation fails unexpectedly", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {})
+    mockCanInviteUsers.mockResolvedValue(true)
+    mockCreateUser.mockRejectedValue(new Error("db error"))
+
+    await expect(
+      users.invite(
+        input,
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext("admin-1", "admin")
+      )
+    ).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" })
+  })
+
+  it("still succeeds when the invite email fails to send", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {})
+    mockCanInviteUsers.mockResolvedValue(true)
+    mockCreateUser.mockResolvedValue({ user: { id: "new-1" } })
+    mockRequestPasswordReset.mockRejectedValue(new Error("mail error"))
+
+    const result = await users.invite(
+      input,
+      // @ts-expect-error - needed because of mocked defineAction function
+      makeContext("admin-1", "admin")
+    )
+
+    expect(result).toEqual({})
   })
 })

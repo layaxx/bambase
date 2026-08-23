@@ -1,10 +1,34 @@
 ---
 import { actions } from "astro:actions"
-import type { UserWithRole } from "better-auth/plugins"
+import type { Prisma } from "@/generated/prisma/client"
+import dayjs from "dayjs"
+import relativeTime from "dayjs/plugin/relativeTime"
+import "dayjs/locale/de"
 import PageLayout from "@/layouts/PageLayout.astro"
-import { canManageUsers, requireRole } from "@/utils/authz"
+import Alert from "@/components/Alert.astro"
+import Pagination from "@/components/Pagination.astro"
+import IconUsers from "@/components/icons/IconUsers.astro"
+import IconUserCheck from "@/components/icons/IconUserCheck.astro"
+import IconUserX from "@/components/icons/IconUserX.astro"
+import IconUserPlus from "@/components/icons/IconUserPlus.astro"
+import IconSearch from "@/components/icons/IconSearch.astro"
+import IconCheck from "@/components/icons/IconCheck.astro"
+import {
+  canManageUsers,
+  canSetUserRoles,
+  canInviteUsers,
+  requireRole,
+  USER_ROLES,
+} from "@/utils/authz"
 import { useTranslations } from "@/i18n/translations"
-import { auth } from "@/utils/auth"
+import prisma from "@/utils/prisma"
+
+dayjs.extend(relativeTime)
+
+const PAGE_SIZE = 25
+
+type Role = (typeof USER_ROLES)[number]
+type UserRow = Awaited<ReturnType<typeof prisma.user.findMany>>[number]
 
 const t = useTranslations(Astro.locals.locale)
 
@@ -14,97 +38,473 @@ const { user: currentUser } = guard
 
 const banResult = Astro.getActionResult(actions.users.ban)
 const unbanResult = Astro.getActionResult(actions.users.unban)
+const setRoleResult = Astro.getActionResult(actions.users.setRole)
 if (
   (banResult?.data !== undefined && !banResult.error) ||
-  (unbanResult?.data !== undefined && !unbanResult.error)
+  (unbanResult?.data !== undefined && !unbanResult.error) ||
+  (setRoleResult?.data !== undefined && !setRoleResult.error)
 ) {
-  return Astro.redirect(Astro.url.pathname)
+  // A no-JS form POST targets `?_action=...` on this same page, which replaces
+  // (not merges with) the page's own query string — so any active filters are
+  // gone from `Astro.url` by the time we get here. The Referer header still has
+  // the filtered URL the form was rendered on, so redirect there instead of
+  // silently dropping the admin's filters after every ban/unban/role change.
+  const referer = Astro.request.headers.get("referer")
+  let redirectTarget = Astro.url.pathname
+  if (referer) {
+    try {
+      const refererUrl = new URL(referer)
+      if (refererUrl.origin === Astro.url.origin && refererUrl.pathname === Astro.url.pathname) {
+        redirectTarget = Astro.url.pathname + refererUrl.search
+      }
+    } catch {
+      // Malformed Referer header — fall back to the plain pathname.
+    }
+  }
+  return Astro.redirect(redirectTarget)
 }
 
-const { users }: { users: UserWithRole[] } = await auth.api.listUsers({
-  headers: Astro.request.headers,
-  query: { sortBy: "createdAt", sortDirection: "desc", limit: 200 },
-})
+const banError = banResult?.error?.message ?? null
+const unbanError = unbanResult?.error?.message ?? null
+const setRoleError = setRoleResult?.error?.message ?? null
+
+const [canSetRole, canInvite] = await Promise.all([
+  canSetUserRoles(currentUser.role),
+  canInviteUsers(currentUser.role),
+])
+
+const searchQuery = Astro.url.searchParams.get("q")?.trim() ?? ""
+const rawRoleFilter = Astro.url.searchParams.get("role") ?? "all"
+const roleFilter: Role | "all" = (USER_ROLES as readonly string[]).includes(rawRoleFilter)
+  ? (rawRoleFilter as Role)
+  : "all"
+const rawStatusFilter = Astro.url.searchParams.get("status")
+const statusFilter: "all" | "active" | "banned" =
+  rawStatusFilter === "active" || rawStatusFilter === "banned" ? rawStatusFilter : "all"
+const rawVerifiedFilter = Astro.url.searchParams.get("verified")
+const verifiedFilter: "all" | "verified" | "unverified" =
+  rawVerifiedFilter === "verified" || rawVerifiedFilter === "unverified" ? rawVerifiedFilter : "all"
+
+const hasActiveFilter =
+  searchQuery !== "" || roleFilter !== "all" || statusFilter !== "all" || verifiedFilter !== "all"
+
+const rawPage = Number.parseInt(Astro.url.searchParams.get("page") ?? "1", 10)
+const currentPage = Number.isNaN(rawPage) || rawPage < 1 ? 1 : rawPage
+
+// "user" is the implicit default role, stored as `null` (or, defensively, "") rather than
+// the literal string — so filtering for it has to match the absence of a role too.
+const roleWhere: Prisma.UserWhereInput | undefined =
+  roleFilter === "all"
+    ? undefined
+    : roleFilter === "user"
+      ? { OR: [{ role: null }, { role: "" }, { role: { contains: roleFilter } }] }
+      : { role: { contains: roleFilter } }
+
+const statusWhere: Prisma.UserWhereInput | undefined =
+  statusFilter === "active"
+    ? { OR: [{ banned: false }, { banned: null }] }
+    : statusFilter === "banned"
+      ? { banned: true }
+      : undefined
+
+const verifiedWhere: Prisma.UserWhereInput | undefined =
+  verifiedFilter === "all" ? undefined : { emailVerified: verifiedFilter === "verified" }
+
+const searchWhere: Prisma.UserWhereInput | undefined = searchQuery
+  ? {
+      OR: [
+        { name: { contains: searchQuery, mode: "insensitive" } },
+        { email: { contains: searchQuery, mode: "insensitive" } },
+      ],
+    }
+  : undefined
+
+const where: Prisma.UserWhereInput = {
+  AND: [roleWhere, statusWhere, verifiedWhere, searchWhere].filter(
+    (clause) => clause !== undefined
+  ),
+}
+
+const [totalUsers, verifiedCount, bannedCount, matchedCount, pagedUsers] = await Promise.all([
+  prisma.user.count(),
+  prisma.user.count({ where: { emailVerified: true } }),
+  prisma.user.count({ where: { banned: true } }),
+  prisma.user.count({ where }),
+  prisma.user.findMany({
+    where,
+    orderBy: { createdAt: "desc" },
+    skip: (currentPage - 1) * PAGE_SIZE,
+    take: PAGE_SIZE,
+  }),
+])
+
+const pageCount = Math.max(1, Math.ceil(matchedCount / PAGE_SIZE))
+
+// Filters or a stale bookmark can push `page` past the last page of results — bounce back
+// to page 1 instead of rendering an empty table while `matchedCount` says otherwise.
+if (pagedUsers.length === 0 && matchedCount > 0) {
+  const redirectParams = new URLSearchParams(Astro.url.searchParams)
+  redirectParams.delete("page")
+  const qs = redirectParams.toString()
+  return Astro.redirect(qs ? `?${qs}` : Astro.url.pathname)
+}
+
+const lastActiveRows = pagedUsers.length
+  ? await prisma.session.groupBy({
+      by: ["userId"],
+      where: { userId: { in: pagedUsers.map((user) => user.id) } },
+      _max: { updatedAt: true },
+    })
+  : []
+const lastActiveMap = new Map(lastActiveRows.map((row) => [row.userId, row._max.updatedAt]))
+
+function primaryRole(user: UserRow): Role {
+  const role = (user.role || "user").split(",")[0]
+  return (USER_ROLES as readonly string[]).includes(role) ? (role as Role) : "user"
+}
+
+function initials(user: UserRow): string {
+  const source = user.name?.trim() || user.email
+  const parts = source.split(/\s+/).filter(Boolean)
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase()
+  return source.slice(0, 2).toUpperCase()
+}
+
+function formatLastActive(userId: string): string {
+  const date = lastActiveMap.get(userId)
+  if (!date) return t.admin.neverActiveLabel
+  return dayjs(date).locale(Astro.locals.locale).fromNow()
+}
+
+const clearFiltersUrl = Astro.url.pathname
+const invited = Astro.url.searchParams.get("invited") === "success"
 ---
 
 <PageLayout title={t.admin.usersTitle}>
-  <h1 class="text-3xl font-bold tracking-tight sm:text-4xl mb-6">{t.admin.usersTitle}</h1>
+  <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h1 class="text-3xl font-bold tracking-tight sm:text-4xl">{t.admin.usersTitle}</h1>
+      <p class="mt-1 text-base-content/70">{t.admin.usersSubtitle}</p>
+    </div>
+    {
+      canInvite && (
+        <a class="btn btn-primary btn-sm gap-1.5" href="/admin/users/invite">
+          <IconUserPlus class="h-4 w-4" />
+          {t.admin.inviteUser}
+        </a>
+      )
+    }
+  </div>
 
-  {
-    users.length === 0 ? (
-      <p class="rounded-xl border border-base-300 bg-base-100 p-6 text-base-content/70">
-        {t.admin.noUsers}
-      </p>
-    ) : (
-      <div class="flex flex-col gap-3">
-        {users.map((user) => (
-          <div class="flex flex-col gap-3 rounded-xl border border-base-300 bg-base-100 p-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p class="font-semibold leading-snug text-base-content">
-                {user.name || user.email}
-                {user.id === currentUser.id && (
-                  <span class="text-base-content/40"> {t.admin.bannedYou}</span>
-                )}
-              </p>
-              <p class="text-sm text-base-content/70">{user.email}</p>
-              <div class="mt-1 flex flex-wrap items-center gap-2">
-                <span class="badge badge-sm badge-neutral">{user.role || "user"}</span>
-                <span
-                  class:list={[
-                    "badge badge-sm",
-                    { "badge-error": user.banned, "badge-success": !user.banned },
-                  ]}
-                >
-                  {user.banned ? t.admin.statusBanned : t.admin.statusActive}
-                </span>
-                {user.banned && user.banExpires && (
-                  <span class="text-xs text-base-content/70">
-                    {t.admin.bannedUntil(
-                      new Date(user.banExpires).toLocaleDateString(t.auth.dateLocale, {
-                        day: "numeric",
-                        month: "long",
-                        year: "numeric",
-                      })
-                    )}
-                  </span>
-                )}
-                {user.banned && !user.banExpires && (
-                  <span class="text-xs text-base-content/70">{t.admin.bannedIndefinitely}</span>
-                )}
-                {user.banned && user.banReason && (
-                  <span class="text-xs text-base-content/70">{user.banReason}</span>
-                )}
-              </div>
-            </div>
-            {user.id === currentUser.id ? null : user.banned ? (
-              <form action={actions.users.unban} method="POST">
-                <input name="id" type="hidden" value={user.id} />
-                <button class="btn btn-outline btn-sm" type="submit">
-                  {t.admin.unbanAction}
-                </button>
-              </form>
-            ) : (
-              <form
-                action={actions.users.ban}
-                class="flex flex-col gap-2 sm:flex-row sm:items-center"
-                method="POST"
-              >
-                <input name="id" type="hidden" value={user.id} />
-                <input
-                  class="input input-sm input-bordered"
-                  maxlength="500"
-                  name="reason"
-                  placeholder={t.admin.reasonPlaceholder}
-                  type="text"
-                />
-                <button class="btn btn-outline btn-error btn-sm" type="submit">
-                  {t.admin.banAction}
-                </button>
-              </form>
-            )}
-          </div>
-        ))}
+  {invited && <Alert variant="success">{t.admin.inviteSuccessMessage}</Alert>}
+  {banError && <Alert variant="error">{banError}</Alert>}
+  {unbanError && <Alert variant="error">{unbanError}</Alert>}
+  {setRoleError && <Alert variant="error">{setRoleError}</Alert>}
+
+  <div class="mb-6 grid gap-4 sm:grid-cols-3">
+    <div class="flex items-center gap-3 rounded-xl border border-base-300 bg-base-100 p-4">
+      <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-base-200">
+        <IconUsers class="h-5 w-5 text-base-content/70" />
       </div>
-    )
-  }
+      <div>
+        <p class="text-2xl font-bold leading-tight">{totalUsers}</p>
+        <p class="text-sm text-base-content/70">{t.admin.statTotalUsers}</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-3 rounded-xl border border-base-300 bg-base-100 p-4">
+      <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-base-200">
+        <IconUserCheck class="h-5 w-5 text-base-content/70" />
+      </div>
+      <div>
+        <p class="text-2xl font-bold leading-tight">{verifiedCount}</p>
+        <p class="text-sm text-base-content/70">{t.admin.statVerifiedAccounts}</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-3 rounded-xl border border-base-300 bg-base-100 p-4">
+      <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-base-200">
+        <IconUserX class="h-5 w-5 text-base-content/70" />
+      </div>
+      <div>
+        <p class="text-2xl font-bold leading-tight">{bannedCount}</p>
+        <p class="text-sm text-base-content/70">{t.admin.statBannedAccounts}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="rounded-xl border border-base-300 bg-base-100 p-4">
+    <form
+      class="flex flex-col gap-3 sm:flex-row sm:items-center"
+      id="user-filter-form"
+      method="get"
+    >
+      <div class="relative flex-1">
+        <IconSearch
+          class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-base-content/40"
+        />
+        <input
+          class="input input-bordered w-full pl-9"
+          id="user-search"
+          name="q"
+          placeholder={t.admin.searchPlaceholder}
+          type="search"
+          value={searchQuery}
+        />
+      </div>
+      <select class="select select-bordered" id="user-role-filter" name="role">
+        <option selected={roleFilter === "all"} value="all">
+          {t.admin.filterAllRoles}
+        </option>
+        {
+          USER_ROLES.map((role) => (
+            <option selected={roleFilter === role} value={role}>
+              {t.admin.roleNames[role]}
+            </option>
+          ))
+        }
+      </select>
+      <select class="select select-bordered" id="user-status-filter" name="status">
+        <option selected={statusFilter === "all"} value="all">
+          {t.admin.filterAllStatuses}
+        </option>
+        <option selected={statusFilter === "active"} value="active">
+          {t.admin.statusActive}
+        </option>
+        <option selected={statusFilter === "banned"} value="banned">
+          {t.admin.statusBanned}
+        </option>
+      </select>
+      <select class="select select-bordered" id="user-verified-filter" name="verified">
+        <option selected={verifiedFilter === "all"} value="all">
+          {t.admin.filterAllVerification}
+        </option>
+        <option selected={verifiedFilter === "verified"} value="verified">
+          {t.admin.statusVerified}
+        </option>
+        <option selected={verifiedFilter === "unverified"} value="unverified">
+          {t.admin.statusUnverified}
+        </option>
+      </select>
+      <noscript>
+        <button class="btn btn-outline btn-sm" type="submit">
+          {t.admin.applyFilters}
+        </button>
+      </noscript>
+    </form>
+
+    <div class="mt-4 flex items-center justify-between">
+      <p class="text-sm text-base-content/70">{t.admin.usersShownCount(matchedCount)}</p>
+      {
+        hasActiveFilter && (
+          <a class="link link-sm" href={clearFiltersUrl}>
+            {t.admin.clearFilters}
+          </a>
+        )
+      }
+    </div>
+  </div>
+
+  <div class="mt-4">
+    {
+      totalUsers === 0 ? (
+        <p class="rounded-xl border border-base-300 bg-base-100 p-6 text-base-content/70">
+          {t.admin.noUsers}
+        </p>
+      ) : matchedCount === 0 ? (
+        <div class="rounded-xl border border-base-300 bg-base-100 p-6 text-center text-base-content/70">
+          <p class="mb-2">{t.admin.noUsersMatchFilters}</p>
+          <a class="btn btn-outline btn-sm" href={clearFiltersUrl}>
+            {t.admin.clearFilters}
+          </a>
+        </div>
+      ) : (
+        <div class="overflow-x-auto rounded-xl border border-base-300 bg-base-100">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>{t.admin.columnUser}</th>
+                <th>{t.admin.columnRole}</th>
+                <th>{t.admin.columnVerification}</th>
+                <th>{t.admin.columnStatus}</th>
+                <th>{t.admin.columnLastActive}</th>
+                <th class="text-right">{t.admin.columnActions}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pagedUsers.map((user) => (
+                <tr>
+                  <td>
+                    <div class="flex items-center gap-3">
+                      <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-base-300 text-xs font-semibold text-base-content/70">
+                        {initials(user)}
+                      </div>
+                      <div>
+                        <p class="font-semibold leading-snug text-base-content">
+                          {user.name || user.email}
+                          {user.id === currentUser.id && (
+                            <span class="font-normal text-base-content/40">
+                              {" "}
+                              {t.admin.bannedYou}
+                            </span>
+                          )}
+                        </p>
+                        <p class="text-sm text-base-content/70">{user.email}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    {user.id === currentUser.id || !canSetRole ? (
+                      <span class="badge badge-sm badge-neutral">
+                        {t.admin.roleNames[primaryRole(user)]}
+                      </span>
+                    ) : (
+                      <form action={actions.users.setRole} method="POST">
+                        <input name="id" type="hidden" value={user.id} />
+                        <select
+                          aria-label={t.admin.changeRoleLabel(user.name || user.email)}
+                          class="select select-bordered select-sm"
+                          name="role"
+                          onchange="this.form.requestSubmit()"
+                        >
+                          {USER_ROLES.map((role) => (
+                            <option selected={primaryRole(user) === role} value={role}>
+                              {t.admin.roleNames[role]}
+                            </option>
+                          ))}
+                        </select>
+                      </form>
+                    )}
+                  </td>
+                  <td>
+                    {user.emailVerified ? (
+                      <span class="badge badge-sm badge-success badge-outline gap-1">
+                        <IconCheck class="h-3 w-3" />
+                        {t.admin.statusVerified}
+                      </span>
+                    ) : (
+                      <span class="badge badge-sm badge-ghost">{t.admin.statusUnverified}</span>
+                    )}
+                  </td>
+                  <td>
+                    <div class="flex flex-col gap-1">
+                      <span
+                        class:list={[
+                          "badge badge-sm w-fit",
+                          { "badge-error": user.banned, "badge-success": !user.banned },
+                        ]}
+                      >
+                        {user.banned ? t.admin.statusBanned : t.admin.statusActive}
+                      </span>
+                      {user.banned && user.banExpires && (
+                        <span class="text-xs text-base-content/70">
+                          {t.admin.bannedUntil(
+                            new Date(user.banExpires).toLocaleDateString(t.auth.dateLocale, {
+                              day: "numeric",
+                              month: "long",
+                              year: "numeric",
+                            })
+                          )}
+                        </span>
+                      )}
+                      {user.banned && !user.banExpires && (
+                        <span class="text-xs text-base-content/70">
+                          {t.admin.bannedIndefinitely}
+                        </span>
+                      )}
+                      {user.banned && user.banReason && (
+                        <span class="text-xs text-base-content/70">{user.banReason}</span>
+                      )}
+                    </div>
+                  </td>
+                  <td>
+                    <span class="whitespace-nowrap text-sm text-base-content/70">
+                      {formatLastActive(user.id)}
+                    </span>
+                  </td>
+                  <td class="text-right">
+                    {user.id === currentUser.id ? (
+                      <span class="text-sm text-base-content/40">—</span>
+                    ) : user.banned ? (
+                      <form action={actions.users.unban} method="POST">
+                        <input name="id" type="hidden" value={user.id} />
+                        <button class="btn btn-outline btn-sm" type="submit">
+                          {t.admin.unbanAction}
+                        </button>
+                      </form>
+                    ) : (
+                      <form
+                        action={actions.users.ban}
+                        class="flex items-center justify-end gap-2"
+                        method="POST"
+                      >
+                        <input name="id" type="hidden" value={user.id} />
+                        <input
+                          class="input input-sm input-bordered w-32"
+                          maxlength="500"
+                          name="reason"
+                          placeholder={t.admin.reasonPlaceholder}
+                          type="text"
+                        />
+                        <button class="btn btn-outline btn-error btn-sm" type="submit">
+                          {t.admin.banAction}
+                        </button>
+                      </form>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )
+    }
+  </div>
+
+  <Pagination
+    nextLabel={t.jobs.paginationNext}
+    page={currentPage}
+    pageCount={pageCount}
+    prevLabel={t.jobs.paginationPrev}
+  />
 </PageLayout>
+
+<script>
+  import { disableSubmitOnSubmit } from "@/utils/form-draft"
+
+  document
+    .querySelectorAll<HTMLFormElement>("table form[method='POST']")
+    .forEach(disableSubmitOnSubmit)
+
+  const filterForm = document.getElementById("user-filter-form") as HTMLFormElement | null
+  if (filterForm) {
+    filterForm.addEventListener("submit", (e) => {
+      e.preventDefault()
+      const data = new FormData(filterForm)
+      const params = new URLSearchParams()
+      for (const [key, value] of data) {
+        const val = typeof value === "string" ? value.trim() : ""
+        if (val === "" || val === "all") continue
+        params.set(key, val)
+      }
+      const qs = params.toString()
+      window.location.href = qs ? `?${qs}` : window.location.pathname
+    })
+
+    filterForm.querySelectorAll("select").forEach((select) => {
+      select.addEventListener("change", () => filterForm.requestSubmit())
+    })
+
+    const searchInput = filterForm.querySelector<HTMLInputElement>("#user-search")
+    if (searchInput) {
+      if (searchInput.value) {
+        searchInput.focus()
+        const len = searchInput.value.length
+        searchInput.setSelectionRange(len, len)
+      }
+      let searchTimer: ReturnType<typeof setTimeout>
+      searchInput.addEventListener("input", () => {
+        clearTimeout(searchTimer)
+        searchTimer = setTimeout(() => filterForm.requestSubmit(), 300)
+      })
+    }
+  }
+</script>

@@ -2,6 +2,12 @@ import type { AstroGlobal } from "astro"
 import { auth } from "./auth"
 
 type ConfiguredRole = "user" | "jobModerator" | "eventModerator" | "admin"
+export const USER_ROLES = [
+  "user",
+  "jobModerator",
+  "eventModerator",
+  "admin",
+] as const satisfies readonly ConfiguredRole[]
 type UserAction =
   | "create"
   | "list"
@@ -74,6 +80,14 @@ export function canManageStudentGroups(role: string | null | undefined): Promise
 
 export function canManageUsers(role: string | null | undefined): Promise<boolean> {
   return hasPermission(role, { user: ["list", "ban"] })
+}
+
+export function canSetUserRoles(role: string | null | undefined): Promise<boolean> {
+  return hasPermission(role, { user: ["set-role"] })
+}
+
+export function canInviteUsers(role: string | null | undefined): Promise<boolean> {
+  return hasPermission(role, { user: ["create"] })
 }
 
 export function canViewSystemStatus(role: string | null | undefined): Promise<boolean> {
