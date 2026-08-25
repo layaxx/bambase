@@ -19,10 +19,14 @@ export function initDraftPersistence(form: HTMLFormElement, fields: string[]): v
 
   const saved = sessionStorage.getItem(draftKey)
   if (saved) {
-    const draft = JSON.parse(saved) as Record<string, string>
-    for (const name of fields) {
-      const el = form.elements.namedItem(name) as FormField | null
-      if (el && draft[name]) (el as HTMLInputElement).value = draft[name]
+    try {
+      const draft = JSON.parse(saved) as Record<string, string>
+      for (const name of fields) {
+        const el = form.elements.namedItem(name) as FormField | null
+        if (el && draft[name]) (el as HTMLInputElement).value = draft[name]
+      }
+    } catch {
+      sessionStorage.removeItem(draftKey)
     }
   }
 

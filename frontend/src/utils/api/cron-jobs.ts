@@ -1,4 +1,4 @@
-import prisma from "@/utils/prisma"
+import prisma from "../prisma"
 import { CRON_JOB_DEFINITIONS, CRON_JOB_KEYS, type CronJobKey } from "@/utils/cron-tracking"
 import type { ApiResult } from "./types"
 
