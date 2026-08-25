@@ -46,4 +46,18 @@ export default defineConfig({
       },
     },
   },
+
+  security: {
+    allowedDomains: [
+      {
+        hostname: "bambase.de",
+        protocol: "https",
+      },
+      {
+        hostname: "localhost",
+        protocol: "http",
+        port: "1337",
+      },
+    ],
+  },
 })
