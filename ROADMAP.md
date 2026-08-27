@@ -598,7 +598,7 @@ Events and job offers currently have no category or tag system, making it hard f
 - [x] Unit tests for pure utility modules: `event-formatting` (`formatDateTime`, `formatTime`), `mensa` (`getRelevantDay`, `groupMealsByDay`), `job-status` (`JOB_STATUS_ALERT_CLASS`, `JOB_STATUS_BADGE_CLASS`)
 - [x] Component tests using `experimental_AstroContainer`: `MensaLocationCard`, `MensaMealItem`, `MensaDaySection`, `ReportModal` — rendered HTML checked for correct output, edge cases (empty meals, allergens, vegan/vegetarian badges, hidden form inputs)
 
-- [x] End-to-end tests with Playwright in `frontend/tests/e2e/`: `public-pages.spec.ts`, `auth.spec.ts`, `account.spec.ts`, `events.spec.ts`, `jobs.spec.ts`, `reports.spec.ts` — run against a full Docker Compose stack with a seeded database (`SEED=true docker-compose up`). Auth state is saved once via `auth.setup.ts` and reused by authenticated specs. Run with `yarn test:e2e` inside `frontend/`.
+- [x] End-to-end tests with Playwright in `frontend/tests/e2e/`: `public-pages.spec.ts`, `auth.spec.ts`, `account.spec.ts`, `events.spec.ts`, `jobs.spec.ts`, `reports.spec.ts` — run against a full Docker Compose stack with a seeded database (`docker-compose up` then `docker compose run --rm frontend-migrate npx prisma db seed`). Auth state is saved once via `auth.setup.ts` and reused by authenticated specs. Run with `yarn test:e2e` inside `frontend/`.
 
 **Still to do:**
 

@@ -10,12 +10,6 @@ FROM base AS prod-deps
 COPY package.json yarn.lock ./
 RUN yarn install --frozen-lockfile --production=true
 
-FROM deps AS migrator
-COPY prisma ./prisma
-COPY prisma.config.ts ./
-RUN npx prisma generate
-CMD ["sh", "-c", "npx prisma migrate deploy && if [ \"$SEED\" = \"true\" ]; then npx prisma db seed; fi"]
-
 FROM deps AS builder
 COPY . .
 RUN npx prisma generate
@@ -32,6 +26,10 @@ ENV NODE_ENV=production \
 COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/package.json ./package.json
+COPY prisma ./prisma
+COPY prisma.config.ts ./
+COPY src/utils/slugify.ts ./src/utils/slugify.ts
+RUN npx prisma generate
 
 USER node
 EXPOSE 4321

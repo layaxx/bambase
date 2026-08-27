@@ -46,7 +46,7 @@ npx prisma migrate deploy
 yarn dev   # Frontend at http://localhost:4321
 ```
 
-On first run, set `SEED=true` in `.env` (or run `npx prisma db seed` directly) to populate the database with sample data.
+On first run, run `npx prisma db seed` to populate the database with sample data.
 
 ### Docker Compose (full stack)
 
@@ -54,6 +54,8 @@ On first run, set `SEED=true` in `.env` (or run `npx prisma db seed` directly) t
 cp .env.example .env   # edit values
 docker-compose up --build
 ```
+
+To populate the database with sample data, run `docker compose run --rm frontend-migrate npx prisma db seed` after the stack is up.
 
 ## Project Structure
 

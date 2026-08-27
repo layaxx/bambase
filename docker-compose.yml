@@ -18,23 +18,19 @@ services:
       timeout: 5s
       retries: 5
 
-  # One-off job: applies pending migrations and (if SEED=true) seeds sample
-  # data, then exits. Uses the `migrator` stage, which only carries the
-  # Prisma CLI + schema (not the built app, dropped from the slim runtime
-  # image).
   frontend-migrate:
     build:
       context: ./frontend
-      target: migrator
-    image: ghcr.io/layaxx/bambase-frontend-migrator:${IMAGE_TAG:-latest}
+    image: ghcr.io/layaxx/bambase-frontend:${IMAGE_TAG:-latest}
+    command: ["npx", "prisma", "migrate", "deploy"]
     environment:
       DATABASE_URL: postgresql://backend:backend@frontend_db:5432/backend?schema=public
-      SEED: ${SEED:-false}
     depends_on:
       frontend_db:
         condition: service_healthy
     networks:
       - internal_network
+    restart: "no"
 
   frontend:
     build:
