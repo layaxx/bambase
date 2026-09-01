@@ -51,7 +51,7 @@ describe("sendMail", () => {
     await sendMail({ to: "student@example.com", subject: "Verify your email", text: "Click here" })
 
     expect(fetch).toHaveBeenCalledWith(
-      "https://api.mailgun.net/v3/mail.example.com/messages",
+      "https://api.eu.mailgun.net/v3/mail.example.com/messages",
       expect.objectContaining({
         method: "POST",
         headers: {
