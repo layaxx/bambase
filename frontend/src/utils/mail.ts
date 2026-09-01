@@ -1,5 +1,5 @@
-const MAILGUN_API_KEY = process.env.MAILGUN_API_KEY
-const MAILGUN_DOMAIN = process.env.MAILGUN_DOMAIN
+const MAILGUN_API_KEY = process.env.MAILGUN_API_KEY ?? import.meta.env.MAILGUN_API_KEY
+const MAILGUN_DOMAIN = process.env.MAILGUN_DOMAIN ?? import.meta.env.MAILGUN_DOMAIN
 
 type MailMessage = {
   to: string
@@ -27,7 +27,9 @@ export async function sendMail(message: MailMessage): Promise<void> {
     text: message.text,
   })
 
-  const response = await fetch(`https://api.mailgun.net/v3/${MAILGUN_DOMAIN}/messages`, {
+  const api_url = `https://api.eu.mailgun.net/v3/${MAILGUN_DOMAIN}/messages`
+
+  const response = await fetch(api_url, {
     method: "POST",
     headers: {
       Authorization: `Basic ${Buffer.from(`api:${MAILGUN_API_KEY}`).toString("base64")}`,
