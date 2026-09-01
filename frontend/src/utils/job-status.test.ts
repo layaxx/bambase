@@ -1,41 +1,45 @@
 import { describe, expect, it } from "vitest"
-import { JOB_STATUS_ALERT_CLASS, JOB_STATUS_BADGE_CLASS, JOB_TYPE_BADGE_CLASS } from "./job-status"
+import {
+  JOB_STATUS_ALERT_VARIANT,
+  JOB_STATUS_BADGE_CLASS,
+  JOB_TYPE_BADGE_CLASS,
+} from "./job-status"
 import { JOB_TYPES } from "./api/job-offers"
 
 // All valid online_status values for a job offer
 const ALL_STATUSES = ["submitted", "published", "expired", "rejected", "archived"] as const
 
-describe("JOB_STATUS_ALERT_CLASS", () => {
+describe("JOB_STATUS_ALERT_VARIANT", () => {
   it("covers all non-published statuses", () => {
     const nonPublished = ALL_STATUSES.filter((s) => s !== "published")
     for (const status of nonPublished) {
-      expect(JOB_STATUS_ALERT_CLASS[status]).toBeDefined()
+      expect(JOB_STATUS_ALERT_VARIANT[status]).toBeDefined()
     }
   })
 
-  it("maps submitted to alert-warning", () => {
-    expect(JOB_STATUS_ALERT_CLASS.submitted).toBe("alert-warning")
+  it("maps submitted to warning", () => {
+    expect(JOB_STATUS_ALERT_VARIANT.submitted).toBe("warning")
   })
 
-  it("maps expired to alert-neutral", () => {
-    expect(JOB_STATUS_ALERT_CLASS.expired).toBe("alert-neutral")
+  it("maps expired to neutral", () => {
+    expect(JOB_STATUS_ALERT_VARIANT.expired).toBe("neutral")
   })
 
-  it("maps rejected to alert-error", () => {
-    expect(JOB_STATUS_ALERT_CLASS.rejected).toBe("alert-error")
+  it("maps rejected to error", () => {
+    expect(JOB_STATUS_ALERT_VARIANT.rejected).toBe("error")
   })
 
-  it("maps archived to alert-info", () => {
-    expect(JOB_STATUS_ALERT_CLASS.archived).toBe("alert-info")
+  it("maps archived to info", () => {
+    expect(JOB_STATUS_ALERT_VARIANT.archived).toBe("info")
   })
 
   it("does not include published (published jobs show no alert)", () => {
-    expect(JOB_STATUS_ALERT_CLASS.published).toBeUndefined()
+    expect(JOB_STATUS_ALERT_VARIANT.published).toBeUndefined()
   })
 
   it("returns undefined for an unknown status (caller should fall back)", () => {
     // @ts-expect-error: We're intentionally testing an invalid status here
-    expect(JOB_STATUS_ALERT_CLASS["unknown"]).toBeUndefined()
+    expect(JOB_STATUS_ALERT_VARIANT["unknown"]).toBeUndefined()
   })
 })
 

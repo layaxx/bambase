@@ -11,8 +11,15 @@ beforeAll(async () => {
 
 const locals = {
   locale: "de" as const,
-  user: { id: 1, email: "user@example.com", createdAt: new Date().toISOString() },
-  token: null,
+  user: {
+    id: "1",
+    email: "usernew@example.com",
+    name: "New User",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    emailVerified: true,
+  },
+  session: null,
 }
 
 const meal: MensaMeal = {

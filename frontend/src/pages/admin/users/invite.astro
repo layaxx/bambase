@@ -1,0 +1,88 @@
+---
+import { actions, isInputError } from "astro:actions"
+import PageLayout from "@/layouts/PageLayout.astro"
+import Alert from "@/components/Alert.astro"
+import IconArrowLeft from "@/components/icons/IconArrowLeft.astro"
+import { canInviteUsers, requireRole, USER_ROLES } from "@/utils/authz"
+import { useTranslations } from "@/i18n/translations"
+
+const t = useTranslations(Astro.locals.locale)
+
+const guard = await requireRole(Astro, canInviteUsers, "/admin/users/invite")
+if (guard instanceof Response) return guard
+
+const result = Astro.getActionResult(actions.users.invite)
+if (result?.data !== undefined && !result.error) {
+  return Astro.redirect("/admin/users?invited=success")
+}
+
+const inputErrors = isInputError(result?.error) ? result.error.fields : {}
+const generalError = result?.error && !isInputError(result.error) ? result.error.message : null
+---
+
+<PageLayout title={t.admin.inviteUser}>
+  <div class="mb-6">
+    <a class="btn btn-ghost btn-sm gap-1 pl-0" href="/admin/users">
+      <IconArrowLeft class="h-4 w-4" />
+      {t.admin.usersTitle}
+    </a>
+  </div>
+
+  <section class="mb-8">
+    <h1 class="mb-1 text-3xl font-bold tracking-tight sm:text-4xl">{t.admin.inviteUser}</h1>
+    <p class="text-base-content/70">{t.admin.inviteUserSubtitle}</p>
+  </section>
+
+  {generalError && <Alert variant="error">{generalError}</Alert>}
+
+  <form action={actions.users.invite} class="flex max-w-md flex-col gap-4" method="POST">
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend font-medium">{t.admin.inviteNameLabel}</legend>
+      <input
+        autocomplete="name"
+        class:list={["input w-full", inputErrors.name && "input-error"]}
+        name="name"
+        required
+        type="text"
+      />
+      {inputErrors.name && <p class="fieldset-label text-error">{inputErrors.name[0]}</p>}
+    </fieldset>
+
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend font-medium">{t.admin.inviteEmailLabel}</legend>
+      <input
+        autocomplete="email"
+        class:list={["input w-full", inputErrors.email && "input-error"]}
+        name="email"
+        required
+        type="email"
+      />
+      {inputErrors.email && <p class="fieldset-label text-error">{inputErrors.email[0]}</p>}
+    </fieldset>
+
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend font-medium">{t.admin.inviteRoleLabel}</legend>
+      <select class="select select-bordered w-full" name="role" required>
+        {
+          USER_ROLES.map((role) => (
+            <option selected={role === "user"} value={role}>
+              {t.admin.roleNames[role]}
+            </option>
+          ))
+        }
+      </select>
+    </fieldset>
+
+    <div class="flex items-center gap-3">
+      <button class="btn btn-primary" type="submit">{t.admin.inviteSubmit}</button>
+      <a class="btn btn-ghost" href="/admin/users">{t.ui.cancel}</a>
+    </div>
+  </form>
+</PageLayout>
+
+<script>
+  import { disableSubmitOnSubmit } from "@/utils/form-draft"
+
+  const form = document.querySelector<HTMLFormElement>("form")
+  if (form) disableSubmitOnSubmit(form)
+</script>

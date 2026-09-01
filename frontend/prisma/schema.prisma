@@ -1,0 +1,305 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum EventCategory {
+  university
+  sport
+  party
+  culture
+  social
+  other
+
+  @@map("event_category")
+}
+
+enum LocationCategory {
+  university
+  mensa
+  library
+  sport
+  venues
+  other
+
+  @@map("location_category")
+}
+
+enum JobType {
+  part_time
+  internship
+  working_student
+  research_assistant
+  thesis
+  volunteer
+  other
+
+  @@map("job_type")
+}
+
+enum JobField {
+  it
+  marketing
+  administration
+  research
+  gastronomy
+  retail
+  education
+  other
+
+  @@map("job_field")
+}
+
+enum WorkMode {
+  on_site
+  hybrid
+  remote
+
+  @@map("work_mode")
+}
+
+enum JobOnlineStatus {
+  submitted
+  published
+  expired
+  rejected
+  archived
+
+  @@map("job_online_status")
+}
+
+enum ReportReason {
+  spam
+  inappropriate
+  outdated
+  other
+
+  @@map("report_reason")
+}
+
+enum ReportReviewStatus {
+  open
+  dismissed
+
+  @@map("report_review_status")
+}
+
+enum CronJobStatus {
+  success
+  error
+
+  @@map("cron_job_status")
+}
+
+model User {
+  id            String     @id
+  name          String
+  email         String
+  emailVerified Boolean
+  image         String?
+  createdAt     DateTime
+  updatedAt     DateTime
+  role          String?
+  banned        Boolean?   @default(false)
+  banReason     String?
+  banExpires    DateTime?
+  sessions      Session[]
+  accounts      Account[]
+  events        Event[]
+  jobOffers     JobOffer[]
+
+  @@unique([email])
+  @@map("user")
+}
+
+model Session {
+  id             String   @id
+  expiresAt      DateTime
+  token          String
+  createdAt      DateTime
+  updatedAt      DateTime
+  ipAddress      String?
+  userAgent      String?
+  userId         String
+  impersonatedBy String?
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime
+  updatedAt             DateTime
+
+  @@map("account")
+}
+
+model Verification {
+  id         String    @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime?
+  updatedAt  DateTime?
+
+  @@map("verification")
+}
+
+model MensaMeal {
+  id            String   @id @default(cuid())
+  name          String
+  priceStudents Decimal  @db.Decimal(6, 2)
+  priceStaff    Decimal? @db.Decimal(6, 2)
+  priceOther    Decimal? @db.Decimal(6, 2)
+  date          DateTime @db.Date
+  location      String
+  isVegan       Boolean  @default(false)
+  isVegetarian  Boolean  @default(false)
+  allergens     String[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([name, date, location])
+  @@index([date])
+  @@map("mensa_meal")
+}
+
+model StudentGroup {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  description String
+  website     String?
+  instagram   String?
+  facebook    String?
+  email       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("student_group")
+}
+
+model Location {
+  id                  String           @id @default(cuid())
+  slug                String           @unique
+  name                String
+  description         String?
+  lat                 Float
+  lon                 Float
+  category            LocationCategory
+  externalUrl         String?
+  addressStreet       String?
+  addressStreetNumber String?
+  addressCity         String?
+  addressZip          String?
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+  events              Event[]
+
+  @@index([category])
+  @@map("location")
+}
+
+model Event {
+  id                    String        @id @default(cuid())
+  slug                  String        @unique
+  title                 String
+  description           String
+  category              EventCategory
+  start                 DateTime
+  end                   DateTime
+  organizer             String
+  externalUrl           String?
+  externalId            String?       @unique
+  hidden                Boolean       @default(false)
+  rejectionReason       String?
+  ownerId               String?
+  owner                 User?         @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  mapLocationId         String?
+  mapLocation           Location?     @relation(fields: [mapLocationId], references: [id], onDelete: SetNull)
+  customLocationName    String?
+  customLocationAddress String?
+  customLocationCity    String?
+  reports               Report[]
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  @@index([start])
+  @@index([hidden])
+  @@map("event")
+}
+
+model JobOffer {
+  id              String          @id @default(cuid())
+  slug            String          @unique
+  title           String
+  description     String
+  company         String
+  location        String
+  onlineStatus    JobOnlineStatus @default(submitted)
+  rejectionReason String?
+  workingHours    Int
+  externalUrl     String?
+  externalId      String?         @unique
+  jobType         JobType
+  field           JobField
+  workMode        WorkMode
+  contactName     String?
+  contactMail     String?
+  contactPhone    String?
+  ownerId         String?
+  owner           User?           @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  reports         Report[]
+  offlineAfter    DateTime
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([onlineStatus, offlineAfter])
+  @@map("job_offer")
+}
+
+model CronJobRun {
+  id         String        @id @default(cuid())
+  jobName    String
+  status     CronJobStatus
+  startedAt  DateTime
+  finishedAt DateTime
+  durationMs Int
+  error      String?
+  createdAt  DateTime      @default(now())
+
+  @@index([jobName, startedAt])
+  @@map("cron_job_run")
+}
+
+model Report {
+  id           String             @id @default(cuid())
+  reason       ReportReason
+  details      String?
+  reviewStatus ReportReviewStatus @default(open)
+  eventId      String?
+  event        Event?             @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  jobOfferId   String?
+  jobOffer     JobOffer?          @relation(fields: [jobOfferId], references: [id], onDelete: Cascade)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  @@map("report")
+}

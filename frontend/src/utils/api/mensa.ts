@@ -1,6 +1,7 @@
 import type { Dayjs } from "dayjs"
-import { client, withTimeout } from "./client"
 import type { ApiResult } from "./types"
+import type { Prisma } from "@/generated/prisma/client"
+import prisma from "../prisma"
 
 export type MensaMeal = {
   name: string
@@ -9,20 +10,40 @@ export type MensaMeal = {
   location: "Feki" | "Austraße" | "Erba"
   isVegan: boolean
   isVegetarian: boolean
-  allergens?: { name: string }[]
+  allergens?: string[]
   id: string
+}
+
+function toDateOnly(date: Dayjs): Date {
+  return new Date(`${date.format("YYYY-MM-DD")}T00:00:00.000Z`)
+}
+
+function toMensaMeal(row: {
+  id: string
+  name: string
+  priceStudents: Prisma.Decimal
+  date: Date
+  location: string
+  isVegan: boolean
+  isVegetarian: boolean
+  allergens: string[]
+}): MensaMeal {
+  return {
+    id: row.id,
+    name: row.name,
+    priceStudents: row.priceStudents.toNumber(),
+    date: row.date.toISOString().slice(0, 10),
+    location: row.location as MensaMeal["location"],
+    isVegan: row.isVegan,
+    isVegetarian: row.isVegetarian,
+    allergens: row.allergens,
+  }
 }
 
 export async function fetchMensaMeals(date: Dayjs): Promise<ApiResult<MensaMeal[]>> {
   try {
-    const result = await withTimeout(
-      client.collection("mensa-meals").find({
-        filters: { date: { $eq: date.format("YYYY-MM-DD") } },
-        populate: ["allergens"],
-        pagination: { limit: 100 },
-      })
-    )
-    return { data: (result.data ?? []) as unknown as MensaMeal[], apiDown: false }
+    const meals = await prisma.mensaMeal.findMany({ where: { date: toDateOnly(date) } })
+    return { data: meals.map(toMensaMeal), apiDown: false }
   } catch (error) {
     console.error("Error fetching Mensa meals", error)
     return { data: [], apiDown: true }
@@ -32,14 +53,10 @@ export async function fetchMensaMeals(date: Dayjs): Promise<ApiResult<MensaMeal[
 export async function fetchMensaMealsRange(dates: Dayjs[]): Promise<ApiResult<MensaMeal[]>> {
   if (dates.length === 0) return { data: [], apiDown: false }
   try {
-    const result = await withTimeout(
-      client.collection("mensa-meals").find({
-        filters: { date: { $in: dates.map((d) => d.format("YYYY-MM-DD")) } },
-        populate: ["allergens"],
-        pagination: { limit: 300 },
-      })
-    )
-    return { data: (result.data ?? []) as unknown as MensaMeal[], apiDown: false }
+    const meals = await prisma.mensaMeal.findMany({
+      where: { date: { in: dates.map(toDateOnly) } },
+    })
+    return { data: meals.map(toMensaMeal), apiDown: false }
   } catch (error) {
     console.error("Error fetching Mensa meals", error)
     return { data: [], apiDown: true }

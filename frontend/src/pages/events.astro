@@ -4,14 +4,54 @@ import PageHeader from "@/components/PageHeader.astro"
 import IconCalendar from "@/components/icons/IconCalendar.astro"
 import EventCard from "@/components/events/EventCard.astro"
 import ApiDownBanner from "@/components/ApiDownBanner.astro"
-import { fetchEvents, EVENT_CATEGORIES } from "@/utils/api"
+import Pagination from "@/components/Pagination.astro"
+import { fetchEventsPaginated, EVENT_CATEGORIES, type EventCategory } from "@/utils/api"
 import { useTranslations } from "@/i18n/translations"
 
 const t = useTranslations(Astro.locals.locale)
 const dateLocale = t.mensa.dateLocale
 
-const { data: events, apiDown } = await fetchEvents()
+const PAGE_SIZE = 15
+
+const rawCategory = Astro.url.searchParams.get("category")
+const activeCategory = (EVENT_CATEGORIES as readonly string[]).includes(rawCategory ?? "")
+  ? (rawCategory as EventCategory)
+  : undefined
+
+const rawDate = Astro.url.searchParams.get("date")
+const dateFilter = rawDate === "week" || rawDate === "month" ? rawDate : "upcoming"
+
+const rawPage = parseInt(Astro.url.searchParams.get("page") ?? "1", 10)
+const currentPage = isNaN(rawPage) || rawPage < 1 ? 1 : rawPage
+
+const hasActiveFilter = activeCategory !== undefined || dateFilter !== "upcoming"
+
+const { data, apiDown } = await fetchEventsPaginated({
+  category: activeCategory,
+  dateFilter,
+  page: currentPage,
+  pageSize: PAGE_SIZE,
+})
+const { events, total, page: actualPage, pageCount } = data
+
+if (!apiDown && events.length === 0 && total > 0) {
+  const redirectParams = new URLSearchParams(Astro.url.searchParams)
+  redirectParams.delete("page")
+  const qs = redirectParams.toString()
+  return Astro.redirect(qs ? `?${qs}` : Astro.url.pathname)
+}
+
 const isLoggedIn = !!Astro.locals.user
+const clearUrl = Astro.url.pathname
+
+function categoryUrl(cat?: string) {
+  const params = new URLSearchParams(Astro.url.searchParams)
+  params.delete("page")
+  if (!cat || cat === "all") params.delete("category")
+  else params.set("category", cat)
+  const qs = params.toString()
+  return qs ? `?${qs}` : Astro.url.pathname
+}
 
 const grouped = Map.groupBy(events, (e) =>
   new Date(e.start).toLocaleDateString(dateLocale, {
@@ -48,14 +88,31 @@ const dateFilters = [
   <div class="mb-2 flex flex-col gap-3">
     <div class="flex flex-wrap items-center gap-2">
       <span class="text-sm text-base-content/40">{t.events.filterCategory}:</span>
-      <button aria-pressed="false" class="btn btn-outline btn-sm" data-cat-filter="all">
+      <a
+        aria-current={activeCategory === undefined ? "true" : undefined}
+        class:list={[
+          "btn btn-sm",
+          {
+            "btn-primary": activeCategory === undefined,
+            "btn-outline": activeCategory !== undefined,
+          },
+        ]}
+        href={categoryUrl("all")}
+      >
         {t.events.filterAll}
-      </button>
+      </a>
       {
         EVENT_CATEGORIES.map((cat) => (
-          <button aria-pressed="false" class="btn btn-outline btn-sm" data-cat-filter={cat}>
+          <a
+            aria-current={activeCategory === cat ? "true" : undefined}
+            class:list={[
+              "btn btn-sm",
+              { "btn-primary": activeCategory === cat, "btn-outline": activeCategory !== cat },
+            ]}
+            href={categoryUrl(cat)}
+          >
             {t.events.categories[cat]}
-          </button>
+          </a>
         ))
       }
     </div>
@@ -65,117 +122,70 @@ const dateFilters = [
         {t.events.filterDate}:
       </label>
       <select class="select select-bordered select-xs" id="event-date-filter">
-        {dateFilters.map(({ key, label }) => <option value={key}>{label}</option>)}
+        {
+          dateFilters.map(({ key, label }) => (
+            <option selected={key === dateFilter} value={key}>
+              {label}
+            </option>
+          ))
+        }
       </select>
     </div>
   </div>
 
-  <p
-    aria-live="polite"
-    class="mb-4 text-sm text-base-content/40"
-    data-plural={t.events.resultPlural}
-    data-singular={t.events.resultSingular}
-    id="result-count"
-  >
-    {events.length}
-    {events.length === 1 ? t.events.resultSingular : t.events.resultPlural}
+  <p aria-live="polite" class="mb-4 text-sm text-base-content/40">
+    {total}
+    {total === 1 ? t.events.resultSingular : t.events.resultPlural}
   </p>
 
   {
-    events.length === 0 ? (
-      <p class="text-base-content/70">{t.events.noEvents}</p>
-    ) : (
-      <div class="space-y-10" id="events-list">
-        {[...grouped.entries()].map(([day, dayEvents]) => (
-          <div data-day-section>
-            <h2 class="mb-4 text-lg font-semibold capitalize">{day}</h2>
-            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {dayEvents.map((event) => (
-                <div data-category={event.category} data-start={event.start}>
+    !apiDown &&
+      (events.length === 0 ? (
+        <div class="rounded-xl border border-base-300 py-16 text-center">
+          <IconCalendar class="mx-auto mb-4 h-10 w-10 text-base-content/40" />
+          <p class="mb-4 text-base-content/70">
+            {hasActiveFilter ? t.events.noEventsFiltered : t.events.noEvents}
+          </p>
+          {hasActiveFilter && (
+            <a class="btn btn-outline btn-sm" href={clearUrl}>
+              {t.events.clearFilters}
+            </a>
+          )}
+        </div>
+      ) : (
+        <div class="space-y-10">
+          {[...grouped.entries()].map(([day, dayEvents]) => (
+            <div>
+              <h2 class="mb-4 text-lg font-semibold capitalize">{day}</h2>
+              <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {dayEvents.map((event) => (
                   <EventCard event={event} />
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
-    )
+          ))}
+        </div>
+      ))
   }
-  <div class="hidden" id="no-events-msg">
-    <p class="text-base-content/70">{t.events.noEventsFiltered}</p>
-    <button class="btn btn-ghost btn-sm mt-2" id="clear-filters-btn">{t.events.clearFilters}</button
-    >
-  </div>
+
+  <Pagination
+    nextLabel={t.jobs.paginationNext}
+    page={actualPage}
+    pageCount={pageCount}
+    prevLabel={t.jobs.paginationPrev}
+  />
 </PageLayout>
 
 <script>
-  import { getParam, setParam } from "@/utils/url-params"
-
-  function applyFilters() {
-    const cat = getParam("category", "all")
-    const date = getParam("date", "upcoming")
-    const now = Date.now()
-    const cutoff =
-      date === "week" ? now + 7 * 86400_000 : date === "month" ? now + 31 * 86400_000 : Infinity
-
-    let visibleCount = 0
-    document.querySelectorAll<HTMLElement>("[data-category]").forEach((card) => {
-      const catMatch = cat === "all" || card.dataset.category === cat
-      const startMs = new Date(card.dataset.start ?? "").getTime()
-      const dateMatch = startMs <= cutoff
-      const visible = catMatch && dateMatch
-      card.style.display = visible ? "" : "none"
-      if (visible) visibleCount++
+  const dateSelect = document.getElementById("event-date-filter") as HTMLSelectElement | null
+  if (dateSelect) {
+    dateSelect.addEventListener("change", () => {
+      const params = new URLSearchParams(window.location.search)
+      if (dateSelect.value === "upcoming") params.delete("date")
+      else params.set("date", dateSelect.value)
+      params.delete("page")
+      const qs = params.toString()
+      window.location.href = qs ? `?${qs}` : window.location.pathname
     })
-
-    // Each day section is hidden when all its cards are filtered out
-    let anyVisible = false
-    document.querySelectorAll<HTMLElement>("[data-day-section]").forEach((section) => {
-      const sectionVisible = [...section.querySelectorAll<HTMLElement>("[data-category]")].some(
-        (c) => c.style.display !== "none"
-      )
-      section.style.display = sectionVisible ? "" : "none"
-      if (sectionVisible) anyVisible = true
-    })
-
-    document.getElementById("no-events-msg")?.classList.toggle("hidden", anyVisible)
-    document.getElementById("events-list")?.classList.toggle("hidden", !anyVisible)
-
-    const countEl = document.getElementById("result-count")
-    if (countEl) {
-      const singular = countEl.dataset.singular ?? ""
-      const plural = countEl.dataset.plural ?? ""
-      countEl.textContent = `${visibleCount} ${visibleCount === 1 ? singular : plural}`
-    }
-
-    document.querySelectorAll<HTMLElement>("[data-cat-filter]").forEach((btn) => {
-      const active = btn.dataset.catFilter === cat
-      btn.classList.toggle("btn-primary", active)
-      btn.classList.toggle("btn-outline", !active)
-      btn.setAttribute("aria-pressed", String(active))
-    })
-
-    const sel = document.getElementById("event-date-filter") as HTMLSelectElement | null
-    if (sel) sel.value = date
   }
-
-  document.querySelectorAll<HTMLElement>("[data-cat-filter]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      setParam("category", btn.dataset.catFilter ?? "")
-      applyFilters()
-    })
-  })
-
-  document.getElementById("event-date-filter")?.addEventListener("change", (e) => {
-    setParam("date", (e.target as HTMLSelectElement).value)
-    applyFilters()
-  })
-
-  document.getElementById("clear-filters-btn")?.addEventListener("click", () => {
-    setParam("category", "all")
-    setParam("date", "upcoming")
-    applyFilters()
-  })
-
-  applyFilters()
 </script>

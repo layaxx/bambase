@@ -10,11 +10,11 @@ import EventDetailPage from "@/components/events/EventDetailPage.astro"
 const t = useTranslations(Astro.locals.locale)
 
 const { slug } = Astro.params
-const [{ data: event, apiDown }, { data: me }] = await Promise.all([
-  slug ? fetchEvent(slug) : Promise.resolve({ data: null as Event | null, apiDown: false }),
-  Astro.callAction(actions.auth.getMe, {}),
-])
-const isOwner = me && event?.owner?.id === me.id
+const { data: event, apiDown } = slug
+  ? await fetchEvent(slug)
+  : { data: null as Event | null, apiDown: false }
+const me = Astro.locals.user
+const isOwner = !!(me && event?.ownerId === me.id)
 
 const deleteResult = Astro.getActionResult(actions.events.delete)
 if (deleteResult?.data !== undefined && !deleteResult.error) {
@@ -65,7 +65,7 @@ const ogImage = event ? `${Astro.url.origin}/api/og/event/${event.slug}.png` : u
         confirmClass="btn btn-error"
         confirmLabel={t.events.deleteEvent}
         formAction={actions.events.delete}
-        hiddenInputs={[{ name: "documentId", value: event.documentId }]}
+        hiddenInputs={[{ name: "id", value: event.id }]}
         id="deleteEventModal"
         message={t.events.deleteConfirm}
       />

@@ -7,7 +7,7 @@ interface Props {
   submitLabel: string
   cancelHref: string
   inputErrors: Record<string, string[] | undefined>
-  documentId?: string
+  id?: string
   enableDraft?: boolean
   initialValues?: {
     title?: string
@@ -30,7 +30,7 @@ const {
   submitLabel,
   cancelHref,
   inputErrors,
-  documentId,
+  id,
   enableDraft = false,
   initialValues = {},
 } = Astro.props
@@ -44,7 +44,7 @@ const t = useTranslations(Astro.locals.locale)
   data-draft-key={enableDraft ? "job-new-draft" : undefined}
   method="POST"
 >
-  {documentId && <input name="documentId" type="hidden" value={documentId} />}
+  {id && <input name="id" type="hidden" value={id} />}
 
   <div class="flex flex-col">
     <fieldset class="fieldset">
@@ -240,6 +240,8 @@ const t = useTranslations(Astro.locals.locale)
 </form>
 
 <script>
+  import { initDraftPersistence } from "@/utils/form-draft"
+
   const FIELDS = [
     "title",
     "company",
@@ -255,50 +257,6 @@ const t = useTranslations(Astro.locals.locale)
     "contact_phone",
   ]
 
-  const form = document.querySelector<HTMLFormElement>("form[data-draft-key]")
-  if (form) {
-    const draftKey = form.dataset.draftKey
-
-    if (draftKey) {
-      const saved = sessionStorage.getItem(draftKey)
-      if (saved) {
-        const draft = JSON.parse(saved) as Record<string, string>
-        for (const name of FIELDS) {
-          const el = form.elements.namedItem(name) as
-            | HTMLInputElement
-            | HTMLTextAreaElement
-            | HTMLSelectElement
-            | null
-          if (el && draft[name]) el.value = draft[name]
-        }
-      }
-
-      let submitting = false
-      const submitBtn = form.querySelector<HTMLButtonElement>('[type="submit"]')
-
-      form.addEventListener("submit", () => {
-        submitting = true
-        if (submitBtn) {
-          submitBtn.disabled = true
-          submitBtn.classList.add("loading")
-        }
-        const draft: Record<string, string> = {}
-        for (const name of FIELDS) {
-          const el = form.elements.namedItem(name) as
-            | HTMLInputElement
-            | HTMLTextAreaElement
-            | HTMLSelectElement
-            | null
-          if (el) draft[name] = el.value
-        }
-        sessionStorage.setItem(draftKey, JSON.stringify(draft))
-      })
-
-      window.addEventListener("pagehide", () => {
-        if (!submitting) {
-          sessionStorage.removeItem(draftKey)
-        }
-      })
-    }
-  }
+  const form = document.querySelector<HTMLFormElement>("form")
+  if (form) initDraftPersistence(form, FIELDS)
 </script>

@@ -1,5 +1,9 @@
 import { expect, test, type Page } from "@playwright/test"
-import { AUTH_FILE, STRAPI_URL } from "../../playwright.config"
+import { AUTH_FILE } from "../../playwright.config"
+
+// A seeded event — unowned (ownerId is null), so it's never owned by the
+// seed user and is safe to use for non-owner assertions.
+const SEEDED_EVENT_URL = "/event/offene-sozialberatung"
 
 /**
  * Event CRUD flows — all tests run as the authenticated seed user.
@@ -31,6 +35,16 @@ async function createEvent(page: Page, title: string): Promise<string> {
   await page.click('button[type="submit"]')
   await page.waitForURL(/\/event\/[a-z0-9-]+$/)
   return page.url()
+}
+
+/**
+ * The /events listing is paginated and sorted by start date ascending, and
+ * FUTURE_START (2099) sorts after every other event, so a freshly created
+ * test event lands on the last page rather than the first.
+ */
+async function goToLastEventsPage(page: Page) {
+  const lastPageLink = page.locator(".join a.join-item", { hasText: /^\d+$/ }).last()
+  if (await lastPageLink.count()) await lastPageLink.click()
 }
 
 async function deleteEvent(page: Page) {
@@ -123,7 +137,7 @@ test("delete event redirects to /account/events and removes it from the list", a
 })
 
 test("no owner controls for non-owner authenticated user", async ({ page }) => {
-  await page.goto("/event/offene-sozialberatung") // one of the seeded events
+  await page.goto(SEEDED_EVENT_URL)
 
   await expect(page.getByRole("button", { name: "Veranstaltung melden" })).toBeVisible()
   await expect(page.getByRole("button", { name: "Löschen" })).not.toBeVisible()
@@ -154,36 +168,53 @@ test("event draft is cleared when navigating away without submitting", async ({ 
 
 // ─── Privilege escalation ───────────────────────────────────────────────────
 
+/**
+ * Astro Actions invoked via a plain <form action={actions.x.y}> render as a
+ * POST to the current page URL with a `?_action=x.y` query param. Ownership
+ * is enforced inside the action handler itself (src/actions/events.ts), which
+ * throws ActionError({ code: "FORBIDDEN" }) — Astro maps that to HTTP 403.
+ * Requests need an Origin/Referer matching the app's own origin, or Astro's
+ * CSRF protection rejects them before the handler ever runs.
+ */
 test.describe("Ownership enforcement — events", () => {
-  let documentId: string
-  let authToken: string
+  let eventId: string
 
   test.beforeAll(async ({ browser }) => {
     const ctx = await browser.newContext({ storageState: AUTH_FILE })
     const pg = await ctx.newPage()
-    await pg.goto("/event/offene-sozialberatung")
-    // Report modal exposes the documentId as a hidden input for non-owner viewers
-    documentId = await pg.locator('input[name="target_id"]').inputValue()
-    const cookies = await ctx.cookies()
-    authToken = cookies.find((c) => c.name === "auth_token")?.value ?? ""
+    await pg.goto(SEEDED_EVENT_URL)
+    // Report modal exposes the event's id as a hidden input for non-owner viewers.
+    eventId = await pg.locator('input[name="target_id"]').inputValue()
     await ctx.close()
-    expect(documentId).toBeTruthy()
-    expect(authToken).toBeTruthy()
+    expect(eventId).toBeTruthy()
   })
 
-  test("cannot DELETE another user's event — Strapi returns 403", async ({ page }) => {
-    const res = await page.request.fetch(`${STRAPI_URL}/api/events/${documentId}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${authToken}` },
+  function sameOriginHeaders(page: Page) {
+    const origin = new URL(page.url()).origin
+    return { Origin: origin, Referer: `${origin}${SEEDED_EVENT_URL}` }
+  }
+
+  test("cannot delete another user's event — events.delete returns FORBIDDEN", async ({ page }) => {
+    await page.goto(SEEDED_EVENT_URL)
+    const res = await page.request.post(`${SEEDED_EVENT_URL}?_action=events.delete`, {
+      form: { id: eventId },
+      headers: sameOriginHeaders(page),
     })
     expect(res.status()).toBe(403)
   })
 
-  test("cannot PUT (update) another user's event — Strapi returns 403", async ({ page }) => {
-    const res = await page.request.fetch(`${STRAPI_URL}/api/events/${documentId}`, {
-      method: "PUT",
-      headers: { Authorization: `Bearer ${authToken}`, "Content-Type": "application/json" },
-      data: JSON.stringify({ data: { title: "Hijacked title" } }),
+  test("cannot update another user's event — events.update returns FORBIDDEN", async ({ page }) => {
+    await page.goto(SEEDED_EVENT_URL)
+    const res = await page.request.post(`${SEEDED_EVENT_URL}?_action=events.update`, {
+      form: {
+        id: eventId,
+        title: "Hijacked title",
+        organizer: "Hijacked Org",
+        description: "hijack attempt",
+        start: "2099-12-01T18:00",
+        end: "2099-12-01T20:00",
+      },
+      headers: sameOriginHeaders(page),
     })
     expect(res.status()).toBe(403)
   })
@@ -273,6 +304,7 @@ test("created event appears on the /events listing page", async ({ page }) => {
   const eventUrl = await createEvent(page, title)
 
   await page.goto("/events")
+  await goToLastEventsPage(page)
   await expect(page.locator("body")).toContainText(title)
 
   await page.goto(eventUrl)

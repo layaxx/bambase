@@ -1,0 +1,101 @@
+---
+import PageLayout from "@/layouts/PageLayout.astro"
+import {
+  canModerateJobOffers,
+  canModerateEvents,
+  canModerateAnyReports,
+  canManageLocations,
+  canManageStudentGroups,
+  canManageUsers,
+  canViewSystemStatus,
+} from "@/utils/authz"
+import { useTranslations } from "@/i18n/translations"
+
+const t = useTranslations(Astro.locals.locale)
+
+const user = Astro.locals.user
+if (!user) return Astro.redirect("/login?redirect=/admin")
+
+const [
+  isJobModerator,
+  isEventModerator,
+  isReportModerator,
+  isLocationManager,
+  isStudentGroupManager,
+  isUserManager,
+  isSystemViewer,
+] = await Promise.all([
+  canModerateJobOffers(user.role),
+  canModerateEvents(user.role),
+  canModerateAnyReports(user.role),
+  canManageLocations(user.role),
+  canManageStudentGroups(user.role),
+  canManageUsers(user.role),
+  canViewSystemStatus(user.role),
+])
+
+const sections = [
+  {
+    href: "/admin/jobs",
+    title: t.admin.jobsQueueTitle,
+    description: t.admin.overviewJobsDescription,
+    visible: isJobModerator,
+  },
+  {
+    href: "/admin/events",
+    title: t.admin.eventsTitle,
+    description: t.admin.overviewEventsDescription,
+    visible: isEventModerator,
+  },
+  {
+    href: "/admin/reports",
+    title: t.admin.reportsTitle,
+    description: t.admin.overviewReportsDescription,
+    visible: isReportModerator,
+  },
+  {
+    href: "/admin/locations",
+    title: t.admin.locationsTitle,
+    description: t.admin.overviewLocationsDescription,
+    visible: isLocationManager,
+  },
+  {
+    href: "/admin/student-groups",
+    title: t.admin.studentGroupsTitle,
+    description: t.admin.overviewStudentGroupsDescription,
+    visible: isStudentGroupManager,
+  },
+  {
+    href: "/admin/users",
+    title: t.admin.usersTitle,
+    description: t.admin.overviewUsersDescription,
+    visible: isUserManager,
+  },
+  {
+    href: "/admin/cron",
+    title: t.admin.cronTitle,
+    description: t.admin.overviewCronDescription,
+    visible: isSystemViewer,
+  },
+].filter((section) => section.visible)
+
+if (sections.length === 0) return Astro.redirect("/")
+---
+
+<PageLayout title={t.admin.overviewTitle}>
+  <h1 class="text-3xl font-bold tracking-tight sm:text-4xl mb-6">{t.admin.overviewTitle}</h1>
+
+  <div class="grid gap-4 sm:grid-cols-2">
+    {
+      sections.map((section) => (
+        <a
+          class="block rounded-xl border border-base-300 bg-base-100 p-4 no-underline transition-colors hover:bg-base-200"
+          href={section.href}
+        >
+          <h2 class="font-semibold leading-snug text-base-content">{section.title}</h2>
+          <p class="mt-1 text-sm text-base-content/70">{section.description}</p>
+        </a>
+      ))
+    }
+  </div>
+</PageLayout>

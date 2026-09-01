@@ -15,9 +15,9 @@ An open-source campus information portal that aggregates key university resource
 | Layer | Tech |
 |---|---|
 | Frontend | [Astro 6](https://astro.build) · TypeScript · Tailwind CSS v4 · DaisyUI v5 · Leaflet |
-| Backend | [Strapi 5](https://strapi.io) (headless CMS) · Node.js · TypeScript |
+| Backend | Astro SSR endpoints & actions · [Prisma](https://prisma.io) · [better-auth](https://better-auth.com) |
 | Database | PostgreSQL 16 |
-| Testing | Vitest (frontend) · Jest (API) · Playwright (E2E) |
+| Testing | Vitest · Playwright (E2E) |
 | Infrastructure | Docker · Docker Compose · GitHub Actions |
 
 ## Getting Started
@@ -35,27 +35,18 @@ An open-source campus information portal that aggregates key university resource
 cp .env.example .env
 ```
 
-The only required values for local development are the Strapi secrets (any non-empty strings work) and the database credentials if you change them. `STRAPI_TOKEN` is needed for frontend API access and must be generated on first start (see step 3.).
+A local PostgreSQL database is required — either run `docker-compose up frontend_db` or point `DATABASE_URL` in `frontend/.env` at your own instance.
 
-**2. Install dependencies and start the API:**
-
-```bash
-cd api
-yarn install
-yarn dev   # Strapi admin at http://localhost:1337
-```
-
-On first run, set `SEED=true` in `.env` to populate the database with sample data.
-
-**3. (First run only) Create a Strapi API token** in the admin panel (`Settings → API Tokens`), paste it into `.env` as `STRAPI_TOKEN`.
-
-**4. Start the Frontend:**
+**2. Start the Frontend:**
 
 ```bash
 cd frontend
 yarn install
+npx prisma migrate deploy
 yarn dev   # Frontend at http://localhost:4321
 ```
+
+On first run, run `npx prisma db seed` to populate the database with sample data.
 
 ### Docker Compose (full stack)
 
@@ -64,12 +55,13 @@ cp .env.example .env   # edit values
 docker-compose up --build
 ```
 
+To populate the database with sample data, run `docker compose run --rm frontend-migrate npx prisma db seed` after the stack is up.
+
 ## Project Structure
 
 ```
 bambase/
-├── api/          # Strapi 5 backend — content types, controllers, routes
-├── frontend/     # Astro frontend — pages, components, API utils
+├── frontend/     # Astro frontend — pages, components, actions, Prisma schema
 ├── .github/      # CI/CD workflows
 ├── docker-compose.yml
 ├── Makefile      # lint, format, git hook helpers
@@ -78,22 +70,22 @@ bambase/
 
 ## Scripts
 
-Run from the respective workspace directory (`api/` or `frontend/`):
+Run from `frontend/`:
 
 | Command | Description |
 |---|---|
 | `yarn dev` | Start development server |
 | `yarn build` | Production build |
 | `yarn test` | Unit tests |
-| `yarn test:e2e` | Playwright end-to-end tests (frontend only) |
+| `yarn test:e2e` | Playwright end-to-end tests |
 | `yarn lint` | ESLint check |
 | `yarn format:write` | Auto-format with Prettier |
 
 From the project root:
 
 ```bash
-make lint      # lint both workspaces
-make format    # format both workspaces
+make lint      # lint frontend/
+make format    # format frontend/
 ```
 
 ## Contributing
@@ -109,7 +101,6 @@ Contributions are welcome. Here's how to get started:
 4. **Make your changes.** Keep PRs focused — one feature or fix per PR.
 5. **Run the full test suite** before opening a PR:
    ```bash
-   cd api && yarn test && yarn lint
    cd frontend && yarn test && yarn lint
    ```
 6. **Open a pull request** against `main`. The CI pipeline will run linting, unit tests, Docker builds, and E2E tests automatically.
@@ -118,7 +109,7 @@ Contributions are welcome. Here's how to get started:
 
 - All code is TypeScript; avoid `any` where possible.
 - Formatting is enforced by Prettier (config in `.prettierrc`). Run `yarn format:write` to fix issues.
-- New content types belong in `api/src/api/`; new pages in `frontend/src/pages/`.
+- New Prisma models belong in `frontend/prisma/schema.prisma`; new pages in `frontend/src/pages/`.
 - Check `ROADMAP.md` for planned work before starting something large — it may already have design notes.
 
 ## License

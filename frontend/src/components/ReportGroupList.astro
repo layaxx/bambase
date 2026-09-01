@@ -1,0 +1,282 @@
+---
+import { actions } from "astro:actions"
+import ApiDownBanner from "@/components/ApiDownBanner.astro"
+import Pagination from "@/components/Pagination.astro"
+import { REPORT_WARNING_THRESHOLD, type ReportGroup } from "@/utils/api"
+import { useTranslations } from "@/i18n/translations"
+
+interface Props {
+  kind: "event" | "job"
+  groups: ReportGroup[]
+  apiDown: boolean
+  statusFilter: "open" | "resolved" | "all"
+  actualPage: number
+  pageCount: number
+}
+
+const { kind, groups, apiDown, statusFilter, actualPage, pageCount } = Astro.props
+
+const t = useTranslations(Astro.locals.locale)
+
+// "Unpublish" reuses each entity's existing visibility mechanism (hidden flag for
+// events, onlineStatus for jobs) instead of deleting the underlying record, so a
+// reported item can be taken offline without losing its data or the report trail.
+const unpublishAction = kind === "event" ? actions.events.unpublish : actions.jobs.reject
+const publishAction = kind === "event" ? actions.events.publish : actions.jobs.approve
+const editBasePath = kind === "event" ? "/admin/events" : "/admin/jobs"
+const editLabel = kind === "event" ? t.admin.editEvent : t.admin.editJob
+const rejectionReasonLabel =
+  kind === "event" ? t.events.rejectionReasonLabel : t.jobs.rejectionReasonLabel
+
+const reasonLabel: Record<string, string> = {
+  spam: t.reports.reasonSpam,
+  inappropriate: t.reports.reasonInappropriate,
+  outdated: t.reports.reasonOutdated,
+  other: t.reports.reasonOther,
+}
+
+function reasonCounts(group: ReportGroup) {
+  const counts = new Map<string, number>()
+  for (const report of group.reports)
+    counts.set(report.reason, (counts.get(report.reason) ?? 0) + 1)
+  return Array.from(counts.entries())
+}
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString(t.auth.dateLocale, {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  })
+}
+
+function severityBadgeClass(group: ReportGroup) {
+  if (group.caseStatus === "resolved") return "badge-ghost"
+  if (group.openCount >= REPORT_WARNING_THRESHOLD) return "badge-error"
+  return "badge-warning"
+}
+
+function statusUrl(status: "open" | "resolved" | "all") {
+  const params = new URLSearchParams(Astro.url.searchParams)
+  params.delete("page")
+  if (status === "open") params.delete("status")
+  else params.set("status", status)
+  const qs = params.toString()
+  return qs ? `?${qs}` : Astro.url.pathname
+}
+
+const statusFilters = [
+  { key: "open", label: t.admin.reportsStatusOpen },
+  { key: "resolved", label: t.admin.reportsStatusResolved },
+  { key: "all", label: t.admin.reportsStatusAll },
+] as const
+---
+
+{apiDown && <ApiDownBanner />}
+
+<div class="mb-4 flex flex-wrap items-center gap-2">
+  {
+    statusFilters.map(({ key, label }) => (
+      <a
+        aria-current={statusFilter === key ? "true" : undefined}
+        class:list={[
+          "btn btn-sm",
+          { "btn-primary": statusFilter === key, "btn-outline": statusFilter !== key },
+        ]}
+        href={statusUrl(key)}
+      >
+        {label}
+      </a>
+    ))
+  }
+</div>
+
+{
+  !apiDown &&
+    (groups.length === 0 ? (
+      <p
+        class="rounded-xl border border-base-300 bg-base-100 p-6 text-base-content/70"
+        data-testid="reports-queue"
+      >
+        {t.admin.noReports}
+      </p>
+    ) : (
+      <div class="flex flex-col gap-3" data-testid="reports-queue">
+        {groups.map((group) => {
+          const targetId = group.key.split(":")[1]
+          return (
+            <div class="flex flex-col gap-3 rounded-xl border border-base-300 bg-base-100 p-4">
+              <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span class:list={["badge badge-sm", severityBadgeClass(group)]}>
+                      {t.admin.reportsCount(group.totalCount)}
+                    </span>
+                    {group.openCount >= REPORT_WARNING_THRESHOLD && (
+                      <span class="badge badge-sm badge-error badge-outline">
+                        {t.admin.reportsMultiple}
+                      </span>
+                    )}
+                    {reasonCounts(group).map(([reason, count]) => (
+                      <span class="badge badge-sm badge-neutral badge-outline">
+                        {reasonLabel[reason] ?? reason} ({count})
+                      </span>
+                    ))}
+                    {group.target && !group.target.published && (
+                      <span class="badge badge-sm badge-ghost">{t.admin.reportsUnpublished}</span>
+                    )}
+                    {group.caseStatus === "resolved" && group.target?.published && (
+                      <span class="badge badge-sm badge-ghost">
+                        {t.admin.reportsStatusResolved}
+                      </span>
+                    )}
+                  </div>
+                  <p class="mt-1 font-semibold leading-snug text-base-content">
+                    {group.target ? (
+                      <a
+                        class="link"
+                        href={
+                          group.target.type === "event"
+                            ? `/event/${group.target.slug}`
+                            : `/job/${group.target.slug}`
+                        }
+                      >
+                        {group.target.title}
+                      </a>
+                    ) : (
+                      t.admin.reportsTargetMissing
+                    )}
+                  </p>
+                  {group.target && !group.target.published && group.target.rejectionReason && (
+                    <p class="mt-1 text-sm text-base-content/70">
+                      {rejectionReasonLabel(group.target.rejectionReason)}
+                    </p>
+                  )}
+                  <p class="mt-1 text-xs text-base-content/40">
+                    {t.admin.reportsOpenDismissedSummary(group.openCount, group.dismissedCount)}
+                    {" · "}
+                    {t.admin.reportsLatestAt(formatDate(group.latestCreatedAt))}
+                  </p>
+                </div>
+                {group.target && (
+                  <div class="flex flex-wrap gap-2">
+                    <a
+                      class="btn btn-outline btn-sm"
+                      href={`${editBasePath}/${group.target.slug}/edit`}
+                    >
+                      {editLabel}
+                    </a>
+                    {group.openCount === 0 ? (
+                      <form action={actions.reports.reopenGroup} method="POST">
+                        <input name="target_type" type="hidden" value={group.target.type} />
+                        <input name="target_id" type="hidden" value={targetId} />
+                        <button class="btn btn-outline btn-sm" type="submit">
+                          {t.admin.reportsReopenAll}
+                        </button>
+                      </form>
+                    ) : (
+                      <form action={actions.reports.dismissGroup} method="POST">
+                        <input name="target_type" type="hidden" value={group.target.type} />
+                        <input name="target_id" type="hidden" value={targetId} />
+                        <button class="btn btn-outline btn-sm" type="submit">
+                          {t.admin.reportsDismissAll}
+                        </button>
+                      </form>
+                    )}
+                    {group.target.published ? (
+                      <form
+                        action={unpublishAction}
+                        class="flex flex-wrap items-center gap-2"
+                        method="POST"
+                      >
+                        <input name="id" type="hidden" value={targetId} />
+                        <input
+                          class="input input-sm input-bordered"
+                          maxlength="500"
+                          name="reason"
+                          placeholder={t.admin.reasonPlaceholder}
+                          type="text"
+                        />
+                        <button class="btn btn-outline btn-warning btn-sm" type="submit">
+                          {t.admin.reportsUnpublish}
+                        </button>
+                      </form>
+                    ) : (
+                      <form action={publishAction} method="POST">
+                        <input name="id" type="hidden" value={targetId} />
+                        <button class="btn btn-outline btn-success btn-sm" type="submit">
+                          {t.admin.reportsPublish}
+                        </button>
+                      </form>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <details class="rounded-lg border border-base-200">
+                <summary class="cursor-pointer select-none px-3 py-2 text-sm text-base-content/70">
+                  {t.admin.reportsShowIndividual(group.totalCount)}
+                </summary>
+                <div class="flex flex-col gap-2 border-t border-base-200 p-3">
+                  {group.reports.map((report) => (
+                    <div class="flex flex-col gap-2 rounded-lg bg-base-200/40 p-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <div class="flex items-center gap-2">
+                          <span class="badge badge-sm badge-neutral">
+                            {reasonLabel[report.reason] ?? report.reason}
+                          </span>
+                          <span
+                            class:list={[
+                              "badge badge-sm",
+                              {
+                                "badge-ghost": report.reviewStatus === "dismissed",
+                                "badge-warning": report.reviewStatus !== "dismissed",
+                              },
+                            ]}
+                          >
+                            {report.reviewStatus === "dismissed"
+                              ? t.admin.reportsStatusDismissed
+                              : t.admin.reportsStatusOpen}
+                          </span>
+                        </div>
+                        {report.details && (
+                          <p class="mt-1 text-sm text-base-content/70">{report.details}</p>
+                        )}
+                        <p class="mt-1 text-xs text-base-content/40">
+                          {t.admin.decidedAt(formatDate(report.createdAt))}
+                        </p>
+                      </div>
+                      <div class="flex gap-2">
+                        {report.reviewStatus === "dismissed" ? (
+                          <form action={actions.reports.reopen} method="POST">
+                            <input name="id" type="hidden" value={report.id} />
+                            <button class="btn btn-outline btn-xs" type="submit">
+                              {t.admin.reportsReopen}
+                            </button>
+                          </form>
+                        ) : (
+                          <form action={actions.reports.dismiss} method="POST">
+                            <input name="id" type="hidden" value={report.id} />
+                            <button class="btn btn-outline btn-xs" type="submit">
+                              {t.admin.reportsDismiss}
+                            </button>
+                          </form>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </details>
+            </div>
+          )
+        })}
+      </div>
+    ))
+}
+
+<Pagination
+  nextLabel={t.jobs.paginationNext}
+  page={actualPage}
+  pageCount={pageCount}
+  prevLabel={t.jobs.paginationPrev}
+/>

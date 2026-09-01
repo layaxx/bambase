@@ -5,6 +5,12 @@ import IconMenu from "./icons/IconMenu.astro"
 import IconX from "./icons/IconX.astro"
 import IconGitHub from "./icons/IconGitHub.astro"
 import { useTranslations } from "@/i18n/translations"
+import {
+  canModerateJobOffers,
+  canModerateEvents,
+  canManageLocations,
+  canManageUsers,
+} from "@/utils/authz"
 
 const locale = Astro.locals.locale
 const t = useTranslations(locale)
@@ -20,6 +26,11 @@ const pathname = Astro.url.pathname
 const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`)
 
 const authUser = Astro.locals.user
+const isModerator = authUser ? await canModerateJobOffers(authUser.role) : false
+const isEventModerator = authUser ? await canModerateEvents(authUser.role) : false
+const isLocationManager = authUser ? await canManageLocations(authUser.role) : false
+const isUserManager = authUser ? await canManageUsers(authUser.role) : false
+const isAdmin = isModerator || isEventModerator || isLocationManager || isUserManager
 
 const switchLang = t.language.switchLang
 const switchLabel = t.language.switchLabel
@@ -65,6 +76,13 @@ const switchUrl = `/set-locale?lang=${switchLang}&redirect=${encodeURIComponent(
       </nav>
 
       <div class="flex items-center gap-1 ml-auto shrink-0">
+        {
+          isAdmin && (
+            <a class="btn btn-sm btn-ghost hidden md:inline-flex" href="/admin">
+              {t.nav.admin}
+            </a>
+          )
+        }
         {
           authUser ? (
             <a class="btn btn-sm btn-ghost hidden md:inline-flex" href="/account">
@@ -140,6 +158,13 @@ const switchUrl = `/set-locale?lang=${switchLang}&redirect=${encodeURIComponent(
       }
     </nav>
     <div class="border-t border-base-300 mt-3 pt-3 flex flex-col gap-1">
+      {
+        isAdmin && (
+          <a class="btn btn-sm btn-ghost w-full" href="/admin">
+            {t.nav.admin}
+          </a>
+        )
+      }
       {
         authUser ? (
           <a class="btn btn-sm btn-ghost w-full" href="/account">

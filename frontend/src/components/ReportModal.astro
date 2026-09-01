@@ -63,3 +63,10 @@ const t = useTranslations(Astro.locals.locale)
     <button aria-label={t.ui.cancel}></button>
   </form>
 </dialog>
+
+<script>
+  import { disableSubmitOnSubmit } from "@/utils/form-draft"
+
+  const form = document.querySelector<HTMLFormElement>("#reportModal form[method='POST']")
+  if (form) disableSubmitOnSubmit(form)
+</script>

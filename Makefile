@@ -1,51 +1,34 @@
-.PHONY: format format-write format-check format-api format-frontend install-hooks remove-hooks lint lint-fix lint-api lint-frontend lint-api-fix lint-frontend-fix
+.PHONY: help format format-write format-check install-hooks remove-hooks lint lint-fix pre-commit
 
 NVM_INIT = . ~/.nvm/nvm.sh && nvm use
 
+# All targets operate on frontend/ — the only workspace in this repo.
+help:
+	@echo "Available targets:"
+	@echo "  pre-commit     Run format-check and lint (used by the git pre-commit hook)"
+	@echo "  format-check   Check formatting without writing changes"
+	@echo "  format         Format all code"
+	@echo "  lint           Lint"
+	@echo "  lint-fix       Lint and auto-fix"
+	@echo "  install-hooks  Install the git pre-commit hook"
+	@echo "  remove-hooks   Remove the git pre-commit hook"
+
 pre-commit: format-check lint
 
-# Check formatting in all workspaces
-format-check: format-api-check format-frontend-check
-
-# Format all code
-format: format-api format-frontend
-
-# Format API workspace
-format-api:
-	cd api && $(NVM_INIT) && yarn format:write
-
-# Check formatting in API
-format-api-check:
-	cd api && $(NVM_INIT) && yarn format:check
-
-# Format frontend workspace
-format-frontend:
-	cd frontend && $(NVM_INIT) && yarn format:write
-
-# Check formatting in frontend
-format-frontend-check:
+# Check formatting
+format-check:
 	cd frontend && $(NVM_INIT) && yarn format:check
 
-# Lint all workspaces
-lint: lint-api lint-frontend
+# Format all code
+format:
+	cd frontend && $(NVM_INIT) && yarn format:write
 
-# Lint and auto-fix all workspaces
-lint-fix: lint-api-fix lint-frontend-fix
-
-# Lint API workspace
-lint-api:
-	cd api && $(NVM_INIT) && yarn lint
-
-# Lint and fix API workspace
-lint-api-fix:
-	cd api && $(NVM_INIT) && yarn lint:fix
-
-# Lint frontend workspace
-lint-frontend:
+# Lint
+lint:
 	cd frontend && $(NVM_INIT) && yarn lint
 
-# Lint and fix frontend workspace
-lint-frontend-fix:
+# Lint and auto-fix
+lint-fix:
 	cd frontend && $(NVM_INIT) && yarn lint:fix
 
 # Install git hooks

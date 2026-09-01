@@ -12,7 +12,7 @@ RUN yarn install --frozen-lockfile --production=true
 
 FROM deps AS builder
 COPY . .
-ARG STRAPI_URL
+RUN npx prisma generate
 RUN yarn build
 
 # Production image
@@ -26,6 +26,10 @@ ENV NODE_ENV=production \
 COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/package.json ./package.json
+COPY prisma ./prisma
+COPY prisma.config.ts ./
+COPY src/utils/slugify.ts ./src/utils/slugify.ts
+RUN npx prisma generate
 
 USER node
 EXPOSE 4321

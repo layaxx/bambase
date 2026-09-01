@@ -3,7 +3,8 @@ import { actions } from "astro:actions"
 import PageLayout from "@/layouts/PageLayout.astro"
 import { fetchJobOffer, REPORT_WARNING_THRESHOLD, type JobOffer } from "@/utils/api"
 import ApiDownBanner from "@/components/ApiDownBanner.astro"
-import { JOB_STATUS_ALERT_CLASS } from "@/utils/job-status"
+import { JOB_STATUS_ALERT_VARIANT } from "@/utils/job-status"
+import { canModerateJobOffers } from "@/utils/authz"
 import { useTranslations } from "@/i18n/translations"
 import IconArrowLeft from "@/components/icons/IconArrowLeft.astro"
 import IconStore from "@/components/icons/IconStore.astro"
@@ -12,21 +13,20 @@ import IconClock from "@/components/icons/IconClock.astro"
 import IconExternalLink from "@/components/icons/IconExternalLink.astro"
 import ReportModal from "@/components/ReportModal.astro"
 import ConfirmModal from "@/components/ConfirmModal.astro"
+import Alert from "@/components/Alert.astro"
 import JobTypeBadge from "@/components/jobs/JobTypeBadge.astro"
 
 const t = useTranslations(Astro.locals.locale)
 
+const me = Astro.locals.user
+const isModerator = me ? await canModerateJobOffers(me.role) : false
 const { slug } = Astro.params
-const token = Astro.locals.token
-const [jobResult, { data: me }] = await Promise.all([
-  slug
-    ? fetchJobOffer(slug, token ?? undefined)
-    : Promise.resolve({ data: null as JobOffer | null, apiDown: false }),
-  Astro.callAction(actions.auth.getMe, {}),
-])
+const jobResult = slug
+  ? await fetchJobOffer(slug, { userId: me?.id, isModerator })
+  : { data: null as JobOffer | null, apiDown: false }
 const job = jobResult.data
 const apiDown = jobResult.apiDown
-const isOwner = me && job?.owner?.id === me.id
+const isOwner = !!(me && job?.ownerId === me.id)
 
 const hasReports = (job?.reports?.length ?? 0) >= REPORT_WARNING_THRESHOLD
 const canArchive = job?.online_status === "published" || job?.online_status === "submitted"
@@ -116,37 +116,23 @@ const ogImage =
         </div>
 
         {job.online_status !== "published" && (
-          <div
-            class:list={[
-              `alert`,
-              `${JOB_STATUS_ALERT_CLASS[job.online_status] ?? "alert-neutral"}`,
-              `mb-6`,
-            ]}
-            role="alert"
-          >
-            <span>
-              {statusLabel[job.online_status] ?? job.online_status} – {t.jobs.notPublishedHint}
-            </span>
-          </div>
+          <Alert variant={JOB_STATUS_ALERT_VARIANT[job.online_status] ?? "neutral"}>
+            {statusLabel[job.online_status] ?? job.online_status} – {t.jobs.notPublishedHint}
+            {job.online_status === "rejected" && job.rejection_reason && (
+              <>
+                <br />
+                {t.jobs.rejectionReasonLabel(job.rejection_reason)}
+              </>
+            )}
+          </Alert>
         )}
-
         {hasReports && (
-          <div class="alert alert-warning alert-outline mb-6" role="alert">
-            <span>{t.reports.warningHint}</span>
-          </div>
+          <Alert outline variant="warning">
+            {t.reports.warningHint}
+          </Alert>
         )}
-
-        {reported === "success" && (
-          <div class="alert alert-success mb-6" role="alert">
-            <span>{t.reports.successMessage}</span>
-          </div>
-        )}
-
-        {reported === "error" && (
-          <div class="alert alert-error mb-6" role="alert">
-            <span>{t.reports.errorMessage}</span>
-          </div>
-        )}
+        {reported === "success" && <Alert variant="success">{t.reports.successMessage}</Alert>}
+        {reported === "error" && <Alert variant="error">{t.reports.errorMessage}</Alert>}
 
         <div class="grid gap-8 lg:grid-cols-3">
           <div class="lg:col-span-2">
@@ -228,7 +214,7 @@ const ogImage =
 
             {!isOwner && !reported && (
               <div class="flex justify-end">
-                <ReportModal targetId={job.documentId} targetType="job" />
+                <ReportModal targetId={job.id} targetType="job" />
               </div>
             )}
           </aside>
@@ -244,7 +230,7 @@ const ogImage =
             confirmClass="btn btn-warning"
             confirmLabel={t.jobs.archiveJob}
             formAction={actions.jobs.archive}
-            hiddenInputs={[{ name: "documentId", value: job.documentId }]}
+            hiddenInputs={[{ name: "id", value: job.id }]}
             id="archiveJobModal"
             message={t.jobs.archiveConfirm}
           />
@@ -253,7 +239,7 @@ const ogImage =
           confirmClass="btn btn-error"
           confirmLabel={t.jobs.deleteJob}
           formAction={actions.jobs.delete}
-          hiddenInputs={[{ name: "documentId", value: job.documentId }]}
+          hiddenInputs={[{ name: "id", value: job.id }]}
           id="deleteJobModal"
           message={t.jobs.deleteConfirm}
         />

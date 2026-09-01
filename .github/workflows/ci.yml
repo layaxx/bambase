@@ -4,21 +4,6 @@ on:
   pull_request:
 
 jobs:
-  lint-api:
-    name: Lint (api)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: yarn
-          cache-dependency-path: api/yarn.lock
-      - run: yarn install --frozen-lockfile
-        working-directory: api
-      - run: yarn lint && yarn format:check
-        working-directory: api
-
   lint-frontend:
     name: Lint (frontend)
     runs-on: ubuntu-latest
@@ -26,28 +11,13 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version-file: frontend/.nvmrc
           cache: yarn
           cache-dependency-path: frontend/yarn.lock
       - run: yarn install --frozen-lockfile
         working-directory: frontend
       - run: yarn lint && yarn format:check
         working-directory: frontend
-
-  test-api:
-    name: Unit tests (api)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: yarn
-          cache-dependency-path: api/yarn.lock
-      - run: yarn install --frozen-lockfile
-        working-directory: api
-      - run: yarn test
-        working-directory: api
 
   test-frontend:
     name: Unit tests (frontend)
@@ -56,28 +26,16 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version-file: frontend/.nvmrc
           cache: yarn
           cache-dependency-path: frontend/yarn.lock
       - run: yarn install --frozen-lockfile
         working-directory: frontend
+      - name: Generate Prisma Client
+        run: npx prisma generate
+        working-directory: frontend
       - run: yarn test
         working-directory: frontend
-        env:
-          STRAPI_TOKEN: "irrelevant-but-must-be-set"
-
-  docker-build-api:
-    name: Docker build (api)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/build-push-action@v6
-        with:
-          context: ./api
-          push: false
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
   docker-build-frontend:
     name: Docker build (frontend)
@@ -89,84 +47,91 @@ jobs:
         with:
           context: ./frontend
           push: false
-          build-args: STRAPI_URL=http://api:1337
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
   e2e:
     name: E2E tests
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: backend
+          POSTGRES_USER: backend
+          POSTGRES_PASSWORD: backend
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U backend -d backend"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://backend:backend@localhost:5432/backend?schema=public
+      BETTER_AUTH_SECRET: only-for-ci-testing
+      BETTER_AUTH_URL: http://localhost:4321
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version-file: frontend/.nvmrc
           cache: yarn
-          cache-dependency-path: |
-            api/yarn.lock
-            frontend/yarn.lock
-
-      - name: Install API dependencies
-        run: yarn install --frozen-lockfile
-        working-directory: api
+          cache-dependency-path: frontend/yarn.lock
 
       - name: Install frontend dependencies
         run: yarn install --frozen-lockfile
         working-directory: frontend
 
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('frontend/yarn.lock') }}
+
       - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps chromium
         working-directory: frontend
 
-      - name: Build API
-        run: yarn build
-        working-directory: api
+      - name: Install Playwright OS dependencies
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+        working-directory: frontend
 
-      - name: Start API
-        run: yarn start &
-        working-directory: api
-        env:
-          NODE_ENV: test
-          SEED: "true"
-          SEED_API_TOKEN: CICD-TEST-TOKEN
-          API_TOKEN_SALT: CICD-TEST-SALT
-          PORT: 1337
-          HOST: 0.0.0.0
-          APP_KEYS: only-for-ci-testing1,only-for-ci-testing2
-          ADMIN_JWT_SECRET: only-for-ci-testing
-          TRANSFER_TOKEN_SALT: also-only-for-ci-testing
-          JWT_SECRET: again-only-for-ci-testing
-          FRONTEND_URL: https://example.com
-          MAILGUN_API_KEY: "ignored-for-ci-testing"
-          MAILGUN_DOMAIN: "https://example.com"
+      - name: Generate Prisma Client
+        run: npx prisma generate
+        working-directory: frontend
+
+      - name: Apply database migrations
+        run: npx prisma migrate deploy
+        working-directory: frontend
+
+      - name: Seed database
+        run: npx prisma db seed
+        working-directory: frontend
 
       - name: Build frontend
         run: yarn build
         working-directory: frontend
-        env:
-          STRAPI_URL: http://localhost:1337
-          STRAPI_TOKEN: CICD-TEST-TOKEN
 
       - name: Start frontend
         run: node ./dist/server/entry.mjs &
         working-directory: frontend
         env:
-          STRAPI_TOKEN: CICD-TEST-TOKEN
           PORT: 4321
           HOST: localhost
 
       - name: Wait for stack to be healthy
-        run: |
-          timeout 180 bash -c 'until curl -sf http://localhost:1337/_health; do sleep 3; done'
-          timeout 60 bash -c 'until curl -sf http://localhost:4321; do sleep 3; done'
+        run: timeout 60 bash -c 'until curl -sf http://localhost:4321; do sleep 3; done'
 
       - name: Run E2E tests
         run: yarn test:e2e
         working-directory: frontend
         env:
           CI: "true"
-          STRAPI_URL: "http://localhost:1337"
 
       - name: Upload Playwright report
         if: failure()

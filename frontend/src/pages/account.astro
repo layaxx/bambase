@@ -1,34 +1,38 @@
 ---
 import PageLayout from "@/layouts/PageLayout.astro"
 import { useTranslations } from "@/i18n/translations"
-import { STRAPI_URL } from "astro:env/client"
-import { deleteAuthCookies } from "@/utils/auth-cookies"
 
 const t = useTranslations(Astro.locals.locale)
 
 const user = Astro.locals.user
-const token = Astro.locals.token
-if (!user || !token) return Astro.redirect("/login?redirect=/account")
-
-const profileRes = await fetch(`${STRAPI_URL}/api/users/me`, {
-  headers: { Authorization: `Bearer ${token}` },
-  signal: AbortSignal.timeout(3000),
-})
-if (!profileRes.ok) {
-  if (profileRes.status === 401 || profileRes.status === 403) {
-    deleteAuthCookies(Astro.cookies)
-
-    console.warn("Unauthorized access to profile, logging user out")
-  } else {
-    throw new Error(`Failed to fetch profile: ${profileRes.status} ${profileRes.statusText}`)
-  }
-  return Astro.redirect("/login?redirect=/account")
-}
-const profile: { email: string; createdAt: string } = await profileRes.json()
+if (!user) return Astro.redirect("/login?redirect=/account")
 ---
 
 <PageLayout title={t.auth.accountTitle}>
   <h1 class="text-3xl font-bold tracking-tight sm:text-4xl mb-8">{t.auth.accountTitle}</h1>
+
+  {
+    !user.emailVerified && (
+      <div
+        class="alert alert-warning mb-6 flex-col items-start sm:flex-row sm:items-center"
+        role="alert"
+      >
+        <div>
+          <h3 class="font-bold">{t.auth.verifyEmailRequiredTitle}</h3>
+          <p>{t.auth.verifyEmailRequiredText}</p>
+        </div>
+        <button
+          class="btn btn-sm mt-2 sm:mt-0"
+          data-email={user.email}
+          data-sent-label={t.auth.resendVerificationSent}
+          id="resend-verification-btn"
+          type="button"
+        >
+          {t.auth.resendVerificationBtn}
+        </button>
+      </div>
+    )
+  }
 
   <div class="card bg-base-100 border border-base-300">
     <div class="card-body gap-4">
@@ -36,7 +40,7 @@ const profile: { email: string; createdAt: string } = await profileRes.json()
         <span class="text-xs text-base-content/40 uppercase tracking-wide"
           >{t.auth.emailFieldLabel}</span
         >
-        <span class="font-medium">{profile.email}</span>
+        <span class="font-medium">{user.email}</span>
       </div>
       <div class="divider my-0"></div>
       <div class="flex flex-col gap-1">
@@ -45,7 +49,7 @@ const profile: { email: string; createdAt: string } = await profileRes.json()
         >
         <span class="font-medium">
           {
-            new Date(profile.createdAt).toLocaleDateString(t.auth.dateLocale, {
+            new Date(user.createdAt).toLocaleDateString(t.auth.dateLocale, {
               day: "numeric",
               month: "long",
               year: "numeric",
@@ -62,6 +66,31 @@ const profile: { email: string; createdAt: string } = await profileRes.json()
   </div>
 
   <div class="mt-4">
-    <a class="btn btn-ghost btn-sm" href="/logout">{t.auth.logout}</a>
+    <button class="btn btn-ghost btn-sm" id="logout-button">{t.auth.logout}</button>
   </div>
+
+  <script>
+    import { authClient } from "@/utils/auth-client"
+
+    document.querySelector("#logout-button")?.addEventListener("click", async () => {
+      await authClient.signOut({
+        fetchOptions: {
+          onSuccess: () => {
+            window.location.pathname = "/"
+          },
+        },
+      })
+    })
+
+    const resendButton = document.getElementById("resend-verification-btn")
+
+    resendButton?.addEventListener("click", async () => {
+      const email = resendButton.dataset.email
+      if (!email) return
+
+      resendButton.setAttribute("disabled", "true")
+      await authClient.sendVerificationEmail({ email, callbackURL: "/login?confirmed=true" })
+      resendButton.textContent = resendButton.dataset.sentLabel ?? resendButton.textContent
+    })
+  </script>
 </PageLayout>

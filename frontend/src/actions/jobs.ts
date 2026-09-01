@@ -1,7 +1,18 @@
 import { defineAction, ActionError } from "astro:actions"
 import { z } from "astro/zod"
 import { JOB_TYPES, JOB_FIELDS, WORK_MODES } from "@/utils/api/job-offers"
-import { STRAPI_URL } from "astro:env/client"
+import { invalidateCacheByPrefix } from "@/utils/api/cache"
+import { createUniqueSlug } from "@/utils/slugify"
+import { canModerateJobOffers } from "@/utils/authz"
+import {
+  requireUserId,
+  requirePermission,
+  assertOwnerOrPermission,
+  mutationError,
+} from "@/utils/action-guards"
+import prisma from "@/utils/prisma"
+
+const JOB_OFFER_LIFETIME_DAYS = 30
 
 const httpUrl = z
   .url()
@@ -26,109 +37,158 @@ const jobCreateSchema = z.object({
 export const jobs = {
   delete: defineAction({
     accept: "form",
-    input: z.object({ documentId: z.string().min(1) }),
-    handler: async ({ documentId }, context) => {
-      const token = context.locals.token
-      if (!token) throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
+    input: z.object({ id: z.string().min(1) }),
+    handler: async ({ id }, context) => {
+      const userId = requireUserId(context)
 
-      const res = await fetch(`${STRAPI_URL}/api/job-offers/${documentId}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const job = await prisma.jobOffer.findUnique({ where: { id }, select: { ownerId: true } })
+      if (!job) throw new ActionError({ code: "NOT_FOUND", message: "Stelle nicht gefunden." })
+      await assertOwnerOrPermission(
+        context,
+        userId,
+        job.ownerId,
+        undefined,
+        "Löschen fehlgeschlagen."
+      )
 
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        console.error("Job delete failed:", data?.error)
-        throw new ActionError({ code: "FORBIDDEN", message: "Löschen fehlgeschlagen." })
+      try {
+        await prisma.jobOffer.delete({ where: { id } })
+      } catch (error) {
+        console.error("Job delete failed:", error)
+        throw new ActionError({ code: "INTERNAL_SERVER_ERROR", message: "Löschen fehlgeschlagen." })
       }
 
+      invalidateCacheByPrefix("job-offers:")
       return {}
     },
   }),
 
   archive: defineAction({
     accept: "form",
-    input: z.object({ documentId: z.string().min(1) }),
-    handler: async ({ documentId }, context) => {
-      const token = context.locals.token
-      if (!token) throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
+    input: z.object({ id: z.string().min(1) }),
+    handler: async ({ id }, context) => {
+      const userId = requireUserId(context)
 
-      const res = await fetch(`${STRAPI_URL}/api/job-offers/${documentId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ data: { online_status: "archived" } }),
-      })
+      const job = await prisma.jobOffer.findUnique({ where: { id }, select: { ownerId: true } })
+      if (!job) throw new ActionError({ code: "NOT_FOUND", message: "Stelle nicht gefunden." })
+      await assertOwnerOrPermission(
+        context,
+        userId,
+        job.ownerId,
+        undefined,
+        "Archivieren fehlgeschlagen."
+      )
 
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        console.error("Job archive failed:", data?.error)
-        throw new ActionError({ code: "FORBIDDEN", message: "Archivieren fehlgeschlagen." })
+      try {
+        await prisma.jobOffer.update({ where: { id }, data: { onlineStatus: "archived" } })
+      } catch (error) {
+        console.error("Job archive failed:", error)
+        throw new ActionError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Archivieren fehlgeschlagen.",
+        })
       }
 
+      invalidateCacheByPrefix("job-offers:")
+      return {}
+    },
+  }),
+
+  approve: defineAction({
+    accept: "form",
+    input: z.object({ id: z.string().min(1) }),
+    handler: async ({ id }, context) => {
+      await requirePermission(context, canModerateJobOffers)
+
+      try {
+        await prisma.jobOffer.update({
+          where: { id },
+          data: { onlineStatus: "published", rejectionReason: null },
+        })
+      } catch (error) {
+        console.error("Job approve failed:", error)
+        throw new ActionError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Genehmigen fehlgeschlagen.",
+        })
+      }
+
+      invalidateCacheByPrefix("job-offers:")
+      return {}
+    },
+  }),
+
+  reject: defineAction({
+    accept: "form",
+    input: z.object({ id: z.string().min(1), reason: z.string().max(500).optional() }),
+    handler: async ({ id, reason }, context) => {
+      await requirePermission(context, canModerateJobOffers)
+
+      try {
+        await prisma.jobOffer.update({
+          where: { id },
+          data: { onlineStatus: "rejected", rejectionReason: reason || null },
+        })
+      } catch (error) {
+        console.error("Job reject failed:", error)
+        throw new ActionError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Ablehnen fehlgeschlagen.",
+        })
+      }
+
+      invalidateCacheByPrefix("job-offers:")
       return {}
     },
   }),
 
   update: defineAction({
     accept: "form",
-    input: z.object({
-      documentId: z.string().min(1),
-      title: z.string().min(1, "Bitte Stellenbezeichnung eingeben.").max(200),
-      company: z.string().min(1, "Bitte Unternehmen eingeben.").max(200),
-      location: z.string().min(1, "Bitte Ort eingeben.").max(200),
-      working_hours: z.coerce.number().int().min(0, "Bitte gültige Stundenzahl eingeben."),
-      description: z.string().min(1, "Bitte Beschreibung eingeben."),
-      job_type: z.enum(JOB_TYPES).default("other"),
-      field: z.enum(JOB_FIELDS).default("other"),
-      work_mode: z.enum(WORK_MODES).default("on_site"),
+    input: jobCreateSchema.extend({
+      id: z.string().min(1),
       contact_name: z.string().max(200).optional(),
-      contact_mail: z.email().max(254).optional(),
-      contact_phone: z.string().max(50).optional(),
-      external_url: httpUrl.optional(),
     }),
-    handler: async ({ documentId, ...fields }, context) => {
-      const token = context.locals.token
-      if (!token) throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
+    handler: async ({ id, ...fields }, context) => {
+      const userId = requireUserId(context)
 
-      let res: Response
+      const existing = await prisma.jobOffer.findUnique({
+        where: { id },
+        select: { ownerId: true },
+      })
+      if (!existing) throw new ActionError({ code: "NOT_FOUND", message: "Stelle nicht gefunden." })
+      await assertOwnerOrPermission(
+        context,
+        userId,
+        existing.ownerId,
+        canModerateJobOffers,
+        "Aktualisierung fehlgeschlagen."
+      )
+
+      let updated: { slug: string }
       try {
-        res = await fetch(`${STRAPI_URL}/api/job-offers/${documentId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({
-            data: {
-              title: fields.title,
-              company: fields.company,
-              location: fields.location,
-              working_hours: fields.working_hours,
-              description: fields.description,
-              job_type: fields.job_type,
-              field: fields.field,
-              work_mode: fields.work_mode,
-              external_url: fields.external_url || undefined,
-              contact: {
-                name: fields.contact_name || undefined,
-                mail: fields.contact_mail || undefined,
-                phone: fields.contact_phone || undefined,
-              },
-            },
-          }),
+        updated = await prisma.jobOffer.update({
+          where: { id },
+          data: {
+            title: fields.title,
+            company: fields.company,
+            location: fields.location,
+            workingHours: fields.working_hours,
+            description: fields.description,
+            jobType: fields.job_type,
+            field: fields.field,
+            workMode: fields.work_mode,
+            externalUrl: fields.external_url || null,
+            contactName: fields.contact_name || null,
+            contactMail: fields.contact_mail || null,
+            contactPhone: fields.contact_phone || null,
+          },
         })
-      } catch {
-        throw new ActionError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Server nicht erreichbar. Bitte versuche es später erneut.",
-        })
+      } catch (error) {
+        throw mutationError(error, "Job update failed", "Aktualisierung fehlgeschlagen.")
       }
 
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}))
-        console.error("Job update failed:", errData?.error)
-        throw new ActionError({ code: "BAD_REQUEST", message: "Aktualisierung fehlgeschlagen." })
-      }
-
-      const data = await res.json()
-      return { slug: String(data.data.slug) }
+      invalidateCacheByPrefix("job-offers:")
+      return { slug: updated.slug }
     },
   }),
 
@@ -136,53 +196,46 @@ export const jobs = {
     accept: "form",
     input: jobCreateSchema,
     handler: async (input, context) => {
-      const token = context.locals.token
-      if (!token) {
-        throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
-      }
-
-      let res: Response
-      try {
-        res = await fetch(`${STRAPI_URL}/api/job-offers`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            data: {
-              title: input.title,
-              company: input.company,
-              location: input.location,
-              working_hours: input.working_hours,
-              description: input.description,
-              job_type: input.job_type,
-              field: input.field,
-              work_mode: input.work_mode,
-              external_url: input.external_url || undefined,
-              contact: {
-                name: input.contact_name || undefined,
-                mail: input.contact_mail || undefined,
-                phone: input.contact_phone || undefined,
-              },
-            },
-          }),
-        })
-      } catch {
+      const userId = requireUserId(context)
+      if (!context.locals.user?.emailVerified) {
         throw new ActionError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Server nicht erreichbar. Bitte versuche es später erneut.",
+          code: "FORBIDDEN",
+          message: "Bitte bestätige zuerst deine E-Mail-Adresse, bevor du eine Stelle einreichst.",
         })
       }
 
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}))
-        console.error("Job create failed:", errData?.error)
-        throw new ActionError({ code: "BAD_REQUEST", message: "Einreichung fehlgeschlagen." })
+      let created: { slug: string }
+      try {
+        const slug = await createUniqueSlug(
+          (slug) => prisma.jobOffer.findUnique({ where: { slug } }),
+          input.title
+        )
+
+        created = await prisma.jobOffer.create({
+          data: {
+            slug,
+            title: input.title,
+            company: input.company,
+            location: input.location,
+            workingHours: input.working_hours,
+            description: input.description,
+            jobType: input.job_type,
+            field: input.field,
+            workMode: input.work_mode,
+            externalUrl: input.external_url || null,
+            contactName: input.contact_name || null,
+            contactMail: input.contact_mail || null,
+            contactPhone: input.contact_phone || null,
+            ownerId: userId,
+            offlineAfter: new Date(Date.now() + JOB_OFFER_LIFETIME_DAYS * 24 * 60 * 60 * 1000),
+          },
+        })
+      } catch (error) {
+        throw mutationError(error, "Job create failed", "Einreichung fehlgeschlagen.")
       }
 
-      const data = await res.json()
-      return { slug: String(data.data.slug) }
+      invalidateCacheByPrefix("job-offers:")
+      return { slug: created.slug }
     },
   }),
 }

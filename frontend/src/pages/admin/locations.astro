@@ -1,0 +1,73 @@
+---
+import { actions } from "astro:actions"
+import PageLayout from "@/layouts/PageLayout.astro"
+import { fetchAllLocationsForAdmin } from "@/utils/api"
+import { canManageLocations, requireRole } from "@/utils/authz"
+import { useTranslations } from "@/i18n/translations"
+import ConfirmModal from "@/components/ConfirmModal.astro"
+
+const t = useTranslations(Astro.locals.locale)
+
+const guard = await requireRole(Astro, canManageLocations, "/admin/locations")
+if (guard instanceof Response) return guard
+
+const deleteResult = Astro.getActionResult(actions.locations.delete)
+if (deleteResult?.data !== undefined && !deleteResult.error) {
+  return Astro.redirect(Astro.url.pathname)
+}
+
+const { data: locations } = await fetchAllLocationsForAdmin()
+---
+
+<PageLayout title={t.admin.locationsTitle}>
+  <div class="mb-6 flex items-center justify-between">
+    <h1 class="text-3xl font-bold tracking-tight sm:text-4xl">{t.admin.locationsTitle}</h1>
+    <a class="btn btn-primary btn-sm" href="/admin/locations/new">{t.admin.newLocation}</a>
+  </div>
+
+  {
+    locations.length === 0 ? (
+      <p class="rounded-xl border border-base-300 bg-base-100 p-6 text-base-content/70">
+        {t.admin.noLocations}
+      </p>
+    ) : (
+      <div class="flex flex-col gap-3">
+        {locations.map((location) => (
+          <div class="flex flex-col gap-3 rounded-xl border border-base-300 bg-base-100 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="font-semibold leading-snug text-base-content">{location.name}</h2>
+                <span class="badge badge-sm badge-neutral">
+                  {t.map.categories[location.category]}
+                </span>
+              </div>
+              {location.address?.city && (
+                <p class="text-sm text-base-content/70">{location.address.city}</p>
+              )}
+            </div>
+            <div class="flex gap-2">
+              <a class="btn btn-outline btn-sm" href={`/admin/locations/${location.slug}/edit`}>
+                {t.admin.editLocation}
+              </a>
+              <button
+                class="btn btn-outline btn-error btn-sm"
+                onclick={`document.getElementById('deleteLocationModal-${location.id}').showModal()`}
+                type="button"
+              >
+                {t.locations.deleteLocation}
+              </button>
+              <ConfirmModal
+                confirmClass="btn btn-error"
+                confirmLabel={t.locations.deleteLocation}
+                formAction={actions.locations.delete}
+                hiddenInputs={[{ name: "id", value: location.id }]}
+                id={`deleteLocationModal-${location.id}`}
+                message={t.locations.deleteConfirm}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+</PageLayout>

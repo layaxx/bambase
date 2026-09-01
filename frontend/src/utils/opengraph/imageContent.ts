@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 import type { Event, JobOffer } from "../api"
 import { useTranslations } from "@/i18n/translations"
 
@@ -39,10 +40,12 @@ export const makeImageContent = ({
   titleContent: string
   subtitleItems: object[]
   category: string
-}) => {
+}): ReactNode => {
   const title = titleContent.length > 60 ? `${titleContent.slice(0, 57)}…` : titleContent
   const titleSize = title.length > 45 ? 50 : 60
 
+  // satori accepts plain JSX-shaped objects, not real React elements, so this
+  // tree doesn't structurally match React's ReactElement/ReactPortal types.
   return {
     type: "div",
     props: {
@@ -132,7 +135,7 @@ export const makeImageContent = ({
         },
       ],
     },
-  }
+  } as unknown as ReactNode
 }
 
 export const makeJobOfferSubtitleItems = (

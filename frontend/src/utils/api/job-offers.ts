@@ -1,48 +1,24 @@
-import { STRAPI_TOKEN } from "astro:env/server"
-import { client, withTimeout, fetchWithTimeout } from "./client"
+import prisma from "../prisma"
 import { withCache } from "./cache"
-import { STRAPI_URL } from "astro:env/client"
 import type { ApiResult } from "./types"
+import { JobType, JobField, WorkMode, JobOnlineStatus } from "@/generated/prisma/enums"
 
-export const JOB_TYPES = [
-  "part_time",
-  "internship",
-  "working_student",
-  "research_assistant",
-  "thesis",
-  "volunteer",
-  "other",
-] as const
+export const JOB_TYPES = Object.values(JobType)
+export const JOB_FIELDS = Object.values(JobField)
+export const WORK_MODES = Object.values(WorkMode)
 
-export type JobType = (typeof JOB_TYPES)[number]
-
-export const JOB_FIELDS = [
-  "it",
-  "marketing",
-  "administration",
-  "research",
-  "gastronomy",
-  "retail",
-  "education",
-  "other",
-] as const
-
-export type JobField = (typeof JOB_FIELDS)[number]
-
-export const WORK_MODES = ["on_site", "hybrid", "remote"] as const
-
-export type WorkMode = (typeof WORK_MODES)[number]
+export type { JobType, JobField, WorkMode }
 
 export type JobOffer = {
-  documentId: string
+  id: string
   slug: string
   title: string
   description: string
   company: string
   location: string
-  online_status: "submitted" | "published" | "expired" | "rejected" | "archived"
+  online_status: JobOnlineStatus
+  rejection_reason?: string
   working_hours: number
-  offline_after?: string
   external_url?: string
   job_type: JobType
   field: JobField
@@ -52,15 +28,16 @@ export type JobOffer = {
     mail?: string
     phone?: string
   }
-  owner?: { id: number }
-  reports?: { documentId: string }[]
+  ownerId?: string | null
+  reports?: { id: string }[]
   createdAt: string
+  updatedAt: string
 }
 
 export type JobOffersFilter = {
-  types?: string[]
-  fields?: string[]
-  workModes?: string[]
+  types?: JobType[]
+  fields?: JobField[]
+  workModes?: WorkMode[]
   search?: string
   sort?: string
   page?: number
@@ -74,47 +51,94 @@ export type JobOfferPage = {
   pageCount: number
 }
 
+type JobOfferRow = {
+  id: string
+  slug: string
+  title: string
+  description: string
+  company: string
+  location: string
+  onlineStatus: JobOnlineStatus
+  rejectionReason: string | null
+  workingHours: number
+  externalUrl: string | null
+  jobType: JobType
+  field: JobField
+  workMode: WorkMode
+  contactName: string | null
+  contactMail: string | null
+  contactPhone: string | null
+  ownerId: string | null
+  createdAt: Date
+  updatedAt: Date
+}
+
+function toJobOffer(row: JobOfferRow, extra?: { reports?: { id: string }[] }): JobOffer {
+  return {
+    id: row.id,
+    slug: row.slug,
+    title: row.title,
+    description: row.description,
+    company: row.company,
+    location: row.location,
+    online_status: row.onlineStatus,
+    rejection_reason: row.rejectionReason ?? undefined,
+    working_hours: row.workingHours,
+    external_url: row.externalUrl ?? undefined,
+    job_type: row.jobType,
+    field: row.field,
+    work_mode: row.workMode,
+    contact: {
+      name: row.contactName ?? undefined,
+      mail: row.contactMail ?? undefined,
+      phone: row.contactPhone ?? undefined,
+    },
+    ownerId: row.ownerId,
+    reports: extra?.reports,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+  }
+}
+
 export async function fetchJobOffersPaginated(
   filter: JobOffersFilter = {}
 ): Promise<ApiResult<JobOfferPage>> {
   const { types, fields, workModes, search, sort = "newest", page = 1, pageSize = 12 } = filter
 
-  const filters: Record<string, unknown> = { online_status: { $eq: "published" } }
-  if (types && types.length === 1) filters.job_type = { $eq: types[0] }
-  else if (types && types.length > 1) filters.job_type = { $in: types }
-  if (fields && fields.length === 1) filters.field = { $eq: fields[0] }
-  else if (fields && fields.length > 1) filters.field = { $in: fields }
-  if (workModes && workModes.length === 1) filters.work_mode = { $eq: workModes[0] }
-  else if (workModes && workModes.length > 1) filters.work_mode = { $in: workModes }
+  const where = { onlineStatus: JobOnlineStatus.published } as {
+    onlineStatus: JobOnlineStatus
+    jobType?: { in: JobType[] }
+    field?: { in: JobField[] }
+    workMode?: { in: WorkMode[] }
+    OR?: { title?: object; company?: object }[]
+  }
+  if (types && types.length > 0) where.jobType = { in: types }
+  if (fields && fields.length > 0) where.field = { in: fields }
+  if (workModes && workModes.length > 0) where.workMode = { in: workModes }
   if (search) {
-    filters.$or = [{ title: { $containsi: search } }, { company: { $containsi: search } }]
+    where.OR = [
+      { title: { contains: search, mode: "insensitive" } },
+      { company: { contains: search, mode: "insensitive" } },
+    ]
   }
 
-  const sortOrder = sort === "oldest" ? ["createdAt:asc"] : ["createdAt:desc"]
   const key = `job-offers:paginated:${JSON.stringify(filter)}`
   try {
-    const result = await withCache(key, () =>
-      withTimeout(
-        client.collection("job-offers").find({
-          filters,
-          sort: sortOrder,
-          populate: ["contact"],
-          pagination: { page, pageSize },
-        })
-      )
-    )
-    const meta = (
-      result as unknown as {
-        meta?: { pagination?: { page: number; pageCount: number; total: number } }
-      }
-    ).meta?.pagination
+    const { rows, total } = await withCache(key, async () => {
+      const [rows, total] = await Promise.all([
+        prisma.jobOffer.findMany({
+          where,
+          orderBy: { createdAt: sort === "oldest" ? "asc" : "desc" },
+          skip: (page - 1) * pageSize,
+          take: pageSize,
+        }),
+        prisma.jobOffer.count({ where }),
+      ])
+      return { rows, total }
+    })
+    const pageCount = Math.max(1, Math.ceil(total / pageSize))
     return {
-      data: {
-        jobs: (result.data ?? []) as unknown as JobOffer[],
-        total: meta?.total ?? 0,
-        page: meta?.page ?? 1,
-        pageCount: meta?.pageCount ?? 1,
-      },
+      data: { jobs: rows.map((row) => toJobOffer(row)), total, page, pageCount },
       apiDown: false,
     }
   } catch (error) {
@@ -126,17 +150,14 @@ export async function fetchJobOffersPaginated(
 export async function fetchJobOffers(limit = 100): Promise<ApiResult<JobOffer[]>> {
   const key = `job-offers:all:${limit}`
   try {
-    const result = await withCache(key, () =>
-      withTimeout(
-        client.collection("job-offers").find({
-          filters: { online_status: { $eq: "published" } },
-          sort: ["createdAt:desc"],
-          populate: ["contact"],
-          pagination: { limit },
-        })
-      )
+    const rows = await withCache(key, () =>
+      prisma.jobOffer.findMany({
+        where: { onlineStatus: "published" },
+        orderBy: { createdAt: "desc" },
+        take: limit,
+      })
     )
-    return { data: (result.data ?? []) as unknown as JobOffer[], apiDown: false }
+    return { data: rows.map((row) => toJobOffer(row)), apiDown: false }
   } catch (error) {
     console.error("Error fetching job offers", error)
     return { data: [], apiDown: true }
@@ -145,46 +166,65 @@ export async function fetchJobOffers(limit = 100): Promise<ApiResult<JobOffer[]>
 
 export async function fetchJobOffer(
   slug: string,
-  token = STRAPI_TOKEN
+  viewer?: { userId?: string | null; isModerator?: boolean }
 ): Promise<ApiResult<JobOffer | null>> {
   try {
-    const res = await fetchWithTimeout(
-      `${STRAPI_URL}/api/job-offers?filters[slug][$eq]=${encodeURIComponent(slug)}&populate[contact]=true&populate[owner][fields][0]=id&populate[reports][filters][review_status][$ne]=dismissed`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    )
+    const row = await prisma.jobOffer.findFirst({
+      where: { slug },
+      include: {
+        reports: { where: { reviewStatus: { not: "dismissed" } }, select: { id: true } },
+      },
+    })
+    if (!row) return { data: null, apiDown: false }
 
-    if (!res.ok) {
-      if (res.status === 401 && token !== STRAPI_TOKEN) {
-        console.warn("Unauthorized access with provided token, retrying with public token...")
-        return fetchJobOffer(slug, STRAPI_TOKEN)
-      }
+    const isOwner = !!viewer?.userId && row.ownerId === viewer.userId
+    if (row.onlineStatus !== "published" && !isOwner && !viewer?.isModerator) {
       return { data: null, apiDown: false }
     }
-    const result = await res.json()
-    return { data: (result?.data?.[0] ?? null) as unknown as JobOffer | null, apiDown: false }
+
+    return { data: toJobOffer(row, { reports: row.reports }), apiDown: false }
   } catch (error) {
     console.error("Error fetching job offer", error)
     return { data: null, apiDown: true }
   }
 }
 
-export async function fetchMyJobOffers(
-  token: string,
-  userId: number
-): Promise<ApiResult<JobOffer[]>> {
+export async function fetchMyJobOffers(ownerId: string): Promise<ApiResult<JobOffer[]>> {
   try {
-    const res = await fetchWithTimeout(
-      `${STRAPI_URL}/api/job-offers?filters[owner][id][$eq]=${userId}&populate[0]=contact&sort=createdAt:desc`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    )
-    if (!res.ok) {
-      console.warn("Failed to fetch own job offers:", await res.text())
-      return { data: [], apiDown: false }
-    }
-    const result = await res.json()
-    return { data: (result?.data ?? []) as unknown as JobOffer[], apiDown: false }
+    const rows = await prisma.jobOffer.findMany({
+      where: { ownerId },
+      orderBy: { createdAt: "desc" },
+    })
+    return { data: rows.map((row) => toJobOffer(row)), apiDown: false }
   } catch (error) {
     console.error("Error fetching own job offers", error)
+    return { data: [], apiDown: true }
+  }
+}
+
+export async function fetchSubmittedJobOffers(): Promise<ApiResult<JobOffer[]>> {
+  try {
+    const rows = await prisma.jobOffer.findMany({
+      where: { onlineStatus: "submitted" },
+      orderBy: { createdAt: "asc" },
+    })
+    return { data: rows.map((row) => toJobOffer(row)), apiDown: false }
+  } catch (error) {
+    console.error("Error fetching submitted job offers", error)
+    return { data: [], apiDown: true }
+  }
+}
+
+export async function fetchRecentlyModeratedJobOffers(limit = 10): Promise<ApiResult<JobOffer[]>> {
+  try {
+    const rows = await prisma.jobOffer.findMany({
+      where: { onlineStatus: { in: [JobOnlineStatus.published, JobOnlineStatus.rejected] } },
+      orderBy: { updatedAt: "desc" },
+      take: limit,
+    })
+    return { data: rows.map((row) => toJobOffer(row)), apiDown: false }
+  } catch (error) {
+    console.error("Error fetching recently moderated job offers", error)
     return { data: [], apiDown: true }
   }
 }

@@ -6,7 +6,8 @@ const AUTH_FILE = "tests/e2e/.auth/seed-user.json"
  * Runs once before authenticated test suites.
  * Logs in as the seed user and saves cookies so other tests can reuse the session.
  *
- * Requires the stack to be running with SEED=true so seed@example.com exists.
+ * Requires the database to be seeded (`npx prisma db seed`, or
+ * `docker compose run --rm frontend-migrate npx prisma db seed`) so seed@example.com exists.
  */
 setup("authenticate as seed user", async ({ page }) => {
   await page.goto("/login")

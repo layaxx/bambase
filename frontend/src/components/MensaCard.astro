@@ -20,15 +20,15 @@ const relevantDayFormatted = relevantDay.toDate().toLocaleDateString(t.mensa.dat
 })
 
 const locations = [
-  { id: "feki", label: "Feki", strapiName: "Feki" },
-  { id: "austrasse", label: "Austraße", strapiName: "Austraße" },
-  { id: "erba", label: "Erba", strapiName: "Erba" },
+  { id: "feki", label: "Feki" },
+  { id: "austrasse", label: "Austraße" },
+  { id: "erba", label: "Erba" },
 ] as const
 
 const { data: meals, apiDown } = await fetchMensaMeals(relevantDay)
 
 const mealsByLocation = Object.fromEntries(
-  locations.map((loc) => [loc.id, meals.filter((m) => m.location === loc.strapiName)])
+  locations.map((loc) => [loc.id, meals.filter((m) => m.location === loc.label)])
 )
 ---
 

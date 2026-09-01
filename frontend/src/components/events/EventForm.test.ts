@@ -11,13 +11,13 @@ beforeAll(async () => {
 
 const locals = {
   locale: "de" as const,
-  user: { id: 1, email: "user@example.com", createdAt: new Date().toISOString() },
-  token: null,
+  user: null,
+  session: null,
 }
 
 const sampleLocations: MapLocation[] = [
   {
-    documentId: "loc-1",
+    id: "loc-1",
     slug: "uni-bamberg",
     name: "Uni Bamberg",
     lat: 49.9,
@@ -26,7 +26,7 @@ const sampleLocations: MapLocation[] = [
     address: { city: "Bamberg" },
   },
   {
-    documentId: "loc-2",
+    id: "loc-2",
     slug: "schlenkerla",
     name: "Schlenkerla",
     lat: 49.89,
@@ -202,11 +202,11 @@ describe("EventForm", () => {
       expect(html).toMatch(/Uni Bamberg\s+·\s+Bamberg/)
     })
 
-    it("pre-selects the matching map_location_documentId option", async () => {
+    it("pre-selects the matching map_location_id option", async () => {
       const html = await container.renderToString(EventForm, {
         props: {
           ...baseProps,
-          initialValues: { locationType: "linked", map_location_documentId: "loc-2" },
+          initialValues: { locationType: "linked", map_location_id: "loc-2" },
         },
         locals,
       })
@@ -332,12 +332,12 @@ describe("EventForm", () => {
   })
 
   describe("documentId hidden input", () => {
-    it("renders a hidden documentId input when documentId prop is provided", async () => {
+    it("renders a hidden documentId input when id prop is provided", async () => {
       const html = await container.renderToString(EventForm, {
-        props: { ...baseProps, documentId: "doc-abc123" },
+        props: { ...baseProps, id: "doc-abc123" },
         locals,
       })
-      expect(html).toContain('name="documentId"')
+      expect(html).toContain('name="id"')
       expect(html).toContain('value="doc-abc123"')
       expect(html).toContain('type="hidden"')
     })

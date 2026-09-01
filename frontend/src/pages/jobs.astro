@@ -197,8 +197,8 @@ const workModeItems = WORK_MODES.map((wm) => ({
 <script>
   const searchInput = document.getElementById("search-input") as HTMLInputElement | null
   if (searchInput) {
-    searchInput.focus()
     if (searchInput.value) {
+      searchInput.focus()
       const len = searchInput.value.length
       searchInput.setSelectionRange(len, len)
     }

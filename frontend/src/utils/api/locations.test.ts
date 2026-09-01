@@ -1,85 +1,114 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { fetchLocations } from "./locations"
+import { fetchLocations, fetchLocationForAdmin, fetchAllLocationsForAdmin } from "./locations"
 
-const mockFind = vi.hoisted(() => vi.fn())
+const mockFindMany = vi.hoisted(() => vi.fn())
+const mockFindFirst = vi.hoisted(() => vi.fn())
 
-vi.mock("./client", () => ({
-  client: {
-    collection: vi.fn().mockReturnValue({ find: mockFind }),
+vi.mock("../prisma", () => ({
+  default: {
+    location: { findMany: mockFindMany, findFirst: mockFindFirst },
   },
-  withTimeout: (p: Promise<unknown>) => p,
-  strapiUrl: "http://localhost:1337",
 }))
 
 vi.mock("./cache", () => ({
   withCache: (_key: string, fn: () => Promise<unknown>) => fn(),
 }))
 
-const sampleLocation = {
-  documentId: "loc-1",
+beforeEach(() => {
+  mockFindMany.mockReset()
+  mockFindFirst.mockReset()
+})
+
+const sampleLocationRow = {
+  id: "loc-1",
   slug: "audimax",
   name: "Audimax",
+  description: null,
   lat: 49.8988,
   lon: 10.9028,
   category: "university",
+  externalUrl: null,
+  addressStreet: null,
+  addressStreetNumber: null,
+  addressCity: null,
+  addressZip: null,
 }
 
 describe("fetchLocations", () => {
-  beforeEach(() => mockFind.mockReset())
-
   it("sorts results by name ascending", async () => {
-    mockFind.mockResolvedValue({ data: [] })
+    mockFindMany.mockResolvedValue([])
 
     await fetchLocations()
 
-    expect(mockFind).toHaveBeenCalledWith(expect.objectContaining({ sort: ["name:asc"] }))
+    expect(mockFindMany).toHaveBeenCalledWith(expect.objectContaining({ orderBy: { name: "asc" } }))
   })
 
-  it("uses a high pagination limit to fetch all locations", async () => {
-    mockFind.mockResolvedValue({ data: [] })
+  it("uses a high take limit to fetch all locations", async () => {
+    mockFindMany.mockResolvedValue([])
 
     await fetchLocations()
 
-    expect(mockFind).toHaveBeenCalledWith(expect.objectContaining({ pagination: { limit: 500 } }))
+    expect(mockFindMany).toHaveBeenCalledWith(expect.objectContaining({ take: 500 }))
   })
 
-  it("populates the address relation", async () => {
-    mockFind.mockResolvedValue({ data: [] })
+  it("sends no where clause when called without a category", async () => {
+    mockFindMany.mockResolvedValue([])
 
     await fetchLocations()
 
-    expect(mockFind).toHaveBeenCalledWith(expect.objectContaining({ populate: ["address"] }))
+    expect(mockFindMany).toHaveBeenCalledWith(expect.objectContaining({ where: undefined }))
   })
 
-  it("sends no filters when called without a category", async () => {
-    mockFind.mockResolvedValue({ data: [] })
-
-    await fetchLocations()
-
-    const call = mockFind.mock.calls[0][0]
-    expect(call).not.toHaveProperty("filters")
-  })
-
-  it("sends a category $eq filter when a category is provided", async () => {
-    mockFind.mockResolvedValue({ data: [] })
+  it("filters by category when one is provided", async () => {
+    mockFindMany.mockResolvedValue([])
 
     await fetchLocations("university")
 
-    expect(mockFind).toHaveBeenCalledWith(
-      expect.objectContaining({ filters: { category: { $eq: "university" } } })
+    expect(mockFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { category: "university" } })
     )
   })
 
-  it("returns the data array from the response", async () => {
-    mockFind.mockResolvedValue({ data: [sampleLocation] })
+  it("maps rows to MapLocation, omitting the address when all fields are null", async () => {
+    mockFindMany.mockResolvedValue([sampleLocationRow])
 
     const result = await fetchLocations()
 
-    expect(result).toEqual({ data: [sampleLocation], apiDown: false })
+    expect(result).toEqual({
+      data: [
+        {
+          id: "loc-1",
+          slug: "audimax",
+          name: "Audimax",
+          description: undefined,
+          lat: 49.8988,
+          lon: 10.9028,
+          category: "university",
+          external_url: undefined,
+          address: undefined,
+        },
+      ],
+      apiDown: false,
+    })
   })
 
-  it("returns an empty array when data is null", async () => {
-    mockFind.mockResolvedValue({ data: null })
+  it("builds an address object when at least one address field is present", async () => {
+    mockFindMany.mockResolvedValue([
+      { ...sampleLocationRow, addressStreet: "Feldkirchenstraße", addressStreetNumber: "21" },
+    ])
+
+    const result = await fetchLocations()
+
+    expect(result.data[0].address).toEqual({
+      street: "Feldkirchenstraße",
+      streetNumber: "21",
+      city: undefined,
+      zip: undefined,
+    })
+  })
+
+  it("returns an empty array when no rows are found", async () => {
+    mockFindMany.mockResolvedValue([])
 
     const result = await fetchLocations()
 
@@ -88,12 +117,76 @@ describe("fetchLocations", () => {
 
   it("logs an error and returns an empty array when the API response is unexpected", async () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
-    mockFind.mockResolvedValue(null)
+    mockFindMany.mockResolvedValue(null)
 
     const result = await fetchLocations()
 
     expect(result).toEqual({ data: [], apiDown: true })
     expect(consoleSpy).toHaveBeenCalledWith("Error fetching locations", expect.any(TypeError))
+    consoleSpy.mockRestore()
+  })
+})
+
+describe("fetchLocationForAdmin", () => {
+  it("looks up the location by slug", async () => {
+    mockFindFirst.mockResolvedValue(sampleLocationRow)
+
+    await fetchLocationForAdmin("audimax")
+
+    expect(mockFindFirst).toHaveBeenCalledWith({ where: { slug: "audimax" } })
+  })
+
+  it("returns null when no location matches the slug", async () => {
+    mockFindFirst.mockResolvedValue(null)
+
+    const result = await fetchLocationForAdmin("missing")
+
+    expect(result).toEqual({ data: null, apiDown: false })
+  })
+
+  it("maps the found row to a MapLocation", async () => {
+    mockFindFirst.mockResolvedValue(sampleLocationRow)
+
+    const result = await fetchLocationForAdmin("audimax")
+
+    expect(result.data).toMatchObject({ id: "loc-1", slug: "audimax", name: "Audimax" })
+  })
+
+  it("logs an error and returns apiDown when the lookup throws", async () => {
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+    mockFindFirst.mockRejectedValue(new Error("db error"))
+
+    const result = await fetchLocationForAdmin("audimax")
+
+    expect(result).toEqual({ data: null, apiDown: true })
+    consoleSpy.mockRestore()
+  })
+})
+
+describe("fetchAllLocationsForAdmin", () => {
+  it("sorts results by name ascending with a default limit of 500", async () => {
+    mockFindMany.mockResolvedValue([])
+
+    await fetchAllLocationsForAdmin()
+
+    expect(mockFindMany).toHaveBeenCalledWith({ orderBy: { name: "asc" }, take: 500 })
+  })
+
+  it("uses a custom limit when provided", async () => {
+    mockFindMany.mockResolvedValue([])
+
+    await fetchAllLocationsForAdmin(10)
+
+    expect(mockFindMany).toHaveBeenCalledWith(expect.objectContaining({ take: 10 }))
+  })
+
+  it("logs an error and returns an empty array when the query throws", async () => {
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+    mockFindMany.mockRejectedValue(new Error("db error"))
+
+    const result = await fetchAllLocationsForAdmin()
+
+    expect(result).toEqual({ data: [], apiDown: true })
     consoleSpy.mockRestore()
   })
 })

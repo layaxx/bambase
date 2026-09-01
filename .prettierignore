@@ -8,7 +8,6 @@ dist/
 build/
 .next/
 .astro/
-.strapi/
 
 # Environment
 .env
@@ -39,7 +38,3 @@ coverage/
 # Database
 *.db
 *.sqlite
-
-# Strapi specific
-.tmp/
-.cache/

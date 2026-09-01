@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import {
   fetchAllPublishedEventSlugs,
   fetchEvents,
@@ -8,86 +8,109 @@ import {
   fetchUpcomingMapEvents,
 } from "./events"
 
-const mockFind = vi.hoisted(() => vi.fn())
-const mockCollection = vi.hoisted(() => vi.fn())
+const mockFindMany = vi.hoisted(() => vi.fn())
+const mockFindFirst = vi.hoisted(() => vi.fn())
 
-vi.mock("./client", () => ({
-  client: { collection: mockCollection },
-  withTimeout: (p: Promise<unknown>) => p,
-  fetchWithTimeout: (url: string, opts: RequestInit) => fetch(url, opts),
-  strapiUrl: "http://localhost:1337",
+vi.mock("../prisma", () => ({
+  default: {
+    event: { findMany: mockFindMany, findFirst: mockFindFirst },
+  },
 }))
 
 vi.mock("./cache", () => ({
   withCache: (_key: string, fn: () => Promise<unknown>) => fn(),
-  CACHE_TTL_MS: 300_000,
 }))
 
 beforeEach(() => {
-  mockFind.mockReset()
-  mockCollection.mockReturnValue({ find: mockFind })
+  mockFindMany.mockReset()
+  mockFindFirst.mockReset()
 })
 
-afterEach(() => {
-  vi.restoreAllMocks()
-  vi.unstubAllGlobals()
-})
+function makeRow(overrides: Partial<Record<string, unknown>> = {}) {
+  return {
+    id: "abc123",
+    slug: "test-event",
+    title: "Test Event",
+    description: "A test",
+    category: "other",
+    start: new Date("2026-04-15T10:00:00Z"),
+    end: new Date("2026-04-15T12:00:00Z"),
+    organizer: "Test Org",
+    externalUrl: null,
+    externalId: null,
+    ownerId: null,
+    customLocationName: null,
+    customLocationAddress: null,
+    customLocationCity: null,
+    ...overrides,
+  }
+}
 
-const sampleEvent = {
-  documentId: "abc123",
+const mappedSampleEvent = {
+  id: "abc123",
   slug: "test-event",
   title: "Test Event",
   description: "A test",
-  start: "2026-04-15T10:00:00Z",
-  end: "2026-04-15T12:00:00Z",
+  start: "2026-04-15T10:00:00.000Z",
+  end: "2026-04-15T12:00:00.000Z",
   organizer: "Test Org",
+  category: "other",
+  external_url: undefined,
+  external_id: undefined,
+  ownerId: null,
+  reports: undefined,
+  map_location: undefined,
+  custom_location: undefined,
 }
 
 describe("fetchEvents", () => {
   it("sorts results by start ascending", async () => {
-    mockFind.mockResolvedValue({ data: [] })
+    mockFindMany.mockResolvedValue([])
 
     await fetchEvents()
 
-    expect(mockFind).toHaveBeenCalledWith(expect.objectContaining({ sort: ["start:asc"] }))
+    expect(mockFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({ orderBy: { start: "asc" } })
+    )
   })
 
   it("excludes hidden events", async () => {
-    mockFind.mockResolvedValue({ data: [] })
+    mockFindMany.mockResolvedValue([])
 
     await fetchEvents()
 
-    const call = mockFind.mock.calls[0][0]
-    expect(call.filters.hidden).toEqual({ $ne: true })
+    expect(mockFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: expect.objectContaining({ hidden: false }) })
+    )
   })
 
   it("uses the default limit of 100", async () => {
-    mockFind.mockResolvedValue({ data: [] })
+    mockFindMany.mockResolvedValue([])
 
     await fetchEvents()
 
-    expect(mockFind).toHaveBeenCalledWith(expect.objectContaining({ pagination: { limit: 100 } }))
+    expect(mockFindMany).toHaveBeenCalledWith(expect.objectContaining({ take: 100 }))
   })
 
   it("respects a custom limit", async () => {
-    mockFind.mockResolvedValue({ data: [] })
+    mockFindMany.mockResolvedValue([])
 
     await fetchEvents(25)
 
-    expect(mockFind).toHaveBeenCalledWith(expect.objectContaining({ pagination: { limit: 25 } }))
+    expect(mockFindMany).toHaveBeenCalledWith(expect.objectContaining({ take: 25 }))
   })
 
-  it("returns the data array from the response", async () => {
-    mockFind.mockResolvedValue({ data: [sampleEvent] })
+  it("returns mapped events from the response", async () => {
+    mockFindMany.mockResolvedValue([makeRow()])
 
     const result = await fetchEvents()
 
-    expect(result).toEqual({ data: [sampleEvent], apiDown: false })
+    expect(result).toEqual({ data: [mappedSampleEvent], apiDown: false })
   })
 
-  it("logs an error and returns an empty array when the API response is unexpected", async () => {
+  it("logs an error and returns an empty array when the query fails", async () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
-    mockFind.mockResolvedValue(null) // null.data throws TypeError inside the try block
+    mockFindMany.mockResolvedValue(null) // null.map throws TypeError inside the try block
 
     const result = await fetchEvents()
 
@@ -98,120 +121,117 @@ describe("fetchEvents", () => {
 
 describe("fetchEvent", () => {
   it("filters by the given slug and excludes hidden events", async () => {
-    mockFind.mockResolvedValue({ data: [sampleEvent] })
+    mockFindFirst.mockResolvedValue(makeRow())
 
     await fetchEvent("test-event")
 
-    expect(mockFind).toHaveBeenCalledWith(
-      expect.objectContaining({
-        filters: { slug: { $eq: "test-event" }, hidden: { $ne: true } },
-      })
+    expect(mockFindFirst).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { slug: "test-event", hidden: false } })
     )
   })
 
-  it("populates owner and filters reports to non-dismissed with empty fields", async () => {
-    mockFind.mockResolvedValue({ data: [sampleEvent] })
+  it("filters reports to non-dismissed and includes the map location", async () => {
+    mockFindFirst.mockResolvedValue(makeRow())
 
     await fetchEvent("test-event")
 
-    expect(mockFind).toHaveBeenCalledWith(
+    expect(mockFindFirst).toHaveBeenCalledWith(
       expect.objectContaining({
-        populate: expect.objectContaining({
-          owner: { fields: ["id"] },
-          reports: {
-            filters: { review_status: { $ne: "dismissed" } },
-            fields: [],
-          },
+        include: expect.objectContaining({
+          reports: { where: { reviewStatus: { not: "dismissed" } }, select: { id: true } },
+          mapLocation: true,
         }),
       })
     )
   })
 
-  it("returns the first item from the data array", async () => {
-    mockFind.mockResolvedValue({ data: [sampleEvent] })
+  it("returns the mapped event", async () => {
+    mockFindFirst.mockResolvedValue(makeRow())
 
     const result = await fetchEvent("test-event")
 
-    expect(result).toEqual({ data: sampleEvent, apiDown: false })
+    expect(result).toEqual({ data: mappedSampleEvent, apiDown: false })
   })
 
   it("returns null when no event matches", async () => {
-    mockFind.mockResolvedValue({ data: [] })
+    mockFindFirst.mockResolvedValue(null)
 
     const result = await fetchEvent("no-such-event")
 
     expect(result).toEqual({ data: null, apiDown: false })
   })
 
-  it("logs an error and returns null when the API response is unexpected", async () => {
+  it("logs an error and returns null when the query fails", async () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
-    mockFind.mockResolvedValue(null) // null.data throws TypeError inside the try block
+    mockFindFirst.mockRejectedValue(new Error("connection refused"))
 
     const result = await fetchEvent("test-event")
 
     expect(result).toEqual({ data: null, apiDown: true })
-    expect(consoleSpy).toHaveBeenCalledWith("Error fetching event", expect.any(TypeError))
+    expect(consoleSpy).toHaveBeenCalledWith("Error fetching event", expect.any(Error))
   })
 })
 
 describe("fetchOngoingOrUpcomingEvents", () => {
   it("sorts results by start ascending", async () => {
-    mockFind.mockResolvedValue({ data: [] })
+    mockFindMany.mockResolvedValue([])
 
     await fetchOngoingOrUpcomingEvents()
 
-    expect(mockFind).toHaveBeenCalledWith(expect.objectContaining({ sort: ["start:asc"] }))
+    expect(mockFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({ orderBy: { start: "asc" } })
+    )
   })
 
   it("uses the default limit of 100", async () => {
-    mockFind.mockResolvedValue({ data: [] })
+    mockFindMany.mockResolvedValue([])
 
     await fetchOngoingOrUpcomingEvents()
 
-    expect(mockFind).toHaveBeenCalledWith(expect.objectContaining({ pagination: { limit: 100 } }))
+    expect(mockFindMany).toHaveBeenCalledWith(expect.objectContaining({ take: 100 }))
   })
 
   it("respects a custom limit", async () => {
-    mockFind.mockResolvedValue({ data: [] })
+    mockFindMany.mockResolvedValue([])
 
     await fetchOngoingOrUpcomingEvents(50)
 
-    expect(mockFind).toHaveBeenCalledWith(expect.objectContaining({ pagination: { limit: 50 } }))
+    expect(mockFindMany).toHaveBeenCalledWith(expect.objectContaining({ take: 50 }))
   })
 
-  it("returns the data array from the response", async () => {
-    mockFind.mockResolvedValue({ data: [sampleEvent] })
+  it("returns mapped events from the response", async () => {
+    mockFindMany.mockResolvedValue([makeRow()])
 
     const result = await fetchOngoingOrUpcomingEvents()
 
-    expect(result).toEqual({ data: [sampleEvent], apiDown: false })
+    expect(result).toEqual({ data: [mappedSampleEvent], apiDown: false })
   })
 
-  it("uses a $or filter combining today's events and currently-ongoing events", async () => {
-    mockFind.mockResolvedValue({ data: [] })
+  it("uses an OR filter combining today's events and currently-ongoing events", async () => {
+    mockFindMany.mockResolvedValue([])
 
     await fetchOngoingOrUpcomingEvents()
 
-    const call = mockFind.mock.calls[0][0]
-    expect(call.filters.$or).toHaveLength(2)
-    expect(call.filters.$or[0].start.$gte).toBeDefined()
-    expect(call.filters.$or[0].start.$lte).toBeDefined()
-    expect(call.filters.$or[1].start.$lte).toBeDefined()
-    expect(call.filters.$or[1].end.$gte).toBeDefined()
+    const call = mockFindMany.mock.calls[0][0]
+    expect(call.where.OR).toHaveLength(2)
+    expect(call.where.OR[0].start.gte).toBeInstanceOf(Date)
+    expect(call.where.OR[0].start.lte).toBeInstanceOf(Date)
+    expect(call.where.OR[1].start.lte).toBeInstanceOf(Date)
+    expect(call.where.OR[1].end.gte).toBeInstanceOf(Date)
   })
 
   it("excludes hidden events", async () => {
-    mockFind.mockResolvedValue({ data: [] })
+    mockFindMany.mockResolvedValue([])
 
     await fetchOngoingOrUpcomingEvents()
 
-    const call = mockFind.mock.calls[0][0]
-    expect(call.filters.hidden).toEqual({ $ne: true })
+    const call = mockFindMany.mock.calls[0][0]
+    expect(call.where.hidden).toBe(false)
   })
 
-  it("logs an error and returns an empty array when the API response is unexpected", async () => {
+  it("logs an error and returns an empty array when the query fails", async () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
-    mockFind.mockResolvedValue(null)
+    mockFindMany.mockResolvedValue(null)
 
     const result = await fetchOngoingOrUpcomingEvents()
 
@@ -222,77 +242,83 @@ describe("fetchOngoingOrUpcomingEvents", () => {
 
 describe("fetchUpcomingMapEvents", () => {
   it("sorts results by start ascending", async () => {
-    mockFind.mockResolvedValue({ data: [] })
+    mockFindMany.mockResolvedValue([])
 
     await fetchUpcomingMapEvents()
 
-    expect(mockFind).toHaveBeenCalledWith(expect.objectContaining({ sort: ["start:asc"] }))
-  })
-
-  it("uses the default limit of 200", async () => {
-    mockFind.mockResolvedValue({ data: [] })
-
-    await fetchUpcomingMapEvents()
-
-    expect(mockFind).toHaveBeenCalledWith(expect.objectContaining({ pagination: { limit: 200 } }))
-  })
-
-  it("respects a custom limit", async () => {
-    mockFind.mockResolvedValue({ data: [] })
-
-    await fetchUpcomingMapEvents(50)
-
-    expect(mockFind).toHaveBeenCalledWith(expect.objectContaining({ pagination: { limit: 50 } }))
-  })
-
-  it("filters to events where end >= now", async () => {
-    mockFind.mockResolvedValue({ data: [] })
-
-    await fetchUpcomingMapEvents()
-
-    const call = mockFind.mock.calls[0][0]
-    expect(call.filters.end.$gte).toBeDefined()
-  })
-
-  it("filters to events where map_location is not null", async () => {
-    mockFind.mockResolvedValue({ data: [] })
-
-    await fetchUpcomingMapEvents()
-
-    const call = mockFind.mock.calls[0][0]
-    expect(call.filters.map_location).toEqual({ $ne: null })
-  })
-
-  it("excludes hidden events", async () => {
-    mockFind.mockResolvedValue({ data: [] })
-
-    await fetchUpcomingMapEvents()
-
-    const call = mockFind.mock.calls[0][0]
-    expect(call.filters.hidden).toEqual({ $ne: true })
-  })
-
-  it("populates map_location", async () => {
-    mockFind.mockResolvedValue({ data: [] })
-
-    await fetchUpcomingMapEvents()
-
-    expect(mockFind).toHaveBeenCalledWith(
-      expect.objectContaining({ populate: { map_location: true } })
+    expect(mockFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({ orderBy: { start: "asc" } })
     )
   })
 
-  it("returns the data array from the response", async () => {
-    mockFind.mockResolvedValue({ data: [sampleEvent] })
+  it("uses the default limit of 200", async () => {
+    mockFindMany.mockResolvedValue([])
+
+    await fetchUpcomingMapEvents()
+
+    expect(mockFindMany).toHaveBeenCalledWith(expect.objectContaining({ take: 200 }))
+  })
+
+  it("respects a custom limit", async () => {
+    mockFindMany.mockResolvedValue([])
+
+    await fetchUpcomingMapEvents(50)
+
+    expect(mockFindMany).toHaveBeenCalledWith(expect.objectContaining({ take: 50 }))
+  })
+
+  it("filters to events where end >= now, map location is set, and not hidden", async () => {
+    mockFindMany.mockResolvedValue([])
+
+    await fetchUpcomingMapEvents()
+
+    const call = mockFindMany.mock.calls[0][0]
+    expect(call.where.end.gte).toBeInstanceOf(Date)
+    expect(call.where.mapLocationId).toEqual({ not: null })
+    expect(call.where.hidden).toBe(false)
+  })
+
+  it("includes the map location", async () => {
+    mockFindMany.mockResolvedValue([])
+
+    await fetchUpcomingMapEvents()
+
+    expect(mockFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({ include: { mapLocation: true } })
+    )
+  })
+
+  it("returns mapped events including the map location when present", async () => {
+    mockFindMany.mockResolvedValue([
+      makeRow({
+        mapLocation: {
+          id: "loc-1",
+          slug: "audimax",
+          name: "Audimax",
+          description: null,
+          lat: 49.9,
+          lon: 10.9,
+          category: "university",
+          externalUrl: null,
+          addressStreet: null,
+          addressStreetNumber: null,
+          addressCity: null,
+          addressZip: null,
+        },
+      }),
+    ])
 
     const result = await fetchUpcomingMapEvents()
 
-    expect(result).toEqual({ data: [sampleEvent], apiDown: false })
+    expect(result.apiDown).toBe(false)
+    expect(result.data[0].map_location).toEqual(
+      expect.objectContaining({ id: "loc-1", slug: "audimax", name: "Audimax" })
+    )
   })
 
-  it("logs an error and returns an empty array when the API response is unexpected", async () => {
+  it("logs an error and returns an empty array when the query fails", async () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
-    mockFind.mockResolvedValue(null)
+    mockFindMany.mockResolvedValue(null)
 
     const result = await fetchUpcomingMapEvents()
 
@@ -302,50 +328,49 @@ describe("fetchUpcomingMapEvents", () => {
 })
 
 describe("fetchAllPublishedEventSlugs", () => {
-  it("requests only the slug field", async () => {
-    mockFind.mockResolvedValue({ data: [] })
+  it("selects only the slug field", async () => {
+    mockFindMany.mockResolvedValue([])
 
     await fetchAllPublishedEventSlugs()
 
-    expect(mockFind).toHaveBeenCalledWith(expect.objectContaining({ fields: ["slug"] }))
+    expect(mockFindMany).toHaveBeenCalledWith(expect.objectContaining({ select: { slug: true } }))
   })
 
   it("uses the default limit of 500", async () => {
-    mockFind.mockResolvedValue({ data: [] })
+    mockFindMany.mockResolvedValue([])
 
     await fetchAllPublishedEventSlugs()
 
-    expect(mockFind).toHaveBeenCalledWith(expect.objectContaining({ pagination: { limit: 500 } }))
+    expect(mockFindMany).toHaveBeenCalledWith(expect.objectContaining({ take: 500 }))
   })
 
   it("respects a custom limit", async () => {
-    mockFind.mockResolvedValue({ data: [] })
+    mockFindMany.mockResolvedValue([])
 
     await fetchAllPublishedEventSlugs(50)
 
-    expect(mockFind).toHaveBeenCalledWith(expect.objectContaining({ pagination: { limit: 50 } }))
+    expect(mockFindMany).toHaveBeenCalledWith(expect.objectContaining({ take: 50 }))
   })
 
   it("returns plain slug strings", async () => {
-    mockFind.mockResolvedValue({ data: [{ slug: "test-event" }, { slug: "another-event" }] })
+    mockFindMany.mockResolvedValue([{ slug: "test-event" }, { slug: "another-event" }])
 
     const result = await fetchAllPublishedEventSlugs()
 
     expect(result).toEqual({ data: ["test-event", "another-event"], apiDown: false })
   })
 
-  it("applies no date filter but excludes hidden events", async () => {
-    mockFind.mockResolvedValue({ data: [] })
+  it("excludes hidden events", async () => {
+    mockFindMany.mockResolvedValue([])
 
     await fetchAllPublishedEventSlugs()
 
-    const call = mockFind.mock.calls[0][0]
-    expect(call.filters).toEqual({ hidden: { $ne: true } })
+    expect(mockFindMany).toHaveBeenCalledWith(expect.objectContaining({ where: { hidden: false } }))
   })
 
-  it("logs an error and returns an empty array when the API response is unexpected", async () => {
+  it("logs an error and returns an empty array when the query fails", async () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
-    mockFind.mockResolvedValue(null)
+    mockFindMany.mockResolvedValue(null)
 
     const result = await fetchAllPublishedEventSlugs()
 
@@ -358,67 +383,30 @@ describe("fetchAllPublishedEventSlugs", () => {
 })
 
 describe("fetchMyEvents", () => {
-  beforeEach(() => {
-    vi.stubGlobal("fetch", vi.fn())
+  it("filters by the given ownerId and sorts by start descending", async () => {
+    mockFindMany.mockResolvedValue([])
+
+    await fetchMyEvents("user-42")
+
+    expect(mockFindMany).toHaveBeenCalledWith({
+      where: { ownerId: "user-42" },
+      orderBy: { start: "desc" },
+    })
   })
 
-  it("filters by the given userId", async () => {
-    vi.mocked(fetch).mockResolvedValue({
-      ok: true,
-      json: async () => ({ data: [] }),
-    } as Response)
+  it("returns mapped events from the response", async () => {
+    mockFindMany.mockResolvedValue([makeRow()])
 
-    await fetchMyEvents("token-abc", 42)
+    const result = await fetchMyEvents("user-42")
 
-    expect(fetch).toHaveBeenCalledWith(
-      expect.stringContaining("filters[owner][id][$eq]=42"),
-      expect.any(Object)
-    )
+    expect(result).toEqual({ data: [mappedSampleEvent], apiDown: false })
   })
 
-  it("includes the Authorization header", async () => {
-    vi.mocked(fetch).mockResolvedValue({
-      ok: true,
-      json: async () => ({ data: [] }),
-    } as Response)
-
-    await fetchMyEvents("my-token", 1)
-
-    expect(fetch).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({
-        headers: expect.objectContaining({ Authorization: "Bearer my-token" }),
-      })
-    )
-  })
-
-  it("returns the data array on success", async () => {
-    vi.mocked(fetch).mockResolvedValue({
-      ok: true,
-      json: async () => ({ data: [sampleEvent] }),
-    } as Response)
-
-    const result = await fetchMyEvents("token", 1)
-
-    expect(result).toEqual({ data: [sampleEvent], apiDown: false })
-  })
-
-  it("returns an empty array when the response is not ok", async () => {
-    vi.mocked(fetch).mockResolvedValue({
-      ok: false,
-      text: async () => "Unauthorized",
-    } as Response)
-
-    const result = await fetchMyEvents("bad-token", 1)
-
-    expect(result).toEqual({ data: [], apiDown: false })
-  })
-
-  it("logs an error and returns an empty array when fetch throws", async () => {
+  it("logs an error and returns an empty array when the query fails", async () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
-    vi.mocked(fetch).mockRejectedValue(new Error("network error"))
+    mockFindMany.mockRejectedValue(new Error("connection refused"))
 
-    const result = await fetchMyEvents("token", 1)
+    const result = await fetchMyEvents("user-42")
 
     expect(result).toEqual({ data: [], apiDown: true })
     expect(consoleSpy).toHaveBeenCalledWith("Error fetching own events", expect.any(Error))

@@ -7,11 +7,9 @@ import { useTranslations } from "@/i18n/translations"
 const t = useTranslations(Astro.locals.locale)
 
 const user = Astro.locals.user
+if (!user) return Astro.redirect("/login?redirect=/account/events")
 
-const token = Astro.locals.token
-if (!user || !token) return Astro.redirect("/login?redirect=/account/events")
-
-const { data: events } = await fetchMyEvents(token, user.id)
+const { data: events } = await fetchMyEvents(user.id)
 const dateLocale = t.mensa.dateLocale
 
 function formatDateTime(iso: string) {
@@ -46,14 +44,24 @@ function formatDateTime(iso: string) {
             class="group flex flex-col gap-1 rounded-xl border border-base-300 bg-base-100 p-4 no-underline transition-all hover:shadow-md"
             href={`/event/${event.slug}`}
           >
-            <h2 class="font-semibold leading-snug text-base-content group-hover:text-primary">
-              {event.title}
-            </h2>
+            <div class="flex items-start justify-between gap-2">
+              <h2 class="font-semibold leading-snug text-base-content group-hover:text-primary">
+                {event.title}
+              </h2>
+              {event.hidden && (
+                <span class="badge badge-sm badge-ghost shrink-0">{t.events.unpublishedBadge}</span>
+              )}
+            </div>
             <p class="text-sm text-base-content/70">
               {formatDateTime(event.start)} – {formatDateTime(event.end)}
             </p>
             <p class="text-sm text-base-content/70">{event.organizer}</p>
             <p class="line-clamp-2 text-sm text-base-content/40">{event.description}</p>
+            {event.hidden && event.rejection_reason && (
+              <p class="text-sm text-base-content/70">
+                {t.events.rejectionReasonLabel(event.rejection_reason)}
+              </p>
+            )}
           </a>
         ))}
       </div>

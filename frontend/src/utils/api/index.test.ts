@@ -1,11 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-// Mock the client module to avoid real network setup during module init
-vi.mock("./client", () => ({
-  client: { collection: vi.fn() },
-  strapiUrl: "http://localhost:1337",
-}))
-
 describe("REPORT_WARNING_THRESHOLD", () => {
   beforeEach(() => {
     vi.resetModules()

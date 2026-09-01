@@ -1,24 +1,8 @@
 ---
-import { actions } from "astro:actions"
 import AppLayout from "@/layouts/AppLayout.astro"
 import { useTranslations } from "@/i18n/translations"
 
 const t = useTranslations(Astro.locals.locale)
-
-const result = Astro.getActionResult(actions.auth.login)
-if (result?.data?.success) {
-  return Astro.redirect(result.data.redirect || "/")
-}
-
-const loggedInButNotConfirmed = result?.data?.notConfirmed === true
-const prefillEmail = result?.data?.email || ""
-
-let error: string | null = null
-if (result?.error?.message) {
-  error = result.error.message
-} else if (result?.data?.success === false && !loggedInButNotConfirmed) {
-  error = t.auth.validation.loginFailed
-}
 
 const emailConfirmed = Astro.url.searchParams.get("confirmed") === "true"
 ---
@@ -33,22 +17,6 @@ const emailConfirmed = Astro.url.searchParams.get("confirmed") === "true"
       </p>
 
       {
-        loggedInButNotConfirmed && (
-          <div class="alert alert-warning mb-4">
-            <div>
-              <h3 class="font-bold">{t.auth.emailNotConfirmed}</h3>
-              <a
-                class="link"
-                href={`/resend-confirmation${prefillEmail ? `?email=${encodeURIComponent(prefillEmail)}` : ""}`}
-              >
-                {t.auth.resendConfirmationLink}
-              </a>
-            </div>
-          </div>
-        )
-      }
-
-      {
         emailConfirmed && (
           <div class="alert alert-success mb-4">
             <div>
@@ -59,20 +27,11 @@ const emailConfirmed = Astro.url.searchParams.get("confirmed") === "true"
         )
       }
 
-      {
-        error && (
-          <div class="alert alert-error mb-4">
-            <span>{error}</span>
-          </div>
-        )
-      }
+      <div class="alert alert-error mb-4 hidden" id="signin-error">
+        <span></span>
+      </div>
 
-      <form action={actions.auth.login} class="flex flex-col" method="POST">
-        <input
-          name="redirect"
-          type="hidden"
-          value={Astro.url.searchParams.get("redirect") || "/"}
-        />
+      <form class="flex flex-col" data-locale={Astro.locals.locale} id="signin-form">
         <fieldset class="fieldset">
           <legend class="fieldset-legend">{t.auth.emailLabel}</legend>
           <input
@@ -82,7 +41,6 @@ const emailConfirmed = Astro.url.searchParams.get("confirmed") === "true"
             placeholder={t.auth.emailPlaceholder}
             required
             type="email"
-            value={prefillEmail}
           />
         </fieldset>
 
@@ -106,4 +64,61 @@ const emailConfirmed = Astro.url.searchParams.get("confirmed") === "true"
       </p>
     </div>
   </main>
+  <script>
+    import { authClient } from "@/utils/auth-client"
+
+    const form = document.getElementById("signin-form")
+
+    const locale: "de" | "en" = form?.dataset.locale === "en" ? "en" : "de"
+
+    form?.addEventListener("submit", async (event) => {
+      event.preventDefault()
+
+      const submitButton = form.querySelector<HTMLButtonElement>('[type="submit"]')
+      if (submitButton) submitButton.disabled = true
+
+      const formData = new FormData(event.target as HTMLFormElement)
+      const email = formData.get("identifier") as string
+      const password = formData.get("password") as string
+      const authResponse = await authClient.signIn.email({
+        email,
+        password,
+      })
+      if (Boolean(authResponse.error) === false) {
+        window.location.href = new URLSearchParams(window.location.search).get("redirect") || "/"
+      } else {
+        if (submitButton) submitButton.disabled = false
+
+        const errorDiv = document.getElementById("signin-error")
+        if (errorDiv) {
+          errorDiv.classList.remove("hidden")
+          const textElem = errorDiv.querySelector("span")
+          if (textElem) {
+            let msg = {
+              de: "Ein unbekannter Fehler ist aufgetreten.",
+              en: "An unknown error occurred.",
+            }
+
+            if (authResponse.error?.status === 500) {
+              msg = {
+                de: "Serverfehler. Bitte später erneut versuchen.",
+                en: "Server Error. Please try again later.",
+              }
+            } else if (authResponse.error?.code === "INVALID_EMAIL_OR_PASSWORD") {
+              msg = {
+                en: "Invalid email or password.",
+                de: "E-Mail oder Passwort ungültig.",
+              }
+            } else if (authResponse.error?.code === "EMAIL_NOT_VERIFIED") {
+              msg = {
+                en: "Please verify your email address first. We've sent you a new verification link.",
+                de: "Bitte bestätige zuerst deine E-Mail-Adresse. Wir haben dir einen neuen Bestätigungslink gesendet.",
+              }
+            }
+            textElem.textContent = msg[locale]
+          }
+        }
+      }
+    })
+  </script>
 </AppLayout>

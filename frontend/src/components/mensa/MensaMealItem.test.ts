@@ -11,8 +11,15 @@ beforeAll(async () => {
 
 const locals = {
   locale: "de" as const,
-  user: { id: 1, email: "user@example.com", createdAt: new Date().toISOString() },
-  token: null,
+  user: {
+    id: "1",
+    email: "usernew@example.com",
+    name: "New User",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    emailVerified: true,
+  },
+  session: null,
 }
 
 const baseMeal: MensaMeal = {
@@ -73,7 +80,7 @@ describe("MensaMealItem", () => {
 
   it("shows allergen toggle when allergens are present", async () => {
     const html = await container.renderToString(MensaMealItem, {
-      props: { meal: { ...baseMeal, allergens: [{ name: "Gluten" }, { name: "Laktose" }] } },
+      props: { meal: { ...baseMeal, allergens: ["Gluten", "Laktose"] } },
     })
     expect(html).toContain("Gluten")
     expect(html).toContain("Laktose")
