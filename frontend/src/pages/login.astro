@@ -66,6 +66,7 @@ const emailConfirmed = Astro.url.searchParams.get("confirmed") === "true"
   </main>
   <script>
     import { authClient } from "@/utils/auth-client"
+    import { safeRedirect } from "@/utils/safe-redirect"
 
     const form = document.getElementById("signin-form")
 
@@ -85,7 +86,10 @@ const emailConfirmed = Astro.url.searchParams.get("confirmed") === "true"
         password,
       })
       if (Boolean(authResponse.error) === false) {
-        window.location.href = new URLSearchParams(window.location.search).get("redirect") || "/"
+        window.location.href = safeRedirect(
+          new URLSearchParams(window.location.search).get("redirect"),
+          window.location.href
+        )
       } else {
         if (submitButton) submitButton.disabled = false
 

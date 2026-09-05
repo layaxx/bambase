@@ -1,5 +1,6 @@
 ---
 import type { Locale } from "@/i18n/translations"
+import { safeRedirect } from "@/utils/safe-redirect"
 
 const SUPPORTED: Locale[] = ["de", "en"]
 
@@ -13,5 +14,5 @@ if (lang && SUPPORTED.includes(lang)) {
   })
 }
 
-return Astro.redirect(Astro.url.searchParams.get("redirect") ?? "/")
+return Astro.redirect(safeRedirect(Astro.url.searchParams.get("redirect"), Astro.url))
 ---
