@@ -11,8 +11,30 @@ import {
   mutationError,
 } from "@/utils/action-guards"
 import prisma from "@/utils/prisma"
+import { JobOnlineStatus } from "@/generated/prisma/enums"
 
 const JOB_OFFER_LIFETIME_DAYS = 30
+
+/**
+ * Statuses a moderator has already ruled on, and that an owner's edit therefore has to undo:
+ * `published` is live on the site, `rejected` carries a moderator's reason. The remaining
+ * statuses (`submitted`, `expired`, `archived`) are offline and awaiting or past moderation
+ * anyway, so an edit leaves them where they are.
+ */
+const MODERATED_STATUSES: JobOnlineStatus[] = [JobOnlineStatus.published, JobOnlineStatus.rejected]
+
+/**
+ * Whether an update has to send the offer back through moderation: an owner who rewrites the
+ * content of an offer a moderator already ruled on would otherwise publish arbitrary text under
+ * that approval. Moderators edit in place — their edit *is* the moderation decision.
+ */
+function needsRemoderation(
+  isModerator: boolean,
+  contentChanged: boolean,
+  status: JobOnlineStatus
+): boolean {
+  return !isModerator && contentChanged && MODERATED_STATUSES.includes(status)
+}
 
 const httpUrl = z
   .url()
@@ -153,10 +175,25 @@ export const jobs = {
 
       const existing = await prisma.jobOffer.findUnique({
         where: { id },
-        select: { ownerId: true },
+        select: {
+          ownerId: true,
+          onlineStatus: true,
+          title: true,
+          company: true,
+          location: true,
+          workingHours: true,
+          description: true,
+          jobType: true,
+          field: true,
+          workMode: true,
+          externalUrl: true,
+          contactName: true,
+          contactMail: true,
+          contactPhone: true,
+        },
       })
       if (!existing) throw new ActionError({ code: "NOT_FOUND", message: "Stelle nicht gefunden." })
-      await assertOwnerOrPermission(
+      const isModerator = await assertOwnerOrPermission(
         context,
         userId,
         existing.ownerId,
@@ -164,23 +201,33 @@ export const jobs = {
         "Aktualisierung fehlgeschlagen."
       )
 
+      const content = {
+        title: fields.title,
+        company: fields.company,
+        location: fields.location,
+        workingHours: fields.working_hours,
+        description: fields.description,
+        jobType: fields.job_type,
+        field: fields.field,
+        workMode: fields.work_mode,
+        externalUrl: fields.external_url || null,
+        contactName: fields.contact_name || null,
+        contactMail: fields.contact_mail || null,
+        contactPhone: fields.contact_phone || null,
+      }
+      const contentChanged = Object.entries(content).some(
+        ([key, value]) => existing[key as keyof typeof content] !== value
+      )
+
       let updated: { slug: string }
       try {
         updated = await prisma.jobOffer.update({
           where: { id },
           data: {
-            title: fields.title,
-            company: fields.company,
-            location: fields.location,
-            workingHours: fields.working_hours,
-            description: fields.description,
-            jobType: fields.job_type,
-            field: fields.field,
-            workMode: fields.work_mode,
-            externalUrl: fields.external_url || null,
-            contactName: fields.contact_name || null,
-            contactMail: fields.contact_mail || null,
-            contactPhone: fields.contact_phone || null,
+            ...content,
+            ...(needsRemoderation(isModerator, contentChanged, existing.onlineStatus)
+              ? { onlineStatus: JobOnlineStatus.submitted, rejectionReason: null }
+              : {}),
           },
         })
       } catch (error) {
