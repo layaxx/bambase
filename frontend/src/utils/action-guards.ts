@@ -27,6 +27,10 @@ export async function requirePermission(
 /**
  * Throws FORBIDDEN unless `userId` owns the entity, or (when given) passes `check`.
  * Used after loading an entity that may belong to its creator or be moderated by staff.
+ *
+ * Returns whether the caller passed `check` (i.e. acts as staff rather than as the owner), so
+ * callers can treat a moderator's edit differently from an owner's — the owner of an approved
+ * entity must not be able to silently change what a moderator signed off on.
  */
 export async function assertOwnerOrPermission(
   context: ActionContext,
@@ -34,9 +38,10 @@ export async function assertOwnerOrPermission(
   ownerId: string | null | undefined,
   check?: RoleCheck,
   message = "Keine Berechtigung."
-): Promise<void> {
-  if (ownerId === userId) return
-  if (check && (await check(context.locals.user?.role))) return
+): Promise<boolean> {
+  const hasPermission = check ? await check(context.locals.user?.role) : false
+  if (hasPermission) return true
+  if (ownerId === userId) return false
   throw new ActionError({ code: "FORBIDDEN", message })
 }
 

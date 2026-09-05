@@ -206,6 +206,27 @@ describe("jobs.create", () => {
 })
 
 describe("jobs.update", () => {
+  /** The stored row matching `baseInput` exactly, so tests opt into a content change. */
+  function makeExistingJob(overrides: Record<string, unknown> = {}) {
+    return {
+      ownerId: "user-1",
+      onlineStatus: "published",
+      title: baseInput.title,
+      company: baseInput.company,
+      location: baseInput.location,
+      workingHours: baseInput.working_hours,
+      description: baseInput.description,
+      jobType: baseInput.job_type,
+      field: baseInput.field,
+      workMode: baseInput.work_mode,
+      externalUrl: null,
+      contactName: baseInput.contact_name,
+      contactMail: null,
+      contactPhone: null,
+      ...overrides,
+    }
+  }
+
   it("throws UNAUTHORIZED when not logged in", async () => {
     await expect(
       jobs.update(
@@ -241,22 +262,120 @@ describe("jobs.update", () => {
   })
 
   it("updates the job offer and returns its slug when the user is the owner", async () => {
-    mockFindUnique.mockResolvedValue({ ownerId: "user-1" })
+    mockFindUnique.mockResolvedValue(makeExistingJob())
     mockUpdate.mockResolvedValue({ slug: "updated-slug" })
 
     const result = await jobs.update(
+      { ...baseInput, id: "job-1", title: "Senior Developer" },
+      // @ts-expect-error - needed because of mocked defineAction function
+      makeContext("user-1")
+    )
+
+    expect(mockUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "job-1" },
+        data: expect.objectContaining({ title: "Senior Developer" }),
+      })
+    )
+    expect(result).toEqual({ slug: "updated-slug" })
+  })
+
+  it("sends a published job offer back to moderation when its owner changes the content", async () => {
+    mockFindUnique.mockResolvedValue(makeExistingJob())
+    mockUpdate.mockResolvedValue({ slug: "updated-slug" })
+
+    await jobs.update(
+      {
+        ...baseInput,
+        id: "job-1",
+        description: "Buy cheap pills",
+        external_url: "https://spam.example",
+      },
+      // @ts-expect-error - needed because of mocked defineAction function
+      makeContext("user-1")
+    )
+
+    expect(mockUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ onlineStatus: "submitted", rejectionReason: null }),
+      })
+    )
+  })
+
+  it("sends a rejected job offer back to moderation and clears the rejection reason", async () => {
+    mockFindUnique.mockResolvedValue(makeExistingJob({ onlineStatus: "rejected" }))
+    mockUpdate.mockResolvedValue({ slug: "updated-slug" })
+
+    await jobs.update(
+      { ...baseInput, id: "job-1", description: "Now with the details you asked for" },
+      // @ts-expect-error - needed because of mocked defineAction function
+      makeContext("user-1")
+    )
+
+    expect(mockUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ onlineStatus: "submitted", rejectionReason: null }),
+      })
+    )
+  })
+
+  it("keeps a published job offer online when the owner submits unchanged content", async () => {
+    mockFindUnique.mockResolvedValue(makeExistingJob())
+    mockUpdate.mockResolvedValue({ slug: "updated-slug" })
+
+    await jobs.update(
       { ...baseInput, id: "job-1" },
       // @ts-expect-error - needed because of mocked defineAction function
       makeContext("user-1")
     )
 
-    expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ where: { id: "job-1" } }))
-    expect(result).toEqual({ slug: "updated-slug" })
+    expect(mockUpdate.mock.calls[0][0].data).not.toHaveProperty("onlineStatus")
+  })
+
+  it("leaves an archived job offer archived when its owner edits it", async () => {
+    mockFindUnique.mockResolvedValue(makeExistingJob({ onlineStatus: "archived" }))
+    mockUpdate.mockResolvedValue({ slug: "updated-slug" })
+
+    await jobs.update(
+      { ...baseInput, id: "job-1", title: "Senior Developer" },
+      // @ts-expect-error - needed because of mocked defineAction function
+      makeContext("user-1")
+    )
+
+    expect(mockUpdate.mock.calls[0][0].data).not.toHaveProperty("onlineStatus")
+  })
+
+  it("keeps a published job offer online when a moderator edits it", async () => {
+    mockFindUnique.mockResolvedValue(makeExistingJob({ ownerId: "someone-else" }))
+    mockCanModerateJobOffers.mockResolvedValue(true)
+    mockUpdate.mockResolvedValue({ slug: "updated-slug" })
+
+    await jobs.update(
+      { ...baseInput, id: "job-1", description: "Tidied up by moderation" },
+      // @ts-expect-error - needed because of mocked defineAction function
+      makeContext("mod-1", true, "jobModerator")
+    )
+
+    expect(mockUpdate.mock.calls[0][0].data).not.toHaveProperty("onlineStatus")
+  })
+
+  it("keeps a published job offer online when a moderator edits their own offer", async () => {
+    mockFindUnique.mockResolvedValue(makeExistingJob({ ownerId: "mod-1" }))
+    mockCanModerateJobOffers.mockResolvedValue(true)
+    mockUpdate.mockResolvedValue({ slug: "updated-slug" })
+
+    await jobs.update(
+      { ...baseInput, id: "job-1", description: "Tidied up by moderation" },
+      // @ts-expect-error - needed because of mocked defineAction function
+      makeContext("mod-1", true, "jobModerator")
+    )
+
+    expect(mockUpdate.mock.calls[0][0].data).not.toHaveProperty("onlineStatus")
   })
 
   it("throws INTERNAL_SERVER_ERROR when the update fails unexpectedly", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {})
-    mockFindUnique.mockResolvedValue({ ownerId: "user-1" })
+    mockFindUnique.mockResolvedValue(makeExistingJob())
     mockUpdate.mockRejectedValue(new Error("db error"))
 
     await expect(
@@ -270,7 +389,7 @@ describe("jobs.update", () => {
 
   it("throws BAD_REQUEST when the update fails due to a known constraint violation", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {})
-    mockFindUnique.mockResolvedValue({ ownerId: "user-1" })
+    mockFindUnique.mockResolvedValue(makeExistingJob())
     mockUpdate.mockRejectedValue(
       new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
         code: "P2002",
