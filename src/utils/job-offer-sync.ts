@@ -2,6 +2,7 @@ import he from "he"
 import { JobField, JobOnlineStatus, JobType, WorkMode } from "@/generated/prisma/enums"
 import prisma from "./prisma"
 import { createWithUniqueSlug } from "./slugify"
+import { errorMessage } from "./error-message"
 
 const FEKI_JOBS_URL = "https://feki.de/api/jobboerse/jobs"
 
@@ -98,9 +99,7 @@ async function fetchAllJobs(cookie: string): Promise<DrupalJob[]> {
       const nextPage = await fetchJobsPage(page, cookie)
       allJobs.push(...nextPage.data)
     } catch (error) {
-      console.error(
-        `[feki] Failed to fetch page ${page}: ${error instanceof Error ? error.message : String(error)}`
-      )
+      console.error(`[feki] Failed to fetch page ${page}: ${errorMessage(error)}`)
     }
   }
 
@@ -120,7 +119,7 @@ export async function syncJobOffers(): Promise<void> {
   try {
     allJobs = await fetchAllJobs(cookie)
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error)
+    const message = errorMessage(error)
     console.error(`[feki] Failed to fetch job offers: ${message}`)
     throw new Error(`Failed to fetch job offers: ${message}`, { cause: error })
   }
@@ -172,9 +171,7 @@ export async function syncJobOffers(): Promise<void> {
       )
       created++
     } catch (error) {
-      console.error(
-        `[feki] Failed to create job offer "${title}": ${error instanceof Error ? error.message : String(error)}`
-      )
+      console.error(`[feki] Failed to create job offer "${title}": ${errorMessage(error)}`)
     }
   }
 
