@@ -12,20 +12,22 @@ An open-source campus information portal that aggregates key university resource
 
 ## Tech Stack
 
-| Layer | Tech |
-|---|---|
-| Frontend | [Astro 6](https://astro.build) · TypeScript · Tailwind CSS v4 · DaisyUI v5 · Leaflet |
-| Backend | Astro SSR endpoints & actions · [Prisma](https://prisma.io) · [better-auth](https://better-auth.com) |
-| Database | PostgreSQL 16 |
-| Testing | Vitest · Playwright (E2E) |
-| Infrastructure | Docker · Docker Compose · GitHub Actions |
+| Layer          | Tech                                                                                                 |
+| -------------- | ---------------------------------------------------------------------------------------------------- |
+| Frontend       | [Astro 6](https://astro.build) · TypeScript · Tailwind CSS v4 · DaisyUI v5 · Leaflet                 |
+| Backend        | Astro SSR endpoints & actions · [Prisma](https://prisma.io) · [better-auth](https://better-auth.com) |
+| Database       | PostgreSQL 16                                                                                        |
+| Testing        | Vitest · Playwright (E2E)                                                                            |
+| Infrastructure | Docker · GitHub Actions                                                                              |
+
+Frontend and backend are a single Astro application — there is no separate API service.
 
 ## Getting Started
 
 ### Prerequisites
 
 - Node.js 22+ and [Yarn](https://yarnpkg.com/)
-- Docker and Docker Compose (recommended for the database)
+- Docker and Docker Compose (recommended for the local database)
 
 ### Setup
 
@@ -35,57 +37,62 @@ An open-source campus information portal that aggregates key university resource
 cp .env.example .env
 ```
 
-A local PostgreSQL database is required — either run `docker-compose up frontend_db` or point `DATABASE_URL` in `frontend/.env` at your own instance.
-
-**2. Start the Frontend:**
+**2. Start a local PostgreSQL database:**
 
 ```bash
-cd frontend
+docker compose -f docker-compose.dev.yml up -d
+```
+
+Or point `DATABASE_URL` in `.env` at your own instance.
+
+**3. Install dependencies and run the app:**
+
+```bash
 yarn install
 npx prisma migrate deploy
-yarn dev   # Frontend at http://localhost:4321
+yarn dev   # http://localhost:4321
 ```
 
 On first run, run `npx prisma db seed` to populate the database with sample data.
 
-### Docker Compose (full stack)
+## Deployment
 
-```bash
-cp .env.example .env   # edit values
-docker-compose up --build
-```
-
-To populate the database with sample data, run `docker compose run --rm frontend-migrate npx prisma db seed` after the stack is up.
+Deployment configuration lives in a separate repository, **bambase-deploy**. It holds the Docker
+Compose stack (app, PostgreSQL, migration job) and pulls the prebuilt image
+`ghcr.io/layaxx/bambase-frontend`, which this repository's release workflow publishes on every
+`v*` tag. The `Dockerfile` that builds that image stays here, next to the code.
 
 ## Project Structure
 
 ```
 bambase/
-├── frontend/     # Astro frontend — pages, components, actions, Prisma schema
+├── src/          # Astro pages, components, actions, utils
+├── prisma/       # Schema, migrations, seed
+├── public/       # Static assets
+├── tests/        # Playwright E2E tests (unit tests live beside their sources)
 ├── .github/      # CI/CD workflows
-├── docker-compose.yml
+├── Dockerfile
+├── docker-compose.dev.yml   # Local dev database only
 ├── Makefile      # lint, format, git hook helpers
 └── ROADMAP.md    # planned features and architectural decisions
 ```
 
 ## Scripts
 
-Run from `frontend/`:
+| Command             | Description                 |
+| ------------------- | --------------------------- |
+| `yarn dev`          | Start development server    |
+| `yarn build`        | Production build            |
+| `yarn test`         | Unit tests                  |
+| `yarn test:e2e`     | Playwright end-to-end tests |
+| `yarn lint`         | ESLint check                |
+| `yarn format:write` | Auto-format with Prettier   |
 
-| Command | Description |
-|---|---|
-| `yarn dev` | Start development server |
-| `yarn build` | Production build |
-| `yarn test` | Unit tests |
-| `yarn test:e2e` | Playwright end-to-end tests |
-| `yarn lint` | ESLint check |
-| `yarn format:write` | Auto-format with Prettier |
-
-From the project root:
+The Makefile wraps the lint/format scripts with `nvm use`:
 
 ```bash
-make lint      # lint frontend/
-make format    # format frontend/
+make lint      # lint
+make format    # format
 ```
 
 ## Contributing
@@ -101,7 +108,7 @@ Contributions are welcome. Here's how to get started:
 4. **Make your changes.** Keep PRs focused — one feature or fix per PR.
 5. **Run the full test suite** before opening a PR:
    ```bash
-   cd frontend && yarn test && yarn lint
+   yarn test && yarn lint
    ```
 6. **Open a pull request** against `main`. The CI pipeline will run linting, unit tests, Docker builds, and E2E tests automatically.
 
@@ -109,7 +116,7 @@ Contributions are welcome. Here's how to get started:
 
 - All code is TypeScript; avoid `any` where possible.
 - Formatting is enforced by Prettier (config in `.prettierrc`). Run `yarn format:write` to fix issues.
-- New Prisma models belong in `frontend/prisma/schema.prisma`; new pages in `frontend/src/pages/`.
+- New Prisma models belong in `prisma/schema.prisma`; new pages in `src/pages/`.
 - Check `ROADMAP.md` for planned work before starting something large — it may already have design notes.
 
 ## License
