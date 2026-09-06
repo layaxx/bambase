@@ -50,7 +50,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const cookieLocale = SUPPORTED_LOCALES.includes(cookieLocaleRaw as Locale)
     ? (cookieLocaleRaw as Locale)
     : undefined
-  if (cookieLocale && SUPPORTED_LOCALES.includes(cookieLocale)) {
+  if (cookieLocale) {
     context.locals.locale = cookieLocale
   } else {
     const acceptLanguage = context.request.headers.get("Accept-Language")
