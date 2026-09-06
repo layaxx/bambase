@@ -2,7 +2,7 @@ import { defineAction, ActionError } from "astro:actions"
 import { z } from "astro/zod"
 import { EVENT_CATEGORIES } from "@/utils/api/events"
 import { invalidateCacheByPrefix } from "@/utils/api/cache"
-import { createUniqueSlug } from "@/utils/slugify"
+import { createWithUniqueSlug } from "@/utils/slugify"
 import { canModerateEvents } from "@/utils/authz"
 import { requireUserId, assertOwnerOrPermission, mutationError } from "@/utils/action-guards"
 import prisma from "@/utils/prisma"
@@ -227,25 +227,22 @@ export const events = {
 
       let created: { slug: string }
       try {
-        const slug = await createUniqueSlug(
-          (slug) => prisma.event.findUnique({ where: { slug } }),
-          input.title
+        created = await createWithUniqueSlug(input.title, (slug) =>
+          prisma.event.create({
+            data: {
+              slug,
+              title: input.title,
+              organizer: input.organizer,
+              description: input.description,
+              start: new Date(input.start),
+              end: new Date(input.end),
+              category: input.category,
+              externalUrl: input.external_url || null,
+              ownerId: userId,
+              ...buildLocationData(input),
+            },
+          })
         )
-
-        created = await prisma.event.create({
-          data: {
-            slug,
-            title: input.title,
-            organizer: input.organizer,
-            description: input.description,
-            start: new Date(input.start),
-            end: new Date(input.end),
-            category: input.category,
-            externalUrl: input.external_url || null,
-            ownerId: userId,
-            ...buildLocationData(input),
-          },
-        })
       } catch (error) {
         throw mutationError(error, "Event create failed", "Einreichung fehlgeschlagen.")
       }

@@ -2,7 +2,7 @@ import { defineAction, ActionError } from "astro:actions"
 import { z } from "astro/zod"
 import { JOB_TYPES, JOB_FIELDS, WORK_MODES } from "@/utils/api/job-offers"
 import { invalidateCacheByPrefix } from "@/utils/api/cache"
-import { createUniqueSlug } from "@/utils/slugify"
+import { createWithUniqueSlug } from "@/utils/slugify"
 import { canModerateJobOffers } from "@/utils/authz"
 import {
   requireUserId,
@@ -253,30 +253,27 @@ export const jobs = {
 
       let created: { slug: string }
       try {
-        const slug = await createUniqueSlug(
-          (slug) => prisma.jobOffer.findUnique({ where: { slug } }),
-          input.title
+        created = await createWithUniqueSlug(input.title, (slug) =>
+          prisma.jobOffer.create({
+            data: {
+              slug,
+              title: input.title,
+              company: input.company,
+              location: input.location,
+              workingHours: input.working_hours,
+              description: input.description,
+              jobType: input.job_type,
+              field: input.field,
+              workMode: input.work_mode,
+              externalUrl: input.external_url || null,
+              contactName: input.contact_name || null,
+              contactMail: input.contact_mail || null,
+              contactPhone: input.contact_phone || null,
+              ownerId: userId,
+              offlineAfter: new Date(Date.now() + JOB_OFFER_LIFETIME_DAYS * 24 * 60 * 60 * 1000),
+            },
+          })
         )
-
-        created = await prisma.jobOffer.create({
-          data: {
-            slug,
-            title: input.title,
-            company: input.company,
-            location: input.location,
-            workingHours: input.working_hours,
-            description: input.description,
-            jobType: input.job_type,
-            field: input.field,
-            workMode: input.work_mode,
-            externalUrl: input.external_url || null,
-            contactName: input.contact_name || null,
-            contactMail: input.contact_mail || null,
-            contactPhone: input.contact_phone || null,
-            ownerId: userId,
-            offlineAfter: new Date(Date.now() + JOB_OFFER_LIFETIME_DAYS * 24 * 60 * 60 * 1000),
-          },
-        })
       } catch (error) {
         throw mutationError(error, "Job create failed", "Einreichung fehlgeschlagen.")
       }

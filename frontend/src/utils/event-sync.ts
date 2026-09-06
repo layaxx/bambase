@@ -3,7 +3,7 @@ import he from "he"
 import removeMd from "remove-markdown"
 import { EventCategory } from "@/generated/prisma/enums"
 import prisma from "./prisma"
-import { slugify, uniqueSlug } from "./slugify"
+import { createWithUniqueSlug } from "./slugify"
 
 const UNIVIS_PREFIX = "univis:"
 
@@ -117,12 +117,9 @@ export async function syncUnivisEvents() {
       }
 
       try {
-        const slug = await uniqueSlug(
-          slugify(data.title),
-          async (candidate) =>
-            (await prisma.event.findUnique({ where: { slug: candidate } })) != null
+        await createWithUniqueSlug(data.title, (slug) =>
+          prisma.event.create({ data: { ...data, slug } })
         )
-        await prisma.event.create({ data: { ...data, slug } })
         return "created"
       } catch (error) {
         console.error(

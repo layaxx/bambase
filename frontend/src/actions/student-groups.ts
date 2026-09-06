@@ -1,7 +1,7 @@
 import { defineAction, ActionError } from "astro:actions"
 import { z } from "astro/zod"
 import { invalidateCacheByPrefix } from "@/utils/api/cache"
-import { createUniqueSlug } from "@/utils/slugify"
+import { createWithUniqueSlug } from "@/utils/slugify"
 import { canManageStudentGroups } from "@/utils/authz"
 import { requirePermission, mutationError } from "@/utils/action-guards"
 import prisma from "@/utils/prisma"
@@ -86,22 +86,19 @@ export const studentGroups = {
 
       let created: { slug: string }
       try {
-        const slug = await createUniqueSlug(
-          (slug) => prisma.studentGroup.findUnique({ where: { slug } }),
-          input.name
+        created = await createWithUniqueSlug(input.name, (slug) =>
+          prisma.studentGroup.create({
+            data: {
+              slug,
+              name: input.name,
+              description: input.description,
+              website: input.website || null,
+              instagram: input.instagram || null,
+              facebook: input.facebook || null,
+              email: input.email || null,
+            },
+          })
         )
-
-        created = await prisma.studentGroup.create({
-          data: {
-            slug,
-            name: input.name,
-            description: input.description,
-            website: input.website || null,
-            instagram: input.instagram || null,
-            facebook: input.facebook || null,
-            email: input.email || null,
-          },
-        })
       } catch (error) {
         throw mutationError(error, "Student group create failed", "Erstellen fehlgeschlagen.")
       }

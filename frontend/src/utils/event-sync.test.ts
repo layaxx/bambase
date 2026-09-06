@@ -91,15 +91,16 @@ describe("syncUnivisEvents", () => {
     })
   })
 
-  it("appends a numeric suffix to the slug when it is already taken", async () => {
+  it("retries with a discriminated slug when the create hits the unique index", async () => {
     mockGetCalendar.mockResolvedValue([makeUnivisEvent()])
-    mockFindUnique.mockResolvedValueOnce({ id: "existing" }).mockResolvedValueOnce(null)
+    mockCreate.mockRejectedValueOnce(
+      Object.assign(new Error("duplicate slug"), { code: "P2002", meta: { target: ["slug"] } })
+    )
 
     await syncUnivisEvents()
 
-    expect(mockCreate).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ slug: "vorlesung-mathematik-2" }) })
-    )
+    expect(mockCreate.mock.calls[0][0].data.slug).toBe("vorlesung-mathematik")
+    expect(mockCreate.mock.calls[1][0].data.slug).toMatch(/^vorlesung-mathematik-[a-z0-9]{4}$/)
   })
 
   it("updates an existing, non-hidden event that matches by externalId", async () => {

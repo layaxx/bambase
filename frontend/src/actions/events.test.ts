@@ -70,7 +70,6 @@ afterEach(() => {
 
 describe("events.create — location data written to Prisma", () => {
   beforeEach(() => {
-    mockFindUnique.mockResolvedValue(null) // slug is always free
     mockCreate.mockResolvedValue({ slug: "test-event" })
   })
 
@@ -169,8 +168,10 @@ describe("events.create", () => {
     expect(mockCreate.mock.calls[0][0].data.ownerId).toBe("user-1")
   })
 
-  it("appends -2 to the slug when the base slug is already taken", async () => {
-    mockFindUnique.mockResolvedValueOnce({ id: "other-event" }).mockResolvedValueOnce(null)
+  it("retries with a discriminated slug when the create hits the unique index", async () => {
+    mockCreate.mockRejectedValueOnce(
+      Object.assign(new Error("duplicate slug"), { code: "P2002", meta: { target: ["slug"] } })
+    )
 
     await events.create(
       baseEventInput,
@@ -178,7 +179,8 @@ describe("events.create", () => {
       makeContext("user-1")
     )
 
-    expect(mockCreate.mock.calls[0][0].data.slug).toBe("test-event-2")
+    expect(mockCreate.mock.calls[0][0].data.slug).toBe("test-event")
+    expect(mockCreate.mock.calls[1][0].data.slug).toMatch(/^test-event-[a-z0-9]{4}$/)
   })
 
   it("returns slug from the created event", async () => {

@@ -61,7 +61,6 @@ afterEach(() => {
 
 describe("studentGroups.create", () => {
   beforeEach(() => {
-    mockFindUnique.mockResolvedValue(null) // slug is always free
     mockCreate.mockResolvedValue({ slug: "test-group" })
   })
 
@@ -87,8 +86,10 @@ describe("studentGroups.create", () => {
     ).rejects.toMatchObject({ code: "FORBIDDEN" })
   })
 
-  it("appends -2 to the slug when the base slug is already taken", async () => {
-    mockFindUnique.mockResolvedValueOnce({ id: "other-group" }).mockResolvedValueOnce(null)
+  it("retries with a discriminated slug when the create hits the unique index", async () => {
+    mockCreate.mockRejectedValueOnce(
+      Object.assign(new Error("duplicate slug"), { code: "P2002", meta: { target: ["slug"] } })
+    )
 
     await studentGroups.create(
       baseGroupInput,
@@ -96,7 +97,8 @@ describe("studentGroups.create", () => {
       makeContext("user-1")
     )
 
-    expect(mockCreate.mock.calls[0][0].data.slug).toBe("test-group-2")
+    expect(mockCreate.mock.calls[0][0].data.slug).toBe("test-group")
+    expect(mockCreate.mock.calls[1][0].data.slug).toMatch(/^test-group-[a-z0-9]{4}$/)
   })
 
   it("returns slug from the created group", async () => {
