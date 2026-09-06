@@ -26,6 +26,9 @@ Thumbs.db
 
 # Testing
 coverage/
+playwright-report/
+test-results/
+tests/e2e/.auth/
 
 # Misc
 .git/
@@ -38,3 +41,7 @@ coverage/
 # Database
 *.db
 *.sqlite
+
+# Generated
+src/generated/
+yarn.lock

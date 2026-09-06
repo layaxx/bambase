@@ -1,9 +1,10 @@
 # BamBase.de Roadmap
 
 > **Architecture note:** the backend was migrated from a separate Strapi CMS
-> (`api/`) to Prisma + better-auth running directly inside the Astro app
-> (`frontend/`) — `api/` was removed from the repository entirely (see
-> `chore: remove strapi`). Entries under **Done** describe the codebase as it
+> (`api/`) to Prisma + better-auth running directly inside the Astro app —
+> `api/` was removed from the repository entirely (see `chore: remove strapi`),
+> and the app, formerly at `frontend/`, now lives at the repository root.
+> Entries under **Done** describe the codebase as it
 > was at the time they were written and may reference Strapi services,
 > controllers, or content types that no longer exist — they're kept as a
 > historical record, not a guide to the current code. Entries under
@@ -11,7 +12,6 @@
 > architecture.
 
 ## Upcoming
-
 
 ### P18 Job Overview Page
 
@@ -57,7 +57,7 @@ The existing client-side approach is acceptable up to approximately 50 published
 - Is full-text search (`search=...`) a requirement for server-side mode? A Prisma `OR` filter across `title`/`company` with `contains`/`insensitive` is precise but does a sequential scan without an index; Postgres full-text search (`tsvector`/`tsquery`) would be needed if this gets slow at scale.
 - Should the filter panel remain a `<details>` collapse, or become always-visible now that it causes a page load? A persistent filter bar (as on `/events`) is more discoverable.
 - If the page moves to server-side rendering with URL navigation, should the URL format change (e.g. `/jobs?type=internship` instead of the current JS-managed param format)? The current param keys (`type`, `field`, `work_mode`, `search`) are clean and can be kept as-is.
-- At what point should pagination be introduced alongside server-side filtering? 50 results per page is a natural default; the events listing already has a working `skip`/`take` pagination pattern (see [events.astro pagination](frontend/src/pages/events.astro)) that jobs could reuse.
+- At what point should pagination be introduced alongside server-side filtering? 50 results per page is a natural default; the events listing already has a working `skip`/`take` pagination pattern (see [events.astro pagination](src/pages/events.astro)) that jobs could reuse.
 
 ### P16 Performance
 
@@ -74,7 +74,7 @@ Audit-driven improvements to API query efficiency, rendering strategy, and asset
 - **Job offer listing double-query + JS dedup** — resolved differently: rather than merging "published + own" into one query, `fetchJobOffers` (public listing) and `fetchMyJobOffers`/`fetchJobOffer` (owner/moderator views, `utils/api/job-offers.ts`) are now separate, purpose-built Prisma queries — no merge-then-dedup step needed.
 - **`fetchLocations()` fetching everything** — resolved: `fetchLocations` accepts an optional category and forwards it as a Prisma `where` filter; `/api/locations.json` serves client-side category switches without a page reload.
 - **Ownership checks over-fetching relations** — resolved: ownership checks read `select: { ownerId: true }` only (see `src/actions/{events,jobs}.ts`), never the full record or a populated relation.
-- **No indexes on frequently filtered columns** — resolved: `frontend/prisma/schema.prisma` defines `@@index([start])` on `Event`, `@@index([onlineStatus, offlineAfter])` on `JobOffer`, and `@@index([date])` on `MensaMeal`, tracked as ordinary Prisma migrations.
+- **No indexes on frequently filtered columns** — resolved: `prisma/schema.prisma` defines `@@index([start])` on `Event`, `@@index([onlineStatus, offlineAfter])` on `JobOffer`, and `@@index([date])` on `MensaMeal`, tracked as ordinary Prisma migrations.
 - **`mensa-meals` sync writing records one at a time** — resolved: `mensa-sync.ts` batches creates/updates/deletes with `Promise.all`.
 - **No caching layer** — partially addressed: `utils/api/cache.ts` provides an in-process `withCache(key, fn)` memoization (5-minute TTL, keyed per query shape) used by the events/jobs/locations fetch helpers, invalidated on writes via `invalidateCacheByPrefix`. This caches within a single server process only — it does not help across multiple replicas or survive a restart, and a `date >= now` filter inside a cached query can serve results up to one TTL stale.
 - **Leaflet loaded from a CDN** — resolved: `map.astro` imports `leaflet` as a bundled module.
@@ -103,10 +103,10 @@ Automatically importing events from external sources would reduce the manual eff
 
 **Work involved:**
 
-- [x] Build UniVis importer (`frontend/src/utils/event-sync.ts`) using the `univis-api` npm package against `univis.uni-bamberg.de`
+- [x] Build UniVis importer (`src/utils/event-sync.ts`) using the `univis-api` npm package against `univis.uni-bamberg.de`
 - [x] Map UniVis fields to the `Event` Prisma model — title, description, organizer, start, end, external_url; category hardcoded to `university`; text cleaned via `he` (HTML entity decode) + `remove-markdown` + custom regex to collapse duplicate link text
 - [x] Deduplicate via `externalId` with a `univis:` prefix; sync window is rolling 2 months (now → +2 months); create/update/delete to keep records in sync with the source
-- [x] Schedule via cron (`frontend/src/utils/event-sync-cron.ts`, registered through the shared `registerCronJob` factory), tracked in the `/admin/cron` status page; also runs at startup when `LOAD_EVENTS_ON_STARTUP=true`
+- [x] Schedule via cron (`src/utils/event-sync-cron.ts`, registered through the shared `registerCronJob` factory), tracked in the `/admin/cron` status page; also runs at startup when `LOAD_EVENTS_ON_STARTUP=true`
 - [x] Display sync provenance on the event detail page — `externalId` prefix (`univis:` vs other) determines the notice text; no separate `source` field needed
 - [ ] Build importer for LiveClub website
 - [ ] Build importers for additional sources as identified
@@ -233,7 +233,7 @@ Registration now requires email confirmation before a new account becomes active
 - Login page detects the "not confirmed" Strapi error and shows a targeted warning with a link to `/resend-confirmation`, rather than a generic login-failed message.
 - Login page shows a success banner when arriving via `?confirmed=true`.
 - Added `/resend-confirmation` page and `resendConfirmation` action. The page always shows a success message regardless of whether the account exists, preventing email enumeration.
-- Cookie-setting logic extracted into `frontend/src/utils/auth-cookies.ts` to avoid duplication between login and register flows.
+- Cookie-setting logic extracted into `src/utils/auth-cookies.ts` to avoid duplication between login and register flows.
 - E2E tests updated: registration test asserts the confirmation-pending UI; the account empty-state test uses a pre-seeded confirmed `clean@example.com` user (no content) instead of relying on auto-login after registration.
 
 **Work involved:**
@@ -423,7 +423,7 @@ The existing test suite is strong on utility functions and E2E happy paths but h
 - The 401-retry fallback in `fetchJobOffer()` — unverified that it retries with the server token and doesn't loop
 - `utils/url-params.ts` — 9 lines, zero coverage
 - `formatJobOfferDate()` relative-time output (dayjs locale switching)
-- E2E: no test verifies that a non-owner *cannot* edit or delete someone else's content (privilege escalation is only checked implicitly)
+- E2E: no test verifies that a non-owner _cannot_ edit or delete someone else's content (privilege escalation is only checked implicitly)
 - E2E: account page tests are thin (35 lines) — no test for the empty state, status badge rendering, or the archive confirmation dialog
 
 **Work involved:**
@@ -574,10 +574,10 @@ Events and job offers currently have no category or tag system, making it hard f
 - [x] Add `job_type` and `field` enum fields to `JobOffer` schema (`api/src/api/job-offer/content-types/job-offer/schema.json`)
 - [x] Update job seed data with realistic `job_type` and `field` values (`api/src/seed/job-offers.ts`)
 - [x] Add `category` enum field to `Event` schema: `university`, `sport`, `party`, `culture`, `social`, `other`
-- [x] Update job creation/editing forms to include `job_type` and `field` selectors (`frontend/src/pages/job/new.astro`, `edit.astro`)
-- [x] Update event creation/editing form to include `category` selector (`frontend/src/pages/event/new.astro`, `edit.astro`)
+- [x] Update job creation/editing forms to include `job_type` and `field` selectors (`src/pages/job/new.astro`, `edit.astro`)
+- [x] Update event creation/editing form to include `category` selector (`src/pages/event/new.astro`, `edit.astro`)
 - [x] Display `job_type` badge on job cards and both `job_type`+`field` on job detail; `category` badge on event cards and detail
-- [x] Add i18n keys for all enum values in both `de` and `en` locales (`frontend/src/i18n/translations.ts`)
+- [x] Add i18n keys for all enum values in both `de` and `en` locales (`src/i18n/translations.ts`)
 - [ ] Expose `job_type`, `field`, and event category as filterable fields in API queries (prerequisite for P6)
 
 **Open questions:** none
@@ -593,12 +593,12 @@ Events and job offers currently have no category or tag system, making it hard f
 
 **Done:**
 
-- [x] Vitest setup in `frontend/` — `vitest.config.ts`, `yarn test` / `yarn test:watch` scripts
+- [x] Vitest setup — `vitest.config.ts`, `yarn test` / `yarn test:watch` scripts
 - [x] Unit tests for all frontend API utility modules (`events`, `job-offers`, `mensa`, `locations`, `student-groups`, `index`): query parameters, pagination limits, populate shapes, request bodies, auth headers, URL encoding, error fallbacks, and `console.error` messages
 - [x] Unit tests for pure utility modules: `event-formatting` (`formatDateTime`, `formatTime`), `mensa` (`getRelevantDay`, `groupMealsByDay`), `job-status` (`JOB_STATUS_ALERT_CLASS`, `JOB_STATUS_BADGE_CLASS`)
 - [x] Component tests using `experimental_AstroContainer`: `MensaLocationCard`, `MensaMealItem`, `MensaDaySection`, `ReportModal` — rendered HTML checked for correct output, edge cases (empty meals, allergens, vegan/vegetarian badges, hidden form inputs)
 
-- [x] End-to-end tests with Playwright in `frontend/tests/e2e/`: `public-pages.spec.ts`, `auth.spec.ts`, `account.spec.ts`, `events.spec.ts`, `jobs.spec.ts`, `reports.spec.ts` — run against a full Docker Compose stack with a seeded database (`docker-compose up` then `docker compose run --rm frontend-migrate npx prisma db seed`). Auth state is saved once via `auth.setup.ts` and reused by authenticated specs. Run with `yarn test:e2e` inside `frontend/`.
+- [x] End-to-end tests with Playwright in `tests/e2e/`: `public-pages.spec.ts`, `auth.spec.ts`, `account.spec.ts`, `events.spec.ts`, `jobs.spec.ts`, `reports.spec.ts` — run against a local dev database seeded with `npx prisma db seed`. Auth state is saved once via `auth.setup.ts` and reused by authenticated specs. Run with `yarn test:e2e`.
 
 **Still to do:**
 
@@ -633,8 +633,12 @@ A brief CSS animation (fade-out glow) is also viable if a persistent ring feels 
 
 ```css
 @keyframes highlight-fade {
-  from { box-shadow: 0 0 0 4px oklch(var(--p) / 0.35); }
-  to   { box-shadow: none; }
+  from {
+    box-shadow: 0 0 0 4px oklch(var(--p) / 0.35);
+  }
+  to {
+    box-shadow: none;
+  }
 }
 
 div:target {
@@ -675,13 +679,13 @@ Anonymous reporting for events and job postings. Reports are reviewed by admins 
 
 ### P2 Student Groups should be API-based
 
-Currently, student organizations are stored as a hardcoded JSON file at `frontend/src/data/groups.json`. Moving them to the API would allow student groups to manage their own entries (e.g., update links, descriptions) without requiring a developer.
+Currently, student organizations are stored as a hardcoded JSON file at `src/data/groups.json`. Moving them to the API would allow student groups to manage their own entries (e.g., update links, descriptions) without requiring a developer.
 
 **Work involved:**
 
 - Create a `StudentGroup` content type in Strapi with fields: `name`, `description`, `website`, `email`, `facebook`, `instagram`, plus any additional social links
 - Migrate existing JSON data into Strapi
-- Update `frontend/src/utils/api.ts` to fetch groups from the API
+- Update `src/utils/api.ts` to fetch groups from the API
 - Update all components that currently import from `groups.json` (homepage widget, dedicated group listing)
 - Consider adding owner/claim functionality so groups can update their own entry
 
@@ -697,13 +701,13 @@ Currently, student organizations are stored as a hardcoded JSON file at `fronten
 
 ### P1 Map Locations should be API-based
 
-Currently, the ~100+ university map locations (buildings, dorms, libraries, cafés, etc.) are stored as a hardcoded JSON file at `frontend/src/data/infomapLocations.json`. Moving them to the Strapi API would allow admins to add, update, or remove locations without a code deployment.
+Currently, the ~100+ university map locations (buildings, dorms, libraries, cafés, etc.) are stored as a hardcoded JSON file at `src/data/infomapLocations.json`. Moving them to the Strapi API would allow admins to add, update, or remove locations without a code deployment.
 
 **Work involved:**
 
 - [x] Create a `Location` content type in Strapi with fields: `name`, `description`, `lat`, `lon`, `category` (enum), `external_url`, `slug`
 - [x] Migrate existing JSON data into Strapi — location data added to `api/src/seed.ts`, seeded automatically on first run
-- [x] Update `frontend/src/utils/api.ts` to fetch locations from the API (`fetchLocations`, `MapLocation` type)
+- [x] Update `src/utils/api.ts` to fetch locations from the API (`fetchLocations`, `MapLocation` type)
 - [x] Update the map page to use the API data; category filtering works; category labels are i18n'd
 
 **Category enum values:** `university`, `mensa`, `library`, `sport`, `venues`, `other`
@@ -751,8 +755,8 @@ The `online_status` enumeration in `api/src/api/job-offer/content-types/job-offe
 - **API schema** — add `"archived"` to the `online_status` enum in `schema.json`. No migration needed since Strapi manages the enum at the application layer.
 - **Strapi permissions** — ensure the `update` endpoint allows an authenticated owner to set `online_status` to `"archived"` (and only to `"archived"` — owners must not be able to self-publish or un-reject). The existing controller in `api/src/api/job-offer/controllers/job-offer.ts` may need a guard.
 - **Astro action** — add an `archive` action (alongside the existing `delete` action) that calls `PATCH /api/job-offers/:documentId` with `{ online_status: "archived" }`, scoped to the authenticated owner.
-- **Job detail page** (`frontend/src/pages/job/[uuid]/index.astro`) — add an "Archive / Position filled" button in the owner action bar next to Edit and Delete. Show a confirmation dialog analogous to the delete confirm. Redirect to `/account/jobs` on success.
-- **Account jobs page** (`frontend/src/pages/account/jobs.astro`) — add `"archived"` to `statusLabel` and `statusClass` (e.g. `badge-info` or `badge-neutral`).
+- **Job detail page** (`src/pages/job/[uuid]/index.astro`) — add an "Archive / Position filled" button in the owner action bar next to Edit and Delete. Show a confirmation dialog analogous to the delete confirm. Redirect to `/account/jobs` on success.
+- **Account jobs page** (`src/pages/account/jobs.astro`) — add `"archived"` to `statusLabel` and `statusClass` (e.g. `badge-info` or `badge-neutral`).
 - **Public listing** — `archived` jobs must not appear publicly. The existing filter `{ online_status: { $eq: "published" } }` in `fetchJobOffers` already excludes them; no change needed.
 - **i18n** — add translation keys for the new status label and the archive button/confirm text.
 

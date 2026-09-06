@@ -1,5 +1,5 @@
 # Local dev database only — not used in production.
-# Matches DATABASE_URL in frontend/.env.
+# Matches DATABASE_URL in .env.
 # Usage: docker compose -f docker-compose.dev.yml up -d
 
 services:

@@ -2,7 +2,6 @@
 
 NVM_INIT = . ~/.nvm/nvm.sh && nvm use
 
-# All targets operate on frontend/ — the only workspace in this repo.
 help:
 	@echo "Available targets:"
 	@echo "  pre-commit     Run format-check and lint (used by the git pre-commit hook)"
@@ -17,19 +16,19 @@ pre-commit: format-check lint
 
 # Check formatting
 format-check:
-	cd frontend && $(NVM_INIT) && yarn format:check
+	$(NVM_INIT) && yarn format:check
 
 # Format all code
 format:
-	cd frontend && $(NVM_INIT) && yarn format:write
+	$(NVM_INIT) && yarn format:write
 
 # Lint
 lint:
-	cd frontend && $(NVM_INIT) && yarn lint
+	$(NVM_INIT) && yarn lint
 
 # Lint and auto-fix
 lint-fix:
-	cd frontend && $(NVM_INIT) && yarn lint:fix
+	$(NVM_INIT) && yarn lint:fix
 
 # Install git hooks
 install-hooks:
