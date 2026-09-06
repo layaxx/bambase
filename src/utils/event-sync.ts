@@ -22,12 +22,8 @@ function parse(str: string): string {
 const client = new UnivISClient({ domain: "univis.uni-bamberg.de" })
 
 function parseTime(time: string): [number, number, number] {
-  const split = time.split(":")
-  const result: [number, number, number] = [0, 0, 0]
-  if (split.length >= 1) result[0] = parseInt(split[0], 10) || 0
-  if (split.length >= 2) result[1] = parseInt(split[1], 10) || 0
-  if (split.length >= 3) result[2] = parseInt(split[2], 10) || 0
-  return result
+  const [h = 0, m = 0, s = 0] = time.split(":").map((n) => parseInt(n, 10) || 0)
+  return [h, m, s]
 }
 
 function toDateTime(date: string, time: string): Date {

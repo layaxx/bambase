@@ -32,7 +32,7 @@ export async function sendMail(message: MailMessage): Promise<void> {
   const response = await fetch(api_url, {
     method: "POST",
     headers: {
-      Authorization: `Basic ${Buffer.from(`api:${MAILGUN_API_KEY}`).toString("base64")}`,
+      Authorization: `Basic ${btoa(`api:${MAILGUN_API_KEY}`)}`,
       "Content-Type": "application/x-www-form-urlencoded",
     },
     body,
