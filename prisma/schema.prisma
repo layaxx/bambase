@@ -129,6 +129,7 @@ model Session {
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([token])
+  @@index([userId])
   @@map("session")
 }
 
@@ -148,6 +149,7 @@ model Account {
   createdAt             DateTime
   updatedAt             DateTime
 
+  @@index([userId])
   @@map("account")
 }
 
@@ -243,6 +245,8 @@ model Event {
 
   @@index([start])
   @@index([hidden])
+  @@index([ownerId])
+  @@index([mapLocationId])
   @@map("event")
 }
 
@@ -272,6 +276,7 @@ model JobOffer {
   updatedAt       DateTime        @updatedAt
 
   @@index([onlineStatus, offlineAfter])
+  @@index([ownerId])
   @@map("job_offer")
 }
 
@@ -301,5 +306,8 @@ model Report {
   createdAt    DateTime           @default(now())
   updatedAt    DateTime           @updatedAt
 
+  @@index([eventId])
+  @@index([jobOfferId])
+  @@index([reviewStatus])
   @@map("report")
 }
