@@ -91,7 +91,6 @@ afterEach(() => {
 
 describe("jobs.create", () => {
   beforeEach(() => {
-    mockFindUnique.mockResolvedValue(null) // slug is always free
     mockCreate.mockResolvedValue({ slug: "developer" })
   })
 
@@ -138,8 +137,10 @@ describe("jobs.create", () => {
     expect(offlineAfter.getTime()).toBeLessThanOrEqual(expected + 5000)
   })
 
-  it("appends -2 to the slug when the base slug is already taken", async () => {
-    mockFindUnique.mockResolvedValueOnce({ id: "other-job" }).mockResolvedValueOnce(null)
+  it("retries with a discriminated slug when the create hits the unique index", async () => {
+    mockCreate.mockRejectedValueOnce(
+      Object.assign(new Error("duplicate slug"), { code: "P2002", meta: { target: ["slug"] } })
+    )
 
     await jobs.create(
       baseInput,
@@ -147,7 +148,8 @@ describe("jobs.create", () => {
       makeContext("user-1")
     )
 
-    expect(mockCreate.mock.calls[0][0].data.slug).toBe("developer-2")
+    expect(mockCreate.mock.calls[0][0].data.slug).toBe("developer")
+    expect(mockCreate.mock.calls[1][0].data.slug).toMatch(/^developer-[a-z0-9]{4}$/)
   })
 
   it("returns slug from the created job offer", async () => {

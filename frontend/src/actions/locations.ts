@@ -2,7 +2,7 @@ import { defineAction, ActionError } from "astro:actions"
 import { z } from "astro/zod"
 import { LOCATION_CATEGORIES } from "@/utils/api/locations"
 import { invalidateCacheByPrefix } from "@/utils/api/cache"
-import { createUniqueSlug } from "@/utils/slugify"
+import { createWithUniqueSlug } from "@/utils/slugify"
 import { canManageLocations } from "@/utils/authz"
 import { requirePermission, mutationError } from "@/utils/action-guards"
 import prisma from "@/utils/prisma"
@@ -90,26 +90,23 @@ export const locations = {
 
       let created: { slug: string }
       try {
-        const slug = await createUniqueSlug(
-          (slug) => prisma.location.findUnique({ where: { slug } }),
-          input.name
+        created = await createWithUniqueSlug(input.name, (slug) =>
+          prisma.location.create({
+            data: {
+              slug,
+              name: input.name,
+              description: input.description || null,
+              category: input.category,
+              lat: input.lat,
+              lon: input.lon,
+              externalUrl: input.external_url || null,
+              addressStreet: input.address_street || null,
+              addressStreetNumber: input.address_street_number || null,
+              addressCity: input.address_city || null,
+              addressZip: input.address_zip || null,
+            },
+          })
         )
-
-        created = await prisma.location.create({
-          data: {
-            slug,
-            name: input.name,
-            description: input.description || null,
-            category: input.category,
-            lat: input.lat,
-            lon: input.lon,
-            externalUrl: input.external_url || null,
-            addressStreet: input.address_street || null,
-            addressStreetNumber: input.address_street_number || null,
-            addressCity: input.address_city || null,
-            addressZip: input.address_zip || null,
-          },
-        })
       } catch (error) {
         throw mutationError(error, "Location create failed", "Erstellen fehlgeschlagen.")
       }

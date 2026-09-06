@@ -1,7 +1,7 @@
 import he from "he"
 import { JobField, JobOnlineStatus, JobType, WorkMode } from "@/generated/prisma/enums"
 import prisma from "./prisma"
-import { slugify, uniqueSlug } from "./slugify"
+import { createWithUniqueSlug } from "./slugify"
 
 const FEKI_JOBS_URL = "https://feki.de/api/jobboerse/jobs"
 
@@ -146,35 +146,30 @@ export async function syncJobOffers(): Promise<void> {
     const title = he.decode(job.title)
 
     try {
-      // eslint-disable-next-line no-await-in-loop -- slug uniqueness check depends on previously created slugs
-      const slug = await uniqueSlug(
-        slugify(title),
-        async (candidate) =>
-          (await prisma.jobOffer.findUnique({ where: { slug: candidate } })) != null
+      // eslint-disable-next-line no-await-in-loop -- inserts stay sequential to keep DB load bounded
+      await createWithUniqueSlug(title, (slug) =>
+        prisma.jobOffer.create({
+          data: {
+            slug,
+            title,
+            description: htmlToText(job.description),
+            company: he.decode(job.company_name),
+            location: he.decode(job.location),
+            externalUrl: job.url,
+            externalId: job.uuid,
+            createdAt: new Date(job.creation_date),
+            workingHours: Number(job.hours_per_week) || 0,
+            jobType: getJobType(job),
+            field: JobField.other,
+            workMode: WorkMode.on_site,
+            contactName: he.decode(job.contact_person),
+            contactMail: he.decode(job.contact_mail),
+            contactPhone: job.contact_tel,
+            onlineStatus: getStatus(job, now),
+            offlineAfter: new Date(job.offline_date),
+          },
+        })
       )
-
-      // eslint-disable-next-line no-await-in-loop -- online status is set after creation, mirroring the original migration
-      await prisma.jobOffer.create({
-        data: {
-          slug,
-          title,
-          description: htmlToText(job.description),
-          company: he.decode(job.company_name),
-          location: he.decode(job.location),
-          externalUrl: job.url,
-          externalId: job.uuid,
-          createdAt: new Date(job.creation_date),
-          workingHours: Number(job.hours_per_week) || 0,
-          jobType: getJobType(job),
-          field: JobField.other,
-          workMode: WorkMode.on_site,
-          contactName: he.decode(job.contact_person),
-          contactMail: he.decode(job.contact_mail),
-          contactPhone: job.contact_tel,
-          onlineStatus: getStatus(job, now),
-          offlineAfter: new Date(job.offline_date),
-        },
-      })
       created++
     } catch (error) {
       console.error(

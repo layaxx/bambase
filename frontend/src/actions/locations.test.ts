@@ -67,7 +67,6 @@ afterEach(() => {
 
 describe("locations.create", () => {
   beforeEach(() => {
-    mockFindUnique.mockResolvedValue(null) // slug is always free
     mockCreate.mockResolvedValue({ slug: "test-location" })
   })
 
@@ -93,8 +92,10 @@ describe("locations.create", () => {
     ).rejects.toMatchObject({ code: "FORBIDDEN" })
   })
 
-  it("appends -2 to the slug when the base slug is already taken", async () => {
-    mockFindUnique.mockResolvedValueOnce({ id: "other-location" }).mockResolvedValueOnce(null)
+  it("retries with a discriminated slug when the create hits the unique index", async () => {
+    mockCreate.mockRejectedValueOnce(
+      Object.assign(new Error("duplicate slug"), { code: "P2002", meta: { target: ["slug"] } })
+    )
 
     await locations.create(
       baseLocationInput,
@@ -102,7 +103,8 @@ describe("locations.create", () => {
       makeContext("user-1")
     )
 
-    expect(mockCreate.mock.calls[0][0].data.slug).toBe("test-location-2")
+    expect(mockCreate.mock.calls[0][0].data.slug).toBe("test-location")
+    expect(mockCreate.mock.calls[1][0].data.slug).toMatch(/^test-location-[a-z0-9]{4}$/)
   })
 
   it("returns slug from the created location", async () => {
