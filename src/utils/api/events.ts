@@ -93,23 +93,6 @@ function toEvent(
   }
 }
 
-export async function fetchEvents(limit = 100): Promise<ApiResult<Event[]>> {
-  const key = `events:all:${limit}`
-  try {
-    const rows = await withCache(key, () =>
-      prisma.event.findMany({
-        where: { end: { gte: new Date() }, hidden: false },
-        orderBy: { start: "asc" },
-        take: limit,
-      })
-    )
-    return { data: rows.map((row) => toEvent(row)), apiDown: false }
-  } catch (error) {
-    console.error("Error fetching events", error)
-    return { data: [], apiDown: true }
-  }
-}
-
 export type EventDateFilter = "upcoming" | "week" | "month"
 
 export type EventsFilter = {

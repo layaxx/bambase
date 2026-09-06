@@ -2,7 +2,6 @@ import type { Dayjs } from "dayjs"
 import type { MensaMeal } from "./api"
 
 export const MENSA_CLOSING_HOUR = 15
-export const MENSA_CLOSING_MINUTE = 0
 
 /**
  * Given the current time, returns the day whose mensa meals are most relevant
@@ -17,10 +16,7 @@ export function getRelevantDay(now: Dayjs): Dayjs {
   const dow = now.day() // 0 = Sunday, 6 = Saturday
 
   if (dow >= 1 && dow <= 5) {
-    const closed =
-      now.hour() > MENSA_CLOSING_HOUR ||
-      (now.hour() === MENSA_CLOSING_HOUR && now.minute() >= MENSA_CLOSING_MINUTE)
-    if (!closed) return now
+    if (now.hour() < MENSA_CLOSING_HOUR) return now
     return now.add(dow === 5 ? 3 : 1, "day") // Friday → Monday, else +1
   }
 

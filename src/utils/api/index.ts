@@ -28,7 +28,6 @@ export type {
   EventDateFilter,
 } from "./events"
 export {
-  fetchEvents,
   fetchEventsPaginated,
   fetchOngoingOrUpcomingEvents,
   fetchEvent,
