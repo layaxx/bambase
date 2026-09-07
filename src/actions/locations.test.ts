@@ -18,7 +18,6 @@ vi.mock("@/utils/api/locations", () => ({
   LOCATION_CATEGORIES: ["university", "mensa", "library", "sport", "venues", "other"] as const,
 }))
 
-const mockFindUnique = vi.hoisted(() => vi.fn())
 const mockCreate = vi.hoisted(() => vi.fn())
 const mockUpdate = vi.hoisted(() => vi.fn())
 const mockDelete = vi.hoisted(() => vi.fn())
@@ -26,7 +25,6 @@ const mockDelete = vi.hoisted(() => vi.fn())
 vi.mock("@/utils/prisma", () => ({
   default: {
     location: {
-      findUnique: mockFindUnique,
       create: mockCreate,
       update: mockUpdate,
       delete: mockDelete,
@@ -41,6 +39,14 @@ vi.mock("@/utils/authz", () => ({
 
 import { locations } from "./locations"
 
+/** The error Prisma raises when an update/delete targets a row that isn't there. */
+function recordNotFound() {
+  return new Prisma.PrismaClientKnownRequestError("Record to update not found", {
+    code: "P2025",
+    clientVersion: "test",
+  })
+}
+
 function makeContext(userId?: string) {
   return { locals: { user: userId ? { id: userId, role: "admin" } : null } }
 }
@@ -53,7 +59,6 @@ const baseLocationInput = {
 }
 
 beforeEach(() => {
-  mockFindUnique.mockReset()
   mockCreate.mockReset()
   mockUpdate.mockReset()
   mockDelete.mockReset()
@@ -207,7 +212,7 @@ describe("locations.update", () => {
   })
 
   it("throws NOT_FOUND when the location doesn't exist", async () => {
-    mockFindUnique.mockResolvedValue(null)
+    mockUpdate.mockRejectedValue(recordNotFound())
 
     await expect(
       locations.update(
@@ -219,7 +224,6 @@ describe("locations.update", () => {
   })
 
   it("updates the location and returns its slug", async () => {
-    mockFindUnique.mockResolvedValue({ id: "loc-1" })
     mockUpdate.mockResolvedValue({ slug: "updated-slug" })
 
     const result = await locations.update(
@@ -234,7 +238,6 @@ describe("locations.update", () => {
 
   it("throws INTERNAL_SERVER_ERROR when the update fails unexpectedly", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {})
-    mockFindUnique.mockResolvedValue({ id: "loc-1" })
     mockUpdate.mockRejectedValue(new Error("db error"))
 
     await expect(
@@ -248,7 +251,6 @@ describe("locations.update", () => {
 
   it("throws BAD_REQUEST when the update fails due to a known constraint violation", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {})
-    mockFindUnique.mockResolvedValue({ id: "loc-1" })
     mockUpdate.mockRejectedValue(
       new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
         code: "P2002",
@@ -290,7 +292,7 @@ describe("locations.delete", () => {
   })
 
   it("throws NOT_FOUND when the location doesn't exist", async () => {
-    mockFindUnique.mockResolvedValue(null)
+    mockDelete.mockRejectedValue(recordNotFound())
 
     await expect(
       locations.delete(
@@ -302,8 +304,6 @@ describe("locations.delete", () => {
   })
 
   it("deletes the location and returns {}", async () => {
-    mockFindUnique.mockResolvedValue({ id: "loc-1" })
-
     const result = await locations.delete(
       { id: "loc-1" },
       // @ts-expect-error - needed because of mocked defineAction function
@@ -316,7 +316,6 @@ describe("locations.delete", () => {
 
   it("throws INTERNAL_SERVER_ERROR when the delete fails", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {})
-    mockFindUnique.mockResolvedValue({ id: "loc-1" })
     mockDelete.mockRejectedValue(new Error("db error"))
 
     await expect(

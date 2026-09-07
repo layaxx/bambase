@@ -46,13 +46,23 @@ export async function assertOwnerOrPermission(
 }
 
 /**
- * Logs `error` and converts it to an ActionError: a known Prisma constraint violation (e.g. a
- * bad foreign key or a duplicate unique value) means the submitted data was invalid, so it maps
- * to BAD_REQUEST; anything else is an unexpected failure and maps to INTERNAL_SERVER_ERROR.
+ * Logs `error` and converts it to an ActionError. P2025 means the row is gone, which the write
+ * itself reports — so callers need no pre-flight existence query. Any other known Prisma error
+ * (bad foreign key, duplicate unique value) means the submitted data was invalid and maps to
+ * BAD_REQUEST; anything else is an unexpected failure and maps to INTERNAL_SERVER_ERROR.
  */
-export function mutationError(error: unknown, logLabel: string, message: string): ActionError {
+export function mutationError(
+  error: unknown,
+  logLabel: string,
+  message: string,
+  notFoundMessage = message
+): ActionError {
   console.error(`${logLabel}:`, error)
-  const code =
-    error instanceof Prisma.PrismaClientKnownRequestError ? "BAD_REQUEST" : "INTERNAL_SERVER_ERROR"
-  return new ActionError({ code, message })
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (error.code === "P2025") {
+      return new ActionError({ code: "NOT_FOUND", message: notFoundMessage })
+    }
+    return new ActionError({ code: "BAD_REQUEST", message })
+  }
+  return new ActionError({ code: "INTERNAL_SERVER_ERROR", message })
 }

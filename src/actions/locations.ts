@@ -1,4 +1,4 @@
-import { defineAction, ActionError } from "astro:actions"
+import { defineAction } from "astro:actions"
 import { z } from "astro/zod"
 import { LOCATION_CATEGORIES } from "@/utils/api/locations"
 import { invalidateCacheByPrefix } from "@/utils/api/cache"
@@ -21,6 +21,8 @@ const locationBaseSchema = z.object({
   address_zip: z.string().max(20).optional(),
 })
 
+const NOT_FOUND_MESSAGE = "Ort nicht gefunden."
+
 export const locations = {
   delete: defineAction({
     accept: "form",
@@ -28,14 +30,15 @@ export const locations = {
     handler: async ({ id }, context) => {
       await requirePermission(context, canManageLocations)
 
-      const location = await prisma.location.findUnique({ where: { id }, select: { id: true } })
-      if (!location) throw new ActionError({ code: "NOT_FOUND", message: "Ort nicht gefunden." })
-
       try {
         await prisma.location.delete({ where: { id } })
       } catch (error) {
-        console.error("Location delete failed:", error)
-        throw new ActionError({ code: "INTERNAL_SERVER_ERROR", message: "Löschen fehlgeschlagen." })
+        throw mutationError(
+          error,
+          "Location delete failed",
+          "Löschen fehlgeschlagen.",
+          NOT_FOUND_MESSAGE
+        )
       }
 
       invalidateCacheByPrefix("locations:")
@@ -48,9 +51,6 @@ export const locations = {
     input: locationBaseSchema.extend({ id: z.string().min(1) }),
     handler: async ({ id, ...fields }, context) => {
       await requirePermission(context, canManageLocations)
-
-      const existing = await prisma.location.findUnique({ where: { id }, select: { id: true } })
-      if (!existing) throw new ActionError({ code: "NOT_FOUND", message: "Ort nicht gefunden." })
 
       let updated: { slug: string }
       try {
@@ -70,7 +70,12 @@ export const locations = {
           },
         })
       } catch (error) {
-        throw mutationError(error, "Location update failed", "Aktualisierung fehlgeschlagen.")
+        throw mutationError(
+          error,
+          "Location update failed",
+          "Aktualisierung fehlgeschlagen.",
+          NOT_FOUND_MESSAGE
+        )
       }
 
       invalidateCacheByPrefix("locations:")
