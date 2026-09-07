@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro"
-import { fetchLocations, LOCATION_CATEGORIES, type MapLocation } from "@/utils/api"
+import { fetchLocations, LOCATION_CATEGORIES, type MapLocation } from "@/utils/api/locations"
 
 export const GET: APIRoute = async ({ url }) => {
   const raw = url.searchParams.get("category") ?? ""

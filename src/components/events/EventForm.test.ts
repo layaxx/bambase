@@ -1,7 +1,7 @@
 import { describe, expect, it, beforeAll } from "vitest"
 import { experimental_AstroContainer as AstroContainer } from "astro/container"
 import EventForm from "./EventForm.astro"
-import type { MapLocation } from "@/utils/api"
+import type { MapLocation } from "@/utils/api/locations"
 
 let container: AstroContainer
 

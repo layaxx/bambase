@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro"
-import { fetchEvent, fetchJobOffer } from "@/utils/api"
+import { fetchEvent } from "@/utils/api/events"
+import { fetchJobOffer } from "@/utils/api/job-offers"
 import { renderToPNG } from "@/utils/opengraph/render"
 import {
   makeEventSubtitleItems,

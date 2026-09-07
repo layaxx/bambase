@@ -1,4 +1,4 @@
-import type { JobOffer } from "./api"
+import type { JobOffer } from "./api/job-offers"
 import dayjs from "dayjs"
 import relativeTime from "dayjs/plugin/relativeTime"
 import "dayjs/locale/de"

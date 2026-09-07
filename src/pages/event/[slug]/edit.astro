@@ -1,7 +1,8 @@
 ---
 import { actions, isInputError } from "astro:actions"
 import PageLayout from "@/layouts/PageLayout.astro"
-import { fetchEvent, fetchLocations } from "@/utils/api"
+import { fetchEvent } from "@/utils/api/events"
+import { fetchLocations } from "@/utils/api/locations"
 import { useTranslations } from "@/i18n/translations"
 import IconArrowLeft from "@/components/icons/IconArrowLeft.astro"
 import EventForm from "@/components/events/EventForm.astro"

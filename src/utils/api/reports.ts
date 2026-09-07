@@ -5,6 +5,9 @@ import type { ReportReviewStatus } from "@/generated/prisma/enums"
 
 export const REPORT_REASONS = Object.values(ReportReason)
 
+/** Open reports against one target before it is flagged as repeatedly reported. */
+export const REPORT_WARNING_THRESHOLD = 3
+
 export type { ReportReason, ReportReviewStatus }
 
 export type ReportTarget =

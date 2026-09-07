@@ -5,7 +5,7 @@ import IconCalendar from "@/components/icons/IconCalendar.astro"
 import EventCard from "@/components/events/EventCard.astro"
 import ApiDownBanner from "@/components/ApiDownBanner.astro"
 import Pagination from "@/components/Pagination.astro"
-import { fetchEventsPaginated, EVENT_CATEGORIES, type EventCategory } from "@/utils/api"
+import { fetchEventsPaginated, EVENT_CATEGORIES, type EventCategory } from "@/utils/api/events"
 import { useTranslations } from "@/i18n/translations"
 
 const t = useTranslations(Astro.locals.locale)

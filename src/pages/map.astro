@@ -2,13 +2,8 @@
 import PageLayout from "@/layouts/PageLayout.astro"
 import PageHeader from "@/components/PageHeader.astro"
 import IconMapPin from "@/components/icons/IconMapPin.astro"
-import {
-  fetchLocations,
-  fetchUpcomingMapEvents,
-  type Event,
-  type EventMapLocation,
-  type MapLocation,
-} from "@/utils/api"
+import { fetchLocations, type MapLocation } from "@/utils/api/locations"
+import { fetchUpcomingMapEvents, type Event, type EventMapLocation } from "@/utils/api/events"
 import { type MapEvent } from "@/utils/map"
 import { useTranslations } from "@/i18n/translations"
 
@@ -232,7 +227,7 @@ const apiDownMessage = t.apiDown.message
 <script>
   import L from "leaflet"
   import "leaflet/dist/leaflet.css"
-  import type { MapLocation } from "@/utils/api"
+  import type { MapLocation } from "@/utils/api/locations"
   import {
     filterEventsByTime,
     formatAddress,

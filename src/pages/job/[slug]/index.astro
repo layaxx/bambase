@@ -1,7 +1,8 @@
 ---
 import { actions } from "astro:actions"
 import PageLayout from "@/layouts/PageLayout.astro"
-import { fetchJobOffer, REPORT_WARNING_THRESHOLD, type JobOffer } from "@/utils/api"
+import { fetchJobOffer, type JobOffer } from "@/utils/api/job-offers"
+import { REPORT_WARNING_THRESHOLD } from "@/utils/api/reports"
 import ApiDownBanner from "@/components/ApiDownBanner.astro"
 import { JOB_STATUS_ALERT_VARIANT } from "@/utils/job-status"
 import { canModerateJobOffers } from "@/utils/authz"

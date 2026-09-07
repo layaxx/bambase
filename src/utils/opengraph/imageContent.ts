@@ -1,5 +1,6 @@
 import type { ReactNode } from "react"
-import type { Event, JobOffer } from "../api"
+import type { Event } from "../api/events"
+import type { JobOffer } from "../api/job-offers"
 import { useTranslations } from "@/i18n/translations"
 
 const t = useTranslations("de")

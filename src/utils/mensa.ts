@@ -1,5 +1,5 @@
 import type { Dayjs } from "dayjs"
-import type { MensaMeal } from "./api"
+import type { MensaMeal } from "./api/mensa"
 
 export const MENSA_CLOSING_HOUR = 15
 

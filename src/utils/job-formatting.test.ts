@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { formatJobLocation } from "./job-formatting"
-import type { JobOffer } from "./api"
+import type { JobOffer } from "./api/job-offers"
 
 const labels = { remote: "Remote", hybrid: "Hybrid" }
 

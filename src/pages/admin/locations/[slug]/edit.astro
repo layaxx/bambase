@@ -1,7 +1,7 @@
 ---
 import { actions, isInputError } from "astro:actions"
 import PageLayout from "@/layouts/PageLayout.astro"
-import { fetchLocationForAdmin } from "@/utils/api"
+import { fetchLocationForAdmin } from "@/utils/api/locations"
 import { canManageLocations, requireRole } from "@/utils/authz"
 import { useTranslations } from "@/i18n/translations"
 import IconArrowLeft from "@/components/icons/IconArrowLeft.astro"
