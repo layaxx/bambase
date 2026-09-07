@@ -1,18 +1,9 @@
 import type { APIRoute } from "astro"
-import { fetchLocations, type MapLocation } from "@/utils/api"
-
-const VALID_CATEGORIES: MapLocation["category"][] = [
-  "university",
-  "library",
-  "mensa",
-  "sport",
-  "venues",
-  "other",
-]
+import { fetchLocations, LOCATION_CATEGORIES, type MapLocation } from "@/utils/api"
 
 export const GET: APIRoute = async ({ url }) => {
   const raw = url.searchParams.get("category") ?? ""
-  const category = (VALID_CATEGORIES as string[]).includes(raw)
+  const category = (LOCATION_CATEGORIES as string[]).includes(raw)
     ? (raw as MapLocation["category"])
     : undefined
 

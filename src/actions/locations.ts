@@ -6,11 +6,7 @@ import { createWithUniqueSlug } from "@/utils/slugify"
 import { canManageLocations } from "@/utils/authz"
 import { requirePermission, mutationError } from "@/utils/action-guards"
 import prisma from "@/utils/prisma"
-
-const httpUrl = z
-  .url()
-  .max(2048)
-  .refine((url) => /^https?:\/\//i.test(url), "Nur http(s)-URLs sind erlaubt.")
+import { httpUrl } from "./schemas"
 
 const locationBaseSchema = z.object({
   name: z.string().min(1, "Bitte Namen eingeben.").max(200),

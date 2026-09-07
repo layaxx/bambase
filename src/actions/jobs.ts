@@ -11,6 +11,7 @@ import {
   mutationError,
 } from "@/utils/action-guards"
 import prisma from "@/utils/prisma"
+import { httpUrl } from "./schemas"
 import { JobOnlineStatus } from "@/generated/prisma/enums"
 
 const JOB_OFFER_LIFETIME_DAYS = 30
@@ -35,11 +36,6 @@ function needsRemoderation(
 ): boolean {
   return !isModerator && contentChanged && MODERATED_STATUSES.includes(status)
 }
-
-const httpUrl = z
-  .url()
-  .max(2048)
-  .refine((url) => /^https?:\/\//i.test(url), "Nur http(s)-URLs sind erlaubt.")
 
 const jobCreateSchema = z.object({
   title: z.string().min(1, "Bitte Stellenbezeichnung eingeben.").max(200),

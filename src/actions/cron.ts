@@ -1,7 +1,8 @@
 import { defineAction, ActionError } from "astro:actions"
 import { z } from "astro/zod"
 import { canViewSystemStatus } from "@/utils/authz"
-import { runTrackedCronJob, type CronJobKey } from "@/utils/cron-tracking"
+import { requirePermission } from "@/utils/action-guards"
+import { runTrackedCronJob, CRON_JOB_KEYS, type CronJobKey } from "@/utils/cron-tracking"
 import { syncMensaMeals } from "@/utils/mensa-sync"
 import { syncUnivisEvents } from "@/utils/event-sync"
 import { syncJobOffers } from "@/utils/job-offer-sync"
@@ -17,16 +18,9 @@ const JOB_RUNNERS: Record<CronJobKey, () => Promise<unknown>> = {
 export const cron = {
   run: defineAction({
     accept: "form",
-    input: z.object({
-      key: z.enum(["mensa-sync", "event-sync", "job-offer-sync", "job-offer-expiry"]),
-    }),
+    input: z.object({ key: z.enum(CRON_JOB_KEYS) }),
     handler: async ({ key }, context) => {
-      if (!context.locals.user) {
-        throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
-      }
-      if (!(await canViewSystemStatus(context.locals.user.role))) {
-        throw new ActionError({ code: "FORBIDDEN", message: "Keine Berechtigung." })
-      }
+      await requirePermission(context, canViewSystemStatus)
 
       const outcome = await runTrackedCronJob(key, JOB_RUNNERS[key])
       if (outcome.status === "error") {

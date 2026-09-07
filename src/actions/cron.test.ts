@@ -21,6 +21,7 @@ vi.mock("@/utils/authz", () => ({
 const mockRunTrackedCronJob = vi.hoisted(() => vi.fn())
 vi.mock("@/utils/cron-tracking", () => ({
   runTrackedCronJob: mockRunTrackedCronJob,
+  CRON_JOB_KEYS: ["mensa-sync", "event-sync", "job-offer-sync", "job-offer-expiry"],
 }))
 
 const mockSyncMensaMeals = vi.hoisted(() => vi.fn())

@@ -6,6 +6,7 @@ import { createWithUniqueSlug } from "@/utils/slugify"
 import { canModerateEvents } from "@/utils/authz"
 import { requireUserId, assertOwnerOrPermission, mutationError } from "@/utils/action-guards"
 import prisma from "@/utils/prisma"
+import { httpUrl } from "./schemas"
 
 const locationFieldsShape = {
   location_type: z.enum(["none", "linked", "custom"]).default("none"),
@@ -50,11 +51,7 @@ const eventBaseSchema = z
     start: z.string().min(1, "Bitte Startzeit eingeben."),
     end: z.string().min(1, "Bitte Endzeit eingeben."),
     category: z.enum(EVENT_CATEGORIES).default("other"),
-    external_url: z
-      .url()
-      .max(2048)
-      .refine((url) => /^https?:\/\//i.test(url), "Nur http(s)-URLs sind erlaubt.")
-      .optional(),
+    external_url: httpUrl.optional(),
   })
   .extend(locationFieldsShape)
 
