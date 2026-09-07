@@ -30,15 +30,8 @@ export function slugify(name: string): string {
   return base || `${FALLBACK_PREFIX}-${shortHash(name.trim())}`
 }
 
-/** Attempts after the plain slug before giving up and surfacing a confirmed slug conflict. */
+/** Attempts after the plain slug before giving up and surfacing the conflict. */
 const MAX_SLUG_ATTEMPTS = 5
-
-/**
- * Attempts after the plain slug for a conflict the driver did not attribute to a column.
- * One retry is enough to tell the cases apart: a genuine slug conflict is resolved by the
- * first discriminator (1.6M candidates), so a second identical failure means another column.
- */
-const MAX_UNATTRIBUTED_ATTEMPTS = 1
 
 /** Four base36 characters, enough to make a repeat collision on the same title unlikely. */
 function randomDiscriminator(): string {
@@ -48,21 +41,21 @@ function randomDiscriminator(): string {
 }
 
 /**
- * How a failed insert relates to the slug column:
- * `"slug"` when the driver blamed one, `"unattributed"` for a unique-constraint violation it
- * did not attribute, and `null` for anything that retrying cannot fix.
+ * Whether a failed insert is a slug conflict a retry can clear. A P2002 that named some other
+ * unique column (Event and JobOffer also have a unique `externalId`) is not, and is rethrown.
+ * A P2002 that named nothing counts as one: retrying is the safe reading when we cannot tell.
  *
  * Duck-typed on Prisma's P2002 rather than importing PrismaClientKnownRequestError, because
  * this module is also loaded by the seed script, which runs under plain Node and cannot
  * resolve the `@/` alias. `meta.target` is the column list on some drivers and the constraint
  * name on others (`Event_slug_key`), so both are matched case-insensitively by substring.
  */
-function classifyConflict(error: unknown): "slug" | "unattributed" | null {
-  if (typeof error !== "object" || error === null) return null
+function isSlugConflict(error: unknown): boolean {
+  if (typeof error !== "object" || error === null) return false
   const { code, meta } = error as { code?: unknown; meta?: { target?: unknown } }
-  if (code !== "P2002") return null
-  if (meta?.target === undefined) return "unattributed"
-  return JSON.stringify(meta.target).toLowerCase().includes("slug") ? "slug" : null
+  if (code !== "P2002") return false
+  if (meta?.target === undefined) return true
+  return JSON.stringify(meta.target).toLowerCase().includes("slug")
 }
 
 /**
@@ -86,10 +79,7 @@ export async function createWithUniqueSlug<T>(
       // eslint-disable-next-line no-await-in-loop -- retries are sequential by nature
       return await create(slug)
     } catch (error) {
-      const conflict = classifyConflict(error)
-      if (conflict === null) throw error
-      const limit = conflict === "slug" ? MAX_SLUG_ATTEMPTS : MAX_UNATTRIBUTED_ATTEMPTS
-      if (attempt >= limit) throw error
+      if (!isSlugConflict(error) || attempt >= MAX_SLUG_ATTEMPTS) throw error
     }
   }
 }
