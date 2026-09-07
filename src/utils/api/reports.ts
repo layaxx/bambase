@@ -1,5 +1,5 @@
 import prisma from "../prisma"
-import type { ApiResult } from "./types"
+import { apiResult, type ApiResult } from "./types"
 import { ReportReason } from "@/generated/prisma/enums"
 import type { ReportReviewStatus } from "@/generated/prisma/enums"
 
@@ -101,6 +101,8 @@ export type ReportGroupPage = {
   pageCount: number
 }
 
+const EMPTY_PAGE: ReportGroupPage = { groups: [], total: 0, page: 1, pageCount: 1 }
+
 function groupKey(row: Pick<ReportRow, "eventId" | "jobOfferId" | "id">): string {
   if (row.eventId) return `event:${row.eventId}`
   if (row.jobOfferId) return `job:${row.jobOfferId}`
@@ -116,12 +118,12 @@ function resolveCaseStatus(group: Pick<ReportGroup, "target" | "openCount">): "o
  * Fetch reports for the admin moderation queue, grouped by target and sorted so the
  * most-reported items surface first — those are the ones most likely to need a decision.
  */
-export async function fetchReportGroupsForAdmin(
+export function fetchReportGroupsForAdmin(
   filter: ReportsFilter = {}
 ): Promise<ApiResult<ReportGroupPage>> {
   const { caseStatus, targetType, page = 1, pageSize = 20 } = filter
 
-  try {
+  return apiResult("Error fetching reports for admin", EMPTY_PAGE, async () => {
     const rows = await prisma.report.findMany({
       where:
         targetType === "event"
@@ -175,9 +177,6 @@ export async function fetchReportGroupsForAdmin(
     const pageCount = Math.max(1, Math.ceil(total / pageSize))
     const paged = groups.slice((page - 1) * pageSize, (page - 1) * pageSize + pageSize)
 
-    return { data: { groups: paged, total, page, pageCount }, apiDown: false }
-  } catch (error) {
-    console.error("Error fetching reports for admin", error)
-    return { data: { groups: [], total: 0, page: 1, pageCount: 1 }, apiDown: true }
-  }
+    return { groups: paged, total, page, pageCount }
+  })
 }

@@ -1,6 +1,6 @@
 import prisma from "../prisma"
 import { CRON_JOB_DEFINITIONS, CRON_JOB_KEYS, type CronJobKey } from "@/utils/cron-tracking"
-import type { ApiResult } from "./types"
+import { apiResult, type ApiResult } from "./types"
 
 export interface CronJobLastRun {
   status: "success" | "error"
@@ -16,15 +16,15 @@ export interface CronJobStatus {
   lastRun: CronJobLastRun | null
 }
 
-export async function fetchCronJobStatuses(): Promise<ApiResult<CronJobStatus[]>> {
-  try {
+export function fetchCronJobStatuses(): Promise<ApiResult<CronJobStatus[]>> {
+  return apiResult("Error fetching cron job statuses", [], async () => {
     const rows = await prisma.cronJobRun.findMany({
       orderBy: { startedAt: "desc" },
       distinct: ["jobName"],
     })
     const lastRunByJob = new Map(rows.map((row) => [row.jobName, row]))
 
-    const data = CRON_JOB_KEYS.map((key) => {
+    return CRON_JOB_KEYS.map((key) => {
       const row = lastRunByJob.get(key)
       return {
         key,
@@ -40,10 +40,5 @@ export async function fetchCronJobStatuses(): Promise<ApiResult<CronJobStatus[]>
           : null,
       }
     })
-
-    return { data, apiDown: false }
-  } catch (error) {
-    console.error("Error fetching cron job statuses", error)
-    return { data: [], apiDown: true }
-  }
+  })
 }

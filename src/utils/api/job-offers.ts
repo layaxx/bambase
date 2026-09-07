@@ -1,6 +1,6 @@
 import prisma from "../prisma"
 import { withCache } from "./cache"
-import type { ApiResult } from "./types"
+import { apiResult, type ApiResult } from "./types"
 import { JobType, JobField, WorkMode, JobOnlineStatus } from "@/generated/prisma/enums"
 
 export const JOB_TYPES = Object.values(JobType)
@@ -51,6 +51,8 @@ export type JobOfferPage = {
   pageCount: number
 }
 
+const EMPTY_PAGE: JobOfferPage = { jobs: [], total: 0, page: 1, pageCount: 1 }
+
 type JobOfferRow = {
   id: string
   slug: string
@@ -100,7 +102,7 @@ function toJobOffer(row: JobOfferRow, extra?: { reports?: { id: string }[] }): J
   }
 }
 
-export async function fetchJobOffersPaginated(
+export function fetchJobOffersPaginated(
   filter: JobOffersFilter = {}
 ): Promise<ApiResult<JobOfferPage>> {
   const { types, fields, workModes, search, sort = "newest", page = 1, pageSize = 12 } = filter
@@ -123,7 +125,7 @@ export async function fetchJobOffersPaginated(
   }
 
   const key = `job-offers:paginated:${JSON.stringify(filter)}`
-  try {
+  return apiResult("Error fetching job offers (paginated)", EMPTY_PAGE, async () => {
     const { rows, total } = await withCache(key, async () => {
       const [rows, total] = await Promise.all([
         prisma.jobOffer.findMany({
@@ -137,94 +139,70 @@ export async function fetchJobOffersPaginated(
       return { rows, total }
     })
     const pageCount = Math.max(1, Math.ceil(total / pageSize))
-    return {
-      data: { jobs: rows.map((row) => toJobOffer(row)), total, page, pageCount },
-      apiDown: false,
-    }
-  } catch (error) {
-    console.error("Error fetching job offers (paginated)", error)
-    return { data: { jobs: [], total: 0, page: 1, pageCount: 1 }, apiDown: true }
-  }
+    return { jobs: rows.map((row) => toJobOffer(row)), total, page, pageCount }
+  })
 }
 
-export async function fetchJobOffers(limit = 100): Promise<ApiResult<JobOffer[]>> {
-  const key = `job-offers:all:${limit}`
-  try {
-    const rows = await withCache(key, () =>
+export function fetchJobOffers(limit = 100): Promise<ApiResult<JobOffer[]>> {
+  return apiResult("Error fetching job offers", [], async () => {
+    const rows = await withCache(`job-offers:all:${limit}`, () =>
       prisma.jobOffer.findMany({
         where: { onlineStatus: "published" },
         orderBy: { createdAt: "desc" },
         take: limit,
       })
     )
-    return { data: rows.map((row) => toJobOffer(row)), apiDown: false }
-  } catch (error) {
-    console.error("Error fetching job offers", error)
-    return { data: [], apiDown: true }
-  }
+    return rows.map((row) => toJobOffer(row))
+  })
 }
 
-export async function fetchJobOffer(
+export function fetchJobOffer(
   slug: string,
   viewer?: { userId?: string | null; isModerator?: boolean }
 ): Promise<ApiResult<JobOffer | null>> {
-  try {
+  return apiResult("Error fetching job offer", null, async () => {
     const row = await prisma.jobOffer.findFirst({
       where: { slug },
       include: {
         reports: { where: { reviewStatus: { not: "dismissed" } }, select: { id: true } },
       },
     })
-    if (!row) return { data: null, apiDown: false }
+    if (!row) return null
 
     const isOwner = !!viewer?.userId && row.ownerId === viewer.userId
-    if (row.onlineStatus !== "published" && !isOwner && !viewer?.isModerator) {
-      return { data: null, apiDown: false }
-    }
+    if (row.onlineStatus !== "published" && !isOwner && !viewer?.isModerator) return null
 
-    return { data: toJobOffer(row, { reports: row.reports }), apiDown: false }
-  } catch (error) {
-    console.error("Error fetching job offer", error)
-    return { data: null, apiDown: true }
-  }
+    return toJobOffer(row, { reports: row.reports })
+  })
 }
 
-export async function fetchMyJobOffers(ownerId: string): Promise<ApiResult<JobOffer[]>> {
-  try {
+export function fetchMyJobOffers(ownerId: string): Promise<ApiResult<JobOffer[]>> {
+  return apiResult("Error fetching own job offers", [], async () => {
     const rows = await prisma.jobOffer.findMany({
       where: { ownerId },
       orderBy: { createdAt: "desc" },
     })
-    return { data: rows.map((row) => toJobOffer(row)), apiDown: false }
-  } catch (error) {
-    console.error("Error fetching own job offers", error)
-    return { data: [], apiDown: true }
-  }
+    return rows.map((row) => toJobOffer(row))
+  })
 }
 
-export async function fetchSubmittedJobOffers(): Promise<ApiResult<JobOffer[]>> {
-  try {
+export function fetchSubmittedJobOffers(): Promise<ApiResult<JobOffer[]>> {
+  return apiResult("Error fetching submitted job offers", [], async () => {
     const rows = await prisma.jobOffer.findMany({
       where: { onlineStatus: "submitted" },
       orderBy: { createdAt: "asc" },
     })
-    return { data: rows.map((row) => toJobOffer(row)), apiDown: false }
-  } catch (error) {
-    console.error("Error fetching submitted job offers", error)
-    return { data: [], apiDown: true }
-  }
+    return rows.map((row) => toJobOffer(row))
+  })
 }
 
-export async function fetchRecentlyModeratedJobOffers(limit = 10): Promise<ApiResult<JobOffer[]>> {
-  try {
+export function fetchRecentlyModeratedJobOffers(limit = 10): Promise<ApiResult<JobOffer[]>> {
+  return apiResult("Error fetching recently moderated job offers", [], async () => {
     const rows = await prisma.jobOffer.findMany({
       where: { onlineStatus: { in: [JobOnlineStatus.published, JobOnlineStatus.rejected] } },
       orderBy: { updatedAt: "desc" },
       take: limit,
     })
-    return { data: rows.map((row) => toJobOffer(row)), apiDown: false }
-  } catch (error) {
-    console.error("Error fetching recently moderated job offers", error)
-    return { data: [], apiDown: true }
-  }
+    return rows.map((row) => toJobOffer(row))
+  })
 }
