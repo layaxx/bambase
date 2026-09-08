@@ -53,9 +53,9 @@ export function canModerateEvents(role: string | null | undefined): Promise<bool
 }
 
 /**
- * Reports have no permission of their own — moderating a report against an event requires
- * event:moderate, against a job requires jobOffer:moderate. `targetType` is undefined for
- * orphan reports (target deleted); either moderator role may act on those.
+ * A report has no permission of its own. To moderate a report against an event you need
+ * event:moderate, and against a job you need jobOffer:moderate. `targetType` is undefined for
+ * an orphan report, whose target is deleted. Each of the two moderator roles can act on those.
  */
 export function canModerateReport(
   role: string | null | undefined,
@@ -97,8 +97,8 @@ export function canViewSystemStatus(role: string | null | undefined): Promise<bo
 type LocalUser = App.Locals["user"]
 
 /**
- * Redirects to login if unauthenticated, or to "/" if the user's role fails
- * `check`. Callers must `return` the result when it's a `Response`.
+ * Redirects to the login page if the user is not signed in, or to "/" if the role of the user
+ * fails `check`. Callers must `return` the result if it is a `Response`.
  */
 export async function requireRole(
   Astro: AstroGlobal,

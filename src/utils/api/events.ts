@@ -167,7 +167,7 @@ export function fetchOngoingOrUpcomingEvents(limit = 100): Promise<ApiResult<Eve
   })
 }
 
-/** Fetch all future events with their map_location populated (used by the map page). */
+/** Fetches the events that did not end, together with their map location, for the map page. */
 export function fetchUpcomingMapEvents(limit = 200): Promise<ApiResult<Event[]>> {
   return apiResult("Error fetching upcoming events", [], async () => {
     const rows = await withCache(`events:upcoming-map:${limit}`, () =>
@@ -195,7 +195,7 @@ export function fetchEvent(slug: string): Promise<ApiResult<Event | null>> {
   })
 }
 
-/** Fetch slugs for all published events (past and future) for use in the sitemap. */
+/** Fetches the slugs of all published events, past and future, for the sitemap. */
 export function fetchAllPublishedEventSlugs(limit = 500): Promise<ApiResult<string[]>> {
   return apiResult("Error fetching event slugs for sitemap", [], async () => {
     const rows = await prisma.event.findMany({
@@ -217,7 +217,7 @@ export function fetchMyEvents(ownerId: string): Promise<ApiResult<Event[]>> {
   })
 }
 
-/** Fetch a single event regardless of hidden status, for admin editing. */
+/** Fetches one event for the admin editor, also if the event is hidden. */
 export function fetchEventForAdmin(slug: string): Promise<ApiResult<Event | null>> {
   return apiResult("Error fetching event for admin", null, async () => {
     const row = await prisma.event.findFirst({
@@ -228,7 +228,7 @@ export function fetchEventForAdmin(slug: string): Promise<ApiResult<Event | null
   })
 }
 
-/** Fetch all events regardless of hidden status, for the admin overview. */
+/** Fetches all events for the admin overview, also the hidden events. */
 export function fetchAllEventsForAdmin(limit = 100): Promise<ApiResult<Event[]>> {
   return apiResult("Error fetching events for admin", [], async () => {
     const rows = await prisma.event.findMany({

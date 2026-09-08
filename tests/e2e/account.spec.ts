@@ -1,10 +1,6 @@
 import { expect, test } from "@playwright/test"
 import { AUTH_FILE } from "../../playwright.config"
 
-/**
- * Account dashboard flows — all tests run as the authenticated seed user.
- */
-
 test.use({ storageState: AUTH_FILE })
 
 test.describe("Account dashboard (/account)", () => {
@@ -34,7 +30,7 @@ test.describe("My Events (/account/events)", () => {
   })
 })
 
-// ─── Empty state (new user with no content) ─────────────────────────────────
+// ─── Empty state: a new user with no content ────────────────────────────────
 
 test.describe("Account pages — empty state", () => {
   test.use({ storageState: { cookies: [], origins: [] } })

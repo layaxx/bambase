@@ -44,11 +44,11 @@ if (
   (unbanResult?.data !== undefined && !unbanResult.error) ||
   (setRoleResult?.data !== undefined && !setRoleResult.error)
 ) {
-  // A no-JS form POST targets `?_action=...` on this same page, which replaces
-  // (not merges with) the page's own query string — so any active filters are
-  // gone from `Astro.url` by the time we get here. The Referer header still has
-  // the filtered URL the form was rendered on, so redirect there instead of
-  // silently dropping the admin's filters after every ban/unban/role change.
+  // A form POST without JavaScript goes to `?_action=...` on this same page. That query
+  // string replaces the query string of the page, thus `Astro.url` no longer has the active
+  // filters. The Referer header still has the filtered URL on which the form was rendered.
+  // A redirect to that URL keeps the filters of the admin after each ban, unban and role
+  // change.
   const referer = Astro.request.headers.get("referer")
   let redirectTarget = Astro.url.pathname
   if (referer) {
@@ -58,7 +58,7 @@ if (
         redirectTarget = Astro.url.pathname + refererUrl.search
       }
     } catch {
-      // Malformed Referer header — fall back to the plain pathname.
+      // The Referer header is not valid. Use the plain pathname.
     }
   }
   return Astro.redirect(redirectTarget)
@@ -91,8 +91,8 @@ const hasActiveFilter =
 const rawPage = Number.parseInt(Astro.url.searchParams.get("page") ?? "1", 10)
 const currentPage = Number.isNaN(rawPage) || rawPage < 1 ? 1 : rawPage
 
-// "user" is the implicit default role, stored as `null` (or, defensively, "") rather than
-// the literal string — so filtering for it has to match the absence of a role too.
+// "user" is the default role. The database stores it as `null`, or as "" for safety, and not
+// as the literal string. A filter for this role must thus also match a role that is absent.
 const roleWhere: Prisma.UserWhereInput | undefined =
   roleFilter === "all"
     ? undefined
@@ -140,8 +140,8 @@ const [totalUsers, verifiedCount, bannedCount, matchedCount, pagedUsers] = await
 
 const pageCount = Math.max(1, Math.ceil(matchedCount / PAGE_SIZE))
 
-// Filters or a stale bookmark can push `page` past the last page of results — bounce back
-// to page 1 instead of rendering an empty table while `matchedCount` says otherwise.
+// A filter or an old bookmark can make `page` larger than the last page of results. Go back
+// to page 1, because the table is empty although `matchedCount` is not 0.
 if (pagedUsers.length === 0 && matchedCount > 0) {
   const redirectParams = new URLSearchParams(Astro.url.searchParams)
   redirectParams.delete("page")

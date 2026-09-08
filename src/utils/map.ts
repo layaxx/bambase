@@ -8,8 +8,8 @@ export type MapEvent = {
 }
 
 /**
- * Formats a `MapLocation` address object into a single human-readable string.
- * Returns `null` when the address is absent or all fields are empty.
+ * Formats the address of a `MapLocation` as one line of text.
+ * Returns `null` if the address is absent, or if all its fields are empty.
  *
  * Example: { street: "Feldkirchenstraße", streetNumber: "21", city: "Bamberg", zip: 96052 }
  *       → "Feldkirchenstraße 21, 96052 Bamberg"
@@ -22,16 +22,16 @@ export function formatAddress(addr: MapLocation["address"]): string | null {
 }
 
 /**
- * Returns the inclusive upper-bound `Date` for the given event time-filter key,
- * relative to `now`.  Returns `null` for the "all" key (no upper bound).
+ * Returns the inclusive upper bound for the given event time-filter key, relative to `now`.
+ * The `"all"` key has no upper bound, thus it returns `null`.
  *
  * Keys:
- *  - `"today"`  → end of the current calendar day (23:59:59.999)
- *  - `"week"`   → `now` + 7 days
- *  - `"month"`  → `now` + 31 days
+ *  - `"today"`  → the end of the current calendar day (23:59:59.999)
+ *  - `"week"`   → `now` plus 7 days
+ *  - `"month"`  → `now` plus 31 days
  *  - `"all"`    → `null`
  *
- * `now` defaults to `new Date()` but can be injected for deterministic testing.
+ * `now` defaults to `new Date()`. Tests give a fixed value to make the result deterministic.
  */
 export function timeFilterBound(
   key: "today" | "week" | "month" | "all",
@@ -46,9 +46,9 @@ export function timeFilterBound(
 }
 
 /**
- * Filters `events` to those whose `start` datetime falls on or before the
- * upper bound for `timeKey`.  Events already filtered to `start >= now`
- * server-side, so only the upper bound is applied here.
+ * Keeps the events that start at or before the upper bound for `timeKey`.
+ * The server query already removed the events that ended before now, thus this
+ * function applies only the upper bound.
  */
 export function filterEventsByTime(
   events: MapEvent[],
@@ -60,9 +60,6 @@ export function filterEventsByTime(
   return events.filter((ev) => new Date(ev.start) <= bound)
 }
 
-/**
- * Groups a flat array of `MapEvent`s into a record keyed by `locationId`.
- */
 export function groupByLocation(events: MapEvent[]): Record<string, MapEvent[]> {
   const result: Record<string, MapEvent[]> = {}
   for (const ev of events) {
@@ -73,7 +70,7 @@ export function groupByLocation(events: MapEvent[]): Record<string, MapEvent[]> 
 }
 
 /**
- * Formats an ISO datetime string for display in a map popup.
+ * Formats an ISO datetime string for a map popup.
  * Example (de-DE): "Mi., 15. Apr., 18:00"
  */
 export function formatEventDate(iso: string, locale: string): string {

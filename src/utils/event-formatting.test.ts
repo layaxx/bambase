@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { formatTime } from "./event-formatting"
 
-// Use a fixed local datetime (no Z suffix) to avoid timezone-dependent offsets.
+// The datetimes are local and have no Z suffix, thus the local time zone cannot move them.
 // 2026-04-15 is a Wednesday.
 const ISO_WEDNESDAY_MORNING = "2026-04-15T10:30:00"
 const ISO_MIDNIGHT = "2026-04-15T00:00:00"

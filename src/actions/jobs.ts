@@ -17,17 +17,17 @@ import { JobOnlineStatus } from "@/generated/prisma/enums"
 const JOB_OFFER_LIFETIME_DAYS = 30
 
 /**
- * Statuses a moderator has already ruled on, and that an owner's edit therefore has to undo:
- * `published` is live on the site, `rejected` carries a moderator's reason. The remaining
- * statuses (`submitted`, `expired`, `archived`) are offline and awaiting or past moderation
- * anyway, so an edit leaves them where they are.
+ * The statuses on which a moderator already made a decision. An edit by the owner must thus
+ * cancel that decision. `published` is live on the site, and `rejected` holds the reason of
+ * the moderator. The other statuses (`submitted`, `expired`, `archived`) are offline and wait
+ * for moderation or come after it, thus an edit keeps them unchanged.
  */
 const MODERATED_STATUSES: JobOnlineStatus[] = [JobOnlineStatus.published, JobOnlineStatus.rejected]
 
 /**
- * Whether an update has to send the offer back through moderation: an owner who rewrites the
- * content of an offer a moderator already ruled on would otherwise publish arbitrary text under
- * that approval. Moderators edit in place — their edit *is* the moderation decision.
+ * Tells if an update must send the offer back to moderation. Without this check, an owner who
+ * rewrites the content of an offer that a moderator approved can publish any text under that
+ * approval. A moderator edits the offer directly, thus the edit is itself the decision.
  */
 function needsRemoderation(
   isModerator: boolean,

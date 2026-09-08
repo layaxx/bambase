@@ -208,7 +208,7 @@ describe("jobs.create", () => {
 })
 
 describe("jobs.update", () => {
-  /** The stored row matching `baseInput` exactly, so tests opt into a content change. */
+  /** The stored row that agrees with `baseInput`. A test thus selects a content change. */
   function makeExistingJob(overrides: Record<string, unknown> = {}) {
     return {
       ownerId: "user-1",

@@ -79,7 +79,6 @@ describe("EventForm", () => {
       const html = await container.renderToString(EventForm, { props: baseProps, locals })
       expect(html).toContain('id="category"')
       expect(html).toContain('name="category"')
-      // de locale: check for a few known category values
       expect(html).toContain('value="sport"')
       expect(html).toContain('value="university"')
       expect(html).toContain('value="other"')
@@ -198,7 +197,8 @@ describe("EventForm", () => {
 
     it("appends city to the option label when address.city is present", async () => {
       const html = await container.renderToString(EventForm, { props: baseProps, locals })
-      // The template renders name and city as separate expressions, resulting in whitespace between them
+      // The template renders the name and the city as two expressions, with whitespace
+      // between them.
       expect(html).toMatch(/Uni Bamberg\s+·\s+Bamberg/)
     })
 

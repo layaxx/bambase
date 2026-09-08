@@ -1,7 +1,7 @@
 import { JobOnlineStatus } from "@/generated/prisma/enums"
 import prisma from "./prisma"
 
-/** Flips published job offers past their `offlineAfter` date to `expired`. */
+/** Sets each published job offer that is past its `offlineAfter` date to `expired`. */
 export async function expireJobOffers(): Promise<void> {
   const { count } = await prisma.jobOffer.updateMany({
     where: {

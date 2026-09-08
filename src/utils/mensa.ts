@@ -4,13 +4,12 @@ import type { MensaMeal } from "./api/mensa"
 export const MENSA_CLOSING_HOUR = 15
 
 /**
- * Given the current time, returns the day whose mensa meals are most relevant
- * to show on the homepage card.
+ * Returns the day whose mensa meals the homepage card must show at the time `now`.
  *
- * - Weekdays before 15:00 → today
- * - Weekdays at/after 15:00 → next weekday (Friday wraps to Monday)
- * - Saturday → Monday (+2 days)
- * - Sunday  → Monday (+1 day)
+ * - A weekday before 15:00 → today
+ * - A weekday at or after 15:00 → the next weekday (Friday goes to Monday)
+ * - Saturday → Monday (plus 2 days)
+ * - Sunday → Monday (plus 1 day)
  */
 export function getRelevantDay(now: Dayjs): Dayjs {
   const dow = now.day() // 0 = Sunday, 6 = Saturday
@@ -49,13 +48,12 @@ export type GroupLabels = {
 }
 
 /**
- * Groups an ordered array of { day, meals } entries into DayEntry records
- * suitable for rendering on the mensa page.
+ * Groups an ordered array of { day, meals } entries into DayEntry records for the mensa page.
  *
- * - Consecutive Saturday+Sunday pairs are merged into a single WeekendEntry.
- * - Isolated weekend days become a single WeekendEntry.
- * - The first weekday entry gets the "today" label, the second gets "tomorrow",
- *   the rest get their weekday name — matching the index in the input array.
+ * - A Saturday entry and the Sunday entry that follows it become one WeekendEntry.
+ * - A single weekend day also becomes one WeekendEntry.
+ * - A weekday entry at index 0 gets the "today" label, and one at index 1 gets "tomorrow".
+ *   Each other weekday entry gets the name of its weekday.
  */
 export function groupMealsByDay(
   mealsByDay: Array<{ day: Dayjs; meals: MensaMeal[] }>,

@@ -35,7 +35,7 @@ vi.mock("@/utils/authz", () => ({
 
 import { studentGroups } from "./student-groups"
 
-/** The error Prisma raises when an update/delete targets a row that isn't there. */
+/** The error that Prisma gives when an update or a delete finds no row. */
 function recordNotFound() {
   return new Prisma.PrismaClientKnownRequestError("Record to update not found", {
     code: "P2025",

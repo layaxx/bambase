@@ -15,19 +15,19 @@ import { slugify } from "../src/utils/slugify.ts"
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL })
 const prisma = new PrismaClient({ adapter })
 
-// A standalone better-auth instance mirroring src/utils/auth.ts — duplicated
-// here because this script runs under plain Node, which can't resolve that
-// module's extensionless imports the way Vite/Astro can.
+// A separate better-auth instance with the same configuration as src/utils/auth.ts. This
+// script runs under plain Node, which cannot resolve the imports without a file extension in
+// that module. Vite and Astro can resolve them.
 const auth = betterAuth({
   database: prismaAdapter(prisma, { provider: "postgresql" }),
   emailAndPassword: { enabled: true },
 })
 
 const SEED_USER = { email: "seed@example.com", password: "Seed1234!" }
-// A second user with no owned content — used by e2e tests for the empty-state UI.
+// A second user that owns no content. The e2e tests use it for the empty-state UI.
 const CLEAN_USER = { email: "clean@example.com", password: "Clean1234!" }
-// A separate account (not SEED_USER/CLEAN_USER) so granting it the "admin" role
-// doesn't affect existing e2e assertions about ownership/empty-state UI.
+// A separate account, and not SEED_USER or CLEAN_USER. The "admin" role on this account thus
+// has no effect on the e2e assertions about the ownership and the empty-state UI.
 const ADMIN_USER = { email: "admin@example.com", password: "Admin1234!" }
 
 const STUDENT_GROUPS = [
@@ -712,7 +712,7 @@ type SeedEvent = {
   category: EventCategory
   mapLocationName?: string
   customLocation?: { name: string; address?: string; city?: string }
-  /** Owned by SEED_USER — gives /account/events a non-empty listing in e2e tests. */
+  /** SEED_USER owns this event, thus /account/events is not empty in the e2e tests. */
   ownedBySeedUser?: boolean
 }
 
@@ -847,7 +847,7 @@ type SeedJobOffer = {
   contactName?: string
   contactMail?: string
   contactPhone?: string
-  /** Owned by SEED_USER — gives /account/jobs a non-empty listing in e2e tests. */
+  /** SEED_USER owns this job, thus /account/jobs is not empty in the e2e tests. */
   ownedBySeedUser?: boolean
 }
 
@@ -971,8 +971,8 @@ async function main() {
     })
   }
 
-  // Seed users are pre-verified — e2e tests exercise job/event submission,
-  // not the email-verification flow itself, which is covered separately.
+  // The seed users are verified before the tests start. The e2e tests examine the submission
+  // of a job and of an event. A different test examines the email verification flow.
   await prisma.user.updateMany({
     where: {
       email: { in: [SEED_USER.email, CLEAN_USER.email, ADMIN_USER.email] },
@@ -981,7 +981,8 @@ async function main() {
     data: { emailVerified: true },
   })
 
-  // Bootstrap the first admin — a real deployment grants this via a one-off DB update.
+  // Make the first admin. In a real deployment an operator does this with one database
+  // update.
   await prisma.user.updateMany({
     where: { email: ADMIN_USER.email, role: null },
     data: { role: "admin" },

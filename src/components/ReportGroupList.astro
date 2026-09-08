@@ -18,9 +18,9 @@ const { kind, groups, apiDown, statusFilter, actualPage, pageCount } = Astro.pro
 
 const t = useTranslations(Astro.locals.locale)
 
-// "Unpublish" reuses each entity's existing visibility mechanism (hidden flag for
-// events, onlineStatus for jobs) instead of deleting the underlying record, so a
-// reported item can be taken offline without losing its data or the report trail.
+// "Unpublish" uses the visibility mechanism of each entity (the hidden flag for an event, the
+// onlineStatus for a job) and does not delete the record. A reported item thus goes offline,
+// and its data and its report trail stay.
 const unpublishAction = kind === "event" ? actions.events.unpublish : actions.jobs.reject
 const publishAction = kind === "event" ? actions.events.publish : actions.jobs.approve
 const editBasePath = kind === "event" ? "/admin/events" : "/admin/jobs"

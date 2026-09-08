@@ -4,14 +4,17 @@ import { Prisma } from "@/generated/prisma/client"
 type ActionContext = { locals: Pick<App.Locals, "user"> }
 type RoleCheck = (role: string | null | undefined) => Promise<boolean>
 
-/** Throws UNAUTHORIZED unless the caller is signed in; returns their user id. */
+/** Returns the id of the caller. Throws UNAUTHORIZED if the caller is not signed in. */
 export function requireUserId(context: ActionContext): string {
   const userId = context.locals.user?.id
   if (!userId) throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
   return userId
 }
 
-/** Throws UNAUTHORIZED/FORBIDDEN unless the caller is signed in and passes `check`. */
+/**
+ * Returns the id of the caller. Throws UNAUTHORIZED if the caller is not signed in,
+ * or FORBIDDEN if the caller fails `check`.
+ */
 export async function requirePermission(
   context: ActionContext,
   check: RoleCheck,
@@ -25,12 +28,12 @@ export async function requirePermission(
 }
 
 /**
- * Throws FORBIDDEN unless `userId` owns the entity, or (when given) passes `check`.
- * Used after loading an entity that may belong to its creator or be moderated by staff.
+ * Throws FORBIDDEN if `userId` is not the owner of the entity and the caller fails `check`.
+ * Use this function after you load an entity that its creator owns and that staff can moderate.
  *
- * Returns whether the caller passed `check` (i.e. acts as staff rather than as the owner), so
- * callers can treat a moderator's edit differently from an owner's — the owner of an approved
- * entity must not be able to silently change what a moderator signed off on.
+ * Returns true if the caller passed `check` and thus acts as staff, and not as the owner.
+ * Callers use this result to make the edit of a moderator different from the edit of an owner.
+ * The owner of an approved entity must not change the content that a moderator approved.
  */
 export async function assertOwnerOrPermission(
   context: ActionContext,
@@ -46,10 +49,11 @@ export async function assertOwnerOrPermission(
 }
 
 /**
- * Logs `error` and converts it to an ActionError. P2025 means the row is gone, which the write
- * itself reports — so callers need no pre-flight existence query. Any other known Prisma error
- * (bad foreign key, duplicate unique value) means the submitted data was invalid and maps to
- * BAD_REQUEST; anything else is an unexpected failure and maps to INTERNAL_SERVER_ERROR.
+ * Logs `error` and converts it to an ActionError.
+ * P2025 means that the row is gone. The write itself reports this, thus callers need no
+ * preliminary query for the row. Each other known Prisma error (a bad foreign key or a
+ * duplicate unique value) means that the data is not valid, and becomes BAD_REQUEST.
+ * Each other error is an unexpected failure, and becomes INTERNAL_SERVER_ERROR.
  */
 export function mutationError(
   error: unknown,

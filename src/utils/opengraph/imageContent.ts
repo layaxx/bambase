@@ -45,8 +45,8 @@ export const makeImageContent = ({
   const title = titleContent.length > 60 ? `${titleContent.slice(0, 57)}…` : titleContent
   const titleSize = title.length > 45 ? 50 : 60
 
-  // satori accepts plain JSX-shaped objects, not real React elements, so this
-  // tree doesn't structurally match React's ReactElement/ReactPortal types.
+  // satori accepts plain objects with the shape of JSX, and not real React elements.
+  // This tree thus does not match the ReactElement/ReactPortal types of React.
   return {
     type: "div",
     props: {

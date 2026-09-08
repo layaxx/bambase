@@ -5,7 +5,7 @@ import type { ReportReviewStatus } from "@/generated/prisma/enums"
 
 export const REPORT_REASONS = Object.values(ReportReason)
 
-/** Open reports against one target before it is flagged as repeatedly reported. */
+/** The number of open reports against one target at which the pages show a warning. */
 export const REPORT_WARNING_THRESHOLD = 3
 
 export type { ReportReason, ReportReviewStatus }
@@ -70,14 +70,14 @@ function toReport(row: ReportRow): Report {
 }
 
 /**
- * All reports filed against a single event/job, newest first. Grouping lets admins spot
- * targets that keep getting reported instead of triaging one report at a time.
+ * All reports against one event or one job, newest first. The group shows admins the targets
+ * that users report again and again, and not one report at a time.
  *
- * `caseStatus` is the case-level verdict, distinct from each report's own `reviewStatus`:
- * a case counts as "resolved" once the target has been taken offline (unpublished/rejected)
- * — regardless of whether the individual reports were ever dismissed — or once every report
- * against a still-published target has been dismissed. Otherwise it's still "open" and needs
- * a decision.
+ * `caseStatus` is the verdict for the full case, and is different from the `reviewStatus` of
+ * each report. A case is "resolved" if the target is offline (unpublished or rejected), or if
+ * an admin dismissed all reports against a target that is still published. The status of each
+ * report against an offline target has no effect. All other cases stay "open" and need a
+ * decision.
  */
 export type ReportGroup = {
   key: string
@@ -118,8 +118,8 @@ function resolveCaseStatus(group: Pick<ReportGroup, "target" | "openCount">): "o
 }
 
 /**
- * Fetch reports for the admin moderation queue, grouped by target and sorted so the
- * most-reported items surface first — those are the ones most likely to need a decision.
+ * Fetches the reports for the admin moderation queue. The reports are grouped by target and
+ * sorted with the most-reported targets first, because those most probably need a decision.
  */
 export function fetchReportGroupsForAdmin(
   filter: ReportsFilter = {}

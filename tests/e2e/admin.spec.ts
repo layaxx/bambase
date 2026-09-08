@@ -1,10 +1,9 @@
 import { expect, test, type Page } from "@playwright/test"
 
 /**
- * Job-offer moderation queue (/admin/jobs) — gated by the "moderator"/"admin"
- * roles from the better-auth `admin` plugin. Each test logs in inline (no
- * shared storageState) since it needs to switch between the non-moderator
- * seed user and the seeded admin@example.com account.
+ * /admin/jobs needs the "moderator" role or the "admin" role from the better-auth `admin`
+ * plugin. Each test logs in inline, because it must change between the seed user, who is not
+ * a moderator, and the seeded admin@example.com account.
  */
 
 async function login(page: Page, email: string, password: string) {

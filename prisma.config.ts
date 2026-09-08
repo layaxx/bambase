@@ -3,7 +3,7 @@ import { defineConfig } from "prisma/config"
 try {
   process.loadEnvFile()
 } catch {
-  // ignore if no .env file is found
+  // There is no .env file. Continue with the environment as it is.
 }
 
 export default defineConfig({

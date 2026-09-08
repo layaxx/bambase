@@ -21,8 +21,7 @@ describe("ReportModal", () => {
         props: { targetType: "job", targetId: "abc" },
         locals,
       })
-      // de locale: t.reports.reportJob should not equal t.reports.reportEvent
-      // Both must produce non-empty text; verify the two variants differ
+      // The two target types must give different button labels.
       const jobHtml = html
 
       const eventHtml = await container.renderToString(ReportModal, {
@@ -30,7 +29,6 @@ describe("ReportModal", () => {
         locals,
       })
 
-      // The button text must differ between the two targetType values
       expect(jobHtml).not.toBe(eventHtml)
     })
 

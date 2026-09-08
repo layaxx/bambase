@@ -54,7 +54,6 @@ export function fetchStudentGroupForAdmin(slug: string): Promise<ApiResult<Stude
   })
 }
 
-/** Fetch all student groups for the admin overview. */
 export function fetchAllStudentGroupsForAdmin(limit = 500): Promise<ApiResult<StudentGroup[]>> {
   return apiResult("Error fetching student groups for admin", [], async () => {
     const rows = await prisma.studentGroup.findMany({

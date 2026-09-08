@@ -1,17 +1,13 @@
 import { expect, test, type Page } from "@playwright/test"
 import { AUTH_FILE } from "../../playwright.config"
 
-/**
- * Job offer CRUD flows — all tests run as the authenticated seed user.
- *
- * Tests that create a job are responsible for cleaning it up at the end
- * to avoid polluting the shared database.
- */
+// A test that creates a job must also delete it at the end, thus the shared database
+// stays clean.
 
 test.use({ storageState: AUTH_FILE })
 
-// One of the seeded job offers — unowned (ownerId is null), so it's never
-// owned by the seed user and is safe to use for non-owner assertions.
+// A job offer from the seed data. It has no owner (ownerId is null), thus the seed user is
+// never its owner and the tests can use it for assertions about a different user.
 const SEEDED_JOB_URL = "/job/werkstudent-in-softwareentwicklung-feki-de-e-v"
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
@@ -83,7 +79,7 @@ test("archive job redirects to same page and shows status alert", async ({ page 
   const title = uniqueTitle()
   const jobUrl = await createJob(page, title)
 
-  // Archive button is shown for submitted/published jobs
+  // The page shows the archive button for a submitted job and for a published job.
   const archiveBtn = page.getByRole("button", { name: "Archivieren" })
   await expect(archiveBtn).toBeVisible()
 
@@ -113,7 +109,7 @@ test("create job without required fields stays on /job/new (browser validation)"
 }) => {
   await page.goto("/job/new")
   await page.click('button[type="submit"]')
-  // Browser's native required validation keeps us on the page
+  // The validation of the browser for a required field keeps the page open.
   await expect(page).toHaveURL("/job/new")
 })
 
@@ -139,11 +135,12 @@ test("job draft is cleared when navigating away without submitting", async ({ pa
   await page.goto("/job/new")
   await page.fill("#title", "Draft that should be discarded")
 
-  // Navigate away via link (not submit) — pagehide fires, draft cleared
+  // Go to a different page with a link and not with a submit. This starts pagehide, which
+  // deletes the draft.
   await page.getByRole("link", { name: "Alle Jobs" }).click()
   await expect(page).toHaveURL("/jobs")
 
-  // Return to the form — sessionStorage draft should be gone
+  // Open the form again. The draft in sessionStorage must be gone.
   await page.goto("/job/new")
   const titleValue = await page.locator("#title").inputValue()
   expect(titleValue).toBe("")
@@ -152,12 +149,12 @@ test("job draft is cleared when navigating away without submitting", async ({ pa
 // ─── Privilege escalation ───────────────────────────────────────────────────
 
 /**
- * Astro Actions invoked via a plain <form action={actions.x.y}> render as a
- * POST to the current page URL with a `?_action=x.y` query param. Ownership
- * is enforced inside the action handler itself (src/actions/jobs.ts), which
- * throws ActionError({ code: "FORBIDDEN" }) — Astro maps that to HTTP 403.
- * Requests need an Origin/Referer matching the app's own origin, or Astro's
- * CSRF protection rejects them before the handler ever runs.
+ * A plain <form action={actions.x.y}> sends an Astro Action as a POST to the URL of the
+ * current page, with the query parameter `?_action=x.y`. The action handler itself
+ * (src/actions/jobs.ts) checks the ownership and throws ActionError({ code: "FORBIDDEN" }),
+ * which Astro sends as HTTP 403. Each request needs an Origin or Referer header with the
+ * origin of the app. Without it, the CSRF protection of Astro rejects the request before the
+ * handler starts.
  */
 test.describe("Ownership enforcement — job offers", () => {
   let jobId: string
@@ -166,7 +163,8 @@ test.describe("Ownership enforcement — job offers", () => {
     const ctx = await browser.newContext({ storageState: AUTH_FILE })
     const pg = await ctx.newPage()
     await pg.goto(SEEDED_JOB_URL)
-    // Report modal exposes the job's id as a hidden input for non-owner viewers.
+    // For a viewer who is not the owner, the report modal has the id of the job in a
+    // hidden input.
     jobId = await pg.locator('input[name="target_id"]').inputValue()
     await ctx.close()
     expect(jobId).toBeTruthy()

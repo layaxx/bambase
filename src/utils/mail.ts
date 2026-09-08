@@ -8,8 +8,9 @@ type MailMessage = {
 }
 
 /**
- * Sends via Mailgun when MAILGUN_API_KEY/MAILGUN_DOMAIN are configured,
- * otherwise logs the message so auth flows stay usable in local dev.
+ * Sends the message with Mailgun if MAILGUN_API_KEY and MAILGUN_DOMAIN are set.
+ * If they are not set, it logs the message, thus the auth flows stay usable in
+ * local development.
  */
 export async function sendMail(message: MailMessage): Promise<void> {
   if (!MAILGUN_API_KEY || !MAILGUN_DOMAIN) {

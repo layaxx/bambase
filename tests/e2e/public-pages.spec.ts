@@ -1,10 +1,5 @@
 import { expect, test } from "@playwright/test"
 
-/**
- * Smoke tests for public read-only pages.
- * No auth required — all tests run as anonymous visitors.
- */
-
 test.describe("Homepage", () => {
   test("loads without errors and shows key sections", async ({ page }) => {
     await page.goto("/")
@@ -28,7 +23,6 @@ test.describe("Job detail — not found", () => {
   test("visiting a non-existent job slug shows not-found content", async ({ page }) => {
     await page.goto("/job/not-a-real-slug")
     await expect(page.locator("body")).not.toContainText("500")
-    // The page renders a not-found heading, not a server error
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible()
     await expect(page.getByRole("link", { name: "Alle Jobs" })).toBeVisible()
   })
@@ -46,7 +40,7 @@ test.describe("Event detail — not found", () => {
 test.describe("Jobs listing (/jobs)", () => {
   test("seeded published jobs are listed (not submitted/expired)", async ({ page }) => {
     await page.goto("/jobs")
-    // The seed data has these published jobs — at least one of them should show
+    // "Werkstudent" is part of the title of a published job in the seed data.
     await expect(page.locator("body")).toContainText("Werkstudent")
   })
 })
@@ -55,7 +49,6 @@ test.describe("Events listing (/events)", () => {
   test("page loads and shows seeded upcoming events", async ({ page }) => {
     await page.goto("/events")
 
-    // Seeded events should appear
     await expect(page.locator('a[href="/event/ersti-party"]')).toBeVisible()
   })
 })
@@ -79,7 +72,7 @@ test.describe("Map (/map)", () => {
 
   test("map container is rendered", async ({ page }) => {
     await page.goto("/map")
-    // Leaflet renders a div with id="map" or class containing "leaflet"
+    // Leaflet makes a div with the id "map" or with a class that contains "leaflet".
     const mapContainer = page.locator("#map, .leaflet-container, [id*=map]").first()
     await expect(mapContainer).toBeAttached()
   })
@@ -106,7 +99,7 @@ test.describe("Sitemap (/sitemap.xml)", () => {
     const response = await request.get("/sitemap.xml")
 
     const body = await response.text()
-    // "Bachelor-/Masterarbeit im Bereich Data Science" is seeded with onlineStatus "submitted"
+    // The seed gives this job the onlineStatus "submitted", thus it is not published.
     expect(body).not.toContain("/job/bachelor-masterarbeit-im-bereich-data-science")
   })
 
@@ -116,7 +109,7 @@ test.describe("Sitemap (/sitemap.xml)", () => {
     const body = await response.text()
 
     expect(body).toContain("/job/werkstudent-in-softwareentwicklung-feki-de-e-v")
-    // Owned by the seed user, but still public once published
+    // The seed user owns this job, but a published job is public.
     expect(body).toContain("/job/praktikum-marketing-social-media-bambus-e-v")
   })
 
@@ -136,11 +129,9 @@ test("Locale switching from German to English and back to German works as expect
   await page.goto("/")
 
   await expect(page.locator("html")).toHaveAttribute("lang", "de")
-  // Set English first
   await page.goto("/set-locale?lang=en&redirect=/")
   await expect(page.locator("html")).toHaveAttribute("lang", "en")
 
-  // Then switch back to German
   await page.goto("/set-locale?lang=de&redirect=/jobs")
   await expect(page.locator("html")).toHaveAttribute("lang", "de")
 })

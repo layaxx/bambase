@@ -1,9 +1,9 @@
 export type ApiResult<T> = { data: T; apiDown: boolean }
 
 /**
- * Runs a query and tags the outcome for the UI: `apiDown` tells a page to render the
- * "data unavailable" banner instead of an empty state, so a failed query never looks
- * like a legitimately empty result. `fallback` is what the page shows meanwhile.
+ * Runs a query and marks the result for the UI. `apiDown` tells a page to show the
+ * "data unavailable" banner and not an empty state, thus a failed query never looks like a
+ * correct empty result. The page shows `fallback` while the query is not available.
  */
 export async function apiResult<T>(
   errorLabel: string,

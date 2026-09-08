@@ -33,7 +33,7 @@ describe("slugify", () => {
   })
 })
 
-/** Mimics the Prisma unique-constraint error the database raises on a duplicate insert. */
+/** Makes the Prisma unique-constraint error that the database gives on a duplicate insert. */
 function uniqueViolation(target?: string[] | string) {
   return Object.assign(new Error("Unique constraint failed"), { code: "P2002", meta: { target } })
 }

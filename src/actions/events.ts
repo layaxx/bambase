@@ -136,9 +136,9 @@ export const events = {
       })
       if (!event) throw new ActionError({ code: "NOT_FOUND", message: "Event nicht gefunden." })
 
-      // A non-null rejectionReason means a moderator unpublished this (self-unpublish via the
-      // account page leaves it unset), so only a moderator may undo that — the owner alone
-      // can't republish their way out of a moderation decision.
+      // A rejectionReason that is not null means that a moderator unpublished this event. An
+      // unpublish by the owner on the account page keeps the reason unset. Only a moderator
+      // can thus publish the event again, and the owner cannot cancel a moderation decision.
       if (event.rejectionReason) {
         if (!(await canModerateEvents(context.locals.user?.role))) {
           throw new ActionError({

@@ -18,9 +18,9 @@ const statement = {
 const ac = createAccessControl(statement)
 
 const userRole = ac.newRole({})
-// Reports don't have their own permission: a report against an event is moderated under
-// event:moderate, a report against a job under jobOffer:moderate — so these two roles also
-// cover report moderation for their respective target type, without granting the other.
+// A report has no permission of its own: event:moderate covers a report against an event, and
+// jobOffer:moderate covers a report against a job. These two roles thus also give report
+// moderation for their own target type, and for no other type.
 const jobModeratorRole = ac.newRole({ jobOffer: ["moderate"] })
 const eventModeratorRole = ac.newRole({ event: ["moderate"] })
 const adminRole = ac.newRole({
@@ -61,8 +61,8 @@ export const auth = betterAuth({
     },
   },
   session: {
-    // Avoids a DB round trip on every request; session changes are picked up
-    // again within maxAge seconds.
+    // The cookie cache removes a database round trip on each request.
+    // A change to the session becomes effective after maxAge seconds.
     cookieCache: {
       enabled: true,
       maxAge: 60,

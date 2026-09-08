@@ -4,18 +4,17 @@ import { expect, test } from "@playwright/test"
 import { AUTH_FILE } from "../../playwright.config"
 
 /**
- * Report submission flows.
+ * Tests for the report submission flows.
  *
- * Reports are available to both anonymous and authenticated visitors for both
- * jobs and events.  Once REPORT_WARNING_THRESHOLD (default: 3) reports have
- * been submitted for a given listing, a warning alert is displayed to all
- * subsequent visitors.
+ * An anonymous visitor and an authenticated visitor can report a job and an event. After
+ * REPORT_WARNING_THRESHOLD (3) reports against one listing, the page shows a warning alert
+ * to each subsequent visitor.
  *
- * The seeded job/event below have no owner (ownerId is null), so the seed
- * user can always report them.
+ * The job and the event from the seed data below have no owner (ownerId is null), thus the
+ * seed user can always report them.
  *
- * Note: Each test run accumulates reports on the seeded slugs used here; these
- * are benign in a seeded test environment and do not need cleanup.
+ * Note: each test run adds more reports to these seeded slugs. This is not a problem in a
+ * seeded test environment and needs no cleanup.
  */
 
 const UNOWNED_JOB_URL = "/job/werkstudent-in-softwareentwicklung-feki-de-e-v"
@@ -98,7 +97,7 @@ test.describe("Report — authenticated seed user", () => {
   })
 
   test("owner does not see report button on their own job", async ({ page }) => {
-    // Create a fresh job owned by the seed user so we don't destroy seeded data
+    // Create a new job that the seed user owns, thus the test does not change the seed data.
     await page.goto("/job/new")
     await page.fill("#title", `Owner report test job ${Date.now()}`)
     await page.fill("#company", "E2E Corp")
@@ -139,19 +138,18 @@ test.describe("Report — authenticated seed user", () => {
 
 test.describe("Report warning — threshold reached", () => {
   /**
-   * Each test creates an isolated listing owned by the seed user, submits
-   * REPORT_WARNING_THRESHOLD (3) reports from independent anonymous browser
-   * contexts, then verifies that the warning alert is rendered for subsequent
-   * visitors. The listing is deleted at the end to avoid DB accumulation.
+   * Each test creates a separate listing that the seed user owns. Then it sends
+   * REPORT_WARNING_THRESHOLD (3) reports from independent anonymous browser contexts, and
+   * makes sure that the page shows the warning alert to each subsequent visitor. The test
+   * deletes the listing at the end, thus the database stays clean.
    *
-   * Using separate browser contexts ensures each report comes from a fresh
-   * session, matching the real-world scenario of different users reporting.
+   * A separate browser context gives each report a new session. This is equal to the real
+   * condition, in which different users send the reports.
    */
 
   test.use({ storageState: AUTH_FILE })
 
   test.skip("job page shows warning alert after 3 reports", async ({ page, browser }) => {
-    // Create an isolated job for this test
     await page.goto("/job/new")
     await page.fill("#title", `Warning threshold test job ${Date.now()}`)
     await page.fill("#company", "E2E Corp")

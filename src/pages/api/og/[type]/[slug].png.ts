@@ -10,7 +10,7 @@ import {
 
 type Card = Parameters<typeof makeImageContent>[0]
 
-/** Card content per entity type, or null when there is nothing public to render. */
+/** The card content for each entity type. Returns null if there is no public content. */
 const CARDS: Record<string, (slug: string) => Promise<Card | null>> = {
   event: async (slug) => {
     const { data: event } = await fetchEvent(slug)
@@ -34,7 +34,7 @@ const CARDS: Record<string, (slug: string) => Promise<Card | null>> = {
 
 export const GET: APIRoute = async ({ params, redirect }) => {
   const { type, slug } = params
-  const card = type ? CARDS[type] : undefined
+  const card = type && Object.hasOwn(CARDS, type) ? CARDS[type] : undefined
   if (!card || !slug) return redirect("/og-image.png", 302)
 
   try {

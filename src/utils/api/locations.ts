@@ -84,7 +84,6 @@ export function fetchLocationForAdmin(slug: string): Promise<ApiResult<MapLocati
   })
 }
 
-/** Fetch all locations for the admin overview. */
 export function fetchAllLocationsForAdmin(limit = 500): Promise<ApiResult<MapLocation[]>> {
   return apiResult("Error fetching locations for admin", [], async () => {
     const rows = await prisma.location.findMany({

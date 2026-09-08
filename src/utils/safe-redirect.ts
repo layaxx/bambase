@@ -1,14 +1,16 @@
 /**
- * Narrows a caller-supplied `?redirect=` value to a path we are willing to send a browser to.
+ * Limits a caller-supplied `?redirect=` value to a path to which we send a browser safely.
  *
- * Anything that can leave the site is replaced by `fallback`: absolute URLs
- * ("https://bambase.de.evil.example"), protocol-relative ones ("//evil.example") and the
- * backslash variants browsers normalise to them ("/\evil.example"). Without this an ordinary
- * link on the real domain becomes a hop to an attacker's page — most damagingly a clone of
- * /login, since the site already teaches users to follow emailed BamBase links to a login form.
+ * `fallback` replaces each value that can leave the site: an absolute URL
+ * ("https://bambase.de.evil.example"), a protocol-relative URL ("//evil.example") and the
+ * backslash forms that browsers change into them ("/\evil.example"). Without this check, a
+ * usual link on the real domain becomes a step to the page of an attacker. A copy of /login
+ * is the most dangerous of these pages, because users already follow BamBase links from an
+ * email to a login form.
  *
- * `base` is the URL the value arrived on: `Astro.url` on the server, `window.location.href` in
- * the browser. The return value is normalised to path + query + hash, so it is always relative.
+ * `base` is the URL on which the value came in: `Astro.url` on the server and
+ * `window.location.href` in the browser. The result contains only the path, the query and the
+ * hash, thus it is always relative.
  */
 export function safeRedirect(
   target: string | null | undefined,

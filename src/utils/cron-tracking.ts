@@ -37,7 +37,7 @@ async function recordCronRun(
   }
 }
 
-/** Runs a cron job, recording its outcome for the admin cron status page. Never throws. */
+/** Runs a cron job and records the result for the admin cron status page. Never throws. */
 export async function runTrackedCronJob(
   jobName: CronJobKey,
   fn: () => Promise<unknown>
