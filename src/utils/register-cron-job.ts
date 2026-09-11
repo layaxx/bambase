@@ -2,14 +2,15 @@ import cron from "node-cron"
 import { runTrackedCronJob, CRON_JOB_DEFINITIONS, type CronJobKey } from "./cron-tracking"
 
 type RegisterCronJobOptions = {
-  /** When set to "true" in a non-prod, non-test env, runs the job once at startup. */
+  /** If this variable is "true", the job runs once at startup outside production and tests. */
   startupEnvVar?: string
   startupMessage?: string
 }
 
 /**
- * Schedules `fn` as a tracked cron job in production. Outside production it either runs once at
- * startup (if `startupEnvVar` is "true") or logs that it's skipped, matching local dev behavior.
+ * Schedules `fn` as a tracked cron job in production. Outside production the job runs once at
+ * startup if `startupEnvVar` is "true". If it is not "true", the function only logs that it did
+ * not schedule the job.
  */
 export function registerCronJob(
   key: CronJobKey,

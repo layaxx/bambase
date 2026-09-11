@@ -1,7 +1,7 @@
 ---
 import { actions } from "astro:actions"
 import PageLayout from "@/layouts/PageLayout.astro"
-import { fetchSubmittedJobOffers, fetchRecentlyModeratedJobOffers } from "@/utils/api"
+import { fetchSubmittedJobOffers, fetchRecentlyModeratedJobOffers } from "@/utils/api/job-offers"
 import { canModerateJobOffers, requireRole } from "@/utils/authz"
 import { JOB_STATUS_BADGE_CLASS } from "@/utils/job-status"
 import { useTranslations } from "@/i18n/translations"

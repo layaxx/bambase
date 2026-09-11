@@ -2,12 +2,7 @@ import { test as setup } from "@playwright/test"
 
 const AUTH_FILE = "tests/e2e/.auth/seed-user.json"
 
-/**
- * Runs once before authenticated test suites.
- * Logs in as the seed user and saves cookies so other tests can reuse the session.
- *
- * Requires the database to be seeded (`npx prisma db seed`) so seed@example.com exists.
- */
+/** The database must have the seed data (`npx prisma db seed`), which contains this user. */
 setup("authenticate as seed user", async ({ page }) => {
   await page.goto("/login")
   await page.fill('[name="identifier"]', "seed@example.com")

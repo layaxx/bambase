@@ -1,12 +1,25 @@
 import { defineMiddleware } from "astro:middleware"
 import type { Locale } from "@/i18n/translations"
 import { auth } from "./utils/auth"
+import { registerCronJob } from "@/utils/register-cron-job"
+import { syncMensaMeals } from "@/utils/mensa-sync"
+import { syncUnivisEvents } from "@/utils/event-sync"
+import { syncJobOffers } from "@/utils/job-offer-sync"
+import { expireJobOffers } from "@/utils/job-offer-expiry"
 
-// load cron jobs
-import "@/utils/mensa-cron"
-import "@/utils/event-sync-cron"
-import "@/utils/job-offer-sync-cron"
-import "@/utils/job-offer-expiry-cron"
+registerCronJob("mensa-sync", syncMensaMeals, {
+  startupEnvVar: "LOAD_MENSA_ON_STARTUP",
+  startupMessage: "Loading Mensa meals on startup.",
+})
+registerCronJob("event-sync", syncUnivisEvents, {
+  startupEnvVar: "LOAD_EVENTS_ON_STARTUP",
+  startupMessage: "Loading UniVis events on startup.",
+})
+registerCronJob("job-offer-sync", syncJobOffers, {
+  startupEnvVar: "LOAD_JOB_OFFERS_ON_STARTUP",
+  startupMessage: "Loading job offers from feki.de on startup.",
+})
+registerCronJob("job-offer-expiry", expireJobOffers)
 
 const SUPPORTED_LOCALES: Locale[] = ["de", "en"]
 const DEFAULT_LOCALE: Locale = "de"
@@ -37,7 +50,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const cookieLocale = SUPPORTED_LOCALES.includes(cookieLocaleRaw as Locale)
     ? (cookieLocaleRaw as Locale)
     : undefined
-  if (cookieLocale && SUPPORTED_LOCALES.includes(cookieLocale)) {
+  if (cookieLocale) {
     context.locals.locale = cookieLocale
   } else {
     const acceptLanguage = context.request.headers.get("Accept-Language")

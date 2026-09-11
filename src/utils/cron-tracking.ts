@@ -1,4 +1,5 @@
 import prisma from "./prisma"
+import { errorMessage } from "./error-message"
 
 export const CRON_JOB_DEFINITIONS = {
   "mensa-sync": { schedule: "0 5,8,10,11,12,14,16 * * *" },
@@ -12,10 +13,6 @@ export type CronJobKey = keyof typeof CRON_JOB_DEFINITIONS
 export const CRON_JOB_KEYS = Object.keys(CRON_JOB_DEFINITIONS) as CronJobKey[]
 
 export type CronJobRunOutcome = { status: "success" } | { status: "error"; error: string }
-
-function formatError(error: unknown): string {
-  return (error instanceof Error ? error.message : String(error)).slice(0, 1000)
-}
 
 async function recordCronRun(
   jobName: CronJobKey,
@@ -32,7 +29,7 @@ async function recordCronRun(
         startedAt,
         finishedAt,
         durationMs: finishedAt.getTime() - startedAt.getTime(),
-        error: status === "error" ? formatError(error) : null,
+        error: status === "error" ? errorMessage(error).slice(0, 1000) : null,
       },
     })
   } catch (dbError) {
@@ -40,7 +37,7 @@ async function recordCronRun(
   }
 }
 
-/** Runs a cron job, recording its outcome for the admin cron status page. Never throws. */
+/** Runs a cron job and records the result for the admin cron status page. Never throws. */
 export async function runTrackedCronJob(
   jobName: CronJobKey,
   fn: () => Promise<unknown>
@@ -52,8 +49,7 @@ export async function runTrackedCronJob(
     return { status: "success" }
   } catch (error) {
     console.error(`Error running scheduled ${jobName}:`, error)
-    const message = formatError(error)
     await recordCronRun(jobName, "error", startedAt, error)
-    return { status: "error", error: message }
+    return { status: "error", error: errorMessage(error).slice(0, 1000) }
   }
 }

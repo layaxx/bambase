@@ -1,7 +1,7 @@
 ---
 import { actions } from "astro:actions"
 import PageLayout from "@/layouts/PageLayout.astro"
-import { fetchCronJobStatuses, type CronJobStatus } from "@/utils/api"
+import { fetchCronJobStatuses, type CronJobStatus } from "@/utils/api/cron-jobs"
 import { canViewSystemStatus, requireRole } from "@/utils/authz"
 import { useTranslations } from "@/i18n/translations"
 import ApiDownBanner from "@/components/ApiDownBanner.astro"

@@ -1,10 +1,5 @@
 import { expect, test } from "@playwright/test"
 
-/**
- * Auth flows — login, register, logout, and protected route guards.
- * Runs without stored auth state so each test starts as an anonymous visitor.
- */
-
 test.describe("Login", () => {
   test("non-existent email shows error alert", async ({ page }) => {
     await page.goto("/login")
@@ -58,9 +53,9 @@ test.describe("Register", () => {
     await page.fill('[name="passwordConfirm"]', "validpassword1")
     await page.click('button[type="submit"]')
 
-    // better-auth returns a generic success response for existing emails
-    // when email verification is required, so signup can't be used to probe
-    // which addresses already have an account.
+    // If email verification is necessary, better-auth gives the same success response for an
+    // email address that already has an account. An attacker can thus not use the signup
+    // form to find the addresses with an account.
     await expect(page.locator("#signup-success")).toBeVisible()
     await expect(page.locator(".alert-error")).toBeHidden()
   })
@@ -85,8 +80,8 @@ test.describe("Register", () => {
     await page.fill('[name="passwordConfirm"]', "validpassword1")
     await page.click('button[type="submit"]')
 
-    // Sign-up requires email verification — no session is created until the
-    // user clicks the confirmation link we emailed them.
+    // Sign-up needs email verification. The server makes no session before the user clicks
+    // the confirmation link in the email.
     await expect(page.locator("#signup-success")).toBeVisible()
     await expect(page).toHaveURL(/register\??.*/)
 

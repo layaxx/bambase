@@ -131,8 +131,8 @@ describe("syncMensaMeals", () => {
       return []
     })
 
-    // Feki returns a day with zero entries this run, so any previously stored
-    // meal for that day should be treated as stale and deleted.
+    // Feki gives a day with no entries in this run. The sync must thus delete each meal
+    // that it stored before for that day.
     vi.mocked(fetch).mockImplementation(async (url) => {
       if (String(url).includes(`/canteen/${CANTEEN_IDS.Feki}`)) {
         return jsonResponse(apiResponse("2026-04-15", [])) as never

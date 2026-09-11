@@ -1,6 +1,6 @@
 import prisma from "../prisma"
 import { withCache } from "./cache"
-import type { ApiResult } from "./types"
+import { apiResult, type ApiResult } from "./types"
 
 export type StudentGroup = {
   id: string
@@ -35,47 +35,31 @@ function toStudentGroup(row: {
   }
 }
 
-export async function fetchStudentGroups(limit = 200): Promise<ApiResult<StudentGroup[]>> {
-  const key = `student-groups:${limit}`
-  try {
-    const groups = await withCache(key, () =>
+export function fetchStudentGroups(limit = 200): Promise<ApiResult<StudentGroup[]>> {
+  return apiResult("Error fetching student groups", [], async () => {
+    const groups = await withCache(`student-groups:${limit}`, () =>
       prisma.studentGroup.findMany({
         orderBy: { name: "asc" },
         take: limit,
       })
     )
-    return { data: groups.map(toStudentGroup), apiDown: false }
-  } catch (error) {
-    console.error("Error fetching student groups", error)
-    return { data: [], apiDown: true }
-  }
+    return groups.map(toStudentGroup)
+  })
 }
 
-export async function fetchStudentGroupForAdmin(
-  slug: string
-): Promise<ApiResult<StudentGroup | null>> {
-  try {
+export function fetchStudentGroupForAdmin(slug: string): Promise<ApiResult<StudentGroup | null>> {
+  return apiResult("Error fetching student group for admin", null, async () => {
     const row = await prisma.studentGroup.findFirst({ where: { slug } })
-    if (!row) return { data: null, apiDown: false }
-    return { data: toStudentGroup(row), apiDown: false }
-  } catch (error) {
-    console.error("Error fetching student group for admin", error)
-    return { data: null, apiDown: true }
-  }
+    return row && toStudentGroup(row)
+  })
 }
 
-/** Fetch all student groups for the admin overview. */
-export async function fetchAllStudentGroupsForAdmin(
-  limit = 500
-): Promise<ApiResult<StudentGroup[]>> {
-  try {
+export function fetchAllStudentGroupsForAdmin(limit = 500): Promise<ApiResult<StudentGroup[]>> {
+  return apiResult("Error fetching student groups for admin", [], async () => {
     const rows = await prisma.studentGroup.findMany({
       orderBy: { name: "asc" },
       take: limit,
     })
-    return { data: rows.map(toStudentGroup), apiDown: false }
-  } catch (error) {
-    console.error("Error fetching student groups for admin", error)
-    return { data: [], apiDown: true }
-  }
+    return rows.map(toStudentGroup)
+  })
 }

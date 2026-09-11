@@ -1,9 +1,9 @@
 import { expect, test, type Page } from "@playwright/test"
 
 /**
- * User management (/admin/users) — gated by the "admin" role from the
- * better-auth `admin` plugin (moderators do not have `user` permissions).
- * Bans/unbans "clean@example.com" since it isn't asserted on by other specs.
+ * /admin/users needs the "admin" role from the better-auth `admin` plugin, because a
+ * moderator has no `user` permission. The tests ban and unban "clean@example.com", because
+ * no other spec makes an assertion about that account.
  */
 
 async function login(page: Page, email: string, password: string) {

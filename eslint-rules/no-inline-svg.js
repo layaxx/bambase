@@ -23,14 +23,13 @@ export default {
     const allowedDir = context.options[0]?.allowedDir ?? "src/components/icons"
     const filePath = context.filename ?? context.getFilename()
 
-    // Normalize path separators (Windows compat)
+    // Change each path separator to "/", because Windows uses a different separator.
     const normalizedPath = filePath.replace(/\\/g, "/")
 
-    // If this file is inside the allowed directory, skip all checks
     if (normalizedPath.includes(allowedDir)) return {}
 
     return {
-      // Catches <svg> in the template section of .astro files
+      // Finds an <svg> element in the template section of an .astro file.
       JSXOpeningElement(node) {
         if (node.name.name === "svg") {
           context.report({ node, messageId: "noInlineSvg", data: { allowedDir } })

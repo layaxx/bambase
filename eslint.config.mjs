@@ -43,10 +43,8 @@ export default defineConfig(
     ignores: ["dist/**", ".astro/**", "node_modules/**"],
   },
 
-  // Base JS rules for all files
   eslint.configs.recommended,
 
-  // TypeScript rules for .ts/.tsx files
   {
     files: ["**/*.ts", "**/*.tsx"],
     extends: [...tseslint.configs.recommended],
@@ -96,7 +94,7 @@ export default defineConfig(
     },
   },
 
-  // Node globals for config files at root (astro.config.mjs, etc.)
+  // The Node globals for the config files in the root directory, such as astro.config.mjs
   {
     files: ["*.mjs", "*.js", "*.cjs"],
     languageOptions: {

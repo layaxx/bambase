@@ -1,11 +1,10 @@
 import { expect, test, type Browser, type Page } from "@playwright/test"
 
 /**
- * Report moderation queue (/admin/reports/events, /admin/reports/jobs) — reports have no
- * permission of their own, so /admin/reports/events is gated by "event:moderate" and
- * /admin/reports/jobs by "jobOffer:moderate" from the better-auth `admin` plugin. Each test
- * logs in inline (no shared storageState) since it needs to switch between the seed user
- * (event owner / anonymous reporter) and the seeded admin@example.com account.
+ * A report has no permission of its own: /admin/reports/events needs "event:moderate" and
+ * /admin/reports/jobs needs "jobOffer:moderate", both from the better-auth `admin` plugin.
+ * Each test logs in inline, because it must change between the seed user, who owns the event
+ * or sends an anonymous report, and the seeded admin@example.com account.
  */
 
 async function login(page: Page, email: string, password: string) {
@@ -91,8 +90,8 @@ test("moderator can dismiss and reopen a report", async ({ page, browser }) => {
 
   await dismissedCard.getByRole("button", { name: "Alle wiedereröffnen" }).click()
 
-  // Reopening redirects back to the default (open) view, where the
-  // now-reopened report should be visible again.
+  // A reopen goes back to the default view, which shows the open reports. The reopened
+  // report must be visible there again.
   await expect(adminPage).toHaveURL(/\/admin\/reports\/events$/)
   await expect(adminPage.locator(".rounded-xl", { hasText: title })).toBeVisible()
   await adminContext.close()
@@ -121,12 +120,12 @@ test("moderator can unpublish and republish a reported event directly from the q
   await expect(reportCard).toBeVisible()
   await reportCard.getByRole("button", { name: "Depublizieren" }).click()
 
-  // Unpublishing resolves the case immediately (regardless of the individual reports'
-  // review status), so it drops out of the default "open" queue...
+  // An unpublish resolves the case immediately, and the review status of each report has no
+  // effect. The case thus goes out of the default "open" queue...
   await expect(adminPage).toHaveURL(/\/admin\/reports\/events$/)
   await expect(adminPage.getByTestId("reports-queue")).not.toContainText(title)
 
-  // ...and shows up under "resolved" instead, flagged as unpublished with a way back.
+  // ...and into the "resolved" queue, marked as unpublished and with a way back.
   await adminPage.goto("/admin/reports/events?status=resolved")
   const unpublishedCard = adminPage.locator(".rounded-xl", { hasText: title })
   await expect(unpublishedCard).toBeVisible()
@@ -137,7 +136,7 @@ test("moderator can unpublish and republish a reported event directly from the q
 
   await unpublishedCard.getByRole("button", { name: "Veröffentlichen" }).click()
   await expect(adminPage).toHaveURL(/\/admin\/reports\/events$/)
-  // Republishing with the report still open moves the case back to "open".
+  // If the report is still open, a new publish moves the case back to "open".
   await expect(adminPage.locator(".rounded-xl", { hasText: title })).toBeVisible()
   await adminContext.close()
 

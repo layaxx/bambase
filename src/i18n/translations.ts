@@ -1,17 +1,5 @@
 export type Locale = "de" | "en"
 
-type SetAtPath<T, Path extends unknown[], Value> = Path extends [infer K, ...infer Rest]
-  ? K extends keyof T
-    ? {
-        [P in keyof T]: P extends K
-          ? Rest extends []
-            ? Value
-            : SetAtPath<T[P], Rest, Value>
-          : T[P]
-      }
-    : T
-  : T
-
 const de = {
   nav: {
     jobs: "Jobs",
@@ -109,15 +97,7 @@ const de = {
     pageSubtitle: "Speisepläne für Feki, Austraße und Erba.",
     today: "Heute",
     tomorrow: "Morgen",
-    weekdays: [
-      "Sonntag",
-      "Montag",
-      "Dienstag",
-      "Mittwoch",
-      "Donnerstag",
-      "Freitag",
-      "Samstag",
-    ] as const,
+    weekdays: ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"],
     weekendHeading: (sat: string, sun: string) => `Samstag & Sonntag, ${sat} – ${sun}`,
     dateLocale: "de-DE",
     vegan: "Vegan",
@@ -538,11 +518,7 @@ const de = {
   },
 }
 
-const en: SetAtPath<
-  typeof de,
-  ["mensa", "weekdays"],
-  [string, string, string, string, string, string, string]
-> = {
+const en: typeof de = {
   nav: {
     jobs: "Jobs",
     events: "Events",
@@ -638,15 +614,7 @@ const en: SetAtPath<
     pageSubtitle: "Menus for Feki, Austraße and Erba.",
     today: "Today",
     tomorrow: "Tomorrow",
-    weekdays: [
-      "Sunday",
-      "Monday",
-      "Tuesday",
-      "Wednesday",
-      "Thursday",
-      "Friday",
-      "Saturday",
-    ] as const,
+    weekdays: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
     weekendHeading: (sat: string, sun: string) => `Saturday & Sunday, ${sat} – ${sun}`,
     dateLocale: "en-US",
     vegan: "Vegan",

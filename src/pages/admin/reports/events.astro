@@ -2,7 +2,7 @@
 import { actions } from "astro:actions"
 import PageLayout from "@/layouts/PageLayout.astro"
 import ReportGroupList from "@/components/ReportGroupList.astro"
-import { fetchReportGroupsForAdmin } from "@/utils/api"
+import { fetchReportGroupsForAdmin } from "@/utils/api/reports"
 import { canModerateEvents, requireRole } from "@/utils/authz"
 import { useTranslations } from "@/i18n/translations"
 

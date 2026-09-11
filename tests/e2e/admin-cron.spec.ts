@@ -1,11 +1,10 @@
 import { expect, test, type Page } from "@playwright/test"
 
 /**
- * Cron job status page (/admin/cron) — gated by the "system:view" permission
- * from the better-auth `admin` plugin. Only exercises the "job-offer-expiry"
- * job via "Jetzt ausführen": unlike the sync jobs, it only touches the local
- * database (no outbound requests to feki.de/UniVis/the Mensa API), so it's
- * safe to trigger for real in e2e.
+ * /admin/cron needs the "system:view" permission from the better-auth `admin` plugin.
+ * The tests start only the "job-offer-expiry" job. It changes only the local database and
+ * sends no request to feki.de, UniVIS or the Mensa API, which the sync jobs do. It is thus
+ * safe to start it in an e2e test.
  */
 
 async function login(page: Page, email: string, password: string) {

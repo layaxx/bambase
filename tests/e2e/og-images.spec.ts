@@ -1,10 +1,7 @@
 import { expect, test } from "@playwright/test"
 
 /**
- * Smoke tests for the OpenGraph image generation API routes.
- * No auth required — these are public endpoints.
- *
- * Seeded data used:
+ * The tests use this seed data:
  *   Events:  ersti-party (published)
  *   Jobs:    werkstudent-in-softwareentwicklung-feki-de-e-v (published),
  *            bachelor-masterarbeit-im-bereich-data-science-universitaet-bamberg (submitted, not yet published)
@@ -23,7 +20,7 @@ test.describe("Event OG image (/api/og/event/[slug].png)", () => {
   test("redirects to fallback image for a non-existent event slug", async ({ request }) => {
     const response = await request.get("/api/og/event/this-slug-does-not-exist.png")
 
-    // Playwright follows the 302 redirect; final URL is the static fallback
+    // Playwright obeys the 302 redirect. The last URL is the static fallback.
     expect(response.url()).toContain("/og-image.png")
     expect(response.status()).toBe(200)
   })
@@ -49,7 +46,7 @@ test.describe("Job OG image (/api/og/job/[slug].png)", () => {
   })
 
   test("redirects to fallback image for a non-published job", async ({ request }) => {
-    // This job is seeded with onlineStatus "submitted" (not yet published)
+    // The seed gives this job the onlineStatus "submitted", thus it is not published.
     const response = await request.get(
       "/api/og/job/bachelor-masterarbeit-im-bereich-data-science-universitaet-bamberg.png"
     )

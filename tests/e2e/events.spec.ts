@@ -1,15 +1,11 @@
 import { expect, test, type Page } from "@playwright/test"
 import { AUTH_FILE } from "../../playwright.config"
 
-// A seeded event — unowned (ownerId is null), so it's never owned by the
-// seed user and is safe to use for non-owner assertions.
+// An event from the seed data. It has no owner (ownerId is null), thus the seed user is
+// never its owner and the tests can use it for assertions about a different user.
 const SEEDED_EVENT_URL = "/event/offene-sozialberatung"
 
-/**
- * Event CRUD flows — all tests run as the authenticated seed user.
- *
- * Tests that create an event are responsible for cleaning it up at the end.
- */
+// A test that creates an event must also delete it at the end.
 
 test.use({ storageState: AUTH_FILE })
 
@@ -19,7 +15,7 @@ function uniqueTitle() {
   return `E2E Test Event ${Date.now()}`
 }
 
-/** datetime-local input value format: YYYY-MM-DDTHH:mm */
+/** The value format of a datetime-local input: YYYY-MM-DDTHH:mm */
 const FUTURE_START = "2099-12-01T18:00"
 const FUTURE_END = "2099-12-01T20:00"
 const INVALID_START = "2099-12-01T20:00" // start after end (invalid)
@@ -38,9 +34,9 @@ async function createEvent(page: Page, title: string): Promise<string> {
 }
 
 /**
- * The /events listing is paginated and sorted by start date ascending, and
- * FUTURE_START (2099) sorts after every other event, so a freshly created
- * test event lands on the last page rather than the first.
+ * The /events page shows the events on more than one page, sorted by start date, earliest
+ * first. FUTURE_START (2099) comes after each other event, thus a new test event is on the
+ * last page and not on the first page.
  */
 async function goToLastEventsPage(page: Page) {
   const lastPageLink = page.locator(".join a.join-item", { hasText: /^\d+$/ }).last()
@@ -74,7 +70,7 @@ test("create event with start after end shows validation error", async ({ page }
   await page.fill("#description", "This should fail validation.")
   await page.click('button[type="submit"]')
 
-  // Server validates start < end and returns an error
+  // The server makes sure that start is before end, and gives an error.
   await expect(page.locator(".alert-error, .text-error")).toBeVisible()
   await expect(page).toHaveURL(/event\/new\??.*/)
 })
@@ -120,7 +116,6 @@ test("edit event — datetime fields are pre-populated correctly", async ({ page
   expect(startValue).toBe(FUTURE_START)
   expect(endValue).toBe(FUTURE_END)
 
-  // navigate back without saving
   await page.goto(eventUrl)
   await deleteEvent(page)
 })
@@ -148,7 +143,7 @@ test("create event without required fields stays on /event/new (browser validati
 }) => {
   await page.goto("/event/new")
   await page.click('button[type="submit"]')
-  // Browser's native required validation keeps us on the page
+  // The validation of the browser for a required field keeps the page open.
   await expect(page).toHaveURL("/event/new")
 })
 
@@ -156,11 +151,12 @@ test("event draft is cleared when navigating away without submitting", async ({ 
   await page.goto("/event/new")
   await page.fill("#title", "Draft that should be discarded")
 
-  // Navigate away via link (not submit) — pagehide fires, draft cleared
+  // Go to a different page with a link and not with a submit. This starts pagehide, which
+  // deletes the draft.
   await page.getByRole("link", { name: "Alle Veranstaltungen" }).click()
   await expect(page).toHaveURL("/events")
 
-  // Return to the form — sessionStorage draft should be gone
+  // Open the form again. The draft in sessionStorage must be gone.
   await page.goto("/event/new")
   const titleValue = await page.locator("#title").inputValue()
   expect(titleValue).toBe("")
@@ -169,12 +165,12 @@ test("event draft is cleared when navigating away without submitting", async ({ 
 // ─── Privilege escalation ───────────────────────────────────────────────────
 
 /**
- * Astro Actions invoked via a plain <form action={actions.x.y}> render as a
- * POST to the current page URL with a `?_action=x.y` query param. Ownership
- * is enforced inside the action handler itself (src/actions/events.ts), which
- * throws ActionError({ code: "FORBIDDEN" }) — Astro maps that to HTTP 403.
- * Requests need an Origin/Referer matching the app's own origin, or Astro's
- * CSRF protection rejects them before the handler ever runs.
+ * A plain <form action={actions.x.y}> sends an Astro Action as a POST to the URL of the
+ * current page, with the query parameter `?_action=x.y`. The action handler itself
+ * (src/actions/events.ts) checks the ownership and throws ActionError({ code: "FORBIDDEN" }),
+ * which Astro sends as HTTP 403. Each request needs an Origin or Referer header with the
+ * origin of the app. Without it, the CSRF protection of Astro rejects the request before the
+ * handler starts.
  */
 test.describe("Ownership enforcement — events", () => {
   let eventId: string
@@ -183,7 +179,8 @@ test.describe("Ownership enforcement — events", () => {
     const ctx = await browser.newContext({ storageState: AUTH_FILE })
     const pg = await ctx.newPage()
     await pg.goto(SEEDED_EVENT_URL)
-    // Report modal exposes the event's id as a hidden input for non-owner viewers.
+    // For a viewer who is not the owner, the report modal has the id of the event in a
+    // hidden input.
     eventId = await pg.locator('input[name="target_id"]').inputValue()
     await ctx.close()
     expect(eventId).toBeTruthy()
@@ -230,12 +227,13 @@ test("create event with no location — EventLocation section is not rendered", 
   await page.fill("#start", FUTURE_START)
   await page.fill("#end", FUTURE_END)
   await page.fill("#description", "Automated E2E test event — safe to delete.")
-  // location_type defaults to "none" — leave it unchanged
+  // location_type has the default value "none". Do not change it.
   await page.click('button[type="submit"]')
   await page.waitForURL(/\/event\/[a-z0-9-]+$/)
 
   await expect(page.getByRole("heading", { level: 1 })).toContainText(title)
-  // EventLocation is only rendered when a location exists; "Ort" dt label should be absent
+  // The page renders EventLocation only for an event with a location, thus the "Ort" label
+  // must be absent.
   await expect(page.locator("dt").filter({ hasText: "Ort" })).toHaveCount(0)
 
   await deleteEvent(page)
@@ -252,11 +250,11 @@ test("create event with map location (linked) — location name appears on detai
   await page.fill("#end", FUTURE_END)
   await page.fill("#description", "Automated E2E test event — safe to delete.")
 
-  // Switch to linked location type to reveal the map location dropdown
+  // The linked location type makes the map location dropdown visible.
   await page.click('input[name="location_type"][value="linked"]')
   await page.locator("#linked-location-section").waitFor({ state: "visible" })
 
-  // Pick the first real location from the dropdown (index 0 is the empty placeholder)
+  // Select the first true location. The option at index 0 is the empty placeholder.
   const locationSelect = page.locator('select[name="map_location_id"]')
   const firstOptionText = await locationSelect.locator("option").nth(1).textContent()
   await locationSelect.selectOption({ index: 1 })
@@ -265,7 +263,7 @@ test("create event with map location (linked) — location name appears on detai
   await page.waitForURL(/\/event\/[a-z0-9-]+$/)
 
   await expect(page.getByRole("heading", { level: 1 })).toContainText(title)
-  // Option label format is "Location Name · City" — check for the name portion
+  // The label of an option has the format "Location Name · City". Use only the name.
   const locationName = (firstOptionText ?? "").split(" · ")[0].trim()
   await expect(page.locator("body")).toContainText(locationName)
 
@@ -281,7 +279,7 @@ test("create event with custom location — custom name appears on detail page",
   await page.fill("#end", FUTURE_END)
   await page.fill("#description", "Automated E2E test event — safe to delete.")
 
-  // Switch to custom location type to reveal the custom fields
+  // The custom location type makes the custom fields visible.
   await page.click('input[name="location_type"][value="custom"]')
   await page.locator("#custom-location-section").waitFor({ state: "visible" })
 
@@ -293,7 +291,6 @@ test("create event with custom location — custom name appears on detail page",
   await page.waitForURL(/\/event\/[a-z0-9-]+$/)
 
   await expect(page.getByRole("heading", { level: 1 })).toContainText(title)
-  // Custom location name should appear in the EventLocation card
   await expect(page.locator("body")).toContainText("E2E Test Venue")
 
   await deleteEvent(page)

@@ -1,6 +1,9 @@
 type FormField = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | RadioNodeList
 
-/** Disables the submit button once a form is submitted, so a slow request or double-click can't fire it twice. */
+/**
+ * Disables the submit button after the user submits a form. A slow request or a double click
+ * can thus not send the form two times.
+ */
 export function disableSubmitOnSubmit(form: HTMLFormElement): void {
   const submitBtn = form.querySelector<HTMLButtonElement>('[type="submit"]')
   form.addEventListener("submit", () => {

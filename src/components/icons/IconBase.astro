@@ -1,0 +1,27 @@
+---
+/**
+ * The 24px outline wrapper that most icons share. The icons that are different
+ * (IconCheck, IconGitHub, IconMenu, IconMoon, IconSun, IconX) keep their own <svg>.
+ */
+interface Props {
+  class?: string
+}
+
+const { class: className } = Astro.props
+---
+
+<svg
+  aria-hidden="true"
+  class:list={className}
+  fill="none"
+  height="24"
+  stroke="currentColor"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  stroke-width="2"
+  viewBox="0 0 24 24"
+  width="24"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <slot />
+</svg>

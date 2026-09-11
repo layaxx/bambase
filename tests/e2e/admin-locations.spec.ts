@@ -1,10 +1,9 @@
 import { expect, test, type Page } from "@playwright/test"
 
 /**
- * Location management (/admin/locations) — gated by the "location:manage"
- * permission from the better-auth `admin` plugin, granted to the "admin" role.
- * Each test logs in inline (no shared storageState) since it needs to switch
- * between the non-manager seed user and the seeded admin@example.com account.
+ * /admin/locations needs the "location:manage" permission from the better-auth `admin`
+ * plugin, which the "admin" role has. Each test logs in inline, because it must change
+ * between the seed user, who is not a manager, and the seeded admin@example.com account.
  */
 
 async function login(page: Page, email: string, password: string) {

@@ -1,7 +1,8 @@
 ---
 import { actions } from "astro:actions"
 import PageLayout from "@/layouts/PageLayout.astro"
-import { fetchEvent, REPORT_WARNING_THRESHOLD, type Event } from "@/utils/api"
+import { fetchEvent, type Event } from "@/utils/api/events"
+import { REPORT_WARNING_THRESHOLD } from "@/utils/api/reports"
 import { useTranslations } from "@/i18n/translations"
 import ConfirmModal from "@/components/ConfirmModal.astro"
 import ApiDownBanner from "@/components/ApiDownBanner.astro"

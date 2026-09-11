@@ -1,12 +1,11 @@
 import { expect, test, type Page } from "@playwright/test"
 
 /**
- * Event moderation (/admin/events) — gated by the "event:moderate" permission
- * from the better-auth `admin` plugin. Unlike jobs, the admin events queue has
- * no approve/reject flow; moderators edit any event via /admin/events/[slug]/edit
- * regardless of ownership. Each test logs in inline (no shared storageState)
- * since it needs to switch between the seed user (event owner) and the seeded
- * admin@example.com account (moderator).
+ * /admin/events needs the "event:moderate" permission from the better-auth `admin` plugin.
+ * The queue has no approve flow and no reject flow, which the jobs queue has: a moderator
+ * edits each event on /admin/events/[slug]/edit, also an event of a different owner.
+ * Each test logs in inline, because it must change between the seed user, who owns the event,
+ * and the seeded admin@example.com account, who is the moderator.
  */
 
 async function login(page: Page, email: string, password: string) {
@@ -71,7 +70,7 @@ test("moderator can edit another user's event", async ({ page, browser }) => {
   await expect(updatedCard).toBeVisible()
   await adminContext.close()
 
-  // slug (and therefore the URL) is unchanged by the title update
+  // A change to the title does not change the slug, and thus does not change the URL.
   await page.goto(eventUrl)
   await expect(page.getByRole("heading", { level: 1 })).toContainText(updatedTitle)
 

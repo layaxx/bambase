@@ -4,6 +4,7 @@ import removeMd from "remove-markdown"
 import { EventCategory } from "@/generated/prisma/enums"
 import prisma from "./prisma"
 import { createWithUniqueSlug } from "./slugify"
+import { errorMessage } from "./error-message"
 
 const UNIVIS_PREFIX = "univis:"
 
@@ -21,12 +22,8 @@ function parse(str: string): string {
 const client = new UnivISClient({ domain: "univis.uni-bamberg.de" })
 
 function parseTime(time: string): [number, number, number] {
-  const split = time.split(":")
-  const result: [number, number, number] = [0, 0, 0]
-  if (split.length >= 1) result[0] = parseInt(split[0], 10) || 0
-  if (split.length >= 2) result[1] = parseInt(split[1], 10) || 0
-  if (split.length >= 3) result[2] = parseInt(split[2], 10) || 0
-  return result
+  const [h = 0, m = 0, s = 0] = time.split(":").map((n) => parseInt(n, 10) || 0)
+  return [h, m, s]
 }
 
 function toDateTime(date: string, time: string): Date {
@@ -50,7 +47,7 @@ export async function syncUnivisEvents() {
   try {
     univisEvents = await client.getCalendar({ start, end })
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error)
+    const message = errorMessage(error)
     console.error(`[univis] Failed to fetch from UniVis: ${message}`)
     throw new Error(`Failed to fetch from UniVis: ${message}`, { cause: error })
   }
@@ -109,9 +106,7 @@ export async function syncUnivisEvents() {
           await prisma.event.update({ where: { id: match.id }, data })
           return "updated"
         } catch (error) {
-          console.error(
-            `[univis] Failed to update event ${externalId}: ${error instanceof Error ? error.message : String(error)}`
-          )
+          console.error(`[univis] Failed to update event ${externalId}: ${errorMessage(error)}`)
           return "skipped"
         }
       }
@@ -122,9 +117,7 @@ export async function syncUnivisEvents() {
         )
         return "created"
       } catch (error) {
-        console.error(
-          `[univis] Failed to create event ${externalId}: ${error instanceof Error ? error.message : String(error)}`
-        )
+        console.error(`[univis] Failed to create event ${externalId}: ${errorMessage(error)}`)
         return "skipped"
       }
     })

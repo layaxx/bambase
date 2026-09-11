@@ -1,7 +1,7 @@
 import { describe, expect, it, beforeAll } from "vitest"
 import { experimental_AstroContainer as AstroContainer } from "astro/container"
 import MensaLocationCard from "./MensaLocationCard.astro"
-import type { MensaMeal } from "@/utils/api"
+import type { MensaMeal } from "@/utils/api/mensa"
 
 let container: AstroContainer
 

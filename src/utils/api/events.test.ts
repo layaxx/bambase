@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import {
   fetchAllPublishedEventSlugs,
-  fetchEvents,
   fetchEvent,
   fetchMyEvents,
   fetchOngoingOrUpcomingEvents,
@@ -62,62 +61,6 @@ const mappedSampleEvent = {
   map_location: undefined,
   custom_location: undefined,
 }
-
-describe("fetchEvents", () => {
-  it("sorts results by start ascending", async () => {
-    mockFindMany.mockResolvedValue([])
-
-    await fetchEvents()
-
-    expect(mockFindMany).toHaveBeenCalledWith(
-      expect.objectContaining({ orderBy: { start: "asc" } })
-    )
-  })
-
-  it("excludes hidden events", async () => {
-    mockFindMany.mockResolvedValue([])
-
-    await fetchEvents()
-
-    expect(mockFindMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: expect.objectContaining({ hidden: false }) })
-    )
-  })
-
-  it("uses the default limit of 100", async () => {
-    mockFindMany.mockResolvedValue([])
-
-    await fetchEvents()
-
-    expect(mockFindMany).toHaveBeenCalledWith(expect.objectContaining({ take: 100 }))
-  })
-
-  it("respects a custom limit", async () => {
-    mockFindMany.mockResolvedValue([])
-
-    await fetchEvents(25)
-
-    expect(mockFindMany).toHaveBeenCalledWith(expect.objectContaining({ take: 25 }))
-  })
-
-  it("returns mapped events from the response", async () => {
-    mockFindMany.mockResolvedValue([makeRow()])
-
-    const result = await fetchEvents()
-
-    expect(result).toEqual({ data: [mappedSampleEvent], apiDown: false })
-  })
-
-  it("logs an error and returns an empty array when the query fails", async () => {
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
-    mockFindMany.mockResolvedValue(null) // null.map throws TypeError inside the try block
-
-    const result = await fetchEvents()
-
-    expect(result).toEqual({ data: [], apiDown: true })
-    expect(consoleSpy).toHaveBeenCalledWith("Error fetching events", expect.any(TypeError))
-  })
-})
 
 describe("fetchEvent", () => {
   it("filters by the given slug and excludes hidden events", async () => {

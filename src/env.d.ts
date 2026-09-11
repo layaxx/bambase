@@ -6,9 +6,6 @@ declare module "*.astro" {
   export default Component
 }
 
-declare module "@fontsource-variable/archivo" {}
-declare module "@fontsource-variable/inter" {}
-
 type UserWithRole = import("better-auth").User & { role?: string | null }
 
 declare namespace App {

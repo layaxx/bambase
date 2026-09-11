@@ -1,6 +1,6 @@
 import prisma from "../prisma"
 import { withCache } from "./cache"
-import type { ApiResult } from "./types"
+import { apiResult, type ApiResult } from "./types"
 import { LocationCategory } from "@/generated/prisma/enums"
 
 export const LOCATION_CATEGORIES = Object.values(LocationCategory)
@@ -62,46 +62,34 @@ export function toMapLocation(row: {
   }
 }
 
-export async function fetchLocations(
+export function fetchLocations(
   category?: MapLocation["category"]
 ): Promise<ApiResult<MapLocation[]>> {
-  const key = `locations:${category ?? "all"}`
-  try {
-    const rows = await withCache(key, () =>
+  return apiResult("Error fetching locations", [], async () => {
+    const rows = await withCache(`locations:${category ?? "all"}`, () =>
       prisma.location.findMany({
         where: category ? { category } : undefined,
         orderBy: { name: "asc" },
         take: 500,
       })
     )
-    return { data: rows.map(toMapLocation), apiDown: false }
-  } catch (error) {
-    console.error("Error fetching locations", error)
-    return { data: [], apiDown: true }
-  }
+    return rows.map(toMapLocation)
+  })
 }
 
-export async function fetchLocationForAdmin(slug: string): Promise<ApiResult<MapLocation | null>> {
-  try {
+export function fetchLocationForAdmin(slug: string): Promise<ApiResult<MapLocation | null>> {
+  return apiResult("Error fetching location for admin", null, async () => {
     const row = await prisma.location.findFirst({ where: { slug } })
-    if (!row) return { data: null, apiDown: false }
-    return { data: toMapLocation(row), apiDown: false }
-  } catch (error) {
-    console.error("Error fetching location for admin", error)
-    return { data: null, apiDown: true }
-  }
+    return row && toMapLocation(row)
+  })
 }
 
-/** Fetch all locations for the admin overview. */
-export async function fetchAllLocationsForAdmin(limit = 500): Promise<ApiResult<MapLocation[]>> {
-  try {
+export function fetchAllLocationsForAdmin(limit = 500): Promise<ApiResult<MapLocation[]>> {
+  return apiResult("Error fetching locations for admin", [], async () => {
     const rows = await prisma.location.findMany({
       orderBy: { name: "asc" },
       take: limit,
     })
-    return { data: rows.map(toMapLocation), apiDown: false }
-  } catch (error) {
-    console.error("Error fetching locations for admin", error)
-    return { data: [], apiDown: true }
-  }
+    return rows.map(toMapLocation)
+  })
 }

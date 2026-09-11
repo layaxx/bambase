@@ -1,6 +1,6 @@
 /**
- * Disallow text-base-content opacity values other than /40 (muted) or /70 (secondary).
- * See ROADMAP P13: text opacity is standardised to two semantic levels.
+ * Permits only the text-base-content opacity values /40 (muted) and /70 (secondary).
+ * See ROADMAP P13: the text opacity has two semantic levels.
  */
 
 const RE = /\btext-base-content\/(?!(?:40|70)\b)\d+\b/g

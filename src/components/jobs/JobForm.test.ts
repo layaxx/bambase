@@ -89,7 +89,7 @@ describe("JobForm", () => {
   describe("contact section", () => {
     it("renders a contact section heading", async () => {
       const html = await container.renderToString(JobForm, { props: baseProps, locals })
-      // de locale: t.jobs.contactSection = "Kontaktdaten"
+      // "Kontaktdaten" is t.jobs.contactSection in the de locale.
       expect(html).toContain("Kontaktdaten")
     })
 

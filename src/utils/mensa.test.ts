@@ -5,7 +5,7 @@ import type { GroupLabels } from "./mensa"
 
 // ─── getRelevantDay ───────────────────────────────────────────────────────────
 
-// Dates used across tests (verified day-of-week):
+// The dates that the tests use, with their weekday:
 // 2026-04-13 Monday, 2026-04-14 Tuesday, 2026-04-17 Friday
 // 2026-04-18 Saturday, 2026-04-19 Sunday, 2026-04-20 Monday
 

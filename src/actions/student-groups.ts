@@ -1,15 +1,11 @@
-import { defineAction, ActionError } from "astro:actions"
+import { defineAction } from "astro:actions"
 import { z } from "astro/zod"
 import { invalidateCacheByPrefix } from "@/utils/api/cache"
 import { createWithUniqueSlug } from "@/utils/slugify"
 import { canManageStudentGroups } from "@/utils/authz"
 import { requirePermission, mutationError } from "@/utils/action-guards"
 import prisma from "@/utils/prisma"
-
-const httpUrl = z
-  .url()
-  .max(2048)
-  .refine((url) => /^https?:\/\//i.test(url), "Nur http(s)-URLs sind erlaubt.")
+import { httpUrl } from "./schemas"
 
 const studentGroupBaseSchema = z.object({
   name: z.string().min(1, "Bitte Namen eingeben.").max(200),
@@ -20,6 +16,8 @@ const studentGroupBaseSchema = z.object({
   email: z.email().max(254).optional(),
 })
 
+const NOT_FOUND_MESSAGE = "Gruppe nicht gefunden."
+
 export const studentGroups = {
   delete: defineAction({
     accept: "form",
@@ -27,14 +25,15 @@ export const studentGroups = {
     handler: async ({ id }, context) => {
       await requirePermission(context, canManageStudentGroups)
 
-      const group = await prisma.studentGroup.findUnique({ where: { id }, select: { id: true } })
-      if (!group) throw new ActionError({ code: "NOT_FOUND", message: "Gruppe nicht gefunden." })
-
       try {
         await prisma.studentGroup.delete({ where: { id } })
       } catch (error) {
-        console.error("Student group delete failed:", error)
-        throw new ActionError({ code: "INTERNAL_SERVER_ERROR", message: "Löschen fehlgeschlagen." })
+        throw mutationError(
+          error,
+          "Student group delete failed",
+          "Löschen fehlgeschlagen.",
+          NOT_FOUND_MESSAGE
+        )
       }
 
       invalidateCacheByPrefix("student-groups:")
@@ -47,14 +46,6 @@ export const studentGroups = {
     input: studentGroupBaseSchema.extend({ id: z.string().min(1) }),
     handler: async ({ id, ...fields }, context) => {
       await requirePermission(context, canManageStudentGroups)
-
-      const existing = await prisma.studentGroup.findUnique({
-        where: { id },
-        select: { id: true },
-      })
-      if (!existing) {
-        throw new ActionError({ code: "NOT_FOUND", message: "Gruppe nicht gefunden." })
-      }
 
       let updated: { slug: string }
       try {
@@ -70,7 +61,12 @@ export const studentGroups = {
           },
         })
       } catch (error) {
-        throw mutationError(error, "Student group update failed", "Aktualisierung fehlgeschlagen.")
+        throw mutationError(
+          error,
+          "Student group update failed",
+          "Aktualisierung fehlgeschlagen.",
+          NOT_FOUND_MESSAGE
+        )
       }
 
       invalidateCacheByPrefix("student-groups:")

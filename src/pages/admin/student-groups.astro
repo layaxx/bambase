@@ -1,7 +1,7 @@
 ---
 import { actions } from "astro:actions"
 import PageLayout from "@/layouts/PageLayout.astro"
-import { fetchAllStudentGroupsForAdmin } from "@/utils/api"
+import { fetchAllStudentGroupsForAdmin } from "@/utils/api/student-groups"
 import { canManageStudentGroups, requireRole } from "@/utils/authz"
 import { useTranslations } from "@/i18n/translations"
 import ConfirmModal from "@/components/ConfirmModal.astro"

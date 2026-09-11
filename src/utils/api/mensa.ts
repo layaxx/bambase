@@ -1,5 +1,5 @@
 import type { Dayjs } from "dayjs"
-import type { ApiResult } from "./types"
+import { apiResult, type ApiResult } from "./types"
 import type { Prisma } from "@/generated/prisma/client"
 import prisma from "../prisma"
 
@@ -40,25 +40,19 @@ function toMensaMeal(row: {
   }
 }
 
-export async function fetchMensaMeals(date: Dayjs): Promise<ApiResult<MensaMeal[]>> {
-  try {
+export function fetchMensaMeals(date: Dayjs): Promise<ApiResult<MensaMeal[]>> {
+  return apiResult("Error fetching Mensa meals", [], async () => {
     const meals = await prisma.mensaMeal.findMany({ where: { date: toDateOnly(date) } })
-    return { data: meals.map(toMensaMeal), apiDown: false }
-  } catch (error) {
-    console.error("Error fetching Mensa meals", error)
-    return { data: [], apiDown: true }
-  }
+    return meals.map(toMensaMeal)
+  })
 }
 
-export async function fetchMensaMealsRange(dates: Dayjs[]): Promise<ApiResult<MensaMeal[]>> {
-  if (dates.length === 0) return { data: [], apiDown: false }
-  try {
+export function fetchMensaMealsRange(dates: Dayjs[]): Promise<ApiResult<MensaMeal[]>> {
+  return apiResult("Error fetching Mensa meals", [], async () => {
+    if (dates.length === 0) return []
     const meals = await prisma.mensaMeal.findMany({
       where: { date: { in: dates.map(toDateOnly) } },
     })
-    return { data: meals.map(toMensaMeal), apiDown: false }
-  } catch (error) {
-    console.error("Error fetching Mensa meals", error)
-    return { data: [], apiDown: true }
-  }
+    return meals.map(toMensaMeal)
+  })
 }

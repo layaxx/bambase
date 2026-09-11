@@ -1,6 +1,7 @@
+import type { JobOnlineStatus } from "@/generated/prisma/enums"
 import type { JobType } from "./api/job-offers"
 
-export type JobStatus = "submitted" | "published" | "expired" | "rejected" | "archived"
+export type JobStatus = JobOnlineStatus
 
 export type AlertVariant = "success" | "error" | "warning" | "neutral" | "info"
 

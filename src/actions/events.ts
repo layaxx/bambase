@@ -6,6 +6,7 @@ import { createWithUniqueSlug } from "@/utils/slugify"
 import { canModerateEvents } from "@/utils/authz"
 import { requireUserId, assertOwnerOrPermission, mutationError } from "@/utils/action-guards"
 import prisma from "@/utils/prisma"
+import { httpUrl } from "./schemas"
 
 const locationFieldsShape = {
   location_type: z.enum(["none", "linked", "custom"]).default("none"),
@@ -50,11 +51,7 @@ const eventBaseSchema = z
     start: z.string().min(1, "Bitte Startzeit eingeben."),
     end: z.string().min(1, "Bitte Endzeit eingeben."),
     category: z.enum(EVENT_CATEGORIES).default("other"),
-    external_url: z
-      .url()
-      .max(2048)
-      .refine((url) => /^https?:\/\//i.test(url), "Nur http(s)-URLs sind erlaubt.")
-      .optional(),
+    external_url: httpUrl.optional(),
   })
   .extend(locationFieldsShape)
 
@@ -139,9 +136,9 @@ export const events = {
       })
       if (!event) throw new ActionError({ code: "NOT_FOUND", message: "Event nicht gefunden." })
 
-      // A non-null rejectionReason means a moderator unpublished this (self-unpublish via the
-      // account page leaves it unset), so only a moderator may undo that — the owner alone
-      // can't republish their way out of a moderation decision.
+      // A rejectionReason that is not null means that a moderator unpublished this event. An
+      // unpublish by the owner on the account page keeps the reason unset. Only a moderator
+      // can thus publish the event again, and the owner cannot cancel a moderation decision.
       if (event.rejectionReason) {
         if (!(await canModerateEvents(context.locals.user?.role))) {
           throw new ActionError({

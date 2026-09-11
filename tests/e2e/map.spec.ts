@@ -19,7 +19,7 @@ test.describe("Map (/map) — category filter behavior", () => {
     await page.goto("/map")
     await expect(page.locator("#location-list button[data-id]").first()).toBeVisible()
 
-    // Hold the response open so there is time to assert the loading state
+    // Keep the response open, thus the test has sufficient time to check the loading state.
     let releaseRoute: () => void
     const hold = new Promise<void>((resolve) => {
       releaseRoute = resolve
@@ -64,7 +64,7 @@ test.describe("Map (/map) — API error behavior", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/map")
     await expect(page.locator("#location-list button[data-id]").first()).toBeVisible()
-    // Subsequent category fetches will return 503
+    // Each subsequent fetch of a category gives a 503 response.
     await page.route("/api/locations.json*", (route) => route.fulfill({ status: 503 }))
     await page.getByRole("button", { name: "Bibliotheken", exact: true }).click()
     await expect(page.locator("#location-list [role=alert]")).toBeVisible()

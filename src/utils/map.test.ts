@@ -8,8 +8,8 @@ import {
   type MapEvent,
 } from "./map"
 
-// Fixed reference point: Wednesday 15 April 2026, noon (local time, no Z suffix
-// to avoid timezone-dependent shifts that would change the calendar date).
+// The reference point for all tests: Wednesday, 15 April 2026, noon. The value has no Z
+// suffix, thus the local time zone cannot move it to a different calendar date.
 const NOW = new Date("2026-04-15T12:00:00")
 
 // ── formatAddress ─────────────────────────────────────────────────────────────
@@ -91,13 +91,13 @@ describe("timeFilterBound", () => {
 // ── filterEventsByTime ────────────────────────────────────────────────────────
 
 const EVENTS: MapEvent[] = [
-  // Same day as NOW (afternoon) — within "today", "week", "month", "all"
+  // The same day as NOW, in the afternoon: in "today", "week", "month" and "all"
   { title: "Today", slug: "today", start: "2026-04-15T18:00:00", locationId: "loc1" },
-  // Next day — within "week", "month", "all" but NOT "today"
+  // The next day: in "week", "month" and "all", but not in "today"
   { title: "Tomorrow", slug: "tomorrow", start: "2026-04-16T10:00:00", locationId: "loc1" },
-  // 10 days out — within "month" and "all" but NOT "today" or "week"
+  // 10 days later: in "month" and "all", but not in "today" or "week"
   { title: "10 days", slug: "ten-days", start: "2026-04-25T10:00:00", locationId: "loc2" },
-  // 35 days out — only within "all"
+  // 35 days later: only in "all"
   { title: "35 days", slug: "thirty-five-days", start: "2026-05-20T10:00:00", locationId: "loc2" },
 ]
 
@@ -132,7 +132,7 @@ describe("filterEventsByTime", () => {
   })
 
   it("includes an event whose start equals the bound exactly", () => {
-    // The week bound is NOW + 7 days; an event starting exactly then is included.
+    // The week bound is NOW plus 7 days. An event that starts at that time is included.
     const bound = new Date(NOW.getTime() + 7 * 86_400_000)
     const edgeEvent: MapEvent = {
       title: "Edge",

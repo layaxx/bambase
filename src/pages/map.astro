@@ -2,13 +2,8 @@
 import PageLayout from "@/layouts/PageLayout.astro"
 import PageHeader from "@/components/PageHeader.astro"
 import IconMapPin from "@/components/icons/IconMapPin.astro"
-import {
-  fetchLocations,
-  fetchUpcomingMapEvents,
-  type Event,
-  type EventMapLocation,
-  type MapLocation,
-} from "@/utils/api"
+import { fetchLocations, type MapLocation } from "@/utils/api/locations"
+import { fetchUpcomingMapEvents, type Event, type EventMapLocation } from "@/utils/api/events"
 import { type MapEvent } from "@/utils/map"
 import { useTranslations } from "@/i18n/translations"
 
@@ -232,7 +227,7 @@ const apiDownMessage = t.apiDown.message
 <script>
   import L from "leaflet"
   import "leaflet/dist/leaflet.css"
-  import type { MapLocation } from "@/utils/api"
+  import type { MapLocation } from "@/utils/api/locations"
   import {
     filterEventsByTime,
     formatAddress,
@@ -240,7 +235,6 @@ const apiDownMessage = t.apiDown.message
     groupByLocation,
     type MapEvent,
   } from "@/utils/map"
-  import { getParam, setParam } from "@/utils/url-params"
 
   const locations = (window as unknown as { __mapLocations: MapLocation[] }).__mapLocations
   const mapEvents = (window as unknown as { __mapEvents: MapEvent[] }).__mapEvents as MapEvent[]
@@ -252,6 +246,12 @@ const apiDownMessage = t.apiDown.message
 
   const apiDownMessage = (window as unknown as { __apiDownMessage: string }).__apiDownMessage
   const apiDown = (window as unknown as { __apiDown: boolean }).__apiDown
+
+  function setParam(key: string, value: string): void {
+    const params = new URLSearchParams(location.search)
+    params.set(key, value)
+    history.replaceState(null, "", `?${params}`)
+  }
 
   function escHtml(s: string): string {
     return s
@@ -479,6 +479,6 @@ const apiDownMessage = t.apiDown.message
 
     // ── initialise from URL params ────────────────────────────────────────────
 
-    applyTimeFilter(getParam("events", "week"))
+    applyTimeFilter(new URLSearchParams(location.search).get("events") ?? "week")
   }
 </script>

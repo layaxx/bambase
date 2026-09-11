@@ -1,5 +1,6 @@
 import { z } from "astro/zod"
 import prisma from "./prisma"
+import { errorMessage } from "./error-message"
 
 const SWCanteenMenuFoodSchema = z.object({
   name: z.string(),
@@ -183,7 +184,7 @@ export async function syncMensaMeals(): Promise<Record<Location, DaySummary | nu
 
         return [mensa.location, sumDaySummaries(dayResults), null]
       } catch (error) {
-        const message = error instanceof Error ? error.message : String(error)
+        const message = errorMessage(error)
         console.error(`Failed to sync mensa data for ${mensa.location}: ${message}`)
         return [mensa.location, null, message]
       }

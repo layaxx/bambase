@@ -1,7 +1,7 @@
 import { describe, expect, it, beforeAll } from "vitest"
 import { experimental_AstroContainer as AstroContainer } from "astro/container"
 import MensaDaySection from "./MensaDaySection.astro"
-import type { MensaMeal } from "@/utils/api"
+import type { MensaMeal } from "@/utils/api/mensa"
 
 let container: AstroContainer
 
@@ -54,9 +54,8 @@ describe("MensaDaySection", () => {
       props: { id: "day-1", heading: "Heute", meals: [] },
       locals,
     })
-    // The i18n key t.mensa.noDataDay should produce a non-empty string
     expect(html).toBeTruthy()
-    // Should not render location cards when there are no meals
+    // "Austraße" is the name of a location card. With no meals there are no location cards.
     expect(html).not.toContain("Austraße")
   })
 
