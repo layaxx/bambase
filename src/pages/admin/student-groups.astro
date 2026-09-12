@@ -27,42 +27,40 @@ const { data: groups } = await fetchAllStudentGroupsForAdmin()
     </a>
   </div>
 
-  {
-    groups.length === 0 ? (
-      <p class="rounded-xl border border-base-300 bg-base-100 p-6 text-base-content/70">
-        {t.admin.noStudentGroups}
-      </p>
-    ) : (
-      <div class="flex flex-col gap-3">
-        {groups.map((group) => (
-          <div class="flex flex-col gap-3 rounded-xl border border-base-300 bg-base-100 p-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 class="font-semibold leading-snug text-base-content">{group.name}</h2>
-              <p class="line-clamp-2 text-sm text-base-content/70">{group.description}</p>
-            </div>
-            <div class="flex gap-2">
-              <a class="btn btn-outline btn-sm" href={`/admin/student-groups/${group.slug}/edit`}>
-                {t.admin.editStudentGroup}
-              </a>
-              <button
-                class="btn btn-outline btn-error btn-sm"
-                onclick={`document.getElementById('deleteStudentGroupModal-${group.id}').showModal()`}
-                type="button"
-              >
-                {t.studentGroups.deleteStudentGroup}
-              </button>
-              <ConfirmModal
-                confirmClass="btn btn-error"
-                confirmLabel={t.studentGroups.deleteStudentGroup}
-                formAction={actions.studentGroups.delete}
-                hiddenInputs={[{ name: "id", value: group.id }]}
-                id={`deleteStudentGroupModal-${group.id}`}
-                message={t.studentGroups.deleteConfirm}
-              />
-            </div>
+  {groups.length === 0 ? (
+    <p class="rounded-xl border border-base-300 bg-base-100 p-6 text-base-content/70">
+      {t.admin.noStudentGroups}
+    </p>
+  ) : (
+    <div class="flex flex-col gap-3">
+      {groups.map((group) => (
+        <div class="flex flex-col gap-3 rounded-xl border border-base-300 bg-base-100 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 class="font-semibold leading-snug text-base-content">{group.name}</h2>
+            <p class="line-clamp-2 text-sm text-base-content/70">{group.description}</p>
           </div>
-        ))}
-      </div>
-    )
-  }
+          <div class="flex gap-2">
+            <a class="btn btn-outline btn-sm" href={`/admin/student-groups/${group.slug}/edit`}>
+              {t.admin.editStudentGroup}
+            </a>
+            <button
+              class="btn btn-outline btn-error btn-sm"
+              onclick={`document.getElementById('deleteStudentGroupModal-${group.id}').showModal()`}
+              type="button"
+            >
+              {t.studentGroups.deleteStudentGroup}
+            </button>
+            <ConfirmModal
+              confirmClass="btn btn-error"
+              confirmLabel={t.studentGroups.deleteStudentGroup}
+              formAction={actions.studentGroups.delete}
+              hiddenInputs={[{ name: "id", value: group.id }]}
+              id={`deleteStudentGroupModal-${group.id}`}
+              message={t.studentGroups.deleteConfirm}
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+  )}
 </PageLayout>

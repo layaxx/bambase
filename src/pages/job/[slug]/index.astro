@@ -68,183 +68,179 @@ const ogImage =
 ---
 
 <PageLayout description={description} ogImage={ogImage} title={job?.title ?? t.jobs.pageTitle}>
-  {
-    apiDown ? (
-      <ApiDownBanner />
-    ) : !job ? (
-      <div class="text-center py-20">
-        <h1 class="text-3xl font-bold mb-4">{t.jobs.notFound.headline}</h1>
-        <p class="text-base-content/70">{t.jobs.notFound.description}</p>
-        <div class="mt-6">
-          <a class="btn btn-primary" href="/jobs">
-            {t.jobs.backToJobs}
-          </a>
-        </div>
+  {apiDown ? (
+    <ApiDownBanner />
+  ) : !job ? (
+    <div class="text-center py-20">
+      <h1 class="text-3xl font-bold mb-4">{t.jobs.notFound.headline}</h1>
+      <p class="text-base-content/70">{t.jobs.notFound.description}</p>
+      <div class="mt-6">
+        <a class="btn btn-primary" href="/jobs">
+          {t.jobs.backToJobs}
+        </a>
       </div>
-    ) : (
-      <>
-        <div class="mb-4 md:mb-6 flex items-center justify-between gap-4">
-          <a class="btn btn-ghost btn-sm gap-1 pl-0" href="/jobs">
-            <IconArrowLeft class="h-4 w-4" />
-            {t.jobs.backToJobs}
-          </a>
-          {isOwner && (
-            <div class="flex items-center gap-2">
-              <a class="btn btn-ghost btn-sm" href="/account/jobs">
-                {t.auth.myJobOffers}
-              </a>
-              <a class="btn btn-outline btn-sm" href={`/job/${job.slug}/edit`}>
-                {t.jobs.editJob}
-              </a>
-              {canArchive ? (
-                <button
-                  class="btn btn-outline btn-sm"
-                  onclick="document.getElementById('archiveJobModal').showModal()"
-                  type="button"
-                >
-                  {t.jobs.archiveJob}
-                </button>
-              ) : null}
+    </div>
+  ) : (
+    <>
+      <div class="mb-4 md:mb-6 flex items-center justify-between gap-4">
+        <a class="btn btn-ghost btn-sm gap-1 pl-0" href="/jobs">
+          <IconArrowLeft class="h-4 w-4" />
+          {t.jobs.backToJobs}
+        </a>
+        {isOwner && (
+          <div class="flex items-center gap-2">
+            <a class="btn btn-ghost btn-sm" href="/account/jobs">
+              {t.auth.myJobOffers}
+            </a>
+            <a class="btn btn-outline btn-sm" href={`/job/${job.slug}/edit`}>
+              {t.jobs.editJob}
+            </a>
+            {canArchive ? (
               <button
-                class="btn btn-outline btn-error btn-sm"
-                onclick="document.getElementById('deleteJobModal').showModal()"
+                class="btn btn-outline btn-sm"
+                onclick="document.getElementById('archiveJobModal').showModal()"
                 type="button"
               >
-                {t.jobs.deleteJob}
+                {t.jobs.archiveJob}
               </button>
-            </div>
+            ) : null}
+            <button
+              class="btn btn-outline btn-error btn-sm"
+              onclick="document.getElementById('deleteJobModal').showModal()"
+              type="button"
+            >
+              {t.jobs.deleteJob}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {job.online_status !== "published" && (
+        <Alert variant={JOB_STATUS_ALERT_VARIANT[job.online_status] ?? "neutral"}>
+          {statusLabel[job.online_status] ?? job.online_status} – {t.jobs.notPublishedHint}
+          {job.online_status === "rejected" && job.rejection_reason && (
+            <>
+              <br />
+              {t.jobs.rejectionReasonLabel(job.rejection_reason)}
+            </>
           )}
-        </div>
+        </Alert>
+      )}
+      {hasReports && (
+        <Alert outline variant="warning">
+          {t.reports.warningHint}
+        </Alert>
+      )}
+      {reported === "success" && <Alert variant="success">{t.reports.successMessage}</Alert>}
+      {reported === "error" && <Alert variant="error">{t.reports.errorMessage}</Alert>}
 
-        {job.online_status !== "published" && (
-          <Alert variant={JOB_STATUS_ALERT_VARIANT[job.online_status] ?? "neutral"}>
-            {statusLabel[job.online_status] ?? job.online_status} – {t.jobs.notPublishedHint}
-            {job.online_status === "rejected" && job.rejection_reason && (
-              <>
-                <br />
-                {t.jobs.rejectionReasonLabel(job.rejection_reason)}
-              </>
-            )}
-          </Alert>
-        )}
-        {hasReports && (
-          <Alert outline variant="warning">
-            {t.reports.warningHint}
-          </Alert>
-        )}
-        {reported === "success" && <Alert variant="success">{t.reports.successMessage}</Alert>}
-        {reported === "error" && <Alert variant="error">{t.reports.errorMessage}</Alert>}
+      <div class="grid gap-8 lg:grid-cols-3">
+        <div class="lg:col-span-2">
+          <div class="mb-2 flex items-center gap-2 text-base-content/70">
+            <IconStore class="h-4 w-4" />
+            <span class="text-sm font-medium">{job.company}</span>
+          </div>
+          <h1 class="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">{job.title}</h1>
 
-        <div class="grid gap-8 lg:grid-cols-3">
-          <div class="lg:col-span-2">
-            <div class="mb-2 flex items-center gap-2 text-base-content/70">
-              <IconStore class="h-4 w-4" />
-              <span class="text-sm font-medium">{job.company}</span>
+          <div class="mb-4 flex flex-wrap gap-2">
+            <a href={`/jobs?type=${job.job_type}`}>
+              <JobTypeBadge jobType={job.job_type} />
+            </a>
+            <a href={`/jobs?field=${job.field}`}>
+              <span class="badge badge-ghost">{t.jobs.jobFields[job.field]}</span>
+            </a>
+          </div>
+
+          <div class="mb-6 flex flex-wrap gap-4 text-sm text-base-content/70">
+            <div class="flex items-center gap-1.5">
+              <IconMapPin class="h-4 w-4 shrink-0" />
+              {job.location}
             </div>
-            <h1 class="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">{job.title}</h1>
-
-            <div class="mb-4 flex flex-wrap gap-2">
-              <a href={`/jobs?type=${job.job_type}`}>
-                <JobTypeBadge jobType={job.job_type} />
-              </a>
-              <a href={`/jobs?field=${job.field}`}>
-                <span class="badge badge-ghost">{t.jobs.jobFields[job.field]}</span>
-              </a>
-            </div>
-
-            <div class="mb-6 flex flex-wrap gap-4 text-sm text-base-content/70">
-              <div class="flex items-center gap-1.5">
-                <IconMapPin class="h-4 w-4 shrink-0" />
-                {job.location}
-              </div>
-              <div class="flex items-center gap-1.5">
-                <IconClock class="h-4 w-4 shrink-0" />
-                {t.jobs.workingHours(job.working_hours)}
-              </div>
-            </div>
-
-            <div class="prose prose-sm max-w-none text-base-content/70">
-              <p class="whitespace-pre-wrap">{job.description}</p>
+            <div class="flex items-center gap-1.5">
+              <IconClock class="h-4 w-4 shrink-0" />
+              {t.jobs.workingHours(job.working_hours)}
             </div>
           </div>
 
-          <aside class="flex flex-col gap-4">
-            <div class="rounded-xl border border-base-300 bg-base-100 p-5">
-              <h2 class="mb-4 font-semibold">{t.jobs.contactTitle}</h2>
-              <dl class="flex flex-col gap-3 text-sm">
-                {job.contact?.name && (
-                  <div>
-                    <dt class="text-base-content/70">Name</dt>
-                    <dd class="font-medium">{job.contact.name}</dd>
-                  </div>
-                )}
-                {job.contact?.mail && (
-                  <div>
-                    <dt class="text-base-content/70">E-Mail</dt>
-                    <dd>
-                      <a class="link link-primary break-all" href={`mailto:${job.contact.mail}`}>
-                        {job.contact.mail}
-                      </a>
-                    </dd>
-                  </div>
-                )}
-                {job.contact?.phone && (
-                  <div>
-                    <dt class="text-base-content/70">Tel.</dt>
-                    <dd>
-                      <a class="link link-primary" href={`tel:${job.contact.phone}`}>
-                        {job.contact.phone}
-                      </a>
-                    </dd>
-                  </div>
-                )}
-              </dl>
-            </div>
-
-            {job.external_url && (
-              <a
-                class="btn btn-primary w-full"
-                href={toExternalUrl(job.external_url)}
-                rel="noopener noreferrer"
-                target="_blank"
-              >
-                {t.jobs.applyExternal}
-                <IconExternalLink class="h-4 w-4" />
-              </a>
-            )}
-
-            {!isOwner && !reported && (
-              <div class="flex justify-end">
-                <ReportModal targetId={job.id} targetType="job" />
-              </div>
-            )}
-          </aside>
+          <div class="prose prose-sm max-w-none text-base-content/70">
+            <p class="whitespace-pre-wrap">{job.description}</p>
+          </div>
         </div>
-      </>
-    )
-  }
-  {
-    job && (
-      <>
-        {canArchive && (
-          <ConfirmModal
-            confirmClass="btn btn-warning"
-            confirmLabel={t.jobs.archiveJob}
-            formAction={actions.jobs.archive}
-            hiddenInputs={[{ name: "id", value: job.id }]}
-            id="archiveJobModal"
-            message={t.jobs.archiveConfirm}
-          />
-        )}
+
+        <aside class="flex flex-col gap-4">
+          <div class="rounded-xl border border-base-300 bg-base-100 p-5">
+            <h2 class="mb-4 font-semibold">{t.jobs.contactTitle}</h2>
+            <dl class="flex flex-col gap-3 text-sm">
+              {job.contact?.name && (
+                <div>
+                  <dt class="text-base-content/70">Name</dt>
+                  <dd class="font-medium">{job.contact.name}</dd>
+                </div>
+              )}
+              {job.contact?.mail && (
+                <div>
+                  <dt class="text-base-content/70">E-Mail</dt>
+                  <dd>
+                    <a class="link link-primary break-all" href={`mailto:${job.contact.mail}`}>
+                      {job.contact.mail}
+                    </a>
+                  </dd>
+                </div>
+              )}
+              {job.contact?.phone && (
+                <div>
+                  <dt class="text-base-content/70">Tel.</dt>
+                  <dd>
+                    <a class="link link-primary" href={`tel:${job.contact.phone}`}>
+                      {job.contact.phone}
+                    </a>
+                  </dd>
+                </div>
+              )}
+            </dl>
+          </div>
+
+          {job.external_url && (
+            <a
+              class="btn btn-primary w-full"
+              href={toExternalUrl(job.external_url)}
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              {t.jobs.applyExternal}
+              <IconExternalLink class="h-4 w-4" />
+            </a>
+          )}
+
+          {!isOwner && !reported && (
+            <div class="flex justify-end">
+              <ReportModal targetId={job.id} targetType="job" />
+            </div>
+          )}
+        </aside>
+      </div>
+    </>
+  )}
+  {job && (
+    <>
+      {canArchive && (
         <ConfirmModal
-          confirmClass="btn btn-error"
-          confirmLabel={t.jobs.deleteJob}
-          formAction={actions.jobs.delete}
+          confirmClass="btn btn-warning"
+          confirmLabel={t.jobs.archiveJob}
+          formAction={actions.jobs.archive}
           hiddenInputs={[{ name: "id", value: job.id }]}
-          id="deleteJobModal"
-          message={t.jobs.deleteConfirm}
+          id="archiveJobModal"
+          message={t.jobs.archiveConfirm}
         />
-      </>
-    )
-  }
+      )}
+      <ConfirmModal
+        confirmClass="btn btn-error"
+        confirmLabel={t.jobs.deleteJob}
+        formAction={actions.jobs.delete}
+        hiddenInputs={[{ name: "id", value: job.id }]}
+        id="deleteJobModal"
+        message={t.jobs.deleteConfirm}
+      />
+    </>
+  )}
 </PageLayout>

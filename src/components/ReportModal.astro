@@ -23,7 +23,9 @@ const t = useTranslations(Astro.locals.locale)
 
 <dialog aria-labelledby="reportModalTitle" class="modal" id="reportModal">
   <div class="modal-box">
-    <h3 class="mb-4 text-lg font-bold" id="reportModalTitle">{t.reports.modalTitle}</h3>
+    <h3 class="mb-4 text-lg font-bold" id="reportModalTitle">
+      {t.reports.modalTitle}
+    </h3>
     <form action={actions.reports.submit} method="POST">
       <input name="target_type" type="hidden" value={targetType} />
       <input name="target_id" type="hidden" value={targetId} />
@@ -46,7 +48,8 @@ const t = useTranslations(Astro.locals.locale)
           id="report-details"
           name="details"
           placeholder={t.reports.detailsPlaceholder}
-          rows="3"></textarea>
+          rows="3"
+        ></textarea>
       </fieldset>
 
       <div class="modal-action">

@@ -56,25 +56,21 @@ const t = useTranslations(Astro.locals.locale)
         ]}
         id="description"
         name="description"
-        rows="4">{initialValues.description}</textarea
-      >
-      {
-        inputErrors.description && (
-          <p class="fieldset-label text-error">{inputErrors.description[0]}</p>
-        )
-      }
+        rows="4"
+      >{initialValues.description}</textarea>
+      {inputErrors.description && (
+        <p class="fieldset-label text-error">{inputErrors.description[0]}</p>
+      )}
     </fieldset>
 
     <fieldset class="fieldset">
       <legend class="fieldset-legend font-medium">{t.locations.fieldCategory}</legend>
       <select class="select select-bordered w-full" id="category" name="category" required>
-        {
-          Object.entries(t.map.categories).map(([value, label]) => (
-            <option selected={initialValues.category === value} value={value}>
-              {label}
-            </option>
-          ))
-        }
+        {Object.entries(t.map.categories).map(([value, label]) => (
+          <option selected={initialValues.category === value} value={value}>
+            {label}
+          </option>
+        ))}
       </select>
     </fieldset>
 
@@ -120,11 +116,9 @@ const t = useTranslations(Astro.locals.locale)
         type="url"
         value={initialValues.external_url ?? ""}
       />
-      {
-        inputErrors.external_url && (
-          <p class="fieldset-label text-error">{inputErrors.external_url[0]}</p>
-        )
-      }
+      {inputErrors.external_url && (
+        <p class="fieldset-label text-error">{inputErrors.external_url[0]}</p>
+      )}
     </fieldset>
 
     <div class="grid sm:grid-cols-2">
@@ -189,8 +183,12 @@ const t = useTranslations(Astro.locals.locale)
   </div>
 
   <div class="flex items-center gap-3">
-    <button class="btn btn-primary" type="submit">{submitLabel}</button>
-    <a class="btn btn-ghost" href={cancelHref}>{t.ui.cancel}</a>
+    <button class="btn btn-primary" type="submit">
+      {submitLabel}
+    </button>
+    <a class="btn btn-ghost" href={cancelHref}>
+      {t.ui.cancel}
+    </a>
   </div>
 </form>
 

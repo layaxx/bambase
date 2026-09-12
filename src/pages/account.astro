@@ -11,62 +11,64 @@ if (!user) return Astro.redirect("/login?redirect=/account")
 <PageLayout title={t.auth.accountTitle}>
   <h1 class="text-3xl font-bold tracking-tight sm:text-4xl mb-8">{t.auth.accountTitle}</h1>
 
-  {
-    !user.emailVerified && (
-      <div
-        class="alert alert-warning mb-6 flex-col items-start sm:flex-row sm:items-center"
-        role="alert"
-      >
-        <div>
-          <h3 class="font-bold">{t.auth.verifyEmailRequiredTitle}</h3>
-          <p>{t.auth.verifyEmailRequiredText}</p>
-        </div>
-        <button
-          class="btn btn-sm mt-2 sm:mt-0"
-          data-email={user.email}
-          data-sent-label={t.auth.resendVerificationSent}
-          id="resend-verification-btn"
-          type="button"
-        >
-          {t.auth.resendVerificationBtn}
-        </button>
+  {!user.emailVerified && (
+    <div
+      class="alert alert-warning mb-6 flex-col items-start sm:flex-row sm:items-center"
+      role="alert"
+    >
+      <div>
+        <h3 class="font-bold">{t.auth.verifyEmailRequiredTitle}</h3>
+        <p>{t.auth.verifyEmailRequiredText}</p>
       </div>
-    )
-  }
+      <button
+        class="btn btn-sm mt-2 sm:mt-0"
+        data-email={user.email}
+        data-sent-label={t.auth.resendVerificationSent}
+        id="resend-verification-btn"
+        type="button"
+      >
+        {t.auth.resendVerificationBtn}
+      </button>
+    </div>
+  )}
 
   <div class="card bg-base-100 border border-base-300">
     <div class="card-body gap-4">
       <div class="flex flex-col gap-1">
-        <span class="text-xs text-base-content/40 uppercase tracking-wide"
-          >{t.auth.emailFieldLabel}</span
-        >
+        <span class="text-xs text-base-content/40 uppercase tracking-wide">
+          {t.auth.emailFieldLabel}
+        </span>
         <span class="font-medium">{user.email}</span>
       </div>
       <div class="divider my-0"></div>
       <div class="flex flex-col gap-1">
-        <span class="text-xs text-base-content/40 uppercase tracking-wide"
-          >{t.auth.memberSince}</span
-        >
+        <span class="text-xs text-base-content/40 uppercase tracking-wide">
+          {t.auth.memberSince}
+        </span>
         <span class="font-medium">
-          {
-            new Date(user.createdAt).toLocaleDateString(t.auth.dateLocale, {
-              day: "numeric",
-              month: "long",
-              year: "numeric",
-            })
-          }
+          {new Date(user.createdAt).toLocaleDateString(t.auth.dateLocale, {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          })}
         </span>
       </div>
     </div>
   </div>
 
   <div class="mt-6 flex flex-wrap gap-3">
-    <a class="btn btn-outline btn-sm" href="/account/jobs">{t.auth.myJobOffers}</a>
-    <a class="btn btn-outline btn-sm" href="/account/events">{t.auth.myEvents}</a>
+    <a class="btn btn-outline btn-sm" href="/account/jobs">
+      {t.auth.myJobOffers}
+    </a>
+    <a class="btn btn-outline btn-sm" href="/account/events">
+      {t.auth.myEvents}
+    </a>
   </div>
 
   <div class="mt-4">
-    <button class="btn btn-ghost btn-sm" id="logout-button">{t.auth.logout}</button>
+    <button class="btn btn-ghost btn-sm" id="logout-button">
+      {t.auth.logout}
+    </button>
   </div>
 
   <script>

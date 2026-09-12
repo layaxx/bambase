@@ -25,42 +25,40 @@ function pageUrl(p: number) {
 }
 ---
 
-{
-  pageCount > 1 && (
-    <div class="mt-6 flex justify-center overflow-x-auto">
-      <div class="join">
-        {page > 1 ? (
-          <a class="join-item btn btn-sm" href={pageUrl(page - 1)}>
-            {prevLabel}
-          </a>
-        ) : (
-          <span class="join-item btn btn-sm btn-disabled">{prevLabel}</span>
-        )}
-        {windowStart > 1 && (
-          <a class="join-item btn btn-sm" href={pageUrl(1)}>
-            1
-          </a>
-        )}
-        {windowStart > 2 && <span class="join-item btn btn-sm btn-disabled">…</span>}
-        {pageNumbers.map((p) => (
-          <a class:list={["join-item btn btn-sm", { "btn-active": p === page }]} href={pageUrl(p)}>
-            {p}
-          </a>
-        ))}
-        {windowEnd < pageCount - 1 && <span class="join-item btn btn-sm btn-disabled">…</span>}
-        {windowEnd < pageCount && (
-          <a class="join-item btn btn-sm" href={pageUrl(pageCount)}>
-            {pageCount}
-          </a>
-        )}
-        {page < pageCount ? (
-          <a class="join-item btn btn-sm" href={pageUrl(page + 1)}>
-            {nextLabel}
-          </a>
-        ) : (
-          <span class="join-item btn btn-sm btn-disabled">{nextLabel}</span>
-        )}
-      </div>
+{pageCount > 1 && (
+  <div class="mt-6 flex justify-center overflow-x-auto">
+    <div class="join">
+      {page > 1 ? (
+        <a class="join-item btn btn-sm" href={pageUrl(page - 1)}>
+          {prevLabel}
+        </a>
+      ) : (
+        <span class="join-item btn btn-sm btn-disabled">{prevLabel}</span>
+      )}
+      {windowStart > 1 && (
+        <a class="join-item btn btn-sm" href={pageUrl(1)}>
+          1
+        </a>
+      )}
+      {windowStart > 2 && <span class="join-item btn btn-sm btn-disabled">…</span>}
+      {pageNumbers.map((p) => (
+        <a class:list={["join-item btn btn-sm", { "btn-active": p === page }]} href={pageUrl(p)}>
+          {p}
+        </a>
+      ))}
+      {windowEnd < pageCount - 1 && <span class="join-item btn btn-sm btn-disabled">…</span>}
+      {windowEnd < pageCount && (
+        <a class="join-item btn btn-sm" href={pageUrl(pageCount)}>
+          {pageCount}
+        </a>
+      )}
+      {page < pageCount ? (
+        <a class="join-item btn btn-sm" href={pageUrl(page + 1)}>
+          {nextLabel}
+        </a>
+      ) : (
+        <span class="join-item btn btn-sm btn-disabled">{nextLabel}</span>
+      )}
     </div>
-  )
-}
+  </div>
+)}

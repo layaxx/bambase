@@ -42,13 +42,11 @@ const generalError = result?.error && !isInputError(result.error) ? result.error
     <h1 class="mb-1 text-3xl font-bold tracking-tight sm:text-4xl">{t.jobs.editTitle}</h1>
   </section>
 
-  {
-    generalError && (
-      <div class="alert alert-error mb-6" role="alert">
-        <span>{generalError}</span>
-      </div>
-    )
-  }
+  {generalError && (
+    <div class="alert alert-error mb-6" role="alert">
+      <span>{generalError}</span>
+    </div>
+  )}
 
   <JobForm
     action={actions.jobs.update}

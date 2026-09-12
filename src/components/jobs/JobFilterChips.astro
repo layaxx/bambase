@@ -17,18 +17,16 @@ const t = useTranslations(Astro.locals.locale)
 const activeItems = [...typeItems, ...fieldItems, ...workModeItems].filter((i) => i.checked)
 ---
 
-{
-  hasActiveFilter && (
-    <div class="mb-4 flex flex-wrap items-center gap-2">
-      {activeItems.map((i) => (
-        <a class="badge badge-soft badge-primary gap-1 pr-1" href={i.url}>
-          {i.label}
-          <IconX class="h-3 w-3" />
-        </a>
-      ))}
-      <a class="text-sm text-primary hover:underline" href={clearUrl}>
-        {t.jobs.clearFilters}
+{hasActiveFilter && (
+  <div class="mb-4 flex flex-wrap items-center gap-2">
+    {activeItems.map((i) => (
+      <a class="badge badge-soft badge-primary gap-1 pr-1" href={i.url}>
+        {i.label}
+        <IconX class="h-3 w-3" />
       </a>
-    </div>
-  )
-}
+    ))}
+    <a class="text-sm text-primary hover:underline" href={clearUrl}>
+      {t.jobs.clearFilters}
+    </a>
+  </div>
+)}

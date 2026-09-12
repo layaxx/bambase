@@ -72,14 +72,14 @@ const dateFilters = [
   <PageHeader color="primary" subtitle={t.events.pageSubtitle} title={t.events.pageTitle}>
     <IconCalendar class="h-5 w-5" slot="icon" />
     <div class="flex items-center gap-2" slot="action">
-      {
-        isLoggedIn && (
-          <a class="btn btn-outline btn-sm" href="/account/events">
-            {t.auth.myEvents}
-          </a>
-        )
-      }
-      <a class="btn btn-primary btn-sm" href="/event/new">{t.events.submitEvent}</a>
+      {isLoggedIn && (
+        <a class="btn btn-outline btn-sm" href="/account/events">
+          {t.auth.myEvents}
+        </a>
+      )}
+      <a class="btn btn-primary btn-sm" href="/event/new">
+        {t.events.submitEvent}
+      </a>
     </div>
   </PageHeader>
 
@@ -101,20 +101,18 @@ const dateFilters = [
       >
         {t.events.filterAll}
       </a>
-      {
-        EVENT_CATEGORIES.map((cat) => (
-          <a
-            aria-current={activeCategory === cat ? "true" : undefined}
-            class:list={[
-              "btn btn-sm",
-              { "btn-primary": activeCategory === cat, "btn-outline": activeCategory !== cat },
-            ]}
-            href={categoryUrl(cat)}
-          >
-            {t.events.categories[cat]}
-          </a>
-        ))
-      }
+      {EVENT_CATEGORIES.map((cat) => (
+        <a
+          aria-current={activeCategory === cat ? "true" : undefined}
+          class:list={[
+            "btn btn-sm",
+            { "btn-primary": activeCategory === cat, "btn-outline": activeCategory !== cat },
+          ]}
+          href={categoryUrl(cat)}
+        >
+          {t.events.categories[cat]}
+        </a>
+      ))}
     </div>
 
     <div class="flex items-center gap-2">
@@ -122,13 +120,11 @@ const dateFilters = [
         {t.events.filterDate}:
       </label>
       <select class="select select-bordered select-xs" id="event-date-filter">
-        {
-          dateFilters.map(({ key, label }) => (
-            <option selected={key === dateFilter} value={key}>
-              {label}
-            </option>
-          ))
-        }
+        {dateFilters.map(({ key, label }) => (
+          <option selected={key === dateFilter} value={key}>
+            {label}
+          </option>
+        ))}
       </select>
     </div>
   </div>
@@ -138,35 +134,33 @@ const dateFilters = [
     {total === 1 ? t.events.resultSingular : t.events.resultPlural}
   </p>
 
-  {
-    !apiDown &&
-      (events.length === 0 ? (
-        <div class="rounded-xl border border-base-300 py-16 text-center">
-          <IconCalendar class="mx-auto mb-4 h-10 w-10 text-base-content/40" />
-          <p class="mb-4 text-base-content/70">
-            {hasActiveFilter ? t.events.noEventsFiltered : t.events.noEvents}
-          </p>
-          {hasActiveFilter && (
-            <a class="btn btn-outline btn-sm" href={clearUrl}>
-              {t.events.clearFilters}
-            </a>
-          )}
-        </div>
-      ) : (
-        <div class="space-y-10">
-          {[...grouped.entries()].map(([day, dayEvents]) => (
-            <div>
-              <h2 class="mb-4 text-lg font-semibold capitalize">{day}</h2>
-              <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {dayEvents.map((event) => (
-                  <EventCard event={event} />
-                ))}
-              </div>
+  {!apiDown &&
+    (events.length === 0 ? (
+      <div class="rounded-xl border border-base-300 py-16 text-center">
+        <IconCalendar class="mx-auto mb-4 h-10 w-10 text-base-content/40" />
+        <p class="mb-4 text-base-content/70">
+          {hasActiveFilter ? t.events.noEventsFiltered : t.events.noEvents}
+        </p>
+        {hasActiveFilter && (
+          <a class="btn btn-outline btn-sm" href={clearUrl}>
+            {t.events.clearFilters}
+          </a>
+        )}
+      </div>
+    ) : (
+      <div class="space-y-10">
+        {[...grouped.entries()].map(([day, dayEvents]) => (
+          <div>
+            <h2 class="mb-4 text-lg font-semibold capitalize">{day}</h2>
+            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {dayEvents.map((event) => (
+                <EventCard event={event} />
+              ))}
             </div>
-          ))}
-        </div>
-      ))
-  }
+          </div>
+        ))}
+      </div>
+    ))}
 
   <Pagination
     nextLabel={t.jobs.paginationNext}

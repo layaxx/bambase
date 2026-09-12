@@ -38,16 +38,14 @@ const sidebarLinks = [
 
     <h3 class="mb-3 text-sm font-semibold text-base-content">Teilverantwortliche Gruppen</h3>
     <ul class="flex flex-col gap-2 text-sm">
-      {
-        sidebarLinks.map((name) => (
-          <li>
-            <span class="flex items-center gap-1.5 text-base-content/70">
-              <IconArrowRight class="h-3.5 w-3.5 shrink-0" />
-              {name}
-            </span>
-          </li>
-        ))
-      }
+      {sidebarLinks.map((name) => (
+        <li>
+          <span class="flex items-center gap-1.5 text-base-content/70">
+            <IconArrowRight class="h-3.5 w-3.5 shrink-0" />
+            {name}
+          </span>
+        </li>
+      ))}
     </ul>
   </div>
 </div>

@@ -63,19 +63,21 @@ const generalError = result?.error && !isInputError(result.error) ? result.error
     <fieldset class="fieldset">
       <legend class="fieldset-legend font-medium">{t.admin.inviteRoleLabel}</legend>
       <select class="select select-bordered w-full" name="role" required>
-        {
-          USER_ROLES.map((role) => (
-            <option selected={role === "user"} value={role}>
-              {t.admin.roleNames[role]}
-            </option>
-          ))
-        }
+        {USER_ROLES.map((role) => (
+          <option selected={role === "user"} value={role}>
+            {t.admin.roleNames[role]}
+          </option>
+        ))}
       </select>
     </fieldset>
 
     <div class="flex items-center gap-3">
-      <button class="btn btn-primary" type="submit">{t.admin.inviteSubmit}</button>
-      <a class="btn btn-ghost" href="/admin/users">{t.ui.cancel}</a>
+      <button class="btn btn-primary" type="submit">
+        {t.admin.inviteSubmit}
+      </button>
+      <a class="btn btn-ghost" href="/admin/users">
+        {t.ui.cancel}
+      </a>
     </div>
   </form>
 </PageLayout>

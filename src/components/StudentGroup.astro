@@ -16,15 +16,13 @@ const { group } = Astro.props
   data-student-group
 >
   <h3 class="mb-2 font-semibold leading-tight text-base-content group-hover:text-primary">
-    {
-      group.website ? (
-        <a class="no-underline" href={group.website} rel="noopener noreferrer" target="_blank">
-          {group.name}
-        </a>
-      ) : (
-        group.name
-      )
-    }
+    {group.website ? (
+      <a class="no-underline" href={group.website} rel="noopener noreferrer" target="_blank">
+        {group.name}
+      </a>
+    ) : (
+      group.name
+    )}
   </h3>
 
   <p class="mb-2 text-sm text-base-content/70 line-clamp-4" data-description>
@@ -40,30 +38,26 @@ const { group } = Astro.props
   </button>
 
   <div class="mt-auto flex gap-3 border-t border-base-300 pt-3">
-    {
-      group.website && (
-        <a
-          class="flex items-center gap-1 text-xs text-base-content/70 hover:text-primary no-underline transition-colors"
-          href={group.website}
-          rel="noopener noreferrer"
-          target="_blank"
-        >
-          <IconGlobe class="h-3.5 w-3.5" />
-          Website
-        </a>
-      )
-    }
-    {
-      group.email && (
-        <a
-          class="flex items-center gap-1 text-xs text-base-content/70 hover:text-primary no-underline transition-colors"
-          href={`mailto:${group.email}`}
-        >
-          <IconMail class="h-3.5 w-3.5" />
-          E-Mail
-        </a>
-      )
-    }
+    {group.website && (
+      <a
+        class="flex items-center gap-1 text-xs text-base-content/70 hover:text-primary no-underline transition-colors"
+        href={group.website}
+        rel="noopener noreferrer"
+        target="_blank"
+      >
+        <IconGlobe class="h-3.5 w-3.5" />
+        Website
+      </a>
+    )}
+    {group.email && (
+      <a
+        class="flex items-center gap-1 text-xs text-base-content/70 hover:text-primary no-underline transition-colors"
+        href={`mailto:${group.email}`}
+      >
+        <IconMail class="h-3.5 w-3.5" />
+        E-Mail
+      </a>
+    )}
   </div>
 </div>
 

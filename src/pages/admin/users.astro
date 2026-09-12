@@ -186,14 +186,12 @@ const invited = Astro.url.searchParams.get("invited") === "success"
       <h1 class="text-3xl font-bold tracking-tight sm:text-4xl">{t.admin.usersTitle}</h1>
       <p class="mt-1 text-base-content/70">{t.admin.usersSubtitle}</p>
     </div>
-    {
-      canInvite && (
-        <a class="btn btn-primary btn-sm gap-1.5" href="/admin/users/invite">
-          <IconUserPlus class="h-4 w-4" />
-          {t.admin.inviteUser}
-        </a>
-      )
-    }
+    {canInvite && (
+      <a class="btn btn-primary btn-sm gap-1.5" href="/admin/users/invite">
+        <IconUserPlus class="h-4 w-4" />
+        {t.admin.inviteUser}
+      </a>
+    )}
   </div>
 
   {invited && <Alert variant="success">{t.admin.inviteSuccessMessage}</Alert>}
@@ -238,9 +236,7 @@ const invited = Astro.url.searchParams.get("invited") === "success"
       method="get"
     >
       <div class="relative flex-1">
-        <IconSearch
-          class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-base-content/40"
-        />
+        <IconSearch class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-base-content/40" />
         <input
           class="input input-bordered w-full pl-9"
           id="user-search"
@@ -254,13 +250,11 @@ const invited = Astro.url.searchParams.get("invited") === "success"
         <option selected={roleFilter === "all"} value="all">
           {t.admin.filterAllRoles}
         </option>
-        {
-          USER_ROLES.map((role) => (
-            <option selected={roleFilter === role} value={role}>
-              {t.admin.roleNames[role]}
-            </option>
-          ))
-        }
+        {USER_ROLES.map((role) => (
+          <option selected={roleFilter === role} value={role}>
+            {t.admin.roleNames[role]}
+          </option>
+        ))}
       </select>
       <select class="select select-bordered" id="user-status-filter" name="status">
         <option selected={statusFilter === "all"} value="all">
@@ -293,170 +287,161 @@ const invited = Astro.url.searchParams.get("invited") === "success"
 
     <div class="mt-4 flex items-center justify-between">
       <p class="text-sm text-base-content/70">{t.admin.usersShownCount(matchedCount)}</p>
-      {
-        hasActiveFilter && (
-          <a class="link link-sm" href={clearFiltersUrl}>
-            {t.admin.clearFilters}
-          </a>
-        )
-      }
+      {hasActiveFilter && (
+        <a class="link link-sm" href={clearFiltersUrl}>
+          {t.admin.clearFilters}
+        </a>
+      )}
     </div>
   </div>
 
   <div class="mt-4">
-    {
-      totalUsers === 0 ? (
-        <p class="rounded-xl border border-base-300 bg-base-100 p-6 text-base-content/70">
-          {t.admin.noUsers}
-        </p>
-      ) : matchedCount === 0 ? (
-        <div class="rounded-xl border border-base-300 bg-base-100 p-6 text-center text-base-content/70">
-          <p class="mb-2">{t.admin.noUsersMatchFilters}</p>
-          <a class="btn btn-outline btn-sm" href={clearFiltersUrl}>
-            {t.admin.clearFilters}
-          </a>
-        </div>
-      ) : (
-        <div class="overflow-x-auto rounded-xl border border-base-300 bg-base-100">
-          <table class="table">
-            <thead>
+    {totalUsers === 0 ? (
+      <p class="rounded-xl border border-base-300 bg-base-100 p-6 text-base-content/70">
+        {t.admin.noUsers}
+      </p>
+    ) : matchedCount === 0 ? (
+      <div class="rounded-xl border border-base-300 bg-base-100 p-6 text-center text-base-content/70">
+        <p class="mb-2">{t.admin.noUsersMatchFilters}</p>
+        <a class="btn btn-outline btn-sm" href={clearFiltersUrl}>
+          {t.admin.clearFilters}
+        </a>
+      </div>
+    ) : (
+      <div class="overflow-x-auto rounded-xl border border-base-300 bg-base-100">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>{t.admin.columnUser}</th>
+              <th>{t.admin.columnRole}</th>
+              <th>{t.admin.columnVerification}</th>
+              <th>{t.admin.columnStatus}</th>
+              <th>{t.admin.columnLastActive}</th>
+              <th class="text-right">{t.admin.columnActions}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {pagedUsers.map((user) => (
               <tr>
-                <th>{t.admin.columnUser}</th>
-                <th>{t.admin.columnRole}</th>
-                <th>{t.admin.columnVerification}</th>
-                <th>{t.admin.columnStatus}</th>
-                <th>{t.admin.columnLastActive}</th>
-                <th class="text-right">{t.admin.columnActions}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pagedUsers.map((user) => (
-                <tr>
-                  <td>
-                    <div class="flex items-center gap-3">
-                      <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-base-300 text-xs font-semibold text-base-content/70">
-                        {initials(user)}
-                      </div>
-                      <div>
-                        <p class="font-semibold leading-snug text-base-content">
-                          {user.name || user.email}
-                          {user.id === currentUser.id && (
-                            <span class="font-normal text-base-content/40">
-                              {" "}
-                              {t.admin.bannedYou}
-                            </span>
-                          )}
-                        </p>
-                        <p class="text-sm text-base-content/70">{user.email}</p>
-                      </div>
+                <td>
+                  <div class="flex items-center gap-3">
+                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-base-300 text-xs font-semibold text-base-content/70">
+                      {initials(user)}
                     </div>
-                  </td>
-                  <td>
-                    {user.id === currentUser.id || !canSetRole ? (
-                      <span class="badge badge-sm badge-neutral">
-                        {t.admin.roleNames[primaryRole(user)]}
-                      </span>
-                    ) : (
-                      <form action={actions.users.setRole} method="POST">
-                        <input name="id" type="hidden" value={user.id} />
-                        <select
-                          aria-label={t.admin.changeRoleLabel(user.name || user.email)}
-                          class="select select-bordered select-sm"
-                          name="role"
-                          onchange="this.form.requestSubmit()"
-                        >
-                          {USER_ROLES.map((role) => (
-                            <option selected={primaryRole(user) === role} value={role}>
-                              {t.admin.roleNames[role]}
-                            </option>
-                          ))}
-                        </select>
-                      </form>
-                    )}
-                  </td>
-                  <td>
-                    {user.emailVerified ? (
-                      <span class="badge badge-sm badge-success badge-outline gap-1">
-                        <IconCheck class="h-3 w-3" />
-                        {t.admin.statusVerified}
-                      </span>
-                    ) : (
-                      <span class="badge badge-sm badge-ghost">{t.admin.statusUnverified}</span>
-                    )}
-                  </td>
-                  <td>
-                    <div class="flex flex-col gap-1">
-                      <span
-                        class:list={[
-                          "badge badge-sm w-fit",
-                          { "badge-error": user.banned, "badge-success": !user.banned },
-                        ]}
-                      >
-                        {user.banned ? t.admin.statusBanned : t.admin.statusActive}
-                      </span>
-                      {user.banned && user.banExpires && (
-                        <span class="text-xs text-base-content/70">
-                          {t.admin.bannedUntil(
-                            new Date(user.banExpires).toLocaleDateString(t.auth.dateLocale, {
-                              day: "numeric",
-                              month: "long",
-                              year: "numeric",
-                            })
-                          )}
-                        </span>
-                      )}
-                      {user.banned && !user.banExpires && (
-                        <span class="text-xs text-base-content/70">
-                          {t.admin.bannedIndefinitely}
-                        </span>
-                      )}
-                      {user.banned && user.banReason && (
-                        <span class="text-xs text-base-content/70">{user.banReason}</span>
-                      )}
+                    <div>
+                      <p class="font-semibold leading-snug text-base-content">
+                        {user.name || user.email}
+                        {user.id === currentUser.id && (
+                          <span class="font-normal text-base-content/40"> {t.admin.bannedYou}</span>
+                        )}
+                      </p>
+                      <p class="text-sm text-base-content/70">{user.email}</p>
                     </div>
-                  </td>
-                  <td>
-                    <span class="whitespace-nowrap text-sm text-base-content/70">
-                      {formatLastActive(user.id)}
+                  </div>
+                </td>
+                <td>
+                  {user.id === currentUser.id || !canSetRole ? (
+                    <span class="badge badge-sm badge-neutral">
+                      {t.admin.roleNames[primaryRole(user)]}
                     </span>
-                  </td>
-                  <td class="text-right">
-                    {user.id === currentUser.id ? (
-                      <span class="text-sm text-base-content/40">—</span>
-                    ) : user.banned ? (
-                      <form action={actions.users.unban} method="POST">
-                        <input name="id" type="hidden" value={user.id} />
-                        <button class="btn btn-outline btn-sm" type="submit">
-                          {t.admin.unbanAction}
-                        </button>
-                      </form>
-                    ) : (
-                      <form
-                        action={actions.users.ban}
-                        class="flex items-center justify-end gap-2"
-                        method="POST"
+                  ) : (
+                    <form action={actions.users.setRole} method="POST">
+                      <input name="id" type="hidden" value={user.id} />
+                      <select
+                        aria-label={t.admin.changeRoleLabel(user.name || user.email)}
+                        class="select select-bordered select-sm"
+                        name="role"
+                        onchange="this.form.requestSubmit()"
                       >
-                        <input name="id" type="hidden" value={user.id} />
-                        <input
-                          class="input input-sm input-bordered w-32"
-                          maxlength="500"
-                          name="reason"
-                          placeholder={t.admin.reasonPlaceholder}
-                          type="text"
-                        />
-                        <button class="btn btn-outline btn-error btn-sm" type="submit">
-                          {t.admin.banAction}
-                        </button>
-                      </form>
+                        {USER_ROLES.map((role) => (
+                          <option selected={primaryRole(user) === role} value={role}>
+                            {t.admin.roleNames[role]}
+                          </option>
+                        ))}
+                      </select>
+                    </form>
+                  )}
+                </td>
+                <td>
+                  {user.emailVerified ? (
+                    <span class="badge badge-sm badge-success badge-outline gap-1">
+                      <IconCheck class="h-3 w-3" />
+                      {t.admin.statusVerified}
+                    </span>
+                  ) : (
+                    <span class="badge badge-sm badge-ghost">{t.admin.statusUnverified}</span>
+                  )}
+                </td>
+                <td>
+                  <div class="flex flex-col gap-1">
+                    <span
+                      class:list={[
+                        "badge badge-sm w-fit",
+                        { "badge-error": user.banned, "badge-success": !user.banned },
+                      ]}
+                    >
+                      {user.banned ? t.admin.statusBanned : t.admin.statusActive}
+                    </span>
+                    {user.banned && user.banExpires && (
+                      <span class="text-xs text-base-content/70">
+                        {t.admin.bannedUntil(
+                          new Date(user.banExpires).toLocaleDateString(t.auth.dateLocale, {
+                            day: "numeric",
+                            month: "long",
+                            year: "numeric",
+                          })
+                        )}
+                      </span>
                     )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )
-    }
+                    {user.banned && !user.banExpires && (
+                      <span class="text-xs text-base-content/70">{t.admin.bannedIndefinitely}</span>
+                    )}
+                    {user.banned && user.banReason && (
+                      <span class="text-xs text-base-content/70">{user.banReason}</span>
+                    )}
+                  </div>
+                </td>
+                <td>
+                  <span class="whitespace-nowrap text-sm text-base-content/70">
+                    {formatLastActive(user.id)}
+                  </span>
+                </td>
+                <td class="text-right">
+                  {user.id === currentUser.id ? (
+                    <span class="text-sm text-base-content/40">—</span>
+                  ) : user.banned ? (
+                    <form action={actions.users.unban} method="POST">
+                      <input name="id" type="hidden" value={user.id} />
+                      <button class="btn btn-outline btn-sm" type="submit">
+                        {t.admin.unbanAction}
+                      </button>
+                    </form>
+                  ) : (
+                    <form
+                      action={actions.users.ban}
+                      class="flex items-center justify-end gap-2"
+                      method="POST"
+                    >
+                      <input name="id" type="hidden" value={user.id} />
+                      <input
+                        class="input input-sm input-bordered w-32"
+                        maxlength="500"
+                        name="reason"
+                        placeholder={t.admin.reasonPlaceholder}
+                        type="text"
+                      />
+                      <button class="btn btn-outline btn-error btn-sm" type="submit">
+                        {t.admin.banAction}
+                      </button>
+                    </form>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
   </div>
 
   <Pagination
