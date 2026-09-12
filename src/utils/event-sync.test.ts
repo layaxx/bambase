@@ -2,7 +2,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 const mockGetCalendar = vi.hoisted(() => vi.fn())
 vi.mock("univis-api", () => ({
-  UnivISClient: vi.fn().mockImplementation(() => ({ getCalendar: mockGetCalendar })),
+  UnivISClient: class {
+    getCalendar = mockGetCalendar
+  },
 }))
 
 const mockFindMany = vi.hoisted(() => vi.fn())

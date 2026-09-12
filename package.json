@@ -60,7 +60,7 @@
     "prettier-plugin-astro": "1.0.0",
     "typescript": "^6.0.2",
     "typescript-eslint": "^8.70.0",
-    "vitest": "^3.0.0"
+    "vitest": "^5.0.0"
   },
   "resolutions": {
     "vite": "7.3.2"
