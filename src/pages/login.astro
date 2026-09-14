@@ -13,19 +13,19 @@ const emailConfirmed = Astro.url.searchParams.get("confirmed") === "true"
       <h1 class="text-2xl font-extrabold mb-2">{t.auth.loginTitle}</h1>
       <p class="text-base-content/70 text-sm mb-6">
         {t.auth.noAccount}
-        <a class="link link-primary" href="/register">{t.auth.registerLink}</a>
+        <a class="link link-primary" href="/register">
+          {t.auth.registerLink}
+        </a>
       </p>
 
-      {
-        emailConfirmed && (
-          <div class="alert alert-success mb-4">
-            <div>
-              <h3 class="font-bold">{t.auth.emailConfirmed}</h3>
-              <p>{t.auth.emailConfirmedYouCanLogin}</p>
-            </div>
+      {emailConfirmed && (
+        <div class="alert alert-success mb-4">
+          <div>
+            <h3 class="font-bold">{t.auth.emailConfirmed}</h3>
+            <p>{t.auth.emailConfirmedYouCanLogin}</p>
           </div>
-        )
-      }
+        </div>
+      )}
 
       <div class="alert alert-error mb-4 hidden" id="signin-error">
         <span></span>
@@ -56,11 +56,15 @@ const emailConfirmed = Astro.url.searchParams.get("confirmed") === "true"
           />
         </fieldset>
 
-        <button class="btn btn-primary mt-6" type="submit">{t.auth.loginBtn}</button>
+        <button class="btn btn-primary mt-6" type="submit">
+          {t.auth.loginBtn}
+        </button>
       </form>
 
       <p class="text-base-content/70 text-sm mt-4">
-        <a class="link link-primary" href="/forgot-password">{t.auth.forgotPasswordLink}</a>
+        <a class="link link-primary" href="/forgot-password">
+          {t.auth.forgotPasswordLink}
+        </a>
       </p>
     </div>
   </main>

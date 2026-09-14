@@ -13,7 +13,7 @@ const { label, checked, url } = Astro.props
 <a
   class:list={[
     "flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors",
-    { "bg-neutral text-neutral-content": checked, "hover:bg-base-200": !checked },
+    { "bg-primary/10 text-primary": checked, "hover:bg-base-200": !checked },
   ]}
   href={url}
 >
@@ -22,7 +22,7 @@ const { label, checked, url } = Astro.props
       class:list={[
         "flex h-4 w-4 shrink-0 items-center justify-center rounded border",
         {
-          "border-neutral-content/60 bg-neutral-content/20": checked,
+          "border-primary/50 bg-primary/20": checked,
           "border-base-content/40": !checked,
         },
       ]}

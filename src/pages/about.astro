@@ -21,8 +21,12 @@ const t = useTranslations(Astro.locals.locale)
       <h2 class="text-xl font-semibold mb-2">{t.about.contributingHeading}</h2>
       <p class="text-base-content/70 mb-4">{t.about.contributingText}</p>
       <div class="flex flex-wrap gap-3">
-        <a class="btn btn-sm btn-outline" href="/event/new">{t.events.submitEvent}</a>
-        <a class="btn btn-sm btn-outline" href="/job/new">{t.jobs.postJob}</a>
+        <a class="btn btn-sm btn-outline" href="/event/new">
+          {t.events.submitEvent}
+        </a>
+        <a class="btn btn-sm btn-outline" href="/job/new">
+          {t.jobs.postJob}
+        </a>
       </div>
     </section>
 
@@ -47,7 +51,10 @@ const t = useTranslations(Astro.locals.locale)
       <h2 class="text-xl font-semibold mb-2">{t.about.legalHeading}</h2>
       <p class="text-base-content/70">
         {t.about.legalText}
-        <a class="link link-hover underline" href="/impressum">{t.about.legalLink}</a>.
+        <a class="link link-hover underline" href="/impressum">
+          {t.about.legalLink}
+        </a>
+        .
       </p>
     </section>
   </div>

@@ -8,13 +8,13 @@ const t = useTranslations(Astro.locals.locale)
   class="fixed bottom-0 left-0 right-0 z-50 hidden border-t border-base-content/20 bg-base-200 p-4"
   id="cookie-banner"
 >
-  <div
-    class="mx-auto flex max-w-7xl flex-col items-start justify-between gap-3 sm:flex-row sm:items-center"
-  >
+  <div class="mx-auto flex max-w-7xl flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
     <p class="text-sm text-base-content/70">
-      {t.cookieBanner.text}<a class="link link-hover underline" href="/privacy"
-        >{t.cookieBanner.privacyLink}</a
-      >.
+      {t.cookieBanner.text}
+      <a class="link link-hover underline" href="/privacy">
+        {t.cookieBanner.privacyLink}
+      </a>
+      .
     </p>
     <button class="btn btn-neutral btn-sm shrink-0" id="cookie-banner-dismiss">
       {t.cookieBanner.dismiss}

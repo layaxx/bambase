@@ -61,20 +61,18 @@ const apiDownMessage = t.apiDown.message
   </PageHeader>
 
   <div class="mb-2 flex flex-wrap gap-2">
-    {
-      categories.map((cat) => (
-        <button
-          aria-pressed={cat === activeCategory ? "true" : "false"}
-          class:list={[
-            "btn btn-sm",
-            { "btn-primary": cat === activeCategory, "btn-outline": cat !== activeCategory },
-          ]}
-          data-filter={cat}
-        >
-          {t.map.categories[cat]}
-        </button>
-      ))
-    }
+    {categories.map((cat) => (
+      <button
+        aria-pressed={cat === activeCategory ? "true" : "false"}
+        class:list={[
+          "btn btn-sm",
+          { "btn-primary": cat === activeCategory, "btn-outline": cat !== activeCategory },
+        ]}
+        data-filter={cat}
+      >
+        {t.map.categories[cat]}
+      </button>
+    ))}
   </div>
 
   <div class="mb-4 flex items-center gap-2">
@@ -82,13 +80,11 @@ const apiDownMessage = t.apiDown.message
       {t.map.eventFilterLabel}:
     </label>
     <select class="select select-bordered select-xs" id="event-time-filter">
-      {
-        timeFilters.map(({ key, label }) => (
-          <option selected={key === "week"} value={key}>
-            {label}
-          </option>
-        ))
-      }
+      {timeFilters.map(({ key, label }) => (
+        <option selected={key === "week"} value={key}>
+          {label}
+        </option>
+      ))}
     </select>
   </div>
 
@@ -96,14 +92,12 @@ const apiDownMessage = t.apiDown.message
     <div
       class="order-2 flex h-48 shrink-0 flex-col overflow-y-auto rounded-xl border border-base-300 bg-base-100 md:order-1 md:h-auto md:w-64"
       id="location-list"
-    >
-    </div>
+    ></div>
 
     <div
       class="order-1 min-h-64 min-w-0 flex-1 rounded-xl border border-base-300 md:order-2"
       id="map"
-    >
-    </div>
+    ></div>
   </div>
 </PageLayout>
 

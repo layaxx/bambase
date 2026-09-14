@@ -15,9 +15,7 @@ const categories = [
 <section class="mb-12" id="map">
   <div class="mb-6 flex items-center justify-between">
     <div class="flex items-center gap-3">
-      <div
-        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg badge-soft badge-info"
-      >
+      <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg badge-soft badge-info">
         <IconMapPin class="h-5 w-5" />
       </div>
       <div>
@@ -34,23 +32,21 @@ const categories = [
   </div>
 
   <div class="grid gap-3 sm:grid-cols-3">
-    {
-      categories.map(({ key, colorScheme }) => (
-        <a
-          class="group flex items-center gap-3 rounded-xl border border-base-300 bg-base-100 p-4 transition-all hover:shadow-md no-underline"
-          href={`/map?filter=${key}`}
+    {categories.map(({ key, colorScheme }) => (
+      <a
+        class="group flex items-center gap-3 rounded-xl border border-base-300 bg-base-100 p-4 transition-all hover:shadow-md no-underline"
+        href={`/map?filter=${key}`}
+      >
+        <div
+          class:list={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full badge-soft badge-${colorScheme}`}
         >
-          <div
-            class:list={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full badge-soft badge-${colorScheme}`}
-          >
-            <IconMapPin class="h-4 w-4" />
-          </div>
-          <span class="text-sm font-medium text-base-content group-hover:text-primary">
-            {t.map.categories[key]}
-          </span>
-          <IconArrowRight class="ml-auto h-4 w-4 shrink-0 text-base-content/40 group-hover:text-primary" />
-        </a>
-      ))
-    }
+          <IconMapPin class="h-4 w-4" />
+        </div>
+        <span class="text-sm font-medium text-base-content group-hover:text-primary">
+          {t.map.categories[key]}
+        </span>
+        <IconArrowRight class="ml-auto h-4 w-4 shrink-0 text-base-content/40 group-hover:text-primary" />
+      </a>
+    ))}
   </div>
 </section>

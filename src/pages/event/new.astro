@@ -36,13 +36,11 @@ const generalError = result?.error && !isInputError(result.error) ? result.error
     <p class="text-base-content/70">{t.events.createSubtitle}</p>
   </section>
 
-  {
-    generalError && (
-      <div class="alert alert-error mb-6" role="alert">
-        <span>{generalError}</span>
-      </div>
-    )
-  }
+  {generalError && (
+    <div class="alert alert-error mb-6" role="alert">
+      <span>{generalError}</span>
+    </div>
+  )}
 
   <EventForm
     action={actions.events.create}

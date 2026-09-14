@@ -14,15 +14,13 @@ const { data: upcomingOrOngoingEvents, apiDown } = await fetchOngoingOrUpcomingE
 <section class="mb-12" id="events">
   <div class="mb-6 flex items-center justify-between">
     <div class="flex items-center gap-3">
-      <div
-        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg badge-soft badge-primary"
-      >
+      <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg badge-soft badge-primary">
         <IconCalendar class="h-5 w-5" />
       </div>
       <div>
-        <a class="text-xl font-semibold hover:text-primary no-underline" href="/events"
-          >{t.events.title}</a
-        >
+        <a class="text-xl font-semibold hover:text-primary no-underline" href="/events">
+          {t.events.title}
+        </a>
         <p class="text-sm text-base-content/70">
           {t.events.countToday(upcomingOrOngoingEvents.length)}
         </p>
@@ -33,19 +31,17 @@ const { data: upcomingOrOngoingEvents, apiDown } = await fetchOngoingOrUpcomingE
       <IconArrowRight class="h-4 w-4" />
     </a>
   </div>
-  {
-    apiDown ? (
-      <ApiDownBanner />
-    ) : upcomingOrOngoingEvents.length === 0 ? (
-      <p class="text-base-content/70 rounded-xl border border-base-300 bg-base-100 p-6">
-        {t.events.none}
-      </p>
-    ) : (
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {upcomingOrOngoingEvents.map((event) => (
-          <EventCard event={event} short />
-        ))}
-      </div>
-    )
-  }
+  {apiDown ? (
+    <ApiDownBanner />
+  ) : upcomingOrOngoingEvents.length === 0 ? (
+    <p class="text-base-content/70 rounded-xl border border-base-300 bg-base-100 p-6">
+      {t.events.none}
+    </p>
+  ) : (
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {upcomingOrOngoingEvents.map((event) => (
+        <EventCard event={event} short />
+      ))}
+    </div>
+  )}
 </section>

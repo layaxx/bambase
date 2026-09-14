@@ -12,5 +12,7 @@ const { variant, outline = false, class: className } = Astro.props
   class:list={["alert mb-6", `alert-${variant}`, outline && "alert-outline", className]}
   role="alert"
 >
-  <span><slot /></span>
+  <span>
+    <slot />
+  </span>
 </div>

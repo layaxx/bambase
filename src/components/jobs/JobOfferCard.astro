@@ -19,9 +19,9 @@ const t = useTranslations(Astro.locals.locale)
 >
   <div class="mb-2 flex flex-row items-center justify-between">
     <JobTypeBadge isSmall jobType={job.job_type} />
-    <span class="shrink-0 text-xs text-base-content/70"
-      >{formatJobOfferDate(job.createdAt, Astro.locals.locale)}</span
-    >
+    <span class="shrink-0 text-xs text-base-content/70">
+      {formatJobOfferDate(job.createdAt, Astro.locals.locale)}
+    </span>
   </div>
   <h3 class="mb-1 font-semibold leading-tight text-base-content group-hover:text-primary">
     {job.title}
@@ -29,14 +29,13 @@ const t = useTranslations(Astro.locals.locale)
   <div class="mb-2 flex flex-row items-center text-sm text-base-content/70">
     <div class="flex items-center gap-1.5 truncate">
       <IconStore class="h-3.5 w-3.5 shrink-0" />
-      <span class="min-w-0 truncate">{job.company},</span><span class="shrink-0"
-        >{
-          formatJobLocation(job, {
-            remote: t.jobs.workModes.remote,
-            hybrid: t.jobs.workModes.hybrid,
-          })
-        }</span
-      >
+      <span class="min-w-0 truncate">{job.company},</span>
+      <span class="shrink-0">
+        {formatJobLocation(job, {
+          remote: t.jobs.workModes.remote,
+          hybrid: t.jobs.workModes.hybrid,
+        })}
+      </span>
     </div>
   </div>
   <p class="mb-3 line-clamp-2 text-sm text-base-content/70">{job.description}</p>

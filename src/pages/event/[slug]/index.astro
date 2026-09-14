@@ -38,38 +38,34 @@ const ogImage = event ? `${Astro.url.origin}/api/og/event/${event.slug}.png` : u
 ---
 
 <PageLayout description={description} ogImage={ogImage} title={event?.title ?? t.events.pageTitle}>
-  {
-    apiDown ? (
-      <ApiDownBanner />
-    ) : !event ? (
-      <div class="py-20 text-center">
-        <h1 class="mb-4 text-3xl font-bold">{t.events.notFound.headline}</h1>
-        <p class="text-base-content/70">{t.events.notFound.description}</p>
-        <div class="mt-6">
-          <a class="btn btn-primary" href="/events">
-            {t.events.backToEvents}
-          </a>
-        </div>
+  {apiDown ? (
+    <ApiDownBanner />
+  ) : !event ? (
+    <div class="py-20 text-center">
+      <h1 class="mb-4 text-3xl font-bold">{t.events.notFound.headline}</h1>
+      <p class="text-base-content/70">{t.events.notFound.description}</p>
+      <div class="mt-6">
+        <a class="btn btn-primary" href="/events">
+          {t.events.backToEvents}
+        </a>
       </div>
-    ) : (
-      <EventDetailPage
-        event={event}
-        hasBeenReported={hasBeenReported}
-        hasReports={hasReports}
-        isOwner={isOwner}
-      />
-    )
-  }
-  {
-    event && isOwner && (
-      <ConfirmModal
-        confirmClass="btn btn-error"
-        confirmLabel={t.events.deleteEvent}
-        formAction={actions.events.delete}
-        hiddenInputs={[{ name: "id", value: event.id }]}
-        id="deleteEventModal"
-        message={t.events.deleteConfirm}
-      />
-    )
-  }
+    </div>
+  ) : (
+    <EventDetailPage
+      event={event}
+      hasBeenReported={hasBeenReported}
+      hasReports={hasReports}
+      isOwner={isOwner}
+    />
+  )}
+  {event && isOwner && (
+    <ConfirmModal
+      confirmClass="btn btn-error"
+      confirmLabel={t.events.deleteEvent}
+      formAction={actions.events.delete}
+      hiddenInputs={[{ name: "id", value: event.id }]}
+      id="deleteEventModal"
+      message={t.events.deleteConfirm}
+    />
+  )}
 </PageLayout>

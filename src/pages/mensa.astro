@@ -38,14 +38,12 @@ const grouped = groupMealsByDay(mealsByDay, {
   {apiDown && <ApiDownBanner />}
 
   <div class="flex flex-col gap-10">
-    {
-      grouped.map((entry) =>
-        entry.type === "weekend" ? (
-          <MensaWeekendSection heading={entry.heading} id={entry.id} />
-        ) : (
-          <MensaDaySection heading={entry.heading} id={entry.id} meals={entry.meals} />
-        )
+    {grouped.map((entry) =>
+      entry.type === "weekend" ? (
+        <MensaWeekendSection heading={entry.heading} id={entry.id} />
+      ) : (
+        <MensaDaySection heading={entry.heading} id={entry.id} meals={entry.meals} />
       )
-    }
+    )}
   </div>
 </PageLayout>

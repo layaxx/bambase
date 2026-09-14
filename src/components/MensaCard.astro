@@ -35,21 +35,17 @@ const mealsByLocation = Object.fromEntries(
 <section class="mb-12" id="mensa">
   <div class="mb-6 flex items-center justify-between">
     <div class="flex items-center gap-3">
-      <div
-        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg badge-soft badge-warning"
-      >
+      <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg badge-soft badge-warning">
         <IconUtensils class="h-5 w-5" />
       </div>
       <div>
-        <a class="text-xl font-semibold hover:text-primary no-underline" href="/mensa"
-          >{t.mensa.cardTitle}</a
-        >
+        <a class="text-xl font-semibold hover:text-primary no-underline" href="/mensa">
+          {t.mensa.cardTitle}
+        </a>
         <p class="text-sm text-base-content/70">
-          {
-            isToday
-              ? t.mensa.cardSubtitleToday(relevantDayFormatted)
-              : t.mensa.cardSubtitle(relevantDayFormatted)
-          }
+          {isToday
+            ? t.mensa.cardSubtitleToday(relevantDayFormatted)
+            : t.mensa.cardSubtitle(relevantDayFormatted)}
         </p>
       </div>
     </div>
@@ -63,63 +59,59 @@ const mealsByLocation = Object.fromEntries(
 
   <div class="rounded-xl border border-base-300 bg-base-100 p-4 sm:p-6">
     <div class="mb-4 flex gap-1 rounded-lg bg-base-200 p-1" role="tablist">
-      {
-        locations.map((loc, i) => (
-          <button
-            aria-controls={`meals-${loc.id}`}
-            aria-selected={i === 0 ? "true" : "false"}
-            class:list={[
-              "flex-1 rounded-md px-3 py-1 text-xs font-medium transition-all",
-              {
-                "bg-base-100 text-base-content shadow-sm": i === 0,
-                "text-base-content/70 hover:text-base-content": i !== 0,
-              },
-            ]}
-            data-loc={loc.id}
-            data-mensa-btn
-            id={`tab-${loc.id}`}
-            role="tab"
-            type="button"
-          >
-            {loc.label}
-          </button>
-        ))
-      }
+      {locations.map((loc, i) => (
+        <button
+          aria-controls={`meals-${loc.id}`}
+          aria-selected={i === 0 ? "true" : "false"}
+          class:list={[
+            "flex-1 rounded-md px-3 py-1 text-xs font-medium transition-all",
+            {
+              "bg-base-100 text-base-content shadow-sm": i === 0,
+              "text-base-content/70 hover:text-base-content": i !== 0,
+            },
+          ]}
+          data-loc={loc.id}
+          data-mensa-btn
+          id={`tab-${loc.id}`}
+          role="tab"
+          type="button"
+        >
+          {loc.label}
+        </button>
+      ))}
     </div>
 
-    {
-      locations.map((loc, i) => (
-        <ul
-          aria-labelledby={`tab-${loc.id}`}
-          class="flex flex-col gap-2"
-          hidden={i !== 0}
-          id={`meals-${loc.id}`}
-          role="tabpanel"
-        >
-          {mealsByLocation[loc.id].length === 0 ? (
-            <li class="text-base-content/70 text-sm">{t.mensa.noData}</li>
-          ) : (
-            mealsByLocation[loc.id].map((meal) => (
-              <li>
-                <a
-                  class="flex items-center justify-between gap-3 rounded-lg border border-base-300 p-3 transition-colors hover:bg-base-200 no-underline"
-                  href={`/mensa#${relevantDayId}-${loc.id}-${meal.id}`}
-                >
-                  <div class="flex min-w-0 flex-wrap items-center gap-1.5">
-                    <span class="text-sm text-base-content">{meal.name}</span>
-                    {meal.isVegan && <MealBadge type="vegan" />}
-                    {!meal.isVegan && meal.isVegetarian && <MealBadge type="vegetarian" />}
-                  </div>
-                  <span class="shrink-0 font-semibold text-sm text-base-content">
-                    {meal.priceStudents.toFixed(2)} €
-                  </span>
-                </a>
-              </li>
-            ))
-          )}
-        </ul>
-      ))
-    }
+    {locations.map((loc, i) => (
+      <ul
+        aria-labelledby={`tab-${loc.id}`}
+        class="flex flex-col gap-2"
+        hidden={i !== 0}
+        id={`meals-${loc.id}`}
+        role="tabpanel"
+      >
+        {mealsByLocation[loc.id].length === 0 ? (
+          <li class="text-base-content/70 text-sm">{t.mensa.noData}</li>
+        ) : (
+          mealsByLocation[loc.id].map((meal) => (
+            <li>
+              <a
+                class="flex items-center justify-between gap-3 rounded-lg border border-base-300 p-3 transition-colors hover:bg-base-200 no-underline"
+                href={`/mensa#${relevantDayId}-${loc.id}-${meal.id}`}
+              >
+                <div class="flex min-w-0 flex-wrap items-center gap-1.5">
+                  <span class="text-sm text-base-content">{meal.name}</span>
+                  {meal.isVegan && <MealBadge type="vegan" />}
+                  {!meal.isVegan && meal.isVegetarian && <MealBadge type="vegetarian" />}
+                </div>
+                <span class="shrink-0 font-semibold text-sm text-base-content">
+                  {meal.priceStudents.toFixed(2)} €
+                </span>
+              </a>
+            </li>
+          ))
+        )}
+      </ul>
+    ))}
   </div>
 </section>
 

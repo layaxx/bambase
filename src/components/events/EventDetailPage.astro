@@ -37,34 +37,30 @@ const location = event?.map_location ?? event?.custom_location
       <IconArrowLeft class="h-4 w-4" />
       {t.events.backToEvents}
     </a>
-    {
-      isOwner && (
-        <div class="flex items-center gap-2">
-          <a class="btn btn-ghost btn-sm" href="/account/events">
-            {t.auth.myEvents}
-          </a>
-          <a class="btn btn-outline btn-sm" href={`/event/${event.slug}/edit`}>
-            {t.events.editEvent}
-          </a>
-          <button
-            class="btn btn-outline btn-error btn-sm"
-            onclick="document.getElementById('deleteEventModal').showModal()"
-            type="button"
-          >
-            {t.events.deleteEvent}
-          </button>
-        </div>
-      )
-    }
+    {isOwner && (
+      <div class="flex items-center gap-2">
+        <a class="btn btn-ghost btn-sm" href="/account/events">
+          {t.auth.myEvents}
+        </a>
+        <a class="btn btn-outline btn-sm" href={`/event/${event.slug}/edit`}>
+          {t.events.editEvent}
+        </a>
+        <button
+          class="btn btn-outline btn-error btn-sm"
+          onclick="document.getElementById('deleteEventModal').showModal()"
+          type="button"
+        >
+          {t.events.deleteEvent}
+        </button>
+      </div>
+    )}
   </div>
 
-  {
-    hasReports && (
-      <Alert outline variant="warning">
-        {t.reports.warningHint}
-      </Alert>
-    )
-  }
+  {hasReports && (
+    <Alert outline variant="warning">
+      {t.reports.warningHint}
+    </Alert>
+  )}
   {hasBeenReported === "success" && <Alert variant="success">{t.reports.successMessage}</Alert>}
   {hasBeenReported === "error" && <Alert variant="error">{t.reports.errorMessage}</Alert>}
 
@@ -92,15 +88,13 @@ const location = event?.map_location ?? event?.custom_location
         <p class="whitespace-pre-wrap">{event.description}</p>
       </div>
 
-      {
-        event.external_id && (
-          <p class="text-xs text-base-content/40 border-t border-base-300 mt-4 pt-1">
-            {event.external_id.startsWith("univis:")
-              ? t.events.syncedFromUnivis
-              : t.events.syncedFromExternal}
-          </p>
-        )
-      }
+      {event.external_id && (
+        <p class="text-xs text-base-content/40 border-t border-base-300 mt-4 pt-1">
+          {event.external_id.startsWith("univis:")
+            ? t.events.syncedFromUnivis
+            : t.events.syncedFromExternal}
+        </p>
+      )}
     </div>
 
     <aside class="flex flex-col gap-4">
@@ -111,9 +105,9 @@ const location = event?.map_location ?? event?.custom_location
             <div class="min-w-0">
               <dt class="mb-0.5 text-xs text-base-content/70">{t.events.filterCategory}</dt>
               <dd>
-                <a href={`/events?category=${event.category}`}
-                  ><EventCategoryBadge category={event.category} /></a
-                >
+                <a href={`/events?category=${event.category}`}>
+                  <EventCategoryBadge category={event.category} />
+                </a>
               </dd>
             </div>
           </div>
@@ -138,58 +132,52 @@ const location = event?.map_location ?? event?.custom_location
             </div>
           </div>
 
-          {
-            location && (
-              <div class="flex items-start gap-2">
-                <IconMapPin class="mt-0.5 h-4 w-4 shrink-0 text-base-content/40" />
-                <div class="min-w-0">
-                  <dt class="mb-0.5 text-xs text-base-content/70">{t.events.locationLabel}</dt>
-                  <dd class="font-medium">{location.name}</dd>
-                  <p class="mt-0.5 text-xs text-base-content/70">
-                    {location.address &&
-                      typeof location.address === "object" &&
-                      formatAddress(location.address)}
-                    {location.address && typeof location.address === "string" && location.address}
-                  </p>
-                  {"category" in location && location.category && (
-                    <a
-                      class="mt-1 inline-flex items-center gap-1 text-xs text-primary hover:underline"
-                      href={`/map?filter=${location.category}`}
-                    >
-                      {t.events.viewOnMap}
-                    </a>
-                  )}
-                </div>
+          {location && (
+            <div class="flex items-start gap-2">
+              <IconMapPin class="mt-0.5 h-4 w-4 shrink-0 text-base-content/40" />
+              <div class="min-w-0">
+                <dt class="mb-0.5 text-xs text-base-content/70">{t.events.locationLabel}</dt>
+                <dd class="font-medium">{location.name}</dd>
+                <p class="mt-0.5 text-xs text-base-content/70">
+                  {location.address &&
+                    typeof location.address === "object" &&
+                    formatAddress(location.address)}
+                  {location.address && typeof location.address === "string" && location.address}
+                </p>
+                {"category" in location && location.category && (
+                  <a
+                    class="mt-1 inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                    href={`/map?filter=${location.category}`}
+                  >
+                    {t.events.viewOnMap}
+                  </a>
+                )}
               </div>
-            )
-          }
+            </div>
+          )}
         </dl>
       </div>
 
-      {
-        event.external_url && (
-          <a
-            class="btn btn-primary w-full"
-            href={event.external_url}
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            {t.events.moreInfo}
-            <IconExternalLink class="h-4 w-4" />
-          </a>
-        )
-      }
+      {event.external_url && (
+        <a
+          class="btn btn-primary w-full"
+          href={event.external_url}
+          rel="noopener noreferrer"
+          target="_blank"
+        >
+          {t.events.moreInfo}
+          <IconExternalLink class="h-4 w-4" />
+        </a>
+      )}
 
-      {
-        !isOwner && !hasBeenReported && (
-          <div class="rounded-xl border border-base-300 bg-base-100 p-4 text-sm text-base-content/70">
-            <p>{t.reports.eventDisclaimer}</p>
-            <div class="mt-2 flex justify-end">
-              <ReportModal targetId={event.id} targetType="event" />
-            </div>
+      {!isOwner && !hasBeenReported && (
+        <div class="rounded-xl border border-base-300 bg-base-100 p-4 text-sm text-base-content/70">
+          <p>{t.reports.eventDisclaimer}</p>
+          <div class="mt-2 flex justify-end">
+            <ReportModal targetId={event.id} targetType="event" />
           </div>
-        )
-      }
+        </div>
+      )}
     </aside>
   </div>
 </>

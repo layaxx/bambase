@@ -14,15 +14,13 @@ const { data: jobs, apiDown } = await fetchJobOffers(3)
 <section class="mb-12" id="jobs">
   <div class="mb-6 flex items-center justify-between">
     <div class="flex items-center gap-3">
-      <div
-        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg badge-soft badge-success"
-      >
+      <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg badge-soft badge-success">
         <IconBriefcase class="h-5 w-5" />
       </div>
       <div>
-        <a class="text-xl font-semibold hover:text-primary no-underline" href="/jobs"
-          >{t.jobs.title}</a
-        >
+        <a class="text-xl font-semibold hover:text-primary no-underline" href="/jobs">
+          {t.jobs.title}
+        </a>
         <p class="text-sm text-base-content/70">{t.jobs.subtitle}</p>
       </div>
     </div>
@@ -32,20 +30,18 @@ const { data: jobs, apiDown } = await fetchJobOffers(3)
     </a>
   </div>
 
-  {
-    apiDown ? (
-      <ApiDownBanner />
-    ) : (
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {jobs.length === 0 && (
-          <p class="text-base-content/70 rounded-xl border border-base-300 bg-base-100 p-6">
-            {t.jobs.noJobs}
-          </p>
-        )}
-        {jobs.map((job) => (
-          <JobOfferCard job={job} />
-        ))}
-      </div>
-    )
-  }
+  {apiDown ? (
+    <ApiDownBanner />
+  ) : (
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {jobs.length === 0 && (
+        <p class="text-base-content/70 rounded-xl border border-base-300 bg-base-100 p-6">
+          {t.jobs.noJobs}
+        </p>
+      )}
+      {jobs.map((job) => (
+        <JobOfferCard job={job} />
+      ))}
+    </div>
+  )}
 </section>

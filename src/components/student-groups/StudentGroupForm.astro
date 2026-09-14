@@ -50,13 +50,11 @@ const t = useTranslations(Astro.locals.locale)
         id="description"
         name="description"
         required
-        rows="4">{initialValues.description}</textarea
-      >
-      {
-        inputErrors.description && (
-          <p class="fieldset-label text-error">{inputErrors.description[0]}</p>
-        )
-      }
+        rows="4"
+      >{initialValues.description}</textarea>
+      {inputErrors.description && (
+        <p class="fieldset-label text-error">{inputErrors.description[0]}</p>
+      )}
     </fieldset>
 
     <fieldset class="fieldset">
@@ -87,11 +85,9 @@ const t = useTranslations(Astro.locals.locale)
           type="url"
           value={initialValues.instagram ?? ""}
         />
-        {
-          inputErrors.instagram && (
-            <p class="fieldset-label text-error">{inputErrors.instagram[0]}</p>
-          )
-        }
+        {inputErrors.instagram && (
+          <p class="fieldset-label text-error">{inputErrors.instagram[0]}</p>
+        )}
       </fieldset>
 
       <fieldset class="fieldset">
@@ -127,8 +123,12 @@ const t = useTranslations(Astro.locals.locale)
   </div>
 
   <div class="flex items-center gap-3">
-    <button class="btn btn-primary" type="submit">{submitLabel}</button>
-    <a class="btn btn-ghost" href={cancelHref}>{t.ui.cancel}</a>
+    <button class="btn btn-primary" type="submit">
+      {submitLabel}
+    </button>
+    <a class="btn btn-ghost" href={cancelHref}>
+      {t.ui.cancel}
+    </a>
   </div>
 </form>
 

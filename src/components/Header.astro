@@ -44,9 +44,7 @@ const switchUrl = `/set-locale?lang=${switchLang}&redirect=${encodeURIComponent(
 >
   {t.nav.skipToContent}
 </a>
-<header
-  class="sticky top-0 z-50 w-full border-b border-base-300 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60"
->
+<header class="sticky top-0 z-50 w-full border-b border-base-300 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
   <div class="max-w-7xl mx-auto px-4">
     <div class="flex h-16 items-center gap-6">
       <a class="text-2xl font-extrabold no-underline leading-none shrink-0 logo-font" href="/">
@@ -54,46 +52,40 @@ const switchUrl = `/set-locale?lang=${switchLang}&redirect=${encodeURIComponent(
       </a>
 
       <nav class="hidden md:flex items-center gap-0.5 flex-1">
-        {
-          navItems.map((item) => (
-            <a
-              aria-current={isActive(item.href) ? "page" : undefined}
-              class:list={[
-                "px-3 py-1.5 rounded-md text-sm no-underline transition-colors",
-                {
-                  "font-semibold bg-base-200 text-base-content": isActive(item.href),
-                  "text-base-content/70 hover:text-base-content hover:bg-base-200": !isActive(
-                    item.href
-                  ),
-                },
-              ]}
-              href={item.href}
-            >
-              {item.name}
-            </a>
-          ))
-        }
+        {navItems.map((item) => (
+          <a
+            aria-current={isActive(item.href) ? "page" : undefined}
+            class:list={[
+              "px-3 py-1.5 rounded-md text-sm no-underline transition-colors",
+              {
+                "font-semibold bg-base-200 text-base-content": isActive(item.href),
+                "text-base-content/70 hover:text-base-content hover:bg-base-200": !isActive(
+                  item.href
+                ),
+              },
+            ]}
+            href={item.href}
+          >
+            {item.name}
+          </a>
+        ))}
       </nav>
 
       <div class="flex items-center gap-1 ml-auto shrink-0">
-        {
-          isAdmin && (
-            <a class="btn btn-sm btn-ghost hidden md:inline-flex" href="/admin">
-              {t.nav.admin}
-            </a>
-          )
-        }
-        {
-          authUser ? (
-            <a class="btn btn-sm btn-ghost hidden md:inline-flex" href="/account">
-              {t.nav.myAccount}
-            </a>
-          ) : (
-            <a class="btn btn-sm btn-neutral hidden md:inline-flex" href="/login">
-              {t.nav.login}
-            </a>
-          )
-        }
+        {isAdmin && (
+          <a class="btn btn-sm btn-ghost hidden md:inline-flex" href="/admin">
+            {t.nav.admin}
+          </a>
+        )}
+        {authUser ? (
+          <a class="btn btn-sm btn-ghost hidden md:inline-flex" href="/account">
+            {t.nav.myAccount}
+          </a>
+        ) : (
+          <a class="btn btn-sm btn-neutral hidden md:inline-flex" href="/login">
+            {t.nav.login}
+          </a>
+        )}
 
         <div class="flex items-center gap-1 md:border-l md:border-base-300 md:pl-2 md:ml-1">
           <a
@@ -137,45 +129,39 @@ const switchUrl = `/set-locale?lang=${switchLang}&redirect=${encodeURIComponent(
 
   <div class="border-t border-base-300 px-4 py-3" hidden id="mobile-nav">
     <nav class="flex flex-col gap-1">
-      {
-        navItems.map((item) => (
-          <a
-            aria-current={isActive(item.href) ? "page" : undefined}
-            class:list={[
-              "px-3 py-2 rounded-md text-sm no-underline transition-colors",
-              {
-                "font-semibold bg-base-200 text-base-content": isActive(item.href),
-                "text-base-content/70 hover:text-base-content hover:bg-base-200": !isActive(
-                  item.href
-                ),
-              },
-            ]}
-            href={item.href}
-          >
-            {item.name}
-          </a>
-        ))
-      }
+      {navItems.map((item) => (
+        <a
+          aria-current={isActive(item.href) ? "page" : undefined}
+          class:list={[
+            "px-3 py-2 rounded-md text-sm no-underline transition-colors",
+            {
+              "font-semibold bg-base-200 text-base-content": isActive(item.href),
+              "text-base-content/70 hover:text-base-content hover:bg-base-200": !isActive(
+                item.href
+              ),
+            },
+          ]}
+          href={item.href}
+        >
+          {item.name}
+        </a>
+      ))}
     </nav>
     <div class="border-t border-base-300 mt-3 pt-3 flex flex-col gap-1">
-      {
-        isAdmin && (
-          <a class="btn btn-sm btn-ghost w-full" href="/admin">
-            {t.nav.admin}
-          </a>
-        )
-      }
-      {
-        authUser ? (
-          <a class="btn btn-sm btn-ghost w-full" href="/account">
-            {t.nav.myAccount}
-          </a>
-        ) : (
-          <a class="btn btn-sm btn-neutral w-full" href="/login">
-            {t.nav.login}
-          </a>
-        )
-      }
+      {isAdmin && (
+        <a class="btn btn-sm btn-ghost w-full" href="/admin">
+          {t.nav.admin}
+        </a>
+      )}
+      {authUser ? (
+        <a class="btn btn-sm btn-ghost w-full" href="/account">
+          {t.nav.myAccount}
+        </a>
+      ) : (
+        <a class="btn btn-sm btn-neutral w-full" href="/login">
+          {t.nav.login}
+        </a>
+      )}
       <a
         class="btn btn-sm btn-ghost w-full"
         href="https://github.com/layaxx/bambase"

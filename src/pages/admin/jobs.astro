@@ -32,109 +32,105 @@ const statusLabel: Record<string, string> = {
 <PageLayout title={t.admin.jobsQueueTitle}>
   <h1 class="text-3xl font-bold tracking-tight sm:text-4xl mb-6">{t.admin.jobsQueueTitle}</h1>
 
-  {
-    jobs.length === 0 ? (
-      <p
-        class="rounded-xl border border-base-300 bg-base-100 p-6 text-base-content/70"
-        data-testid="job-queue"
-      >
-        {t.admin.noSubmittedJobs}
-      </p>
-    ) : (
-      <div class="flex flex-col gap-3" data-testid="job-queue">
-        {jobs.map((job) => (
-          <div class="flex flex-col gap-3 rounded-xl border border-base-300 bg-base-100 p-4">
-            <div>
-              <h2 class="font-semibold leading-snug text-base-content">{job.title}</h2>
-              <p class="text-sm text-base-content/70">
-                {job.company} · {job.location}
-              </p>
-              <p class="line-clamp-2 text-sm text-base-content/40">{job.description}</p>
-            </div>
-            <div class="flex gap-2">
-              <a class="btn btn-outline btn-sm" href={`/admin/jobs/${job.slug}/edit`}>
-                {t.admin.editJob}
-              </a>
-              <form action={actions.jobs.approve} method="POST">
-                <input name="id" type="hidden" value={job.id} />
-                <button class="btn btn-success btn-sm" type="submit">
-                  {t.admin.approveJob}
-                </button>
-              </form>
-              <form
-                action={actions.jobs.reject}
-                class="flex flex-wrap items-center gap-2"
-                method="POST"
-              >
-                <input name="id" type="hidden" value={job.id} />
-                <input
-                  class="input input-sm input-bordered"
-                  maxlength="500"
-                  name="reason"
-                  placeholder={t.admin.reasonPlaceholder}
-                  type="text"
-                />
-                <button class="btn btn-outline btn-error btn-sm" type="submit">
-                  {t.admin.rejectJob}
-                </button>
-              </form>
-            </div>
+  {jobs.length === 0 ? (
+    <p
+      class="rounded-xl border border-base-300 bg-base-100 p-6 text-base-content/70"
+      data-testid="job-queue"
+    >
+      {t.admin.noSubmittedJobs}
+    </p>
+  ) : (
+    <div class="flex flex-col gap-3" data-testid="job-queue">
+      {jobs.map((job) => (
+        <div class="flex flex-col gap-3 rounded-xl border border-base-300 bg-base-100 p-4">
+          <div>
+            <h2 class="font-semibold leading-snug text-base-content">{job.title}</h2>
+            <p class="text-sm text-base-content/70">
+              {job.company} · {job.location}
+            </p>
+            <p class="line-clamp-2 text-sm text-base-content/40">{job.description}</p>
           </div>
-        ))}
-      </div>
-    )
-  }
-
-  <h2 class="text-2xl font-bold tracking-tight mt-12 mb-6">{t.admin.recentDecisionsTitle}</h2>
-
-  {
-    recentlyModerated.length === 0 ? (
-      <p
-        class="rounded-xl border border-base-300 bg-base-100 p-6 text-base-content/70"
-        data-testid="recent-decisions"
-      >
-        {t.admin.noRecentDecisions}
-      </p>
-    ) : (
-      <div class="flex flex-col gap-3" data-testid="recent-decisions">
-        {recentlyModerated.map((job) => (
-          <div class="flex flex-col gap-3 rounded-xl border border-base-300 bg-base-100 p-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <div class="flex items-center gap-2">
-                <h3 class="font-semibold leading-snug text-base-content">{job.title}</h3>
-                <span
-                  class:list={[
-                    "badge badge-sm",
-                    JOB_STATUS_BADGE_CLASS[job.online_status] ?? "badge-neutral",
-                  ]}
-                >
-                  {statusLabel[job.online_status] ?? job.online_status}
-                </span>
-              </div>
-              <p class="text-sm text-base-content/70">
-                {job.company} · {job.location}
-              </p>
-              {job.online_status === "rejected" && job.rejection_reason && (
-                <p class="text-sm text-base-content/70">
-                  {t.jobs.rejectionReasonLabel(job.rejection_reason)}
-                </p>
-              )}
-              <p class="text-xs text-base-content/40">
-                {t.admin.decidedAt(
-                  new Date(job.updatedAt).toLocaleDateString(t.auth.dateLocale, {
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                  })
-                )}
-              </p>
-            </div>
+          <div class="flex gap-2">
             <a class="btn btn-outline btn-sm" href={`/admin/jobs/${job.slug}/edit`}>
               {t.admin.editJob}
             </a>
+            <form action={actions.jobs.approve} method="POST">
+              <input name="id" type="hidden" value={job.id} />
+              <button class="btn btn-success btn-sm" type="submit">
+                {t.admin.approveJob}
+              </button>
+            </form>
+            <form
+              action={actions.jobs.reject}
+              class="flex flex-wrap items-center gap-2"
+              method="POST"
+            >
+              <input name="id" type="hidden" value={job.id} />
+              <input
+                class="input input-sm input-bordered"
+                maxlength="500"
+                name="reason"
+                placeholder={t.admin.reasonPlaceholder}
+                type="text"
+              />
+              <button class="btn btn-outline btn-error btn-sm" type="submit">
+                {t.admin.rejectJob}
+              </button>
+            </form>
           </div>
-        ))}
-      </div>
-    )
-  }
+        </div>
+      ))}
+    </div>
+  )}
+
+  <h2 class="text-2xl font-bold tracking-tight mt-12 mb-6">{t.admin.recentDecisionsTitle}</h2>
+
+  {recentlyModerated.length === 0 ? (
+    <p
+      class="rounded-xl border border-base-300 bg-base-100 p-6 text-base-content/70"
+      data-testid="recent-decisions"
+    >
+      {t.admin.noRecentDecisions}
+    </p>
+  ) : (
+    <div class="flex flex-col gap-3" data-testid="recent-decisions">
+      {recentlyModerated.map((job) => (
+        <div class="flex flex-col gap-3 rounded-xl border border-base-300 bg-base-100 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="font-semibold leading-snug text-base-content">{job.title}</h3>
+              <span
+                class:list={[
+                  "badge badge-sm",
+                  JOB_STATUS_BADGE_CLASS[job.online_status] ?? "badge-neutral",
+                ]}
+              >
+                {statusLabel[job.online_status] ?? job.online_status}
+              </span>
+            </div>
+            <p class="text-sm text-base-content/70">
+              {job.company} · {job.location}
+            </p>
+            {job.online_status === "rejected" && job.rejection_reason && (
+              <p class="text-sm text-base-content/70">
+                {t.jobs.rejectionReasonLabel(job.rejection_reason)}
+              </p>
+            )}
+            <p class="text-xs text-base-content/40">
+              {t.admin.decidedAt(
+                new Date(job.updatedAt).toLocaleDateString(t.auth.dateLocale, {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                })
+              )}
+            </p>
+          </div>
+          <a class="btn btn-outline btn-sm" href={`/admin/jobs/${job.slug}/edit`}>
+            {t.admin.editJob}
+          </a>
+        </div>
+      ))}
+    </div>
+  )}
 </PageLayout>

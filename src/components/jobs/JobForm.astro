@@ -100,50 +100,42 @@ const t = useTranslations(Astro.locals.locale)
         type="number"
         value={initialValues.working_hours}
       />
-      {
-        inputErrors.working_hours && (
-          <p class="fieldset-label text-error">{inputErrors.working_hours[0]}</p>
-        )
-      }
+      {inputErrors.working_hours && (
+        <p class="fieldset-label text-error">{inputErrors.working_hours[0]}</p>
+      )}
     </fieldset>
 
     <div class="grid gap-4 sm:grid-cols-3">
       <fieldset class="fieldset">
         <legend class="fieldset-legend font-medium">{t.jobs.fieldJobType}</legend>
         <select class="select select-bordered w-full" id="job_type" name="job_type" required>
-          {
-            Object.entries(t.jobs.jobTypes).map(([value, label]) => (
-              <option selected={initialValues.job_type === value} value={value}>
-                {label}
-              </option>
-            ))
-          }
+          {Object.entries(t.jobs.jobTypes).map(([value, label]) => (
+            <option selected={initialValues.job_type === value} value={value}>
+              {label}
+            </option>
+          ))}
         </select>
       </fieldset>
 
       <fieldset class="fieldset">
         <legend class="fieldset-legend font-medium">{t.jobs.fieldField}</legend>
         <select class="select select-bordered w-full" id="field" name="field">
-          {
-            Object.entries(t.jobs.jobFields).map(([value, label]) => (
-              <option selected={initialValues.field === value} value={value}>
-                {label}
-              </option>
-            ))
-          }
+          {Object.entries(t.jobs.jobFields).map(([value, label]) => (
+            <option selected={initialValues.field === value} value={value}>
+              {label}
+            </option>
+          ))}
         </select>
       </fieldset>
 
       <fieldset class="fieldset">
         <legend class="fieldset-legend font-medium">{t.jobs.fieldWorkMode}</legend>
         <select class="select select-bordered w-full" id="work_mode" name="work_mode" required>
-          {
-            Object.entries(t.jobs.workModes).map(([value, label]) => (
-              <option selected={initialValues.work_mode === value} value={value}>
-                {label}
-              </option>
-            ))
-          }
+          {Object.entries(t.jobs.workModes).map(([value, label]) => (
+            <option selected={initialValues.work_mode === value} value={value}>
+              {label}
+            </option>
+          ))}
         </select>
       </fieldset>
     </div>
@@ -158,13 +150,11 @@ const t = useTranslations(Astro.locals.locale)
         id="description"
         name="description"
         required
-        rows="6">{initialValues.description}</textarea
-      >
-      {
-        inputErrors.description && (
-          <p class="fieldset-label text-error">{inputErrors.description[0]}</p>
-        )
-      }
+        rows="6"
+      >{initialValues.description}</textarea>
+      {inputErrors.description && (
+        <p class="fieldset-label text-error">{inputErrors.description[0]}</p>
+      )}
     </fieldset>
 
     <fieldset class="fieldset">
@@ -179,11 +169,9 @@ const t = useTranslations(Astro.locals.locale)
         type="url"
         value={initialValues.external_url ?? ""}
       />
-      {
-        inputErrors.external_url && (
-          <p class="fieldset-label text-error">{inputErrors.external_url[0]}</p>
-        )
-      }
+      {inputErrors.external_url && (
+        <p class="fieldset-label text-error">{inputErrors.external_url[0]}</p>
+      )}
     </fieldset>
   </div>
 
@@ -234,8 +222,12 @@ const t = useTranslations(Astro.locals.locale)
   </div>
 
   <div class="flex items-center gap-3">
-    <button class="btn btn-primary" type="submit">{submitLabel}</button>
-    <a class="btn btn-ghost" href={cancelHref}>{t.ui.cancel}</a>
+    <button class="btn btn-primary" type="submit">
+      {submitLabel}
+    </button>
+    <a class="btn btn-ghost" href={cancelHref}>
+      {t.ui.cancel}
+    </a>
   </div>
 </form>
 

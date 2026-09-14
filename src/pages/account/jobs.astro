@@ -29,42 +29,42 @@ const statusLabel: Record<string, string> = {
   </div>
   <h1 class="text-3xl font-bold tracking-tight sm:text-4xl mb-6">{t.auth.myJobOffers}</h1>
 
-  {
-    jobs.length === 0 ? (
-      <p class="rounded-xl border border-base-300 bg-base-100 p-6 text-base-content/70">
-        {t.auth.noMyJobOffers}
-      </p>
-    ) : (
-      <div class="flex flex-col gap-3">
-        {jobs.map((job) => (
-          <a
-            class="group flex flex-col gap-1 rounded-xl border border-base-300 bg-base-100 p-4 no-underline transition-all hover:shadow-md"
-            href={`/job/${job.slug}`}
-          >
-            <div class="flex items-start justify-between gap-2">
-              <h2 class="font-semibold leading-snug text-base-content group-hover:text-primary">
-                {job.title}
-              </h2>
-              <span
-                class:list={[
-                  `badge badge-sm shrink-0`,
-                  `${JOB_STATUS_BADGE_CLASS[job.online_status] ?? "badge-neutral"}`,
-                ]}
-              >
-                {statusLabel[job.online_status] ?? job.online_status}
-              </span>
-            </div>
-            <p class="text-sm text-base-content/70">
-              {job.company} · {job.location}
-            </p>
-            <p class="line-clamp-2 text-sm text-base-content/40">{job.description}</p>
-          </a>
-        ))}
-      </div>
-    )
-  }
+  {jobs.length === 0 ? (
+    <p class="rounded-xl border border-base-300 bg-base-100 p-6 text-base-content/70">
+      {t.auth.noMyJobOffers}
+    </p>
+  ) : (
+    <div class="flex flex-col gap-3">
+      {jobs.map((job) => (
+        <a
+          class="group flex flex-col gap-1 rounded-xl border border-base-300 bg-base-100 p-4 no-underline transition-all hover:shadow-md"
+          href={`/job/${job.slug}`}
+        >
+          <div class="flex items-start justify-between gap-2">
+            <h2 class="font-semibold leading-snug text-base-content group-hover:text-primary">
+              {job.title}
+            </h2>
+            <span
+              class:list={[
+                `badge badge-sm shrink-0`,
+                `${JOB_STATUS_BADGE_CLASS[job.online_status] ?? "badge-neutral"}`,
+              ]}
+            >
+              {statusLabel[job.online_status] ?? job.online_status}
+            </span>
+          </div>
+          <p class="text-sm text-base-content/70">
+            {job.company} · {job.location}
+          </p>
+          <p class="line-clamp-2 text-sm text-base-content/40">{job.description}</p>
+        </a>
+      ))}
+    </div>
+  )}
 
   <div class="mt-6">
-    <a class="btn btn-primary btn-sm" href="/job/new">{t.jobs.postJob}</a>
+    <a class="btn btn-primary btn-sm" href="/job/new">
+      {t.jobs.postJob}
+    </a>
   </div>
 </PageLayout>

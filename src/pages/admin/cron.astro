@@ -36,45 +36,43 @@ function statusBadgeClass(job: CronJobStatus) {
 
   {runError && <Alert variant="error">{runError}</Alert>}
 
-  {
-    apiDown ? (
-      <ApiDownBanner />
-    ) : (
-      <div class="flex flex-col gap-3">
-        {jobs.map((job) => (
-          <div class="flex flex-col gap-3 rounded-xl border border-base-300 bg-base-100 p-4 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <p class="font-semibold leading-snug text-base-content">
-                {t.admin.cronJobLabels[job.key]}
+  {apiDown ? (
+    <ApiDownBanner />
+  ) : (
+    <div class="flex flex-col gap-3">
+      {jobs.map((job) => (
+        <div class="flex flex-col gap-3 rounded-xl border border-base-300 bg-base-100 p-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <p class="font-semibold leading-snug text-base-content">
+              {t.admin.cronJobLabels[job.key]}
+            </p>
+            <p class="text-sm text-base-content/70">{t.admin.cronScheduleLabel(job.schedule)}</p>
+            {job.lastRun ? (
+              <p class="mt-1 text-xs text-base-content/70">
+                {t.admin.cronLastRunAt(
+                  new Date(job.lastRun.startedAt).toLocaleString(t.auth.dateLocale)
+                )}
+                {" · "}
+                {t.admin.cronDuration((job.lastRun.durationMs / 1000).toFixed(1))}
               </p>
-              <p class="text-sm text-base-content/70">{t.admin.cronScheduleLabel(job.schedule)}</p>
-              {job.lastRun ? (
-                <p class="mt-1 text-xs text-base-content/70">
-                  {t.admin.cronLastRunAt(
-                    new Date(job.lastRun.startedAt).toLocaleString(t.auth.dateLocale)
-                  )}
-                  {" · "}
-                  {t.admin.cronDuration((job.lastRun.durationMs / 1000).toFixed(1))}
-                </p>
-              ) : (
-                <p class="mt-1 text-xs text-base-content/70">{t.admin.cronNeverRun}</p>
-              )}
-              {job.lastRun?.status === "error" && job.lastRun.error && (
-                <p class="mt-1 text-xs text-error break-all">{job.lastRun.error}</p>
-              )}
-            </div>
-            <div class="flex items-center gap-2">
-              <span class:list={["badge badge-sm", statusBadgeClass(job)]}>{statusLabel(job)}</span>
-              <form action={actions.cron.run} method="POST">
-                <input name="key" type="hidden" value={job.key} />
-                <button class="btn btn-outline btn-sm" type="submit">
-                  {t.admin.cronRunNow}
-                </button>
-              </form>
-            </div>
+            ) : (
+              <p class="mt-1 text-xs text-base-content/70">{t.admin.cronNeverRun}</p>
+            )}
+            {job.lastRun?.status === "error" && job.lastRun.error && (
+              <p class="mt-1 text-xs text-error break-all">{job.lastRun.error}</p>
+            )}
           </div>
-        ))}
-      </div>
-    )
-  }
+          <div class="flex items-center gap-2">
+            <span class:list={["badge badge-sm", statusBadgeClass(job)]}>{statusLabel(job)}</span>
+            <form action={actions.cron.run} method="POST">
+              <input name="key" type="hidden" value={job.key} />
+              <button class="btn btn-outline btn-sm" type="submit">
+                {t.admin.cronRunNow}
+              </button>
+            </form>
+          </div>
+        </div>
+      ))}
+    </div>
+  )}
 </PageLayout>

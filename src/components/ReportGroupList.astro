@@ -75,204 +75,198 @@ const statusFilters = [
 {apiDown && <ApiDownBanner />}
 
 <div class="mb-4 flex flex-wrap items-center gap-2">
-  {
-    statusFilters.map(({ key, label }) => (
-      <a
-        aria-current={statusFilter === key ? "true" : undefined}
-        class:list={[
-          "btn btn-sm",
-          { "btn-primary": statusFilter === key, "btn-outline": statusFilter !== key },
-        ]}
-        href={statusUrl(key)}
-      >
-        {label}
-      </a>
-    ))
-  }
+  {statusFilters.map(({ key, label }) => (
+    <a
+      aria-current={statusFilter === key ? "true" : undefined}
+      class:list={[
+        "btn btn-sm",
+        { "btn-primary": statusFilter === key, "btn-outline": statusFilter !== key },
+      ]}
+      href={statusUrl(key)}
+    >
+      {label}
+    </a>
+  ))}
 </div>
 
-{
-  !apiDown &&
-    (groups.length === 0 ? (
-      <p
-        class="rounded-xl border border-base-300 bg-base-100 p-6 text-base-content/70"
-        data-testid="reports-queue"
-      >
-        {t.admin.noReports}
-      </p>
-    ) : (
-      <div class="flex flex-col gap-3" data-testid="reports-queue">
-        {groups.map((group) => {
-          const targetId = group.key.split(":")[1]
-          return (
-            <div class="flex flex-col gap-3 rounded-xl border border-base-300 bg-base-100 p-4">
-              <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <div class="flex flex-wrap items-center gap-2">
-                    <span class:list={["badge badge-sm", severityBadgeClass(group)]}>
-                      {t.admin.reportsCount(group.totalCount)}
+{!apiDown &&
+  (groups.length === 0 ? (
+    <p
+      class="rounded-xl border border-base-300 bg-base-100 p-6 text-base-content/70"
+      data-testid="reports-queue"
+    >
+      {t.admin.noReports}
+    </p>
+  ) : (
+    <div class="flex flex-col gap-3" data-testid="reports-queue">
+      {groups.map((group) => {
+        const targetId = group.key.split(":")[1]
+        return (
+          <div class="flex flex-col gap-3 rounded-xl border border-base-300 bg-base-100 p-4">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class:list={["badge badge-sm", severityBadgeClass(group)]}>
+                    {t.admin.reportsCount(group.totalCount)}
+                  </span>
+                  {group.openCount >= REPORT_WARNING_THRESHOLD && (
+                    <span class="badge badge-sm badge-error badge-outline">
+                      {t.admin.reportsMultiple}
                     </span>
-                    {group.openCount >= REPORT_WARNING_THRESHOLD && (
-                      <span class="badge badge-sm badge-error badge-outline">
-                        {t.admin.reportsMultiple}
-                      </span>
-                    )}
-                    {reasonCounts(group).map(([reason, count]) => (
-                      <span class="badge badge-sm badge-neutral badge-outline">
-                        {reasonLabel[reason] ?? reason} ({count})
-                      </span>
-                    ))}
-                    {group.target && !group.target.published && (
-                      <span class="badge badge-sm badge-ghost">{t.admin.reportsUnpublished}</span>
-                    )}
-                    {group.caseStatus === "resolved" && group.target?.published && (
-                      <span class="badge badge-sm badge-ghost">
-                        {t.admin.reportsStatusResolved}
-                      </span>
-                    )}
-                  </div>
-                  <p class="mt-1 font-semibold leading-snug text-base-content">
-                    {group.target ? (
-                      <a
-                        class="link"
-                        href={
-                          group.target.type === "event"
-                            ? `/event/${group.target.slug}`
-                            : `/job/${group.target.slug}`
-                        }
-                      >
-                        {group.target.title}
-                      </a>
-                    ) : (
-                      t.admin.reportsTargetMissing
-                    )}
-                  </p>
-                  {group.target && !group.target.published && group.target.rejectionReason && (
-                    <p class="mt-1 text-sm text-base-content/70">
-                      {rejectionReasonLabel(group.target.rejectionReason)}
-                    </p>
                   )}
-                  <p class="mt-1 text-xs text-base-content/40">
-                    {t.admin.reportsOpenDismissedSummary(group.openCount, group.dismissedCount)}
-                    {" · "}
-                    {t.admin.reportsLatestAt(formatDate(group.latestCreatedAt))}
-                  </p>
-                </div>
-                {group.target && (
-                  <div class="flex flex-wrap gap-2">
-                    <a
-                      class="btn btn-outline btn-sm"
-                      href={`${editBasePath}/${group.target.slug}/edit`}
-                    >
-                      {editLabel}
-                    </a>
-                    {group.openCount === 0 ? (
-                      <form action={actions.reports.reopenGroup} method="POST">
-                        <input name="target_type" type="hidden" value={group.target.type} />
-                        <input name="target_id" type="hidden" value={targetId} />
-                        <button class="btn btn-outline btn-sm" type="submit">
-                          {t.admin.reportsReopenAll}
-                        </button>
-                      </form>
-                    ) : (
-                      <form action={actions.reports.dismissGroup} method="POST">
-                        <input name="target_type" type="hidden" value={group.target.type} />
-                        <input name="target_id" type="hidden" value={targetId} />
-                        <button class="btn btn-outline btn-sm" type="submit">
-                          {t.admin.reportsDismissAll}
-                        </button>
-                      </form>
-                    )}
-                    {group.target.published ? (
-                      <form
-                        action={unpublishAction}
-                        class="flex flex-wrap items-center gap-2"
-                        method="POST"
-                      >
-                        <input name="id" type="hidden" value={targetId} />
-                        <input
-                          class="input input-sm input-bordered"
-                          maxlength="500"
-                          name="reason"
-                          placeholder={t.admin.reasonPlaceholder}
-                          type="text"
-                        />
-                        <button class="btn btn-outline btn-warning btn-sm" type="submit">
-                          {t.admin.reportsUnpublish}
-                        </button>
-                      </form>
-                    ) : (
-                      <form action={publishAction} method="POST">
-                        <input name="id" type="hidden" value={targetId} />
-                        <button class="btn btn-outline btn-success btn-sm" type="submit">
-                          {t.admin.reportsPublish}
-                        </button>
-                      </form>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <details class="rounded-lg border border-base-200">
-                <summary class="cursor-pointer select-none px-3 py-2 text-sm text-base-content/70">
-                  {t.admin.reportsShowIndividual(group.totalCount)}
-                </summary>
-                <div class="flex flex-col gap-2 border-t border-base-200 p-3">
-                  {group.reports.map((report) => (
-                    <div class="flex flex-col gap-2 rounded-lg bg-base-200/40 p-3 sm:flex-row sm:items-start sm:justify-between">
-                      <div>
-                        <div class="flex items-center gap-2">
-                          <span class="badge badge-sm badge-neutral">
-                            {reasonLabel[report.reason] ?? report.reason}
-                          </span>
-                          <span
-                            class:list={[
-                              "badge badge-sm",
-                              {
-                                "badge-ghost": report.reviewStatus === "dismissed",
-                                "badge-warning": report.reviewStatus !== "dismissed",
-                              },
-                            ]}
-                          >
-                            {report.reviewStatus === "dismissed"
-                              ? t.admin.reportsStatusDismissed
-                              : t.admin.reportsStatusOpen}
-                          </span>
-                        </div>
-                        {report.details && (
-                          <p class="mt-1 text-sm text-base-content/70">{report.details}</p>
-                        )}
-                        <p class="mt-1 text-xs text-base-content/40">
-                          {t.admin.decidedAt(formatDate(report.createdAt))}
-                        </p>
-                      </div>
-                      <div class="flex gap-2">
-                        {report.reviewStatus === "dismissed" ? (
-                          <form action={actions.reports.reopen} method="POST">
-                            <input name="id" type="hidden" value={report.id} />
-                            <button class="btn btn-outline btn-xs" type="submit">
-                              {t.admin.reportsReopen}
-                            </button>
-                          </form>
-                        ) : (
-                          <form action={actions.reports.dismiss} method="POST">
-                            <input name="id" type="hidden" value={report.id} />
-                            <button class="btn btn-outline btn-xs" type="submit">
-                              {t.admin.reportsDismiss}
-                            </button>
-                          </form>
-                        )}
-                      </div>
-                    </div>
+                  {reasonCounts(group).map(([reason, count]) => (
+                    <span class="badge badge-sm badge-neutral badge-outline">
+                      {reasonLabel[reason] ?? reason} ({count})
+                    </span>
                   ))}
+                  {group.target && !group.target.published && (
+                    <span class="badge badge-sm badge-ghost">{t.admin.reportsUnpublished}</span>
+                  )}
+                  {group.caseStatus === "resolved" && group.target?.published && (
+                    <span class="badge badge-sm badge-ghost">{t.admin.reportsStatusResolved}</span>
+                  )}
                 </div>
-              </details>
+                <p class="mt-1 font-semibold leading-snug text-base-content">
+                  {group.target ? (
+                    <a
+                      class="link"
+                      href={
+                        group.target.type === "event"
+                          ? `/event/${group.target.slug}`
+                          : `/job/${group.target.slug}`
+                      }
+                    >
+                      {group.target.title}
+                    </a>
+                  ) : (
+                    t.admin.reportsTargetMissing
+                  )}
+                </p>
+                {group.target && !group.target.published && group.target.rejectionReason && (
+                  <p class="mt-1 text-sm text-base-content/70">
+                    {rejectionReasonLabel(group.target.rejectionReason)}
+                  </p>
+                )}
+                <p class="mt-1 text-xs text-base-content/40">
+                  {t.admin.reportsOpenDismissedSummary(group.openCount, group.dismissedCount)}
+                  {" · "}
+                  {t.admin.reportsLatestAt(formatDate(group.latestCreatedAt))}
+                </p>
+              </div>
+              {group.target && (
+                <div class="flex flex-wrap gap-2">
+                  <a
+                    class="btn btn-outline btn-sm"
+                    href={`${editBasePath}/${group.target.slug}/edit`}
+                  >
+                    {editLabel}
+                  </a>
+                  {group.openCount === 0 ? (
+                    <form action={actions.reports.reopenGroup} method="POST">
+                      <input name="target_type" type="hidden" value={group.target.type} />
+                      <input name="target_id" type="hidden" value={targetId} />
+                      <button class="btn btn-outline btn-sm" type="submit">
+                        {t.admin.reportsReopenAll}
+                      </button>
+                    </form>
+                  ) : (
+                    <form action={actions.reports.dismissGroup} method="POST">
+                      <input name="target_type" type="hidden" value={group.target.type} />
+                      <input name="target_id" type="hidden" value={targetId} />
+                      <button class="btn btn-outline btn-sm" type="submit">
+                        {t.admin.reportsDismissAll}
+                      </button>
+                    </form>
+                  )}
+                  {group.target.published ? (
+                    <form
+                      action={unpublishAction}
+                      class="flex flex-wrap items-center gap-2"
+                      method="POST"
+                    >
+                      <input name="id" type="hidden" value={targetId} />
+                      <input
+                        class="input input-sm input-bordered"
+                        maxlength="500"
+                        name="reason"
+                        placeholder={t.admin.reasonPlaceholder}
+                        type="text"
+                      />
+                      <button class="btn btn-outline btn-warning btn-sm" type="submit">
+                        {t.admin.reportsUnpublish}
+                      </button>
+                    </form>
+                  ) : (
+                    <form action={publishAction} method="POST">
+                      <input name="id" type="hidden" value={targetId} />
+                      <button class="btn btn-outline btn-success btn-sm" type="submit">
+                        {t.admin.reportsPublish}
+                      </button>
+                    </form>
+                  )}
+                </div>
+              )}
             </div>
-          )
-        })}
-      </div>
-    ))
-}
+
+            <details class="rounded-lg border border-base-200">
+              <summary class="cursor-pointer select-none px-3 py-2 text-sm text-base-content/70">
+                {t.admin.reportsShowIndividual(group.totalCount)}
+              </summary>
+              <div class="flex flex-col gap-2 border-t border-base-200 p-3">
+                {group.reports.map((report) => (
+                  <div class="flex flex-col gap-2 rounded-lg bg-base-200/40 p-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <div class="flex items-center gap-2">
+                        <span class="badge badge-sm badge-neutral">
+                          {reasonLabel[report.reason] ?? report.reason}
+                        </span>
+                        <span
+                          class:list={[
+                            "badge badge-sm",
+                            {
+                              "badge-ghost": report.reviewStatus === "dismissed",
+                              "badge-warning": report.reviewStatus !== "dismissed",
+                            },
+                          ]}
+                        >
+                          {report.reviewStatus === "dismissed"
+                            ? t.admin.reportsStatusDismissed
+                            : t.admin.reportsStatusOpen}
+                        </span>
+                      </div>
+                      {report.details && (
+                        <p class="mt-1 text-sm text-base-content/70">{report.details}</p>
+                      )}
+                      <p class="mt-1 text-xs text-base-content/40">
+                        {t.admin.decidedAt(formatDate(report.createdAt))}
+                      </p>
+                    </div>
+                    <div class="flex gap-2">
+                      {report.reviewStatus === "dismissed" ? (
+                        <form action={actions.reports.reopen} method="POST">
+                          <input name="id" type="hidden" value={report.id} />
+                          <button class="btn btn-outline btn-xs" type="submit">
+                            {t.admin.reportsReopen}
+                          </button>
+                        </form>
+                      ) : (
+                        <form action={actions.reports.dismiss} method="POST">
+                          <input name="id" type="hidden" value={report.id} />
+                          <button class="btn btn-outline btn-xs" type="submit">
+                            {t.admin.reportsDismiss}
+                          </button>
+                        </form>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </details>
+          </div>
+        )
+      })}
+    </div>
+  ))}
 
 <Pagination
   nextLabel={t.jobs.paginationNext}

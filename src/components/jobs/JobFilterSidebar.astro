@@ -29,20 +29,26 @@ const t = useTranslations(Astro.locals.locale)
     <h3 class="mb-2 text-xs font-semibold uppercase tracking-wide text-base-content/40">
       {t.jobs.filterType}
     </h3>
-    {typeItems.map((item) => <JobFilterItem {...item} />)}
+    {typeItems.map((item) => (
+      <JobFilterItem {...item} />
+    ))}
   </div>
 
   <div class="mb-5">
     <h3 class="mb-2 text-xs font-semibold uppercase tracking-wide text-base-content/40">
       {t.jobs.filterField}
     </h3>
-    {fieldItems.map((item) => <JobFilterItem {...item} />)}
+    {fieldItems.map((item) => (
+      <JobFilterItem {...item} />
+    ))}
   </div>
 
   <div class="mb-5">
     <h3 class="mb-2 text-xs font-semibold uppercase tracking-wide text-base-content/40">
       {t.jobs.fieldWorkMode}
     </h3>
-    {workModeItems.map((item) => <JobFilterItem {...item} />)}
+    {workModeItems.map((item) => (
+      <JobFilterItem {...item} />
+    ))}
   </div>
 </aside>
