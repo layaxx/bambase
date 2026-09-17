@@ -25,6 +25,7 @@ vi.mock("./prisma", () => ({
 }))
 
 import { syncUnivisEvents } from "./event-sync"
+import { baseLogger } from "@/utils/logger"
 
 function makeUnivisEvent(overrides: Record<string, unknown> = {}) {
   return {
@@ -48,8 +49,8 @@ beforeEach(() => {
   mockUpdate.mockReset().mockResolvedValue({})
   mockCreate.mockReset().mockResolvedValue({})
   mockDeleteMany.mockReset().mockResolvedValue(undefined)
-  vi.spyOn(console, "warn").mockImplementation(() => {})
-  vi.spyOn(console, "error").mockImplementation(() => {})
+  vi.spyOn(baseLogger, "warn").mockImplementation(() => {})
+  vi.spyOn(baseLogger, "error").mockImplementation(() => {})
 })
 
 describe("syncUnivisEvents", () => {
@@ -58,7 +59,10 @@ describe("syncUnivisEvents", () => {
 
     await expect(syncUnivisEvents()).rejects.toThrow(/timeout/)
 
-    expect(console.error).toHaveBeenCalledWith(expect.stringContaining("timeout"))
+    expect(baseLogger.error).toHaveBeenCalledWith(
+      { err: expect.objectContaining({ message: "timeout" }) },
+      "external API request failed"
+    )
   })
 
   it("resolves without throwing when the fetch succeeds", async () => {
@@ -74,7 +78,10 @@ describe("syncUnivisEvents", () => {
 
     expect(mockCreate).not.toHaveBeenCalled()
     expect(mockUpdate).not.toHaveBeenCalled()
-    expect(console.warn).toHaveBeenCalledWith(expect.stringContaining("missing required fields"))
+    expect(baseLogger.warn).toHaveBeenCalledWith(
+      { externalId: expect.any(String) },
+      "event skipped, missing required fields"
+    )
   })
 
   it("creates a new event with a slug derived from the title when no existing match is found", async () => {
@@ -144,7 +151,10 @@ describe("syncUnivisEvents", () => {
 
     await expect(syncUnivisEvents()).resolves.toBeUndefined()
 
-    expect(console.error).toHaveBeenCalledWith(expect.stringContaining("db unavailable"))
+    expect(baseLogger.error).toHaveBeenCalledWith(
+      { err: expect.objectContaining({ message: "db unavailable" }), externalId: "univis:123" },
+      "event update failed"
+    )
   })
 
   it("logs and continues (without throwing) when creating an event fails", async () => {
@@ -153,7 +163,10 @@ describe("syncUnivisEvents", () => {
 
     await expect(syncUnivisEvents()).resolves.toBeUndefined()
 
-    expect(console.error).toHaveBeenCalledWith(expect.stringContaining("db unavailable"))
+    expect(baseLogger.error).toHaveBeenCalledWith(
+      { err: expect.objectContaining({ message: "db unavailable" }), externalId: "univis:123" },
+      "event create failed"
+    )
   })
 
   it("deletes non-hidden events that previously synced from UniVis but were not seen this run", async () => {

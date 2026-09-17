@@ -2,6 +2,7 @@ import type { APIRoute } from "astro"
 import { fetchEvent } from "@/utils/api/events"
 import { fetchJobOffer } from "@/utils/api/job-offers"
 import { renderToPNG } from "@/utils/opengraph/render"
+import { getLogger } from "@/utils/logger"
 import {
   makeEventSubtitleItems,
   makeImageContent,
@@ -50,7 +51,7 @@ export const GET: APIRoute = async ({ params, redirect }) => {
       },
     })
   } catch (error) {
-    console.error("Error generating OG image:", error)
+    getLogger().error({ err: error, type, slug }, "og image generation failed")
     return redirect("/og-image.png", 302)
   }
 }

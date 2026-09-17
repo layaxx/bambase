@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import { baseLogger } from "@/utils/logger"
 import {
   fetchJobOffers,
   fetchJobOffersPaginated,
@@ -106,13 +107,16 @@ describe("fetchJobOffers", () => {
   })
 
   it("logs an error and returns an empty array when the query fails", async () => {
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+    const consoleSpy = vi.spyOn(baseLogger, "error").mockImplementation(() => {})
     mockFindMany.mockResolvedValue(null) // null.map throws TypeError inside the try block
 
     const result = await fetchJobOffers()
 
     expect(result).toEqual({ data: [], apiDown: true })
-    expect(consoleSpy).toHaveBeenCalledWith("Error fetching job offers", expect.any(TypeError))
+    expect(consoleSpy).toHaveBeenCalledWith(
+      { err: expect.any(TypeError), operation: "Error fetching job offers" },
+      "data query failed"
+    )
   })
 })
 
@@ -190,7 +194,7 @@ describe("fetchJobOffersPaginated", () => {
   })
 
   it("logs an error and returns an empty page when the query fails", async () => {
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+    const consoleSpy = vi.spyOn(baseLogger, "error").mockImplementation(() => {})
     mockFindMany.mockRejectedValue(new Error("db error"))
 
     const result = await fetchJobOffersPaginated()
@@ -200,8 +204,8 @@ describe("fetchJobOffersPaginated", () => {
       apiDown: true,
     })
     expect(consoleSpy).toHaveBeenCalledWith(
-      "Error fetching job offers (paginated)",
-      expect.any(Error)
+      { err: expect.any(Error), operation: "Error fetching job offers (paginated)" },
+      "data query failed"
     )
   })
 })
@@ -248,13 +252,16 @@ describe("fetchJobOffer", () => {
   })
 
   it("logs an error and returns null when the query fails", async () => {
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+    const consoleSpy = vi.spyOn(baseLogger, "error").mockImplementation(() => {})
     mockFindFirst.mockRejectedValue(new Error("connection refused"))
 
     const result = await fetchJobOffer("developer-1")
 
     expect(result).toEqual({ data: null, apiDown: true })
-    expect(consoleSpy).toHaveBeenCalledWith("Error fetching job offer", expect.any(Error))
+    expect(consoleSpy).toHaveBeenCalledWith(
+      { err: expect.any(Error), operation: "Error fetching job offer" },
+      "data query failed"
+    )
   })
 
   it("hides a non-published job offer from an anonymous visitor", async () => {
@@ -311,12 +318,15 @@ describe("fetchMyJobOffers", () => {
   })
 
   it("logs an error and returns an empty array when the query fails", async () => {
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+    const consoleSpy = vi.spyOn(baseLogger, "error").mockImplementation(() => {})
     mockFindMany.mockRejectedValue(new Error("connection refused"))
 
     const result = await fetchMyJobOffers("user-42")
 
     expect(result).toEqual({ data: [], apiDown: true })
-    expect(consoleSpy).toHaveBeenCalledWith("Error fetching own job offers", expect.any(Error))
+    expect(consoleSpy).toHaveBeenCalledWith(
+      { err: expect.any(Error), operation: "Error fetching own job offers" },
+      "data query failed"
+    )
   })
 })

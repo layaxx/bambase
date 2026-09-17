@@ -1,3 +1,5 @@
+import { getLogger } from "./logger"
+
 const MAILGUN_API_KEY = process.env.MAILGUN_API_KEY ?? import.meta.env.MAILGUN_API_KEY
 const MAILGUN_DOMAIN = process.env.MAILGUN_DOMAIN ?? import.meta.env.MAILGUN_DOMAIN
 
@@ -14,10 +16,12 @@ type MailMessage = {
  */
 export async function sendMail(message: MailMessage): Promise<void> {
   if (!MAILGUN_API_KEY || !MAILGUN_DOMAIN) {
-    console.warn(
-      `[mail] MAILGUN_API_KEY/MAILGUN_DOMAIN not set, logging email instead of sending:\n` +
-        `To: ${message.to}\nSubject: ${message.subject}\n\n${message.text}`
+    getLogger().warn(
+      { to: message.to, subject: message.subject },
+      "mailgun not configured, email not sent"
     )
+    // The body can carry password-reset links, so it stays out of production logs entirely.
+    if (!import.meta.env.PROD) getLogger().debug({ body: message.text }, "email body")
     return
   }
 

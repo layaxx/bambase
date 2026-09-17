@@ -4,6 +4,7 @@ import { APIError } from "better-auth"
 import { canManageUsers, canSetUserRoles, canInviteUsers, USER_ROLES } from "@/utils/authz"
 import { requirePermission } from "@/utils/action-guards"
 import { auth } from "@/utils/auth"
+import { getLogger } from "@/utils/logger"
 
 export const users = {
   ban: defineAction({
@@ -27,7 +28,7 @@ export const users = {
             message: "Du kannst dich nicht selbst sperren.",
           })
         }
-        console.error("User ban failed:", error)
+        getLogger().error({ err: error }, "user ban failed")
         throw new ActionError({ code: "INTERNAL_SERVER_ERROR", message: "Sperren fehlgeschlagen." })
       }
 
@@ -47,7 +48,7 @@ export const users = {
           body: { userId: id },
         })
       } catch (error) {
-        console.error("User unban failed:", error)
+        getLogger().error({ err: error }, "user unban failed")
         throw new ActionError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Entsperren fehlgeschlagen.",
@@ -86,7 +87,7 @@ export const users = {
             message: "Rolle konnte nicht geändert werden.",
           })
         }
-        console.error("User role change failed:", error)
+        getLogger().error({ err: error }, "user role change failed")
         throw new ActionError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Rolle konnte nicht geändert werden.",
@@ -119,7 +120,7 @@ export const users = {
             message: "Diese E-Mail-Adresse wird bereits verwendet.",
           })
         }
-        console.error("User invite failed:", error)
+        getLogger().error({ err: error }, "user invite failed")
         throw new ActionError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Einladung fehlgeschlagen.",
@@ -132,7 +133,7 @@ export const users = {
           body: { email, redirectTo: "/reset-password" },
         })
       } catch (error) {
-        console.error("Sending invite email failed:", error)
+        getLogger().error({ err: error }, "invite email failed")
       }
 
       return {}

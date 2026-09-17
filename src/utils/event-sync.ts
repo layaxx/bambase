@@ -5,6 +5,9 @@ import { EventCategory } from "@/generated/prisma/enums"
 import prisma from "./prisma"
 import { createWithUniqueSlug } from "./slugify"
 import { errorMessage } from "./error-message"
+import { baseLogger } from "./logger"
+
+const log = baseLogger.child({ job: "event-sync" })
 
 const UNIVIS_PREFIX = "univis:"
 
@@ -40,7 +43,7 @@ export async function syncUnivisEvents() {
   const start = now.toISOString().split("T")[0]
   const end = windowEnd.toISOString().split("T")[0]
 
-  console.warn(`[univis] Syncing events ${start} -> ${end}`)
+  log.info({ start, end }, "event sync started")
 
   let univisEvents: Awaited<ReturnType<typeof client.getCalendar>>
 
@@ -48,11 +51,11 @@ export async function syncUnivisEvents() {
     univisEvents = await client.getCalendar({ start, end })
   } catch (error) {
     const message = errorMessage(error)
-    console.error(`[univis] Failed to fetch from UniVis: ${message}`)
+    log.error({ err: error }, "external API request failed")
     throw new Error(`Failed to fetch from UniVis: ${message}`, { cause: error })
   }
 
-  console.warn(`[univis] Received ${univisEvents.length} events`)
+  log.debug({ count: univisEvents.length }, "events received")
 
   const existing = await prisma.event.findMany({
     where: {
@@ -78,7 +81,7 @@ export async function syncUnivisEvents() {
         !event.starttime ||
         !event.endtime
       ) {
-        console.warn(`[univis] Skipping event ${event._key} - missing required fields`)
+        log.warn({ externalId }, "event skipped, missing required fields")
         return "skipped"
       }
 
@@ -106,7 +109,7 @@ export async function syncUnivisEvents() {
           await prisma.event.update({ where: { id: match.id }, data })
           return "updated"
         } catch (error) {
-          console.error(`[univis] Failed to update event ${externalId}: ${errorMessage(error)}`)
+          log.error({ err: error, externalId }, "event update failed")
           return "skipped"
         }
       }
@@ -117,7 +120,7 @@ export async function syncUnivisEvents() {
         )
         return "created"
       } catch (error) {
-        console.error(`[univis] Failed to create event ${externalId}: ${errorMessage(error)}`)
+        log.error({ err: error, externalId }, "event create failed")
         return "skipped"
       }
     })
@@ -135,7 +138,5 @@ export async function syncUnivisEvents() {
   }
   const deleted = stale.length
 
-  console.warn(
-    `[univis] Done - created: ${created}, updated: ${updated}, deleted: ${deleted}, skipped: ${skipped}`
-  )
+  log.info({ created, updated, deleted, skipped }, "event sync completed")
 }

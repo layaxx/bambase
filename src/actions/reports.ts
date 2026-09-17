@@ -4,6 +4,7 @@ import { ReportReason } from "@/generated/prisma/enums"
 import { canModerateReport } from "@/utils/authz"
 import { requireUserId } from "@/utils/action-guards"
 import prisma from "@/utils/prisma"
+import { getLogger } from "@/utils/logger"
 
 function targetTypeOf(report: {
   eventId: string | null
@@ -44,7 +45,7 @@ export const reports = {
           },
         })
       } catch (error) {
-        console.error("Report submission failed:", error)
+        getLogger().error({ err: error }, "report create failed")
         throw new ActionError({ code: "INTERNAL_SERVER_ERROR", message: "Meldung fehlgeschlagen." })
       }
 
@@ -68,7 +69,7 @@ export const reports = {
       try {
         await prisma.report.update({ where: { id }, data: { reviewStatus: "dismissed" } })
       } catch (error) {
-        console.error("Report dismiss failed:", error)
+        getLogger().error({ err: error }, "report dismiss failed")
         throw new ActionError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Verwerfen fehlgeschlagen.",
@@ -95,7 +96,7 @@ export const reports = {
       try {
         await prisma.report.update({ where: { id }, data: { reviewStatus: "open" } })
       } catch (error) {
-        console.error("Report reopen failed:", error)
+        getLogger().error({ err: error }, "report reopen failed")
         throw new ActionError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Wiedereröffnen fehlgeschlagen.",
@@ -126,7 +127,7 @@ export const reports = {
           data: { reviewStatus: "dismissed" },
         })
       } catch (error) {
-        console.error("Report group dismiss failed:", error)
+        getLogger().error({ err: error }, "report group dismiss failed")
         throw new ActionError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Verwerfen fehlgeschlagen.",
@@ -157,7 +158,7 @@ export const reports = {
           data: { reviewStatus: "open" },
         })
       } catch (error) {
-        console.error("Report group reopen failed:", error)
+        getLogger().error({ err: error }, "report group reopen failed")
         throw new ActionError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Wiedereröffnen fehlgeschlagen.",

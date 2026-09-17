@@ -7,6 +7,7 @@ import { canModerateEvents } from "@/utils/authz"
 import { requireUserId, assertOwnerOrPermission, mutationError } from "@/utils/action-guards"
 import prisma from "@/utils/prisma"
 import { httpUrl } from "./schemas"
+import { getLogger } from "@/utils/logger"
 
 const locationFieldsShape = {
   location_type: z.enum(["none", "linked", "custom"]).default("none"),
@@ -81,7 +82,7 @@ export const events = {
       try {
         await prisma.event.delete({ where: { id } })
       } catch (error) {
-        console.error("Event delete failed:", error)
+        getLogger().error({ err: error }, "event delete failed")
         throw new ActionError({ code: "INTERNAL_SERVER_ERROR", message: "Löschen fehlgeschlagen." })
       }
 
@@ -112,7 +113,7 @@ export const events = {
           data: { hidden: true, rejectionReason: reason || null },
         })
       } catch (error) {
-        console.error("Event unpublish failed:", error)
+        getLogger().error({ err: error }, "event unpublish failed")
         throw new ActionError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Depublizieren fehlgeschlagen.",
@@ -162,7 +163,7 @@ export const events = {
           data: { hidden: false, rejectionReason: null },
         })
       } catch (error) {
-        console.error("Event publish failed:", error)
+        getLogger().error({ err: error }, "event publish failed")
         throw new ActionError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Veröffentlichen fehlgeschlagen.",

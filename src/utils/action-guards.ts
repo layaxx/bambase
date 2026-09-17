@@ -1,5 +1,6 @@
 import { ActionError } from "astro:actions"
 import { Prisma } from "@/generated/prisma/client"
+import { getLogger } from "./logger"
 
 type ActionContext = { locals: Pick<App.Locals, "user"> }
 type RoleCheck = (role: string | null | undefined) => Promise<boolean>
@@ -61,7 +62,7 @@ export function mutationError(
   message: string,
   notFoundMessage = message
 ): ActionError {
-  console.error(`${logLabel}:`, error)
+  getLogger().error({ err: error, operation: logLabel }, "action failed")
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
     if (error.code === "P2025") {
       return new ActionError({ code: "NOT_FOUND", message: notFoundMessage })

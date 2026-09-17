@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 vi.mock("astro:middleware", () => ({
   defineMiddleware: (fn: CallableFunction) => fn,
@@ -10,15 +10,25 @@ vi.mock("./utils/auth", () => ({
 }))
 
 import { onRequest } from "./middleware"
+import { baseLogger } from "./utils/logger"
 import type { APIContext } from "astro"
 
 function makeContext({
   cookieLocale,
   acceptLanguage,
+  headers = {},
+  method = "GET",
+  path = "/events",
 }: {
   cookieLocale?: string
   acceptLanguage?: string | null
+  headers?: Record<string, string>
+  method?: string
+  path?: string
 }) {
+  const allHeaders = new Headers(headers)
+  if (acceptLanguage) allHeaders.set("Accept-Language", acceptLanguage)
+
   return {
     cookies: {
       get: (name: string) => {
@@ -28,11 +38,8 @@ function makeContext({
       set: vi.fn(),
       delete: vi.fn(),
     },
-    request: {
-      headers: {
-        get: (name: string) => (name === "Accept-Language" ? (acceptLanguage ?? null) : null),
-      },
-    },
+    url: new URL(`http://localhost:4321${path}`),
+    request: { method, headers: allHeaders },
     locals: {} as Record<string, unknown>,
   } as unknown as APIContext<Record<string, unknown>, Record<string, string | undefined>>
 }
@@ -141,6 +148,85 @@ describe("onRequest middleware", () => {
       await onRequest(ctx, next)
       expect(ctx.locals.user).toBeNull()
       expect(ctx.locals.session).toBeNull()
+    })
+  })
+
+  describe("request correlation", () => {
+    it("returns a generated request id in the X-Request-ID response header", async () => {
+      const response = await onRequest(makeContext({ cookieLocale: "de" }), next)
+      expect(response?.headers.get("X-Request-ID")).toMatch(/^[0-9a-f-]{36}$/)
+    })
+
+    // Astro renders the error page by running the middleware again on the same Request.
+    it("keeps the same id when Astro re-enters on the same request", async () => {
+      const ctx = makeContext({ cookieLocale: "de" })
+      const errorPass = makeContext({ cookieLocale: "de" })
+      Object.assign(errorPass, { request: ctx.request })
+
+      const first = await onRequest(ctx, next)
+      const second = await onRequest(errorPass, next)
+
+      expect(second?.headers.get("X-Request-ID")).toBe(first?.headers.get("X-Request-ID"))
+    })
+  })
+
+  describe("request logging", () => {
+    afterEach(() => vi.restoreAllMocks())
+
+    it("logs one canonical access log per request", async () => {
+      const infoSpy = vi.spyOn(baseLogger, "info").mockImplementation(() => {})
+      const ctx = makeContext({
+        cookieLocale: "de",
+        method: "POST",
+        path: "/jobs",
+        headers: { "User-Agent": "vitest" },
+      })
+
+      await onRequest(ctx, vi.fn().mockResolvedValue(new Response(null, { status: 201 })))
+
+      expect(infoSpy).toHaveBeenCalledTimes(1)
+      expect(infoSpy).toHaveBeenCalledWith(
+        {
+          method: "POST",
+          path: "/jobs",
+          status: 201,
+          durationMs: expect.any(Number),
+          userAgent: "vitest",
+        },
+        "request completed"
+      )
+    })
+
+    it("does not log the query string", async () => {
+      const infoSpy = vi.spyOn(baseLogger, "info").mockImplementation(() => {})
+      const ctx = makeContext({ cookieLocale: "de", path: "/jobs?token=secret-value" })
+
+      await onRequest(ctx, next)
+
+      expect(JSON.stringify(infoSpy.mock.calls)).not.toContain("secret-value")
+    })
+
+    it("logs a structured error and rethrows when the request fails", async () => {
+      const errorSpy = vi.spyOn(baseLogger, "error").mockImplementation(() => {})
+      const ctx = makeContext({ cookieLocale: "de", path: "/boom" })
+      const boom = new Error("handler exploded")
+
+      await expect(onRequest(ctx, vi.fn().mockRejectedValue(boom))).rejects.toThrow(boom)
+
+      expect(errorSpy).toHaveBeenCalledWith(
+        { err: boom, method: "GET", path: "/boom", durationMs: expect.any(Number) },
+        "request failed"
+      )
+    })
+
+    it("logs a failed session lookup without failing the request", async () => {
+      const errorSpy = vi.spyOn(baseLogger, "error").mockImplementation(() => {})
+      getSession.mockRejectedValue(new Error("auth down"))
+      const ctx = makeContext({ cookieLocale: "de" })
+
+      await onRequest(ctx, next)
+
+      expect(errorSpy).toHaveBeenCalledWith({ err: expect.any(Error) }, "session lookup failed")
     })
   })
 })

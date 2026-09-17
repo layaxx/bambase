@@ -13,6 +13,7 @@ import {
 import prisma from "@/utils/prisma"
 import { httpUrl } from "./schemas"
 import { JobOnlineStatus } from "@/generated/prisma/enums"
+import { getLogger } from "@/utils/logger"
 
 const JOB_OFFER_LIFETIME_DAYS = 30
 
@@ -72,7 +73,7 @@ export const jobs = {
       try {
         await prisma.jobOffer.delete({ where: { id } })
       } catch (error) {
-        console.error("Job delete failed:", error)
+        getLogger().error({ err: error }, "job delete failed")
         throw new ActionError({ code: "INTERNAL_SERVER_ERROR", message: "Löschen fehlgeschlagen." })
       }
 
@@ -100,7 +101,7 @@ export const jobs = {
       try {
         await prisma.jobOffer.update({ where: { id }, data: { onlineStatus: "archived" } })
       } catch (error) {
-        console.error("Job archive failed:", error)
+        getLogger().error({ err: error }, "job archive failed")
         throw new ActionError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Archivieren fehlgeschlagen.",
@@ -124,7 +125,7 @@ export const jobs = {
           data: { onlineStatus: "published", rejectionReason: null },
         })
       } catch (error) {
-        console.error("Job approve failed:", error)
+        getLogger().error({ err: error }, "job approve failed")
         throw new ActionError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Genehmigen fehlgeschlagen.",
@@ -148,7 +149,7 @@ export const jobs = {
           data: { onlineStatus: "rejected", rejectionReason: reason || null },
         })
       } catch (error) {
-        console.error("Job reject failed:", error)
+        getLogger().error({ err: error }, "job reject failed")
         throw new ActionError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Ablehnen fehlgeschlagen.",

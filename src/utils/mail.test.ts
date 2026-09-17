@@ -5,7 +5,9 @@ const ORIGINAL_DOMAIN = process.env.MAILGUN_DOMAIN
 
 async function importMail() {
   vi.resetModules()
-  return import("./mail")
+  // mail.ts pulls in its own fresh logger module after the reset, so tests must spy on that one.
+  const [mail, { baseLogger }] = await Promise.all([import("./mail"), import("./logger")])
+  return { ...mail, baseLogger }
 }
 
 beforeEach(() => {
@@ -22,20 +24,23 @@ describe("sendMail", () => {
   it("logs the message instead of sending when Mailgun is not configured", async () => {
     delete process.env.MAILGUN_API_KEY
     delete process.env.MAILGUN_DOMAIN
-    const { sendMail } = await importMail()
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
+    const { sendMail, baseLogger } = await importMail()
+    const warnSpy = vi.spyOn(baseLogger, "warn").mockImplementation(() => {})
 
     await sendMail({ to: "student@example.com", subject: "Hi", text: "Body" })
 
     expect(fetch).not.toHaveBeenCalled()
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("student@example.com"))
+    expect(warnSpy).toHaveBeenCalledWith(
+      { to: "student@example.com", subject: "Hi" },
+      "mailgun not configured, email not sent"
+    )
   })
 
   it("logs instead of sending when only one of the two env vars is set", async () => {
     process.env.MAILGUN_API_KEY = "key-123"
     delete process.env.MAILGUN_DOMAIN
-    const { sendMail } = await importMail()
-    vi.spyOn(console, "warn").mockImplementation(() => {})
+    const { sendMail, baseLogger } = await importMail()
+    vi.spyOn(baseLogger, "warn").mockImplementation(() => {})
 
     await sendMail({ to: "student@example.com", subject: "Hi", text: "Body" })
 

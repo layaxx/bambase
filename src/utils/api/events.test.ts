@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import { baseLogger } from "@/utils/logger"
 import {
   fetchAllPublishedEventSlugs,
   fetchEvent,
@@ -105,13 +106,16 @@ describe("fetchEvent", () => {
   })
 
   it("logs an error and returns null when the query fails", async () => {
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+    const consoleSpy = vi.spyOn(baseLogger, "error").mockImplementation(() => {})
     mockFindFirst.mockRejectedValue(new Error("connection refused"))
 
     const result = await fetchEvent("test-event")
 
     expect(result).toEqual({ data: null, apiDown: true })
-    expect(consoleSpy).toHaveBeenCalledWith("Error fetching event", expect.any(Error))
+    expect(consoleSpy).toHaveBeenCalledWith(
+      { err: expect.any(Error), operation: "Error fetching event" },
+      "data query failed"
+    )
   })
 })
 
@@ -173,13 +177,16 @@ describe("fetchOngoingOrUpcomingEvents", () => {
   })
 
   it("logs an error and returns an empty array when the query fails", async () => {
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+    const consoleSpy = vi.spyOn(baseLogger, "error").mockImplementation(() => {})
     mockFindMany.mockResolvedValue(null)
 
     const result = await fetchOngoingOrUpcomingEvents()
 
     expect(result).toEqual({ data: [], apiDown: true })
-    expect(consoleSpy).toHaveBeenCalledWith("Error fetching events", expect.any(TypeError))
+    expect(consoleSpy).toHaveBeenCalledWith(
+      { err: expect.any(TypeError), operation: "Error fetching events" },
+      "data query failed"
+    )
   })
 })
 
@@ -260,13 +267,16 @@ describe("fetchUpcomingMapEvents", () => {
   })
 
   it("logs an error and returns an empty array when the query fails", async () => {
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+    const consoleSpy = vi.spyOn(baseLogger, "error").mockImplementation(() => {})
     mockFindMany.mockResolvedValue(null)
 
     const result = await fetchUpcomingMapEvents()
 
     expect(result).toEqual({ data: [], apiDown: true })
-    expect(consoleSpy).toHaveBeenCalledWith("Error fetching upcoming events", expect.any(TypeError))
+    expect(consoleSpy).toHaveBeenCalledWith(
+      { err: expect.any(TypeError), operation: "Error fetching upcoming events" },
+      "data query failed"
+    )
   })
 })
 
@@ -312,15 +322,15 @@ describe("fetchAllPublishedEventSlugs", () => {
   })
 
   it("logs an error and returns an empty array when the query fails", async () => {
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+    const consoleSpy = vi.spyOn(baseLogger, "error").mockImplementation(() => {})
     mockFindMany.mockResolvedValue(null)
 
     const result = await fetchAllPublishedEventSlugs()
 
     expect(result).toEqual({ data: [], apiDown: true })
     expect(consoleSpy).toHaveBeenCalledWith(
-      "Error fetching event slugs for sitemap",
-      expect.any(TypeError)
+      { err: expect.any(TypeError), operation: "Error fetching event slugs for sitemap" },
+      "data query failed"
     )
   })
 })
@@ -346,12 +356,15 @@ describe("fetchMyEvents", () => {
   })
 
   it("logs an error and returns an empty array when the query fails", async () => {
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+    const consoleSpy = vi.spyOn(baseLogger, "error").mockImplementation(() => {})
     mockFindMany.mockRejectedValue(new Error("connection refused"))
 
     const result = await fetchMyEvents("user-42")
 
     expect(result).toEqual({ data: [], apiDown: true })
-    expect(consoleSpy).toHaveBeenCalledWith("Error fetching own events", expect.any(Error))
+    expect(consoleSpy).toHaveBeenCalledWith(
+      { err: expect.any(Error), operation: "Error fetching own events" },
+      "data query failed"
+    )
   })
 })

@@ -95,6 +95,48 @@ make lint      # lint
 make format    # format
 ```
 
+## Logging
+
+Server-side logging uses [Pino](https://getpino.io) via `src/utils/logger.ts`. It is server-only —
+never import it from a client-side `<script>`. The container writes JSON to stdout/stderr and
+nothing else: no log files in the image, no shipper.
+
+|               | Development              | Production             |
+| ------------- | ------------------------ | ---------------------- |
+| Format        | `pino-pretty`, colorised | newline-delimited JSON |
+| Default level | `debug`                  | `info`                 |
+
+`LOG_LEVEL` overrides the level (`trace`…`fatal`, or `silent`); an unset, empty or invalid value
+falls back to the default, so a typo cannot take the server down. Tests run at `silent`.
+
+In production `console.*` is routed into the logger, so the lines Astro's SSR runtime and Better
+Auth write through `console` land in the JSON stream tagged `"source": "console"` instead of as
+unparseable ANSI. Those carry a preformatted string that redaction cannot reach inside, so
+application code must always log through `getLogger()`.
+
+**Writing logs.** Put dynamic values in fields, keep the message a short lowercase constant, and
+pass errors as `err` so Pino serializes type, message and stack:
+
+```ts
+import { getLogger } from "@/utils/logger"
+
+getLogger().info({ userId }, "user authenticated")
+getLogger().error({ err, orderId }, "failed to create order")
+```
+
+Background jobs run outside a request and bind a child of `baseLogger`, e.g.
+`baseLogger.child({ job: "event-sync" })`.
+
+**Request IDs.** Middleware gives every request a UUID, returns it as the `X-Request-ID` response
+header, and attaches it to every line logged while handling that request — including from services
+that never see the request object, because the logger is carried in an `AsyncLocalStorage`. It
+writes exactly one access log per request; do not add a second one.
+
+**Sensitive data.** `authorization`, `cookie`, `password`, `token`, `apiKey`, `secret` and the
+credential-bearing env vars are redacted at the top level and one level deep (see `REDACTED_PATHS`).
+Redaction is a safety net, not a licence: never log whole request objects or bodies. Query strings
+stay out of the access log because they carry tokens and email addresses — only `pathname` is logged.
+
 ## Contributing
 
 Contributions are welcome. Here's how to get started:
