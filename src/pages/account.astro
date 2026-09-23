@@ -5,11 +5,26 @@ import { useTranslations } from "@/i18n/translations"
 const t = useTranslations(Astro.locals.locale)
 
 const user = Astro.locals.user
-if (!user) return Astro.redirect("/login?redirect=/account")
+if (!user) {
+  return Astro.redirect(
+    `/login?redirect=${encodeURIComponent(Astro.url.pathname + Astro.url.search)}`
+  )
+}
+
+const emailConfirmed = Astro.url.searchParams.get("confirmed") === "true"
 ---
 
 <PageLayout title={t.auth.accountTitle}>
   <h1 class="text-3xl font-bold tracking-tight sm:text-4xl mb-8">{t.auth.accountTitle}</h1>
+
+  {emailConfirmed && user.emailVerified && (
+    <div class="alert alert-success mb-6" role="status">
+      <div>
+        <h3 class="font-bold">{t.auth.emailConfirmed}</h3>
+        <p>{t.auth.emailConfirmedText}</p>
+      </div>
+    </div>
+  )}
 
   {!user.emailVerified && (
     <div
@@ -91,7 +106,7 @@ if (!user) return Astro.redirect("/login?redirect=/account")
       if (!email) return
 
       resendButton.setAttribute("disabled", "true")
-      await authClient.sendVerificationEmail({ email, callbackURL: "/login?confirmed=true" })
+      await authClient.sendVerificationEmail({ email, callbackURL: "/account?confirmed=true" })
       resendButton.textContent = resendButton.dataset.sentLabel ?? resendButton.textContent
     })
   </script>
