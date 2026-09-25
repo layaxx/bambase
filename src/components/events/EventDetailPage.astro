@@ -147,7 +147,7 @@ const location = event?.map_location ?? event?.custom_location
                 {"category" in location && location.category && (
                   <a
                     class="mt-1 inline-flex items-center gap-1 text-xs text-primary hover:underline"
-                    href={`/map?filter=${location.category}`}
+                    href={`/map?filter=${location.category}&location=${location.id}`}
                   >
                     {t.events.viewOnMap}
                   </a>

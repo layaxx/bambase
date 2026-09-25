@@ -130,8 +130,7 @@ const dateFilters = [
   </div>
 
   <p aria-live="polite" class="mb-4 text-sm text-base-content/40">
-    {total}
-    {total === 1 ? t.events.resultSingular : t.events.resultPlural}
+    {`${total} ${total === 1 ? t.events.resultSingular : t.events.resultPlural}`}
   </p>
 
   {!apiDown &&

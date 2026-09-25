@@ -52,6 +52,7 @@ const timeFilters = [
 ] as const
 
 const upcomingEventsLabel = t.map.upcomingEvents
+const dateLocale = t.map.dateLocale
 const apiDownMessage = t.apiDown.message
 ---
 
@@ -204,6 +205,7 @@ const apiDownMessage = t.apiDown.message
     locations,
     mapEvents,
     upcomingEventsLabel,
+    dateLocale,
     allCategoryLabels,
     apiDownMessage,
     apiDown,
@@ -213,6 +215,7 @@ const apiDownMessage = t.apiDown.message
   window.__mapLocations = locations
   window.__mapEvents = mapEvents
   window.__upcomingEventsLabel = upcomingEventsLabel
+  window.__dateLocale = dateLocale
   window.__categoryLabels = allCategoryLabels
   window.__apiDownMessage = apiDownMessage
   window.__apiDown = apiDown
@@ -234,6 +237,8 @@ const apiDownMessage = t.apiDown.message
   const mapEvents = (window as unknown as { __mapEvents: MapEvent[] }).__mapEvents as MapEvent[]
   const upcomingEventsLabel = (window as unknown as { __upcomingEventsLabel: string })
     .__upcomingEventsLabel as string
+
+  const dateLocale = (window as unknown as { __dateLocale: string }).__dateLocale
 
   const categoryLabels = (window as unknown as { __categoryLabels: Record<string, string> })
     .__categoryLabels
@@ -297,7 +302,7 @@ const apiDownMessage = t.apiDown.message
                  (ev) =>
                    `<div class="popup-event-item">
                       <a href="/event/${escHtml(ev.slug)}" class="popup-event-link">${escHtml(ev.title)}</a>
-                      <span class="popup-event-date">${escHtml(formatEventDate(ev.start, navigator.language))}</span>
+                      <span class="popup-event-date">${escHtml(formatEventDate(ev.start, dateLocale))}</span>
                     </div>`
                )
                .join("")}
@@ -321,6 +326,16 @@ const apiDownMessage = t.apiDown.message
   function initMap() {
     const map = L.map("map").setView([49.899, 10.889], 14)
 
+    // The zoom controls paint above the popup pane, so autoPan keeps popups clear of
+    // that corner. maxWidth has to leave room for that pan inset (46 + 12) plus
+    // Leaflet's own content margins (44), or a panned popup overflows the map's
+    // right edge on a phone.
+    const popupOptions: L.PopupOptions = {
+      maxWidth: Math.min(300, map.getSize().x - 108),
+      autoPanPaddingTopLeft: [52, 12],
+      autoPanPaddingBottomRight: [12, 12],
+    }
+
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution:
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
@@ -335,7 +350,7 @@ const apiDownMessage = t.apiDown.message
       if (loc.lat == null || loc.lon == null) return
       const marker = L.marker([loc.lat, loc.lon], { icon: makeIcon(loc.category, 0) })
         .addTo(map)
-        .bindPopup("")
+        .bindPopup("", popupOptions)
       markerMap[loc.id] = { marker, category: loc.category, loc }
     })
 
@@ -407,7 +422,7 @@ const apiDownMessage = t.apiDown.message
             icon: makeIcon(loc.category, locEvents.length),
           })
             .addTo(map)
-            .bindPopup(buildPopupHtml(loc, locEvents))
+            .bindPopup(buildPopupHtml(loc, locEvents), popupOptions)
           markerMap[loc.id] = { marker, category: loc.category, loc }
         })
 
@@ -449,15 +464,17 @@ const apiDownMessage = t.apiDown.message
 
     // ── click list item → fly to marker ──────────────────────────────────────
 
+    function selectLocation(id: string | undefined): boolean {
+      const entry = id ? markerMap[id] : undefined
+      if (!entry) return false
+      map.flyTo(entry.marker.getLatLng(), 17, { duration: 0.8 })
+      map.once("moveend", () => entry.marker.openPopup())
+      return true
+    }
+
     function attachListClickHandlers(container: HTMLElement) {
       container.querySelectorAll<HTMLElement>("[data-id]").forEach((item) => {
-        item.addEventListener("click", () => {
-          const entry = item.dataset.id ? markerMap[item.dataset.id] : undefined
-          if (entry) {
-            map.flyTo(entry.marker.getLatLng(), 17, { duration: 0.8 })
-            entry.marker.openPopup()
-          }
-        })
+        item.addEventListener("click", () => selectLocation(item.dataset.id))
       })
     }
 
@@ -473,6 +490,14 @@ const apiDownMessage = t.apiDown.message
 
     // ── initialise from URL params ────────────────────────────────────────────
 
-    applyTimeFilter(new URLSearchParams(location.search).get("events") ?? "week")
+    const params = new URLSearchParams(location.search)
+    applyTimeFilter(params.get("events") ?? "week")
+
+    const wanted = params.get("location")
+    if (wanted && selectLocation(wanted)) {
+      document
+        .querySelector<HTMLElement>(`[data-id="${CSS.escape(wanted)}"]`)
+        ?.scrollIntoView({ block: "nearest" })
+    }
   }
 </script>
