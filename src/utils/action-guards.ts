@@ -8,7 +8,10 @@ type RoleCheck = (role: string | null | undefined) => Promise<boolean>
 /** Returns the id of the caller. Throws UNAUTHORIZED if the caller is not signed in. */
 export function requireUserId(context: ActionContext): string {
   const userId = context.locals.user?.id
-  if (!userId) throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
+  if (!userId) {
+    getLogger().warn("action denied, not signed in")
+    throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
+  }
   return userId
 }
 
@@ -23,6 +26,7 @@ export async function requirePermission(
 ): Promise<string> {
   const userId = requireUserId(context)
   if (!(await check(context.locals.user?.role))) {
+    getLogger().warn({ role: context.locals.user?.role }, "action denied, missing permission")
     throw new ActionError({ code: "FORBIDDEN", message })
   }
   return userId
@@ -46,6 +50,7 @@ export async function assertOwnerOrPermission(
   const hasPermission = check ? await check(context.locals.user?.role) : false
   if (hasPermission) return true
   if (ownerId === userId) return false
+  getLogger().warn({ role: context.locals.user?.role }, "action denied, not owner")
   throw new ActionError({ code: "FORBIDDEN", message })
 }
 

@@ -197,6 +197,37 @@ describe("onRequest middleware", () => {
       )
     })
 
+    it("binds the caller and names the form action on the access log", async () => {
+      const childSpy = vi.spyOn(baseLogger, "child")
+      const infoSpy = vi.spyOn(baseLogger, "info").mockImplementation(() => {})
+      getSession.mockResolvedValue({ user: { id: "user-1" }, session: { id: "sess-1" } })
+      const ctx = makeContext({
+        cookieLocale: "de",
+        method: "POST",
+        path: "/admin/users?_astroAction=users.ban",
+      })
+
+      await onRequest(ctx, next)
+
+      expect(childSpy).toHaveBeenCalledWith({ requestId: expect.any(String), userId: "user-1" })
+      expect(infoSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ path: "/admin/users", action: "users.ban" }),
+        "request completed"
+      )
+    })
+
+    it("logs a 5xx response as a warning", async () => {
+      const warnSpy = vi.spyOn(baseLogger, "warn").mockImplementation(() => {})
+      const ctx = makeContext({ cookieLocale: "de" })
+
+      await onRequest(ctx, vi.fn().mockResolvedValue(new Response(null, { status: 500 })))
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 500 }),
+        "request completed"
+      )
+    })
+
     it("does not log the query string", async () => {
       const infoSpy = vi.spyOn(baseLogger, "info").mockImplementation(() => {})
       const ctx = makeContext({ cookieLocale: "de", path: "/jobs?token=secret-value" })

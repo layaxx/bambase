@@ -21,6 +21,10 @@ async function requireReportModerator(
   message: string
 ): Promise<void> {
   if (!(await canModerateReport(context.locals.user?.role, targetType))) {
+    getLogger().warn(
+      { role: context.locals.user?.role, targetType },
+      "action denied, missing permission"
+    )
     throw new ActionError({ code: "FORBIDDEN", message })
   }
 }
@@ -45,10 +49,14 @@ export const reports = {
           },
         })
       } catch (error) {
-        getLogger().error({ err: error }, "report create failed")
+        getLogger().error(
+          { err: error, targetType: target_type, targetId: target_id },
+          "report create failed"
+        )
         throw new ActionError({ code: "INTERNAL_SERVER_ERROR", message: "Meldung fehlgeschlagen." })
       }
 
+      getLogger().info({ targetType: target_type, targetId: target_id, reason }, "report submitted")
       return { success: true }
     },
   }),
@@ -69,12 +77,14 @@ export const reports = {
       try {
         await prisma.report.update({ where: { id }, data: { reviewStatus: "dismissed" } })
       } catch (error) {
-        getLogger().error({ err: error }, "report dismiss failed")
+        getLogger().error({ err: error, reportId: id }, "report dismiss failed")
         throw new ActionError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Verwerfen fehlgeschlagen.",
         })
       }
+
+      getLogger().info({ reportId: id }, "report dismissed")
 
       return {}
     },
@@ -96,12 +106,14 @@ export const reports = {
       try {
         await prisma.report.update({ where: { id }, data: { reviewStatus: "open" } })
       } catch (error) {
-        getLogger().error({ err: error }, "report reopen failed")
+        getLogger().error({ err: error, reportId: id }, "report reopen failed")
         throw new ActionError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Wiedereröffnen fehlgeschlagen.",
         })
       }
+
+      getLogger().info({ reportId: id }, "report reopened")
 
       return {}
     },
@@ -117,8 +129,9 @@ export const reports = {
       requireUserId(context)
       await requireReportModerator(context, target_type, "Verwerfen fehlgeschlagen.")
 
+      let count: number
       try {
-        await prisma.report.updateMany({
+        const result = await prisma.report.updateMany({
           where: {
             reviewStatus: "open",
             eventId: target_type === "event" ? target_id : undefined,
@@ -126,13 +139,22 @@ export const reports = {
           },
           data: { reviewStatus: "dismissed" },
         })
+        count = result.count
       } catch (error) {
-        getLogger().error({ err: error }, "report group dismiss failed")
+        getLogger().error(
+          { err: error, targetType: target_type, targetId: target_id },
+          "report group dismiss failed"
+        )
         throw new ActionError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Verwerfen fehlgeschlagen.",
         })
       }
+
+      getLogger().info(
+        { targetType: target_type, targetId: target_id, count },
+        "report group dismissed"
+      )
 
       return {}
     },
@@ -148,8 +170,9 @@ export const reports = {
       requireUserId(context)
       await requireReportModerator(context, target_type, "Wiedereröffnen fehlgeschlagen.")
 
+      let count: number
       try {
-        await prisma.report.updateMany({
+        const result = await prisma.report.updateMany({
           where: {
             reviewStatus: "dismissed",
             eventId: target_type === "event" ? target_id : undefined,
@@ -157,13 +180,22 @@ export const reports = {
           },
           data: { reviewStatus: "open" },
         })
+        count = result.count
       } catch (error) {
-        getLogger().error({ err: error }, "report group reopen failed")
+        getLogger().error(
+          { err: error, targetType: target_type, targetId: target_id },
+          "report group reopen failed"
+        )
         throw new ActionError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Wiedereröffnen fehlgeschlagen.",
         })
       }
+
+      getLogger().info(
+        { targetType: target_type, targetId: target_id, count },
+        "report group reopened"
+      )
 
       return {}
     },

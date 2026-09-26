@@ -73,10 +73,11 @@ export const jobs = {
       try {
         await prisma.jobOffer.delete({ where: { id } })
       } catch (error) {
-        getLogger().error({ err: error }, "job delete failed")
+        getLogger().error({ err: error, jobOfferId: id }, "job delete failed")
         throw new ActionError({ code: "INTERNAL_SERVER_ERROR", message: "Löschen fehlgeschlagen." })
       }
 
+      getLogger().info({ jobOfferId: id }, "job deleted")
       invalidateCacheByPrefix("job-offers:")
       return {}
     },
@@ -101,13 +102,14 @@ export const jobs = {
       try {
         await prisma.jobOffer.update({ where: { id }, data: { onlineStatus: "archived" } })
       } catch (error) {
-        getLogger().error({ err: error }, "job archive failed")
+        getLogger().error({ err: error, jobOfferId: id }, "job archive failed")
         throw new ActionError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Archivieren fehlgeschlagen.",
         })
       }
 
+      getLogger().info({ jobOfferId: id }, "job archived")
       invalidateCacheByPrefix("job-offers:")
       return {}
     },
@@ -125,13 +127,14 @@ export const jobs = {
           data: { onlineStatus: "published", rejectionReason: null },
         })
       } catch (error) {
-        getLogger().error({ err: error }, "job approve failed")
+        getLogger().error({ err: error, jobOfferId: id }, "job approve failed")
         throw new ActionError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Genehmigen fehlgeschlagen.",
         })
       }
 
+      getLogger().info({ jobOfferId: id }, "job approved")
       invalidateCacheByPrefix("job-offers:")
       return {}
     },
@@ -149,13 +152,14 @@ export const jobs = {
           data: { onlineStatus: "rejected", rejectionReason: reason || null },
         })
       } catch (error) {
-        getLogger().error({ err: error }, "job reject failed")
+        getLogger().error({ err: error, jobOfferId: id }, "job reject failed")
         throw new ActionError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Ablehnen fehlgeschlagen.",
         })
       }
 
+      getLogger().info({ jobOfferId: id, withReason: Boolean(reason) }, "job rejected")
       invalidateCacheByPrefix("job-offers:")
       return {}
     },

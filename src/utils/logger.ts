@@ -134,4 +134,16 @@ function captureConsole(): void {
   /* eslint-enable no-console */
 }
 
-if (import.meta.env.PROD) captureConsole()
+function logCrashes(): void {
+  // A monitor observes without handling, so Node still crashes. It also fires for unhandled
+  // rejections, with origin "unhandledRejection". An "unhandledRejection" listener would suppress
+  // the crash.
+  process.on("uncaughtExceptionMonitor", (err, origin) => {
+    baseLogger.fatal({ err, origin }, "process crashed")
+  })
+}
+
+if (import.meta.env.PROD) {
+  captureConsole()
+  logCrashes()
+}

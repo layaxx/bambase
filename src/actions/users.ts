@@ -28,9 +28,11 @@ export const users = {
             message: "Du kannst dich nicht selbst sperren.",
           })
         }
-        getLogger().error({ err: error }, "user ban failed")
+        getLogger().error({ err: error, targetUserId: id }, "user ban failed")
         throw new ActionError({ code: "INTERNAL_SERVER_ERROR", message: "Sperren fehlgeschlagen." })
       }
+
+      getLogger().info({ targetUserId: id, withReason: Boolean(reason) }, "user banned")
 
       return {}
     },
@@ -48,12 +50,14 @@ export const users = {
           body: { userId: id },
         })
       } catch (error) {
-        getLogger().error({ err: error }, "user unban failed")
+        getLogger().error({ err: error, targetUserId: id }, "user unban failed")
         throw new ActionError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Entsperren fehlgeschlagen.",
         })
       }
+
+      getLogger().info({ targetUserId: id }, "user unbanned")
 
       return {}
     },
@@ -87,12 +91,14 @@ export const users = {
             message: "Rolle konnte nicht geändert werden.",
           })
         }
-        getLogger().error({ err: error }, "user role change failed")
+        getLogger().error({ err: error, targetUserId: id, role }, "user role change failed")
         throw new ActionError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Rolle konnte nicht geändert werden.",
         })
       }
+
+      getLogger().info({ targetUserId: id, role }, "user role changed")
 
       return {}
     },
@@ -108,8 +114,9 @@ export const users = {
     handler: async ({ email, name, role }, context) => {
       await requirePermission(context, canInviteUsers)
 
+      let invited: Awaited<ReturnType<typeof auth.api.createUser>>
       try {
-        await auth.api.createUser({
+        invited = await auth.api.createUser({
           headers: context.request.headers,
           body: { email, name, role },
         })
@@ -120,12 +127,14 @@ export const users = {
             message: "Diese E-Mail-Adresse wird bereits verwendet.",
           })
         }
-        getLogger().error({ err: error }, "user invite failed")
+        getLogger().error({ err: error, role }, "user invite failed")
         throw new ActionError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Einladung fehlgeschlagen.",
         })
       }
+
+      getLogger().info({ targetUserId: invited.user.id, role }, "user invited")
 
       try {
         await auth.api.requestPasswordReset({
@@ -133,7 +142,7 @@ export const users = {
           body: { email, redirectTo: "/reset-password" },
         })
       } catch (error) {
-        getLogger().error({ err: error }, "invite email failed")
+        getLogger().error({ err: error, targetUserId: invited.user.id }, "invite email failed")
       }
 
       return {}

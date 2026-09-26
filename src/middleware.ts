@@ -58,48 +58,53 @@ function parseAcceptLanguage(header: string | null): Locale {
 }
 
 export const onRequest = defineMiddleware(async (context, next) => {
+  const startedAt = performance.now()
   const requestId = resolveRequestId(context.request)
-  const log = baseLogger.child({ requestId })
+  const method = context.request.method
+  const path = context.url.pathname
+  // Form actions post to the page itself, and the action name travels in the query string,
+  // which stays out of the log. The name alone is safe and tells the POSTs apart.
+  const action = context.url.searchParams.get("_astroAction") ?? undefined
+
+  const cookieLocaleRaw = context.cookies.get(COOKIE_NAME)?.value?.toLowerCase()
+  const cookieLocale = SUPPORTED_LOCALES.includes(cookieLocaleRaw as Locale)
+    ? (cookieLocaleRaw as Locale)
+    : undefined
+  if (cookieLocale) {
+    context.locals.locale = cookieLocale
+  } else {
+    const acceptLanguage = context.request.headers.get("Accept-Language")
+    context.locals.locale = parseAcceptLanguage(acceptLanguage)
+    context.cookies.set(COOKIE_NAME, context.locals.locale, {
+      httpOnly: true,
+      sameSite: "strict",
+      path: "/",
+    })
+  }
+
+  context.locals.user = null
+  context.locals.session = null
+  try {
+    const session = await auth.api.getSession({ headers: context.request.headers })
+    if (session) {
+      context.locals.user = session.user
+      context.locals.session = session.session
+    }
+  } catch (err) {
+    baseLogger.child({ requestId }).error({ err }, "session lookup failed")
+  }
+
+  // Bound after the session lookup, so every line of the request names the caller.
+  const userId = context.locals.user?.id
+  const log = baseLogger.child(userId ? { requestId, userId } : { requestId })
 
   return runWithRequestLogger(log, async () => {
-    const startedAt = performance.now()
-    const method = context.request.method
-    const path = context.url.pathname
-
-    const cookieLocaleRaw = context.cookies.get(COOKIE_NAME)?.value?.toLowerCase()
-    const cookieLocale = SUPPORTED_LOCALES.includes(cookieLocaleRaw as Locale)
-      ? (cookieLocaleRaw as Locale)
-      : undefined
-    if (cookieLocale) {
-      context.locals.locale = cookieLocale
-    } else {
-      const acceptLanguage = context.request.headers.get("Accept-Language")
-      context.locals.locale = parseAcceptLanguage(acceptLanguage)
-      context.cookies.set(COOKIE_NAME, context.locals.locale, {
-        httpOnly: true,
-        sameSite: "strict",
-        path: "/",
-      })
-    }
-
-    context.locals.user = null
-    context.locals.session = null
-    try {
-      const session = await auth.api.getSession({ headers: context.request.headers })
-      if (session) {
-        context.locals.user = session.user
-        context.locals.session = session.session
-      }
-    } catch (err) {
-      log.error({ err }, "session lookup failed")
-    }
-
     let response: Response
     try {
       response = await next()
     } catch (err) {
       log.error(
-        { err, method, path, durationMs: Math.round(performance.now() - startedAt) },
+        { err, method, path, action, durationMs: Math.round(performance.now() - startedAt) },
         "request failed"
       )
       throw err
@@ -112,10 +117,12 @@ export const onRequest = defineMiddleware(async (context, next) => {
       // The id still appears in the log line below.
     }
 
-    log.info(
+    // A thrown error was already logged as "request failed", so a 5xx here is only a warning.
+    log[response.status >= 500 ? "warn" : "info"](
       {
         method,
         path,
+        action,
         status: response.status,
         durationMs: Math.round(performance.now() - startedAt),
         userAgent: context.request.headers.get("User-Agent")?.slice(0, 256) ?? undefined,

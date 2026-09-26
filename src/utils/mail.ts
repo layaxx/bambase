@@ -16,12 +16,17 @@ type MailMessage = {
  */
 export async function sendMail(message: MailMessage): Promise<void> {
   if (!MAILGUN_API_KEY || !MAILGUN_DOMAIN) {
-    getLogger().warn(
-      { to: message.to, subject: message.subject },
-      "mailgun not configured, email not sent"
-    )
-    // The body can carry password-reset links, so it stays out of production logs entirely.
-    if (!import.meta.env.PROD) getLogger().debug({ body: message.text }, "email body")
+    // The recipient is personal data and the body can carry password-reset links, so both stay
+    // out of production logs.
+    if (import.meta.env.PROD) {
+      getLogger().warn({ subject: message.subject }, "mailgun not configured, email not sent")
+    } else {
+      getLogger().warn(
+        { to: message.to, subject: message.subject },
+        "mailgun not configured, email not sent"
+      )
+      getLogger().debug({ body: message.text }, "email body")
+    }
     return
   }
 
@@ -44,6 +49,14 @@ export async function sendMail(message: MailMessage): Promise<void> {
   })
 
   if (!response.ok) {
-    throw new Error(`Mailgun request failed with status ${response.status}`)
+    const reason = (await response.text().catch(() => "")).slice(0, 500)
+    getLogger().error(
+      { subject: message.subject, status: response.status, reason },
+      "email send failed"
+    )
+    throw new Error(`Mailgun request failed with status ${response.status}: ${reason}`)
   }
+
+  const { id } = (await response.json().catch(() => ({}))) as { id?: string }
+  getLogger().info({ subject: message.subject, mailgunId: id }, "email sent")
 }
