@@ -11,11 +11,13 @@ import IconArrowLeft from "@/components/icons/IconArrowLeft.astro"
 import IconStore from "@/components/icons/IconStore.astro"
 import IconMapPin from "@/components/icons/IconMapPin.astro"
 import IconClock from "@/components/icons/IconClock.astro"
+import IconCalendar from "@/components/icons/IconCalendar.astro"
 import IconExternalLink from "@/components/icons/IconExternalLink.astro"
 import ReportModal from "@/components/ReportModal.astro"
 import ConfirmModal from "@/components/ConfirmModal.astro"
 import Alert from "@/components/Alert.astro"
 import JobTypeBadge from "@/components/jobs/JobTypeBadge.astro"
+import { formatJobLocation } from "@/utils/job-formatting"
 
 const t = useTranslations(Astro.locals.locale)
 
@@ -28,6 +30,12 @@ const jobResult = slug
 const job = jobResult.data
 const apiDown = jobResult.apiDown
 const isOwner = !!(me && job?.ownerId === me.id)
+const formatDate = (iso: string) =>
+  new Date(iso).toLocaleDateString(t.auth.dateLocale, {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  })
 
 const hasReports = (job?.reports?.length ?? 0) >= REPORT_WARNING_THRESHOLD
 const canArchive = job?.online_status === "published" || job?.online_status === "submitted"
@@ -154,11 +162,18 @@ const ogImage =
           <div class="mb-6 flex flex-wrap gap-4 text-sm text-base-content/70">
             <div class="flex items-center gap-1.5">
               <IconMapPin class="h-4 w-4 shrink-0" />
-              {job.location}
+              {formatJobLocation(job, {
+                remote: t.jobs.workModes.remote,
+                hybrid: t.jobs.workModes.hybrid,
+              })}
             </div>
             <div class="flex items-center gap-1.5">
               <IconClock class="h-4 w-4 shrink-0" />
               {t.jobs.workingHours(job.working_hours)}
+            </div>
+            <div class="flex items-center gap-1.5">
+              <IconCalendar class="h-4 w-4 shrink-0" />
+              {t.jobs.postedOn(formatDate(job.createdAt))}
             </div>
           </div>
 
