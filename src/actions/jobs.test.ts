@@ -598,7 +598,7 @@ describe("jobs.reject", () => {
   it("throws UNAUTHORIZED when not logged in", async () => {
     await expect(
       jobs.reject(
-        { id: "job-1" },
+        { id: "job-1", reason: "Spam" },
         // @ts-expect-error - needed because of mocked defineAction function
         makeContext()
       )
@@ -610,35 +610,18 @@ describe("jobs.reject", () => {
 
     await expect(
       jobs.reject(
-        { id: "job-1" },
+        { id: "job-1", reason: "Spam" },
         // @ts-expect-error - needed because of mocked defineAction function
         makeContext("user-1")
       )
     ).rejects.toMatchObject({ code: "FORBIDDEN" })
   })
 
-  it("sets onlineStatus to 'rejected' when the user can moderate job offers", async () => {
+  it("sets onlineStatus to 'rejected' and stores the reason when the user can moderate job offers", async () => {
     mockCanModerateJobOffers.mockResolvedValue(true)
     mockUpdate.mockResolvedValue({})
 
     const result = await jobs.reject(
-      { id: "job-1" },
-      // @ts-expect-error - needed because of mocked defineAction function
-      makeContext("moderator-1", true, "jobModerator")
-    )
-
-    expect(mockUpdate).toHaveBeenCalledWith({
-      where: { id: "job-1" },
-      data: { onlineStatus: "rejected", rejectionReason: null },
-    })
-    expect(result).toEqual({})
-  })
-
-  it("stores the given reason", async () => {
-    mockCanModerateJobOffers.mockResolvedValue(true)
-    mockUpdate.mockResolvedValue({})
-
-    await jobs.reject(
       { id: "job-1", reason: "Doesn't meet posting guidelines" },
       // @ts-expect-error - needed because of mocked defineAction function
       makeContext("moderator-1", true, "jobModerator")
@@ -648,6 +631,7 @@ describe("jobs.reject", () => {
       where: { id: "job-1" },
       data: { onlineStatus: "rejected", rejectionReason: "Doesn't meet posting guidelines" },
     })
+    expect(result).toEqual({})
   })
 
   it("throws INTERNAL_SERVER_ERROR when the update fails", async () => {
@@ -657,7 +641,7 @@ describe("jobs.reject", () => {
 
     await expect(
       jobs.reject(
-        { id: "job-1" },
+        { id: "job-1", reason: "Spam" },
         // @ts-expect-error - needed because of mocked defineAction function
         makeContext("moderator-1", true, "jobModerator")
       )

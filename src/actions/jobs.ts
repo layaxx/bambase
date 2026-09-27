@@ -142,14 +142,14 @@ export const jobs = {
 
   reject: defineAction({
     accept: "form",
-    input: z.object({ id: z.string().min(1), reason: z.string().max(500).optional() }),
+    input: z.object({ id: z.string().min(1), reason: z.string().trim().min(1).max(500) }),
     handler: async ({ id, reason }, context) => {
       await requirePermission(context, canModerateJobOffers)
 
       try {
         await prisma.jobOffer.update({
           where: { id },
-          data: { onlineStatus: "rejected", rejectionReason: reason || null },
+          data: { onlineStatus: "rejected", rejectionReason: reason },
         })
       } catch (error) {
         getLogger().error({ err: error, jobOfferId: id }, "job reject failed")

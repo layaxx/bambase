@@ -48,6 +48,9 @@ if (reportResult) {
 }
 
 const reported = Astro.url.searchParams.get("reported")
+const justSubmitted = isOwner && Astro.url.searchParams.has("submitted")
+// createdAt is only a meaningful "posted on" date once the listing has gone live.
+const showPostedOn = job?.online_status !== "submitted" && job?.online_status !== "rejected"
 
 const statusLabel: Record<string, string> = {
   submitted: t.auth.statusSubmitted,
@@ -123,13 +126,23 @@ const ogImage =
         )}
       </div>
 
+      {justSubmitted && <Alert variant="success">{t.jobs.submitSuccess}</Alert>}
       {job.online_status !== "published" && (
         <Alert variant={JOB_STATUS_ALERT_VARIANT[job.online_status] ?? "neutral"}>
           {statusLabel[job.online_status] ?? job.online_status} – {t.jobs.notPublishedHint}
-          {job.online_status === "rejected" && job.rejection_reason && (
+          {job.online_status === "submitted" && (
             <>
-              <br />
-              {t.jobs.rejectionReasonLabel(job.rejection_reason)}
+              <br /> {t.jobs.submittedReviewHint}
+            </>
+          )}
+          {job.online_status === "rejected" && (
+            <>
+              {job.rejection_reason && (
+                <>
+                  <br /> {t.jobs.rejectionReasonLabel(job.rejection_reason)}
+                </>
+              )}
+              <br /> {t.jobs.rejectedResubmitHint}
             </>
           )}
         </Alert>
@@ -171,10 +184,12 @@ const ogImage =
               <IconClock class="h-4 w-4 shrink-0" />
               {t.jobs.workingHours(job.working_hours)}
             </div>
-            <div class="flex items-center gap-1.5">
-              <IconCalendar class="h-4 w-4 shrink-0" />
-              {t.jobs.postedOn(formatDate(job.createdAt))}
-            </div>
+            {showPostedOn && (
+              <div class="flex items-center gap-1.5">
+                <IconCalendar class="h-4 w-4 shrink-0" />
+                {t.jobs.postedOn(formatDate(job.createdAt))}
+              </div>
+            )}
           </div>
 
           <div class="prose prose-sm max-w-none text-base-content/70">

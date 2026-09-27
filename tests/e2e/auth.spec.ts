@@ -2,6 +2,20 @@ import { expect, test } from "@playwright/test"
 import { AUTH_FILE } from "../../playwright.config"
 
 test.describe("Login", () => {
+  test("posting a job while logged out explains the login and keeps the target", async ({
+    page,
+  }) => {
+    await page.goto("/jobs")
+    await page.getByRole("link", { name: "Job inserieren" }).first().click()
+
+    await expect(page).toHaveURL(/\/login\?redirect=\/job\/new/)
+    await expect(page.getByText("Bitte melde dich an oder registriere dich")).toBeVisible()
+    await expect(page.getByRole("link", { name: "Registrieren" })).toHaveAttribute(
+      "href",
+      "/register?redirect=%2Fjob%2Fnew"
+    )
+  })
+
   test("non-existent email shows error alert", async ({ page }) => {
     await page.goto("/login")
     await page.fill('[name="identifier"]', "nobody@does-not-exist.example.com")
