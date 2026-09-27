@@ -196,6 +196,12 @@ export function fetchSubmittedJobOffers(): Promise<ApiResult<JobOffer[]>> {
   })
 }
 
+export function countSubmittedJobOffers(): Promise<ApiResult<number>> {
+  return apiResult("Error counting submitted job offers", 0, () =>
+    prisma.jobOffer.count({ where: { onlineStatus: "submitted" } })
+  )
+}
+
 export function fetchRecentlyModeratedJobOffers(limit = 10): Promise<ApiResult<JobOffer[]>> {
   return apiResult("Error fetching recently moderated job offers", [], async () => {
     const rows = await prisma.jobOffer.findMany({
