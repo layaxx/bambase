@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import dayjs from "dayjs"
 import { Decimal } from "@/generated/prisma/internal/prismaNamespace"
 import { fetchMensaMeals, fetchMensaMealsRange } from "./mensa"
+import { baseLogger } from "@/utils/logger"
 
 const mockFindMany = vi.hoisted(() => vi.fn())
 
@@ -72,13 +73,16 @@ describe("fetchMensaMeals", () => {
   })
 
   it("logs an error and returns apiDown: true when the query fails", async () => {
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+    const consoleSpy = vi.spyOn(baseLogger, "error").mockImplementation(() => {})
     mockFindMany.mockRejectedValue(new Error("connection refused"))
 
     const result = await fetchMensaMeals(dayjs("2026-04-15"))
 
     expect(result).toEqual({ data: [], apiDown: true })
-    expect(consoleSpy).toHaveBeenCalledWith("Error fetching Mensa meals", expect.any(Error))
+    expect(consoleSpy).toHaveBeenCalledWith(
+      { err: expect.any(Error), operation: "Error fetching Mensa meals" },
+      "data query failed"
+    )
     consoleSpy.mockRestore()
   })
 })
@@ -128,7 +132,7 @@ describe("fetchMensaMealsRange", () => {
   })
 
   it("returns empty array and apiDown true on error", async () => {
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+    const consoleSpy = vi.spyOn(baseLogger, "error").mockImplementation(() => {})
     mockFindMany.mockRejectedValue(new Error("connection refused"))
 
     const result = await fetchMensaMealsRange([dayjs("2026-04-15")])

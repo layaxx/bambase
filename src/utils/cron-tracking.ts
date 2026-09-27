@@ -1,5 +1,6 @@
 import prisma from "./prisma"
 import { errorMessage } from "./error-message"
+import { baseLogger } from "./logger"
 
 export const CRON_JOB_DEFINITIONS = {
   "mensa-sync": { schedule: "0 5,8,10,11,12,14,16 * * *" },
@@ -33,7 +34,7 @@ async function recordCronRun(
       },
     })
   } catch (dbError) {
-    console.error("Failed to record cron job run", dbError)
+    baseLogger.error({ err: dbError, jobName }, "cron run record failed")
   }
 }
 
@@ -48,7 +49,7 @@ export async function runTrackedCronJob(
     await recordCronRun(jobName, "success", startedAt)
     return { status: "success" }
   } catch (error) {
-    console.error(`Error running scheduled ${jobName}:`, error)
+    baseLogger.error({ err: error, jobName }, "cron job failed")
     await recordCronRun(jobName, "error", startedAt, error)
     return { status: "error", error: errorMessage(error).slice(0, 1000) }
   }

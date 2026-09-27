@@ -84,7 +84,7 @@ const generalError = result?.error && !isInputError(result.error) ? result.error
     if (!email) return
 
     resendButton.setAttribute("disabled", "true")
-    await authClient.sendVerificationEmail({ email, callbackURL: "/login?confirmed=true" })
+    await authClient.sendVerificationEmail({ email, callbackURL: "/account?confirmed=true" })
     resendButton.textContent = resendButton.dataset.sentLabel ?? resendButton.textContent
   })
 </script>

@@ -1,10 +1,13 @@
 ---
 import AppLayout from "@/layouts/AppLayout.astro"
 import { useTranslations } from "@/i18n/translations"
+import { safeRedirect } from "@/utils/safe-redirect"
 
 const t = useTranslations(Astro.locals.locale)
 
-const emailConfirmed = Astro.url.searchParams.get("confirmed") === "true"
+if (Astro.locals.user) {
+  return Astro.redirect(safeRedirect(Astro.url.searchParams.get("redirect"), Astro.url, "/account"))
+}
 ---
 
 <AppLayout title={t.auth.loginTitle}>
@@ -17,15 +20,6 @@ const emailConfirmed = Astro.url.searchParams.get("confirmed") === "true"
           {t.auth.registerLink}
         </a>
       </p>
-
-      {emailConfirmed && (
-        <div class="alert alert-success mb-4">
-          <div>
-            <h3 class="font-bold">{t.auth.emailConfirmed}</h3>
-            <p>{t.auth.emailConfirmedYouCanLogin}</p>
-          </div>
-        </div>
-      )}
 
       <div class="alert alert-error mb-4 hidden" id="signin-error">
         <span></span>

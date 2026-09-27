@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { runTrackedCronJob } from "./cron-tracking"
+import { baseLogger } from "@/utils/logger"
 
 const mockCreate = vi.hoisted(() => vi.fn())
 
@@ -27,7 +28,7 @@ describe("runTrackedCronJob", () => {
   })
 
   it("records an error run and does not throw when the job rejects", async () => {
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+    const consoleSpy = vi.spyOn(baseLogger, "error").mockImplementation(() => {})
 
     const outcome = await runTrackedCronJob("event-sync", async () => {
       throw new Error("boom")
@@ -40,19 +41,22 @@ describe("runTrackedCronJob", () => {
       })
     )
     expect(consoleSpy).toHaveBeenCalledWith(
-      "Error running scheduled event-sync:",
-      expect.any(Error)
+      { err: expect.any(Error), jobName: "event-sync" },
+      "cron job failed"
     )
   })
 
   it("does not throw if writing the run to the database fails", async () => {
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+    const consoleSpy = vi.spyOn(baseLogger, "error").mockImplementation(() => {})
     mockCreate.mockRejectedValue(new Error("db down"))
 
     await expect(runTrackedCronJob("job-offer-sync", async () => "ok")).resolves.toEqual({
       status: "success",
     })
 
-    expect(consoleSpy).toHaveBeenCalledWith("Failed to record cron job run", expect.any(Error))
+    expect(consoleSpy).toHaveBeenCalledWith(
+      { err: expect.any(Error), jobName: "job-offer-sync" },
+      "cron run record failed"
+    )
   })
 })

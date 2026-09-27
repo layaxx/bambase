@@ -14,6 +14,7 @@ vi.mock("./prisma", () => ({
 }))
 
 import { syncJobOffers } from "./job-offer-sync"
+import { baseLogger } from "@/utils/logger"
 
 const ORIGINAL_ENV = process.env.JOB_OFFER_MIGRATION_COOKIE
 
@@ -31,17 +32,20 @@ afterEach(() => {
 
 describe("syncJobOffers", () => {
   it("throws when fetching the first page of job offers fails", async () => {
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+    const consoleSpy = vi.spyOn(baseLogger, "error").mockImplementation(() => {})
     vi.mocked(fetch).mockResolvedValue({ ok: false, status: 500 } as never)
 
     await expect(syncJobOffers()).rejects.toThrow(/status 500/)
 
-    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("status 500"))
+    expect(consoleSpy).toHaveBeenCalledWith(
+      { err: expect.objectContaining({ message: expect.stringContaining("status 500") }) },
+      "external API request failed"
+    )
   })
 
   it("does nothing (and does not throw) when no migration cookie is configured", async () => {
     delete process.env.JOB_OFFER_MIGRATION_COOKIE
-    vi.spyOn(console, "warn").mockImplementation(() => {})
+    vi.spyOn(baseLogger, "warn").mockImplementation(() => {})
 
     await expect(syncJobOffers()).resolves.toBeUndefined()
 

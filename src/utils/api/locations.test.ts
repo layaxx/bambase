@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { fetchLocations, fetchLocationForAdmin, fetchAllLocationsForAdmin } from "./locations"
+import { baseLogger } from "@/utils/logger"
 
 const mockFindMany = vi.hoisted(() => vi.fn())
 const mockFindFirst = vi.hoisted(() => vi.fn())
@@ -116,13 +117,16 @@ describe("fetchLocations", () => {
   })
 
   it("logs an error and returns an empty array when the API response is unexpected", async () => {
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+    const consoleSpy = vi.spyOn(baseLogger, "error").mockImplementation(() => {})
     mockFindMany.mockResolvedValue(null)
 
     const result = await fetchLocations()
 
     expect(result).toEqual({ data: [], apiDown: true })
-    expect(consoleSpy).toHaveBeenCalledWith("Error fetching locations", expect.any(TypeError))
+    expect(consoleSpy).toHaveBeenCalledWith(
+      { err: expect.any(TypeError), operation: "Error fetching locations" },
+      "data query failed"
+    )
     consoleSpy.mockRestore()
   })
 })
@@ -153,7 +157,7 @@ describe("fetchLocationForAdmin", () => {
   })
 
   it("logs an error and returns apiDown when the lookup throws", async () => {
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+    const consoleSpy = vi.spyOn(baseLogger, "error").mockImplementation(() => {})
     mockFindFirst.mockRejectedValue(new Error("db error"))
 
     const result = await fetchLocationForAdmin("audimax")
@@ -181,7 +185,7 @@ describe("fetchAllLocationsForAdmin", () => {
   })
 
   it("logs an error and returns an empty array when the query throws", async () => {
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+    const consoleSpy = vi.spyOn(baseLogger, "error").mockImplementation(() => {})
     mockFindMany.mockRejectedValue(new Error("db error"))
 
     const result = await fetchAllLocationsForAdmin()

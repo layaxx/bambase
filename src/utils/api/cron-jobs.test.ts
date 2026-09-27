@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { fetchCronJobStatuses } from "./cron-jobs"
+import { baseLogger } from "@/utils/logger"
 
 const mockFindMany = vi.hoisted(() => vi.fn())
 
@@ -68,12 +69,15 @@ describe("fetchCronJobStatuses", () => {
   })
 
   it("logs an error and returns an empty list when the query fails", async () => {
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+    const consoleSpy = vi.spyOn(baseLogger, "error").mockImplementation(() => {})
     mockFindMany.mockRejectedValue(new Error("db error"))
 
     const result = await fetchCronJobStatuses()
 
     expect(result).toEqual({ data: [], apiDown: true })
-    expect(consoleSpy).toHaveBeenCalledWith("Error fetching cron job statuses", expect.any(Error))
+    expect(consoleSpy).toHaveBeenCalledWith(
+      { err: expect.any(Error), operation: "Error fetching cron job statuses" },
+      "data query failed"
+    )
   })
 })

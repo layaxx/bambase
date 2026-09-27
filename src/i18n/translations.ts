@@ -217,6 +217,7 @@ const de = {
     cardSubtitle: "Wichtige Orte in Bamberg",
     showMap: "Zur Campuskarte",
     upcomingEvents: "Kommende Veranstaltungen",
+    dateLocale: "de-DE",
     eventFilterLabel: "Veranstaltungen",
     eventFilterToday: "Heute",
     eventFilterWeek: "7 Tage",
@@ -308,8 +309,7 @@ const de = {
     confirmSuccess: "E-Mail erfolgreich bestätigt! Du wirst weitergeleitet…",
     confirmFailed: "Bestätigungslink ungültig oder abgelaufen.",
     emailConfirmed: "E-Mail-Adresse bestätigt!",
-    emailConfirmedYouCanLogin:
-      "Deine E-Mail-Adresse wurde erfolgreich bestätigt. Du kannst dich jetzt anmelden.",
+    emailConfirmedText: "Deine E-Mail-Adresse wurde erfolgreich bestätigt.",
     verifyEmailRequiredTitle: "E-Mail-Adresse nicht bestätigt",
     verifyEmailRequiredText:
       "Bitte bestätige deine E-Mail-Adresse, um Stellenangebote einreichen zu können.",
@@ -734,6 +734,7 @@ const en: typeof de = {
     cardSubtitle: "Important locations in Bamberg",
     showMap: "Open campus map",
     upcomingEvents: "Upcoming events",
+    dateLocale: "en-US",
     eventFilterLabel: "Show Events",
     eventFilterToday: "Today",
     eventFilterWeek: "7 days",
@@ -825,8 +826,7 @@ const en: typeof de = {
     confirmSuccess: "Email confirmed successfully! Redirecting…",
     confirmFailed: "Confirmation link is invalid or has expired.",
     emailConfirmed: "Email address confirmed!",
-    emailConfirmedYouCanLogin:
-      "Your email address has been successfully confirmed. You can now log in.",
+    emailConfirmedText: "Your email address has been successfully confirmed.",
     verifyEmailRequiredTitle: "Email address not verified",
     verifyEmailRequiredText: "Please verify your email address to be able to submit job listings.",
     resendVerificationBtn: "Resend verification email",

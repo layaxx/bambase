@@ -30,3 +30,7 @@ tests/e2e/.auth/
 playwright-report/
 test-results/
 /src/generated/prisma
+.playwright-mcp/
+.claude/commands
+.mcp.json
+PERSONAS.md

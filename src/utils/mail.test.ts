@@ -5,7 +5,9 @@ const ORIGINAL_DOMAIN = process.env.MAILGUN_DOMAIN
 
 async function importMail() {
   vi.resetModules()
-  return import("./mail")
+  // mail.ts pulls in its own fresh logger module after the reset, so tests must spy on that one.
+  const [mail, { baseLogger }] = await Promise.all([import("./mail"), import("./logger")])
+  return { ...mail, baseLogger }
 }
 
 beforeEach(() => {
@@ -22,20 +24,23 @@ describe("sendMail", () => {
   it("logs the message instead of sending when Mailgun is not configured", async () => {
     delete process.env.MAILGUN_API_KEY
     delete process.env.MAILGUN_DOMAIN
-    const { sendMail } = await importMail()
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
+    const { sendMail, baseLogger } = await importMail()
+    const warnSpy = vi.spyOn(baseLogger, "warn").mockImplementation(() => {})
 
     await sendMail({ to: "student@example.com", subject: "Hi", text: "Body" })
 
     expect(fetch).not.toHaveBeenCalled()
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("student@example.com"))
+    expect(warnSpy).toHaveBeenCalledWith(
+      { to: "student@example.com", subject: "Hi" },
+      "mailgun not configured, email not sent"
+    )
   })
 
   it("logs instead of sending when only one of the two env vars is set", async () => {
     process.env.MAILGUN_API_KEY = "key-123"
     delete process.env.MAILGUN_DOMAIN
-    const { sendMail } = await importMail()
-    vi.spyOn(console, "warn").mockImplementation(() => {})
+    const { sendMail, baseLogger } = await importMail()
+    vi.spyOn(baseLogger, "warn").mockImplementation(() => {})
 
     await sendMail({ to: "student@example.com", subject: "Hi", text: "Body" })
 
@@ -46,7 +51,7 @@ describe("sendMail", () => {
     process.env.MAILGUN_API_KEY = "key-123"
     process.env.MAILGUN_DOMAIN = "mail.example.com"
     const { sendMail } = await importMail()
-    vi.mocked(fetch).mockResolvedValue({ ok: true } as never)
+    vi.mocked(fetch).mockResolvedValue(Response.json({ id: "<msg-1@mailgun>" }))
 
     await sendMail({ to: "student@example.com", subject: "Verify your email", text: "Click here" })
 
@@ -73,18 +78,48 @@ describe("sendMail", () => {
     process.env.MAILGUN_API_KEY = "key-123"
     process.env.MAILGUN_DOMAIN = "mail.example.com"
     const { sendMail } = await importMail()
-    vi.mocked(fetch).mockResolvedValue({ ok: false, status: 422 } as never)
+    vi.mocked(fetch).mockResolvedValue(new Response("Domain not found", { status: 422 }))
 
     await expect(
       sendMail({ to: "student@example.com", subject: "Hi", text: "Body" })
-    ).rejects.toThrow(/422/)
+    ).rejects.toThrow(/422: Domain not found/)
+  })
+
+  it("logs Mailgun's reason when sending fails, without the recipient", async () => {
+    process.env.MAILGUN_API_KEY = "key-123"
+    process.env.MAILGUN_DOMAIN = "mail.example.com"
+    const { sendMail, baseLogger } = await importMail()
+    const errorSpy = vi.spyOn(baseLogger, "error").mockImplementation(() => {})
+    vi.mocked(fetch).mockResolvedValue(new Response("Domain not found", { status: 422 }))
+
+    await sendMail({ to: "student@example.com", subject: "Hi", text: "Body" }).catch(() => {})
+
+    expect(errorSpy).toHaveBeenCalledWith(
+      { subject: "Hi", status: 422, reason: "Domain not found" },
+      "email send failed"
+    )
+  })
+
+  it("logs the Mailgun message id on success, without the recipient", async () => {
+    process.env.MAILGUN_API_KEY = "key-123"
+    process.env.MAILGUN_DOMAIN = "mail.example.com"
+    const { sendMail, baseLogger } = await importMail()
+    const infoSpy = vi.spyOn(baseLogger, "info").mockImplementation(() => {})
+    vi.mocked(fetch).mockResolvedValue(Response.json({ id: "<msg-1@mailgun>" }))
+
+    await sendMail({ to: "student@example.com", subject: "Hi", text: "Body" })
+
+    expect(infoSpy).toHaveBeenCalledWith(
+      { subject: "Hi", mailgunId: "<msg-1@mailgun>" },
+      "email sent"
+    )
   })
 
   it("resolves without throwing when the Mailgun API responds with ok", async () => {
     process.env.MAILGUN_API_KEY = "key-123"
     process.env.MAILGUN_DOMAIN = "mail.example.com"
     const { sendMail } = await importMail()
-    vi.mocked(fetch).mockResolvedValue({ ok: true } as never)
+    vi.mocked(fetch).mockResolvedValue(Response.json({ id: "<msg-1@mailgun>" }))
 
     await expect(
       sendMail({ to: "student@example.com", subject: "Hi", text: "Body" })

@@ -1,5 +1,6 @@
 import { JobOnlineStatus } from "@/generated/prisma/enums"
 import prisma from "./prisma"
+import { baseLogger } from "./logger"
 
 /** Sets each published job offer that is past its `offlineAfter` date to `expired`. */
 export async function expireJobOffers(): Promise<void> {
@@ -11,5 +12,5 @@ export async function expireJobOffers(): Promise<void> {
     data: { onlineStatus: JobOnlineStatus.expired },
   })
 
-  console.warn(`[job-offer-expiry] Expired ${count} job offer(s)`)
+  baseLogger.info({ job: "job-offer-expiry", count }, "job offers expired")
 }

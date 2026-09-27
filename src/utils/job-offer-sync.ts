@@ -3,6 +3,9 @@ import { JobField, JobOnlineStatus, JobType, WorkMode } from "@/generated/prisma
 import prisma from "./prisma"
 import { createWithUniqueSlug } from "./slugify"
 import { errorMessage } from "./error-message"
+import { baseLogger } from "./logger"
+
+const log = baseLogger.child({ job: "job-offer-sync" })
 
 const FEKI_JOBS_URL = "https://feki.de/api/jobboerse/jobs"
 
@@ -99,7 +102,7 @@ async function fetchAllJobs(cookie: string): Promise<DrupalJob[]> {
       const nextPage = await fetchJobsPage(page, cookie)
       allJobs.push(...nextPage.data)
     } catch (error) {
-      console.error(`[feki] Failed to fetch page ${page}: ${errorMessage(error)}`)
+      log.error({ err: error, page }, "external API request failed")
     }
   }
 
@@ -109,9 +112,7 @@ async function fetchAllJobs(cookie: string): Promise<DrupalJob[]> {
 export async function syncJobOffers(): Promise<void> {
   const cookie = process.env.JOB_OFFER_MIGRATION_COOKIE
   if (!cookie) {
-    console.warn(
-      "[feki] JOB_OFFER_MIGRATION_COOKIE is not set. Skipping job offer migration. Set this environment variable to enable it."
-    )
+    log.warn("job offer sync skipped, JOB_OFFER_MIGRATION_COOKIE is not set")
     return
   }
 
@@ -120,11 +121,11 @@ export async function syncJobOffers(): Promise<void> {
     allJobs = await fetchAllJobs(cookie)
   } catch (error) {
     const message = errorMessage(error)
-    console.error(`[feki] Failed to fetch job offers: ${message}`)
+    log.error({ err: error }, "external API request failed")
     throw new Error(`Failed to fetch job offers: ${message}`, { cause: error })
   }
 
-  console.warn(`[feki] Fetched ${allJobs.length} job offers`)
+  log.debug({ count: allJobs.length }, "job offers received")
 
   const existing = await prisma.jobOffer.findMany({
     where: { externalId: { not: null } },
@@ -171,9 +172,9 @@ export async function syncJobOffers(): Promise<void> {
       )
       created++
     } catch (error) {
-      console.error(`[feki] Failed to create job offer "${title}": ${errorMessage(error)}`)
+      log.error({ err: error, title }, "job offer create failed")
     }
   }
 
-  console.warn(`[feki] Done — created: ${created}, skipped (already exist): ${skipped}`)
+  log.info({ created, skipped }, "job offer sync completed")
 }

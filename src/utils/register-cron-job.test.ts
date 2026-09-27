@@ -10,6 +10,7 @@ vi.mock("./cron-tracking", () => ({
 }))
 
 import { registerCronJob } from "./register-cron-job"
+import { baseLogger } from "@/utils/logger"
 
 beforeEach(() => {
   mockSchedule.mockReset()
@@ -38,28 +39,17 @@ describe("registerCronJob", () => {
     vi.stubEnv("PROD", false)
     vi.stubEnv("TEST", "")
     vi.stubEnv("LOAD_MENSA_ON_STARTUP", "true")
-    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
+    const consoleSpy = vi.spyOn(baseLogger, "info").mockImplementation(() => {})
     const fn = vi.fn()
 
-    registerCronJob("mensa-sync", fn, {
-      startupEnvVar: "LOAD_MENSA_ON_STARTUP",
-      startupMessage: "Loading on startup.",
-    })
+    registerCronJob("mensa-sync", fn, { startupEnvVar: "LOAD_MENSA_ON_STARTUP" })
 
     expect(mockSchedule).not.toHaveBeenCalled()
     expect(mockRunTrackedCronJob).toHaveBeenCalledWith("mensa-sync", fn)
-    expect(consoleSpy).toHaveBeenCalledWith("Loading on startup.")
-  })
-
-  it("falls back to a default startup message when none is given", () => {
-    vi.stubEnv("PROD", false)
-    vi.stubEnv("TEST", "")
-    vi.stubEnv("LOAD_MENSA_ON_STARTUP", "true")
-    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
-
-    registerCronJob("mensa-sync", vi.fn(), { startupEnvVar: "LOAD_MENSA_ON_STARTUP" })
-
-    expect(consoleSpy).toHaveBeenCalledWith("Running mensa-sync on startup.")
+    expect(consoleSpy).toHaveBeenCalledWith(
+      { jobName: "mensa-sync" },
+      "running cron job on startup"
+    )
   })
 
   it("does not run at startup while under test even if the startup env var is 'true'", () => {
@@ -76,14 +66,15 @@ describe("registerCronJob", () => {
   it("logs a skip notice outside production when no startup env var is configured", () => {
     vi.stubEnv("PROD", false)
     vi.stubEnv("TEST", "")
-    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
+    const debugSpy = vi.spyOn(baseLogger, "debug").mockImplementation(() => {})
 
     registerCronJob("mensa-sync", vi.fn())
 
     expect(mockSchedule).not.toHaveBeenCalled()
     expect(mockRunTrackedCronJob).not.toHaveBeenCalled()
-    expect(consoleSpy).toHaveBeenCalledWith(
-      "mensa-sync cron job is not scheduled in development mode."
+    expect(debugSpy).toHaveBeenCalledWith(
+      { jobName: "mensa-sync" },
+      "cron job not scheduled outside production"
     )
   })
 
@@ -91,13 +82,14 @@ describe("registerCronJob", () => {
     vi.stubEnv("PROD", false)
     vi.stubEnv("TEST", "")
     vi.stubEnv("LOAD_MENSA_ON_STARTUP", "false")
-    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
+    const debugSpy = vi.spyOn(baseLogger, "debug").mockImplementation(() => {})
 
     registerCronJob("mensa-sync", vi.fn(), { startupEnvVar: "LOAD_MENSA_ON_STARTUP" })
 
     expect(mockRunTrackedCronJob).not.toHaveBeenCalled()
-    expect(consoleSpy).toHaveBeenCalledWith(
-      "mensa-sync cron job is not scheduled in development mode."
+    expect(debugSpy).toHaveBeenCalledWith(
+      { jobName: "mensa-sync" },
+      "cron job not scheduled outside production"
     )
   })
 })

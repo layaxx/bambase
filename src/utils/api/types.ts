@@ -1,3 +1,5 @@
+import { getLogger } from "../logger"
+
 export type ApiResult<T> = { data: T; apiDown: boolean }
 
 /**
@@ -13,7 +15,7 @@ export async function apiResult<T>(
   try {
     return { data: await load(), apiDown: false }
   } catch (error) {
-    console.error(errorLabel, error)
+    getLogger().error({ err: error, operation: errorLabel }, "data query failed")
     return { data: fallback, apiDown: true }
   }
 }

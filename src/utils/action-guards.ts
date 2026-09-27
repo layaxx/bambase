@@ -1,5 +1,6 @@
 import { ActionError } from "astro:actions"
 import { Prisma } from "@/generated/prisma/client"
+import { getLogger } from "./logger"
 
 type ActionContext = { locals: Pick<App.Locals, "user"> }
 type RoleCheck = (role: string | null | undefined) => Promise<boolean>
@@ -7,7 +8,10 @@ type RoleCheck = (role: string | null | undefined) => Promise<boolean>
 /** Returns the id of the caller. Throws UNAUTHORIZED if the caller is not signed in. */
 export function requireUserId(context: ActionContext): string {
   const userId = context.locals.user?.id
-  if (!userId) throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
+  if (!userId) {
+    getLogger().warn("action denied, not signed in")
+    throw new ActionError({ code: "UNAUTHORIZED", message: "Nicht angemeldet." })
+  }
   return userId
 }
 
@@ -22,6 +26,7 @@ export async function requirePermission(
 ): Promise<string> {
   const userId = requireUserId(context)
   if (!(await check(context.locals.user?.role))) {
+    getLogger().warn({ role: context.locals.user?.role }, "action denied, missing permission")
     throw new ActionError({ code: "FORBIDDEN", message })
   }
   return userId
@@ -45,6 +50,7 @@ export async function assertOwnerOrPermission(
   const hasPermission = check ? await check(context.locals.user?.role) : false
   if (hasPermission) return true
   if (ownerId === userId) return false
+  getLogger().warn({ role: context.locals.user?.role }, "action denied, not owner")
   throw new ActionError({ code: "FORBIDDEN", message })
 }
 
@@ -61,7 +67,7 @@ export function mutationError(
   message: string,
   notFoundMessage = message
 ): ActionError {
-  console.error(`${logLabel}:`, error)
+  getLogger().error({ err: error, operation: logLabel }, "action failed")
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
     if (error.code === "P2025") {
       return new ActionError({ code: "NOT_FOUND", message: notFoundMessage })

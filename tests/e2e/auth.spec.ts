@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test"
+import { AUTH_FILE } from "../../playwright.config"
 
 test.describe("Login", () => {
   test("non-existent email shows error alert", async ({ page }) => {
@@ -199,5 +200,20 @@ test.describe("Logout", () => {
 
     await page.goto("/account")
     await expect(page).toHaveURL(/\/login/)
+  })
+})
+
+test.describe("Auth pages while signed in", () => {
+  test.use({ storageState: AUTH_FILE })
+
+  test("/login and /register redirect to /account, honouring ?redirect", async ({ page }) => {
+    await page.goto("/login")
+    await expect(page).toHaveURL("/account")
+
+    await page.goto("/register")
+    await expect(page).toHaveURL("/account")
+
+    await page.goto("/login?redirect=/jobs")
+    await expect(page).toHaveURL("/jobs")
   })
 })

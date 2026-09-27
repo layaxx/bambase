@@ -7,6 +7,7 @@ import { canModerateEvents } from "@/utils/authz"
 import { requireUserId, assertOwnerOrPermission, mutationError } from "@/utils/action-guards"
 import prisma from "@/utils/prisma"
 import { httpUrl } from "./schemas"
+import { getLogger } from "@/utils/logger"
 
 const locationFieldsShape = {
   location_type: z.enum(["none", "linked", "custom"]).default("none"),
@@ -81,10 +82,11 @@ export const events = {
       try {
         await prisma.event.delete({ where: { id } })
       } catch (error) {
-        console.error("Event delete failed:", error)
+        getLogger().error({ err: error, eventId: id }, "event delete failed")
         throw new ActionError({ code: "INTERNAL_SERVER_ERROR", message: "Löschen fehlgeschlagen." })
       }
 
+      getLogger().info({ eventId: id }, "event deleted")
       invalidateCacheByPrefix("events:")
       return {}
     },
@@ -112,13 +114,14 @@ export const events = {
           data: { hidden: true, rejectionReason: reason || null },
         })
       } catch (error) {
-        console.error("Event unpublish failed:", error)
+        getLogger().error({ err: error, eventId: id }, "event unpublish failed")
         throw new ActionError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Depublizieren fehlgeschlagen.",
         })
       }
 
+      getLogger().info({ eventId: id, withReason: Boolean(reason) }, "event unpublished")
       invalidateCacheByPrefix("events:")
       return {}
     },
@@ -141,6 +144,7 @@ export const events = {
       // can thus publish the event again, and the owner cannot cancel a moderation decision.
       if (event.rejectionReason) {
         if (!(await canModerateEvents(context.locals.user?.role))) {
+          getLogger().warn({ eventId: id }, "action denied, event was unpublished by a moderator")
           throw new ActionError({
             code: "FORBIDDEN",
             message: "Veröffentlichen fehlgeschlagen.",
@@ -162,13 +166,14 @@ export const events = {
           data: { hidden: false, rejectionReason: null },
         })
       } catch (error) {
-        console.error("Event publish failed:", error)
+        getLogger().error({ err: error, eventId: id }, "event publish failed")
         throw new ActionError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Veröffentlichen fehlgeschlagen.",
         })
       }
 
+      getLogger().info({ eventId: id }, "event published")
       invalidateCacheByPrefix("events:")
       return {}
     },

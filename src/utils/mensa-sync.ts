@@ -1,6 +1,9 @@
 import { z } from "astro/zod"
 import prisma from "./prisma"
 import { errorMessage } from "./error-message"
+import { baseLogger } from "./logger"
+
+const log = baseLogger.child({ job: "mensa-sync" })
 
 const SWCanteenMenuFoodSchema = z.object({
   name: z.string(),
@@ -94,8 +97,9 @@ function transformApiResponse(
           if (name) {
             allergens.push(name)
           } else {
-            console.warn(
-              `Unknown additive identifier "${id}" for food "${food.name}" on ${day.day} at ${location}`
+            log.warn(
+              { additive: id, meal: food.name, date: day.day, location },
+              "unknown additive identifier"
             )
           }
         }
@@ -131,7 +135,7 @@ async function upsertDay(
   const outcomes = await Promise.all(
     meals.map(async (meal) => {
       if (!meal.name || meal.name.trim() === "-") {
-        console.warn(`Skipping meal with empty name on ${date} at ${location}`)
+        log.warn({ date, location }, "meal skipped, empty name")
         return null
       }
 
@@ -185,7 +189,7 @@ export async function syncMensaMeals(): Promise<Record<Location, DaySummary | nu
         return [mensa.location, sumDaySummaries(dayResults), null]
       } catch (error) {
         const message = errorMessage(error)
-        console.error(`Failed to sync mensa data for ${mensa.location}: ${message}`)
+        log.error({ err: error, location: mensa.location }, "mensa sync failed")
         return [mensa.location, null, message]
       }
     })

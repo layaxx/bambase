@@ -3,6 +3,8 @@ import AppLayout from "@/layouts/AppLayout.astro"
 import { useTranslations } from "@/i18n/translations"
 
 const t = useTranslations(Astro.locals.locale)
+
+if (Astro.locals.user) return Astro.redirect("/account")
 ---
 
 <AppLayout title={t.auth.registerTitle}>
@@ -111,7 +113,7 @@ const t = useTranslations(Astro.locals.locale)
         name: email,
         email,
         password,
-        callbackURL: "/login?confirmed=true",
+        callbackURL: "/account?confirmed=true",
       })
 
       if (Boolean(authResponse.error) === false) {

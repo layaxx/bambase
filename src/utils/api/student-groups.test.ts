@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import { baseLogger } from "@/utils/logger"
 import {
   fetchStudentGroups,
   fetchStudentGroupForAdmin,
@@ -90,13 +91,16 @@ describe("fetchStudentGroups", () => {
   })
 
   it("logs an error and returns an empty array when the API response is unexpected", async () => {
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+    const consoleSpy = vi.spyOn(baseLogger, "error").mockImplementation(() => {})
     mockFindMany.mockResolvedValue(null)
 
     const result = await fetchStudentGroups()
 
     expect(result).toEqual({ data: [], apiDown: true })
-    expect(consoleSpy).toHaveBeenCalledWith("Error fetching student groups", expect.any(TypeError))
+    expect(consoleSpy).toHaveBeenCalledWith(
+      { err: expect.any(TypeError), operation: "Error fetching student groups" },
+      "data query failed"
+    )
     consoleSpy.mockRestore()
   })
 })
@@ -127,7 +131,7 @@ describe("fetchStudentGroupForAdmin", () => {
   })
 
   it("logs an error and returns apiDown when the lookup throws", async () => {
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+    const consoleSpy = vi.spyOn(baseLogger, "error").mockImplementation(() => {})
     mockFindFirst.mockRejectedValue(new Error("db error"))
 
     const result = await fetchStudentGroupForAdmin("asta")
@@ -155,7 +159,7 @@ describe("fetchAllStudentGroupsForAdmin", () => {
   })
 
   it("logs an error and returns an empty array when the query throws", async () => {
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+    const consoleSpy = vi.spyOn(baseLogger, "error").mockImplementation(() => {})
     mockFindMany.mockRejectedValue(new Error("db error"))
 
     const result = await fetchAllStudentGroupsForAdmin()

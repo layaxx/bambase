@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { syncMensaMeals } from "./mensa-sync"
+import { baseLogger } from "@/utils/logger"
 
 const mockFindMany = vi.hoisted(() => vi.fn())
 const mockUpsert = vi.hoisted(() => vi.fn())
@@ -147,7 +148,7 @@ describe("syncMensaMeals", () => {
   })
 
   it("syncs the remaining canteens but rejects if one request fails", async () => {
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+    const consoleSpy = vi.spyOn(baseLogger, "error").mockImplementation(() => {})
     vi.mocked(fetch).mockImplementation(async (url) => {
       if (String(url).includes(`/canteen/${CANTEEN_IDS.Erba}`)) {
         return jsonResponse(null, false) as never
@@ -175,12 +176,15 @@ describe("syncMensaMeals", () => {
     expect(mockUpsert).toHaveBeenCalledWith(
       expect.objectContaining({ create: expect.objectContaining({ name: "Soup" }) })
     )
-    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("Erba"))
+    expect(consoleSpy).toHaveBeenCalledWith(
+      { err: expect.any(Error), location: "Erba" },
+      "mensa sync failed"
+    )
     consoleSpy.mockRestore()
   })
 
   it("rejects when all canteens fail", async () => {
-    vi.spyOn(console, "error").mockImplementation(() => {})
+    vi.spyOn(baseLogger, "error").mockImplementation(() => {})
     vi.mocked(fetch).mockResolvedValue(jsonResponse(null, false) as never)
 
     await expect(syncMensaMeals()).rejects.toThrow(/3\/3 canteen/)
