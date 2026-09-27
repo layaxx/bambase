@@ -50,10 +50,14 @@ const statusLabel: Record<string, string> = {
     <>
       <form
         action={actions.jobs.reject}
-        class="mb-3 flex flex-wrap items-center gap-2 rounded-xl bg-base-200 p-3"
+        class="mb-3 flex flex-wrap items-center gap-2 rounded-xl bg-base-200 px-4 py-3"
         id="bulk-moderation"
         method="POST"
       >
+        <label class="mr-2 flex cursor-pointer items-center gap-3 text-sm font-medium">
+          <input class="checkbox checkbox-sm" id="select-all-jobs" type="checkbox" />
+          {t.admin.selectAll}
+        </label>
         <span class="text-sm font-medium text-base-content/70">{t.admin.bulkActionsLabel}</span>
         <button
           class="btn btn-success btn-sm"
@@ -192,3 +196,23 @@ const statusLabel: Record<string, string> = {
     </div>
   )}
 </PageLayout>
+
+<script>
+  const all = document.querySelector<HTMLInputElement>("#select-all-jobs")
+  const boxes = [
+    ...document.querySelectorAll<HTMLInputElement>('input[form="bulk-moderation"][name="id"]'),
+  ]
+
+  all?.addEventListener("change", () => {
+    for (const box of boxes) box.checked = all.checked
+  })
+
+  for (const box of boxes) {
+    box.addEventListener("change", () => {
+      if (!all) return
+      const checked = boxes.filter((b) => b.checked).length
+      all.checked = checked === boxes.length
+      all.indeterminate = checked > 0 && checked < boxes.length
+    })
+  }
+</script>
