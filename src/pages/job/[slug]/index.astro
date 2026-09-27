@@ -18,6 +18,7 @@ import ConfirmModal from "@/components/ConfirmModal.astro"
 import Alert from "@/components/Alert.astro"
 import JobTypeBadge from "@/components/jobs/JobTypeBadge.astro"
 import { formatJobLocation } from "@/utils/job-formatting"
+import { formatLongDate } from "@/utils/event-formatting"
 
 const t = useTranslations(Astro.locals.locale)
 
@@ -30,12 +31,6 @@ const jobResult = slug
 const job = jobResult.data
 const apiDown = jobResult.apiDown
 const isOwner = !!(me && job?.ownerId === me.id)
-const formatDate = (iso: string) =>
-  new Date(iso).toLocaleDateString(t.auth.dateLocale, {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  })
 
 const hasReports = (job?.reports?.length ?? 0) >= REPORT_WARNING_THRESHOLD
 const canArchive = job?.online_status === "published" || job?.online_status === "submitted"
@@ -187,7 +182,7 @@ const ogImage =
             {showPostedOn && (
               <div class="flex items-center gap-1.5">
                 <IconCalendar class="h-4 w-4 shrink-0" />
-                {t.jobs.postedOn(formatDate(job.createdAt))}
+                {t.jobs.postedOn(formatLongDate(job.createdAt, t.auth.dateLocale))}
               </div>
             )}
           </div>

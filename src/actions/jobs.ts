@@ -27,27 +27,6 @@ const JOB_OFFER_LIFETIME_DAYS = 30
 const MODERATED_STATUSES: JobOnlineStatus[] = [JobOnlineStatus.published, JobOnlineStatus.rejected]
 
 /**
- * Tells if an update must send the offer back to moderation. Without this check, an owner who
- * rewrites the content of an offer that a moderator approved can publish any text under that
- * approval. A moderator edits the offer directly, thus the edit is itself the decision.
- */
-/** What a moderation update returns: enough to write the owner a mail. */
-const notifySelect = {
-  slug: true,
-  title: true,
-  rejectionReason: true,
-  owner: { select: { id: true, email: true } },
-} as const
-
-/** A moderator who decides on an own offer needs no mail about it. */
-function recipient(
-  owner: { id: string; email: string } | null,
-  actorId: string | undefined
-): string | undefined {
-  return owner && owner.id !== actorId ? owner.email : undefined
-}
-
-/**
  * Publishes or rejects one offer and mails its owner. Approve and reject take several ids so
  * that a moderator can clear the queue in one submit.
  */
@@ -57,32 +36,39 @@ async function moderate(
   reason: string | null,
   context: { locals: Pick<App.Locals, "user">; url: URL }
 ): Promise<void> {
-  const verb = status === "published" ? "approve" : "reject"
+  const [verb, failMessage] =
+    status === "published"
+      ? ["approve", "Genehmigen fehlgeschlagen."]
+      : ["reject", "Ablehnen fehlgeschlagen."]
   let job
   try {
     job = await prisma.jobOffer.update({
       where: { id },
       data: { onlineStatus: status, rejectionReason: reason },
-      select: notifySelect,
+      select: {
+        slug: true,
+        title: true,
+        rejectionReason: true,
+        owner: { select: { id: true, email: true } },
+      },
     })
   } catch (error) {
     getLogger().error({ err: error, jobOfferId: id }, `job ${verb} failed`)
-    throw new ActionError({
-      code: "INTERNAL_SERVER_ERROR",
-      message: status === "published" ? "Genehmigen fehlgeschlagen." : "Ablehnen fehlgeschlagen.",
-    })
+    throw new ActionError({ code: "INTERNAL_SERVER_ERROR", message: failMessage })
   }
 
-  getLogger().info({ jobOfferId: id }, `job ${status === "published" ? "approved" : "rejected"}`)
+  getLogger().info({ jobOfferId: id }, `job ${verb}d`)
   invalidateCacheByPrefix("job-offers:")
-  await notifyJobOwner(
-    recipient(job.owner, context.locals.user?.id),
-    job,
-    status,
-    context.url.origin
-  )
+  // A moderator who decides on an own offer needs no mail about it.
+  const to = job.owner && job.owner.id !== context.locals.user?.id ? job.owner.email : undefined
+  await notifyJobOwner(to, job, status, context.url.origin)
 }
 
+/**
+ * Tells if an update must send the offer back to moderation. Without this check, an owner who
+ * rewrites the content of an offer that a moderator approved can publish any text under that
+ * approval. A moderator edits the offer directly, thus the edit is itself the decision.
+ */
 function needsRemoderation(
   isModerator: boolean,
   contentChanged: boolean,

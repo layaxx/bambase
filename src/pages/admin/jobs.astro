@@ -5,6 +5,7 @@ import { fetchSubmittedJobOffers, fetchRecentlyModeratedJobOffers } from "@/util
 import { canModerateJobOffers, requireRole } from "@/utils/authz"
 import { JOB_STATUS_BADGE_CLASS } from "@/utils/job-status"
 import { useTranslations } from "@/i18n/translations"
+import { formatLongDate } from "@/utils/event-formatting"
 
 const t = useTranslations(Astro.locals.locale)
 
@@ -102,13 +103,7 @@ const statusLabel: Record<string, string> = {
                 </h2>
                 <p class="text-sm text-base-content/70">
                   {job.company} · {job.location} ·{" "}
-                  {t.admin.submittedOn(
-                    new Date(job.createdAt).toLocaleDateString(t.auth.dateLocale, {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                    })
-                  )}
+                  {t.admin.submittedOn(formatLongDate(job.createdAt, t.auth.dateLocale))}
                 </p>
                 <p class="mt-1 line-clamp-2 text-sm text-base-content/70">{job.description}</p>
               </div>
@@ -179,13 +174,7 @@ const statusLabel: Record<string, string> = {
               </p>
             )}
             <p class="text-xs text-base-content/40">
-              {t.admin.decidedAt(
-                new Date(job.updatedAt).toLocaleDateString(t.auth.dateLocale, {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                })
-              )}
+              {t.admin.decidedAt(formatLongDate(job.updatedAt, t.auth.dateLocale))}
             </p>
           </div>
           <a class="btn btn-outline btn-sm" href={`/admin/jobs/${job.slug}/edit`}>

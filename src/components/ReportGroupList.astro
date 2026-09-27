@@ -4,6 +4,7 @@ import ApiDownBanner from "@/components/ApiDownBanner.astro"
 import Pagination from "@/components/Pagination.astro"
 import { REPORT_WARNING_THRESHOLD, type ReportGroup } from "@/utils/api/reports"
 import { useTranslations } from "@/i18n/translations"
+import { formatLongDate } from "@/utils/event-formatting"
 
 interface Props {
   kind: "event" | "job"
@@ -25,6 +26,8 @@ const unpublishAction = kind === "event" ? actions.events.unpublish : actions.jo
 const publishAction = kind === "event" ? actions.events.publish : actions.jobs.approve
 const editBasePath = kind === "event" ? "/admin/events" : "/admin/jobs"
 const editLabel = kind === "event" ? t.admin.editEvent : t.admin.editJob
+const reasonInputLabel =
+  kind === "job" ? t.admin.rejectReasonPlaceholder : t.admin.reasonPlaceholder
 const rejectionReasonLabel =
   kind === "event" ? t.events.rejectionReasonLabel : t.jobs.rejectionReasonLabel
 
@@ -42,13 +45,7 @@ function reasonCounts(group: ReportGroup) {
   return Array.from(counts.entries())
 }
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString(t.auth.dateLocale, {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  })
-}
+const formatDate = (iso: string) => formatLongDate(iso, t.auth.dateLocale)
 
 function severityBadgeClass(group: ReportGroup) {
   if (group.caseStatus === "resolved") return "badge-ghost"
@@ -186,19 +183,11 @@ const statusFilters = [
                     >
                       <input name="id" type="hidden" value={targetId} />
                       <input
-                        aria-label={
-                          kind === "job"
-                            ? t.admin.rejectReasonPlaceholder
-                            : t.admin.reasonPlaceholder
-                        }
+                        aria-label={reasonInputLabel}
                         class="input input-sm input-bordered"
                         maxlength="500"
                         name="reason"
-                        placeholder={
-                          kind === "job"
-                            ? t.admin.rejectReasonPlaceholder
-                            : t.admin.reasonPlaceholder
-                        }
+                        placeholder={reasonInputLabel}
                         required={kind === "job"}
                         type="text"
                       />

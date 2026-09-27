@@ -7,6 +7,15 @@ export function formatDate(iso: string, locale: string): string {
   })
 }
 
+/** Example (de-DE): "15. April 2026" */
+export function formatLongDate(iso: string, locale: string): string {
+  return new Date(iso).toLocaleDateString(locale, {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  })
+}
+
 /** Example (de-DE): "10:30 Uhr" */
 export function formatTime(iso: string, locale: string): string {
   return new Date(iso).toLocaleTimeString(locale, {

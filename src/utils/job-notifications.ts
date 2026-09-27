@@ -1,7 +1,7 @@
 import { sendMail } from "./mail"
 import { getLogger } from "./logger"
 
-export type JobNotificationKind = "received" | "published" | "rejected"
+type JobNotificationKind = "received" | "published" | "rejected"
 
 type NotifiedJob = {
   slug: string
