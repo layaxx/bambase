@@ -121,7 +121,8 @@ const de = {
     backToJobs: "Alle Jobs",
     postJob: "Job inserieren",
     notPublishedHint: "Dieses Angebot ist nur für dich sichtbar.",
-    submittedReviewHint: "Neue Angebote prüfen wir in der Regel innerhalb weniger Tage.",
+    submittedReviewHint:
+      "Neue Angebote prüfen wir in der Regel innerhalb weniger Tage. Du bekommst eine E-Mail, sobald es geprüft ist.",
     rejectedResubmitHint: "Bearbeite das Angebot, um es erneut zur Prüfung einzureichen.",
     rejectionReasonLabel: (reason: string) => `Grund: ${reason}`,
     editTitle: "Stellenangebot bearbeiten",
@@ -642,7 +643,8 @@ const en: typeof de = {
     backToJobs: "All jobs",
     postJob: "Post a job",
     notPublishedHint: "This listing is only visible to you.",
-    submittedReviewHint: "We usually review new listings within a few days.",
+    submittedReviewHint:
+      "We usually review new listings within a few days. You will get an email once it has been reviewed.",
     rejectedResubmitHint: "Edit the listing to submit it for review again.",
     rejectionReasonLabel: (reason: string) => `Reason: ${reason}`,
     editTitle: "Edit job listing",

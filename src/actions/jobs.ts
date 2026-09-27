@@ -14,6 +14,7 @@ import prisma from "@/utils/prisma"
 import { httpUrl } from "./schemas"
 import { JobOnlineStatus } from "@/generated/prisma/enums"
 import { getLogger } from "@/utils/logger"
+import { notifyJobOwner } from "@/utils/job-notifications"
 
 const JOB_OFFER_LIFETIME_DAYS = 30
 
@@ -30,6 +31,22 @@ const MODERATED_STATUSES: JobOnlineStatus[] = [JobOnlineStatus.published, JobOnl
  * rewrites the content of an offer that a moderator approved can publish any text under that
  * approval. A moderator edits the offer directly, thus the edit is itself the decision.
  */
+/** What a moderation update returns: enough to write the owner a mail. */
+const notifySelect = {
+  slug: true,
+  title: true,
+  rejectionReason: true,
+  owner: { select: { id: true, email: true } },
+} as const
+
+/** A moderator who decides on an own offer needs no mail about it. */
+function recipient(
+  owner: { id: string; email: string } | null,
+  actorId: string | undefined
+): string | undefined {
+  return owner && owner.id !== actorId ? owner.email : undefined
+}
+
 function needsRemoderation(
   isModerator: boolean,
   contentChanged: boolean,
@@ -121,10 +138,12 @@ export const jobs = {
     handler: async ({ id }, context) => {
       await requirePermission(context, canModerateJobOffers)
 
+      let job
       try {
-        await prisma.jobOffer.update({
+        job = await prisma.jobOffer.update({
           where: { id },
           data: { onlineStatus: "published", rejectionReason: null },
+          select: notifySelect,
         })
       } catch (error) {
         getLogger().error({ err: error, jobOfferId: id }, "job approve failed")
@@ -136,6 +155,12 @@ export const jobs = {
 
       getLogger().info({ jobOfferId: id }, "job approved")
       invalidateCacheByPrefix("job-offers:")
+      await notifyJobOwner(
+        recipient(job.owner, context.locals.user?.id),
+        job,
+        "published",
+        context.url.origin
+      )
       return {}
     },
   }),
@@ -146,10 +171,12 @@ export const jobs = {
     handler: async ({ id, reason }, context) => {
       await requirePermission(context, canModerateJobOffers)
 
+      let job
       try {
-        await prisma.jobOffer.update({
+        job = await prisma.jobOffer.update({
           where: { id },
           data: { onlineStatus: "rejected", rejectionReason: reason },
+          select: notifySelect,
         })
       } catch (error) {
         getLogger().error({ err: error, jobOfferId: id }, "job reject failed")
@@ -159,8 +186,14 @@ export const jobs = {
         })
       }
 
-      getLogger().info({ jobOfferId: id, withReason: Boolean(reason) }, "job rejected")
+      getLogger().info({ jobOfferId: id }, "job rejected")
       invalidateCacheByPrefix("job-offers:")
+      await notifyJobOwner(
+        recipient(job.owner, context.locals.user?.id),
+        job,
+        "rejected",
+        context.url.origin
+      )
       return {}
     },
   }),
@@ -280,6 +313,12 @@ export const jobs = {
       }
 
       invalidateCacheByPrefix("job-offers:")
+      await notifyJobOwner(
+        context.locals.user.email,
+        { slug: created.slug, title: input.title },
+        "received",
+        context.url.origin
+      )
       return { slug: created.slug }
     },
   }),
