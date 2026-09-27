@@ -1,4 +1,5 @@
 import prisma from "../prisma"
+import type { Prisma } from "@/generated/prisma/client"
 import { apiResult, type ApiResult } from "./types"
 import { ReportReason } from "@/generated/prisma/enums"
 import type { ReportReviewStatus } from "@/generated/prisma/enums"
@@ -23,22 +24,12 @@ export type Report = {
   target: ReportTarget | null
 }
 
-type ReportRow = {
-  id: string
-  reason: ReportReason
-  details: string | null
-  reviewStatus: ReportReviewStatus
-  createdAt: Date
-  eventId: string | null
-  jobOfferId: string | null
-  event: { title: string; slug: string; hidden: boolean; rejectionReason: string | null } | null
-  jobOffer: {
-    title: string
-    slug: string
-    onlineStatus: string
-    rejectionReason: string | null
-  } | null
-}
+const REPORT_INCLUDE = {
+  event: { select: { title: true, slug: true, hidden: true, rejectionReason: true } },
+  jobOffer: { select: { title: true, slug: true, onlineStatus: true, rejectionReason: true } },
+} satisfies Prisma.ReportInclude
+
+type ReportRow = Prisma.ReportGetPayload<{ include: typeof REPORT_INCLUDE }>
 
 function toReport(row: ReportRow): Report {
   const target: ReportTarget | null = row.event
@@ -134,12 +125,7 @@ export function fetchReportGroupsForAdmin(
           : targetType === "job"
             ? { jobOfferId: { not: null } }
             : {},
-      include: {
-        event: { select: { title: true, slug: true, hidden: true, rejectionReason: true } },
-        jobOffer: {
-          select: { title: true, slug: true, onlineStatus: true, rejectionReason: true },
-        },
-      },
+      include: REPORT_INCLUDE,
       orderBy: { createdAt: "desc" },
     })
 

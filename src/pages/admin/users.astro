@@ -1,9 +1,7 @@
 ---
 import { actions } from "astro:actions"
 import type { Prisma } from "@/generated/prisma/client"
-import dayjs from "dayjs"
-import relativeTime from "dayjs/plugin/relativeTime"
-import "dayjs/locale/de"
+import { formatRelativeDate } from "@/utils/job-formatting"
 import PageLayout from "@/layouts/PageLayout.astro"
 import Alert from "@/components/Alert.astro"
 import Pagination from "@/components/Pagination.astro"
@@ -22,8 +20,6 @@ import {
 } from "@/utils/authz"
 import { useTranslations } from "@/i18n/translations"
 import prisma from "@/utils/prisma"
-
-dayjs.extend(relativeTime)
 
 const PAGE_SIZE = 25
 
@@ -173,7 +169,7 @@ function initials(user: UserRow): string {
 function formatLastActive(userId: string): string {
   const date = lastActiveMap.get(userId)
   if (!date) return t.admin.neverActiveLabel
-  return dayjs(date).locale(Astro.locals.locale).fromNow()
+  return formatRelativeDate(date, Astro.locals.locale)
 }
 
 const clearFiltersUrl = Astro.url.pathname

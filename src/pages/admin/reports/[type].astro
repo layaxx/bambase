@@ -1,0 +1,75 @@
+---
+import { actions } from "astro:actions"
+import PageLayout from "@/layouts/PageLayout.astro"
+import ReportGroupList from "@/components/ReportGroupList.astro"
+import { fetchReportGroupsForAdmin } from "@/utils/api/reports"
+import { canModerateEvents, canModerateJobOffers, requireRole } from "@/utils/authz"
+import { useTranslations } from "@/i18n/translations"
+
+const t = useTranslations(Astro.locals.locale)
+
+const KINDS = {
+  events: {
+    kind: "event",
+    check: canModerateEvents,
+    title: t.admin.reportsEventsTitle,
+    actions: [actions.events.unpublish, actions.events.publish],
+  },
+  jobs: {
+    kind: "job",
+    check: canModerateJobOffers,
+    title: t.admin.reportsJobsTitle,
+    actions: [actions.jobs.reject, actions.jobs.approve],
+  },
+} as const
+const { type = "" } = Astro.params
+if (!Object.hasOwn(KINDS, type)) return new Response(null, { status: 404 })
+const config = KINDS[type as keyof typeof KINDS]
+
+const guard = await requireRole(Astro, config.check, Astro.url.pathname)
+if (guard instanceof Response) return guard
+
+const succeeded = [
+  actions.reports.dismiss,
+  actions.reports.reopen,
+  actions.reports.dismissGroup,
+  actions.reports.reopenGroup,
+  ...config.actions,
+].some((action) => {
+  const result = Astro.getActionResult(action)
+  return result?.data !== undefined && !result.error
+})
+if (succeeded) {
+  return Astro.redirect(Astro.url.pathname)
+}
+
+const PAGE_SIZE = 20
+
+const rawStatus = Astro.url.searchParams.get("status")
+const statusFilter: "open" | "resolved" | "all" =
+  rawStatus === "resolved" || rawStatus === "all" ? rawStatus : "open"
+
+const rawPage = parseInt(Astro.url.searchParams.get("page") ?? "1", 10)
+const currentPage = isNaN(rawPage) || rawPage < 1 ? 1 : rawPage
+
+const { data, apiDown } = await fetchReportGroupsForAdmin({
+  caseStatus: statusFilter === "all" ? undefined : statusFilter,
+  targetType: config.kind,
+  page: currentPage,
+  pageSize: PAGE_SIZE,
+})
+const { groups, page: actualPage, pageCount } = data
+---
+
+<PageLayout title={config.title}>
+  <h1 class="text-3xl font-bold tracking-tight sm:text-4xl mb-6">{config.title}</h1>
+
+  <ReportGroupList
+    actualPage={actualPage}
+    apiDown={apiDown}
+    groups={groups}
+    kind={config.kind}
+    pageCount={pageCount}
+    statusFilter={statusFilter}
+  />
+</PageLayout>

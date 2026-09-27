@@ -2,6 +2,7 @@ import prisma from "../prisma"
 import { withCache } from "./cache"
 import { apiResult, type ApiResult } from "./types"
 import { JobType, JobField, WorkMode, JobOnlineStatus } from "@/generated/prisma/enums"
+import type { JobOfferModel } from "@/generated/prisma/models"
 
 export const JOB_TYPES = Object.values(JobType)
 export const JOB_FIELDS = Object.values(JobField)
@@ -53,29 +54,7 @@ export type JobOfferPage = {
 
 const EMPTY_PAGE: JobOfferPage = { jobs: [], total: 0, page: 1, pageCount: 1 }
 
-type JobOfferRow = {
-  id: string
-  slug: string
-  title: string
-  description: string
-  company: string
-  location: string
-  onlineStatus: JobOnlineStatus
-  rejectionReason: string | null
-  workingHours: number
-  externalUrl: string | null
-  jobType: JobType
-  field: JobField
-  workMode: WorkMode
-  contactName: string | null
-  contactMail: string | null
-  contactPhone: string | null
-  ownerId: string | null
-  createdAt: Date
-  updatedAt: Date
-}
-
-function toJobOffer(row: JobOfferRow, extra?: { reports?: { id: string }[] }): JobOffer {
+function toJobOffer(row: JobOfferModel, extra?: { reports?: { id: string }[] }): JobOffer {
   return {
     id: row.id,
     slug: row.slug,
