@@ -36,7 +36,7 @@ const de = {
     moreInfo: "Weitere Informationen",
     submitEvent: "Veranstaltung einreichen",
     createTitle: "Veranstaltung einreichen",
-    createSubtitle: "Die Veranstaltung wird nach einer kurzen Prüfung veröffentlicht.",
+    createSubtitle: "Die Veranstaltung ist sofort nach dem Einreichen öffentlich sichtbar.",
     fieldTitle: "Titel",
     fieldOrganizer: "Veranstalter",
     fieldDescription: "Beschreibung",
@@ -53,7 +53,6 @@ const de = {
       culture: "Kultur",
       social: "Soziales",
     },
-    submitSuccess: "Veranstaltung erfolgreich eingereicht. Sie wird nach Prüfung veröffentlicht.",
     editTitle: "Veranstaltung bearbeiten",
     editEvent: "Bearbeiten",
     deleteEvent: "Löschen",
@@ -363,7 +362,7 @@ const de = {
       "BamBase.de bündelt Informationen rund um das Studium an der Universität Bamberg an einem zentralen Ort: Veranstaltungen, Stellenangebote, Mensapläne, wichtige Orte auf dem Campus und studentische Gruppen – alles auf einen Blick.",
     contributingHeading: "Mitmachen",
     contributingText:
-      "Du kannst Veranstaltungen und Stellenangebote direkt über die Website einreichen. Sie werden nach einer kurzen Prüfung veröffentlicht. Studentische Gruppen, die ihre Informationen ergänzen möchten, wenden sich bitte an das Team.",
+      "Du kannst Veranstaltungen und Stellenangebote direkt über die Website einreichen. Veranstaltungen sind sofort sichtbar, Stellenangebote nach einer kurzen Prüfung. Studentische Gruppen, die ihre Informationen ergänzen möchten, wenden sich bitte an das Team.",
     openSourceHeading: "Open Source",
     openSourceText:
       "BamBase.de ist ein Open-Source-Projekt. Fehler, Verbesserungsvorschläge und Fragen können auf GitHub als Issue gemeldet werden.",
@@ -555,7 +554,7 @@ const en: typeof de = {
     moreInfo: "More information",
     submitEvent: "Submit event",
     createTitle: "Submit an event",
-    createSubtitle: "Your event will be reviewed before it goes live.",
+    createSubtitle: "Your event goes live as soon as you submit it.",
     fieldTitle: "Title",
     fieldOrganizer: "Organizer",
     fieldDescription: "Description",
@@ -572,7 +571,6 @@ const en: typeof de = {
       culture: "Culture",
       social: "Social",
     },
-    submitSuccess: "Event submitted successfully. It will be published after review.",
     editTitle: "Edit event",
     editEvent: "Edit",
     deleteEvent: "Delete",
@@ -880,7 +878,7 @@ const en: typeof de = {
       "BamBase.de brings together information about student life at the University of Bamberg in one place: events, job listings, cafeteria menus, important campus locations, and student groups – all at a glance.",
     contributingHeading: "Get involved",
     contributingText:
-      "You can submit events and job listings directly through the website. They will be published after a short review. Student groups that want to add or update their information are welcome to reach out to the team.",
+      "You can submit events and job listings directly through the website. Events go live immediately, job listings after a short review. Student groups that want to add or update their information are welcome to reach out to the team.",
     openSourceHeading: "Open Source",
     openSourceText:
       "BamBase.de is an open-source project. Bugs, feature requests, and questions can be reported as issues on GitHub.",
