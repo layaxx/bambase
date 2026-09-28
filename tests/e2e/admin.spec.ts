@@ -27,8 +27,8 @@ async function createJob(page: Page, title: string): Promise<string> {
   await page.fill("#description", "Automated E2E test job — safe to delete.")
   await page.fill("#contact_name", "Test Contact")
   await page.click('button[type="submit"]')
-  await page.waitForURL(/\/job\/[a-z0-9-]+$/)
-  return page.url()
+  await page.waitForURL(/\/job\/[a-z0-9-]+\?submitted$/)
+  return page.url().split("?")[0]
 }
 
 test("non-moderator visiting /admin/jobs is redirected away", async ({ page }) => {
@@ -82,6 +82,9 @@ test("moderator can reject a submitted job", async ({ page, browser }) => {
 
   const jobCard = adminPage.locator(".rounded-xl", { hasText: title })
   await expect(jobCard).toBeVisible()
+  await jobCard
+    .getByRole("textbox", { name: "Grund für die Ablehnung" })
+    .fill("Bitte Stundenlohn angeben.")
   await jobCard.getByRole("button", { name: "Ablehnen" }).click()
 
   await expect(adminPage.getByTestId("job-queue")).not.toContainText(title)
@@ -93,7 +96,53 @@ test("moderator can reject a submitted job", async ({ page, browser }) => {
 
   await page.goto(jobUrl)
   await expect(page.locator("body")).toContainText("Abgelehnt")
+  await expect(page.getByRole("alert")).toContainText("Grund: Bitte Stundenlohn angeben.")
+  await expect(page.getByText(/Veröffentlicht am/)).toHaveCount(0)
 
+  await page.goto("/account/jobs")
+  await expect(page.locator("a", { hasText: title })).toContainText(
+    "Grund: Bitte Stundenlohn angeben."
+  )
+  await page.goto(jobUrl)
+
+  await page.getByRole("button", { name: "Löschen" }).click()
+  await page.getByRole("dialog").getByRole("button", { name: "Löschen" }).click()
+})
+
+test("moderator sees what waits and rejects several jobs at once", async ({ page, browser }) => {
+  await login(page, "seed@example.com", "Seed1234!")
+  const base = uniqueTitle()
+  const [titleA, titleB] = [`${base} A`, `${base} B`]
+  const urlA = await createJob(page, titleA)
+  const urlB = await createJob(page, titleB)
+
+  const adminContext = await browser.newContext()
+  const adminPage = await adminContext.newPage()
+  await login(adminPage, "admin@example.com", "Admin1234!")
+  await adminPage.goto("/admin")
+  await expect(adminPage.getByRole("link", { name: /^Stellenangebote prüfen/ })).toContainText(
+    /\d+ wartend/
+  )
+
+  await adminPage.goto("/admin/jobs")
+  await expect(adminPage.getByTestId("job-queue-count")).toContainText(/\d+ wartend/)
+  await expect(adminPage.locator(".rounded-xl", { hasText: titleA })).toContainText(
+    "Eingereicht am"
+  )
+  await adminPage.getByRole("checkbox", { name: `${titleA} auswählen` }).check()
+  await adminPage.getByRole("checkbox", { name: `${titleB} auswählen` }).check()
+  const bulk = adminPage.locator("#bulk-moderation")
+  await bulk.getByRole("textbox", { name: "Grund für die Ablehnung" }).fill("Testeintrag")
+  await bulk.getByRole("button", { name: "Ablehnen" }).click()
+
+  await expect(adminPage.getByTestId("job-queue")).not.toContainText(titleA)
+  await expect(adminPage.getByTestId("job-queue")).not.toContainText(titleB)
+  await adminContext.close()
+
+  await page.goto(urlA)
+  await page.getByRole("button", { name: "Löschen" }).click()
+  await page.getByRole("dialog").getByRole("button", { name: "Löschen" }).click()
+  await page.goto(urlB)
   await page.getByRole("button", { name: "Löschen" }).click()
   await page.getByRole("dialog").getByRole("button", { name: "Löschen" }).click()
 })

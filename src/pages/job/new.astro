@@ -16,7 +16,7 @@ const emailVerified = Astro.locals.user.emailVerified
 const result = Astro.getActionResult(actions.jobs.create)
 
 if (result?.data) {
-  return Astro.redirect(`/job/${result.data.slug}`)
+  return Astro.redirect(`/job/${result.data.slug}?submitted`)
 }
 
 const inputErrors = isInputError(result?.error) ? result.error.fields : {}
@@ -84,7 +84,7 @@ const generalError = result?.error && !isInputError(result.error) ? result.error
     if (!email) return
 
     resendButton.setAttribute("disabled", "true")
-    await authClient.sendVerificationEmail({ email, callbackURL: "/account?confirmed=true" })
+    await authClient.sendVerificationEmail({ email, callbackURL: "/job/new" })
     resendButton.textContent = resendButton.dataset.sentLabel ?? resendButton.textContent
   })
 </script>

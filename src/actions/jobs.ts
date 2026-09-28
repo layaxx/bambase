@@ -14,6 +14,7 @@ import prisma from "@/utils/prisma"
 import { httpUrl } from "./schemas"
 import { JobOnlineStatus } from "@/generated/prisma/enums"
 import { getLogger } from "@/utils/logger"
+import { notifyJobOwner } from "@/utils/job-notifications"
 
 const JOB_OFFER_LIFETIME_DAYS = 30
 
@@ -24,6 +25,44 @@ const JOB_OFFER_LIFETIME_DAYS = 30
  * for moderation or come after it, thus an edit keeps them unchanged.
  */
 const MODERATED_STATUSES: JobOnlineStatus[] = [JobOnlineStatus.published, JobOnlineStatus.rejected]
+
+/**
+ * Publishes or rejects one offer and mails its owner. Approve and reject take several ids so
+ * that a moderator can clear the queue in one submit.
+ */
+async function moderate(
+  id: string,
+  status: "published" | "rejected",
+  reason: string | null,
+  context: { locals: Pick<App.Locals, "user">; url: URL }
+): Promise<void> {
+  const [verb, failMessage] =
+    status === "published"
+      ? ["approve", "Genehmigen fehlgeschlagen."]
+      : ["reject", "Ablehnen fehlgeschlagen."]
+  let job
+  try {
+    job = await prisma.jobOffer.update({
+      where: { id },
+      data: { onlineStatus: status, rejectionReason: reason },
+      select: {
+        slug: true,
+        title: true,
+        rejectionReason: true,
+        owner: { select: { id: true, email: true } },
+      },
+    })
+  } catch (error) {
+    getLogger().error({ err: error, jobOfferId: id }, `job ${verb} failed`)
+    throw new ActionError({ code: "INTERNAL_SERVER_ERROR", message: failMessage })
+  }
+
+  getLogger().info({ jobOfferId: id }, `job ${verb}d`)
+  invalidateCacheByPrefix("job-offers:")
+  // A moderator who decides on an own offer needs no mail about it.
+  const to = job.owner && job.owner.id !== context.locals.user?.id ? job.owner.email : undefined
+  await notifyJobOwner(to, job, status, context.url.origin)
+}
 
 /**
  * Tells if an update must send the offer back to moderation. Without this check, an owner who
@@ -117,50 +156,23 @@ export const jobs = {
 
   approve: defineAction({
     accept: "form",
-    input: z.object({ id: z.string().min(1) }),
+    input: z.object({ id: z.array(z.string().min(1)).min(1) }),
     handler: async ({ id }, context) => {
       await requirePermission(context, canModerateJobOffers)
-
-      try {
-        await prisma.jobOffer.update({
-          where: { id },
-          data: { onlineStatus: "published", rejectionReason: null },
-        })
-      } catch (error) {
-        getLogger().error({ err: error, jobOfferId: id }, "job approve failed")
-        throw new ActionError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Genehmigen fehlgeschlagen.",
-        })
-      }
-
-      getLogger().info({ jobOfferId: id }, "job approved")
-      invalidateCacheByPrefix("job-offers:")
+      await Promise.all(id.map((jobOfferId) => moderate(jobOfferId, "published", null, context)))
       return {}
     },
   }),
 
   reject: defineAction({
     accept: "form",
-    input: z.object({ id: z.string().min(1), reason: z.string().max(500).optional() }),
+    input: z.object({
+      id: z.array(z.string().min(1)).min(1),
+      reason: z.string().trim().min(1).max(500),
+    }),
     handler: async ({ id, reason }, context) => {
       await requirePermission(context, canModerateJobOffers)
-
-      try {
-        await prisma.jobOffer.update({
-          where: { id },
-          data: { onlineStatus: "rejected", rejectionReason: reason || null },
-        })
-      } catch (error) {
-        getLogger().error({ err: error, jobOfferId: id }, "job reject failed")
-        throw new ActionError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Ablehnen fehlgeschlagen.",
-        })
-      }
-
-      getLogger().info({ jobOfferId: id, withReason: Boolean(reason) }, "job rejected")
-      invalidateCacheByPrefix("job-offers:")
+      await Promise.all(id.map((jobOfferId) => moderate(jobOfferId, "rejected", reason, context)))
       return {}
     },
   }),
@@ -280,6 +292,12 @@ export const jobs = {
       }
 
       invalidateCacheByPrefix("job-offers:")
+      await notifyJobOwner(
+        context.locals.user.email,
+        { slug: created.slug, title: input.title },
+        "received",
+        context.url.origin
+      )
       return { slug: created.slug }
     },
   }),

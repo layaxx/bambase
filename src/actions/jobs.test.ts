@@ -54,6 +54,9 @@ vi.mock("@/utils/prisma", () => ({
 }))
 
 const mockCanModerateJobOffers = vi.hoisted(() => vi.fn())
+const mockSendMail = vi.hoisted(() => vi.fn())
+
+vi.mock("@/utils/mail", () => ({ sendMail: mockSendMail }))
 
 vi.mock("@/utils/authz", () => ({
   canModerateJobOffers: mockCanModerateJobOffers,
@@ -62,7 +65,12 @@ vi.mock("@/utils/authz", () => ({
 import { jobs } from "./jobs"
 
 function makeContext(userId?: string, emailVerified = true, role: string | null = null) {
-  return { locals: { user: userId ? { id: userId, emailVerified, role } : null } }
+  return {
+    locals: {
+      user: userId ? { id: userId, email: `${userId}@example.com`, emailVerified, role } : null,
+    },
+    url: new URL("https://bambase.test/admin/jobs"),
+  }
 }
 
 const baseInput = {
@@ -83,6 +91,7 @@ beforeEach(() => {
   mockUpdate.mockReset()
   mockDelete.mockReset()
   mockCanModerateJobOffers.mockReset()
+  mockSendMail.mockReset()
 })
 
 afterEach(() => {
@@ -543,7 +552,7 @@ describe("jobs.approve", () => {
   it("throws UNAUTHORIZED when not logged in", async () => {
     await expect(
       jobs.approve(
-        { id: "job-1" },
+        { id: ["job-1"] },
         // @ts-expect-error - needed because of mocked defineAction function
         makeContext()
       )
@@ -555,7 +564,7 @@ describe("jobs.approve", () => {
 
     await expect(
       jobs.approve(
-        { id: "job-1" },
+        { id: ["job-1"] },
         // @ts-expect-error - needed because of mocked defineAction function
         makeContext("user-1")
       )
@@ -567,7 +576,7 @@ describe("jobs.approve", () => {
     mockUpdate.mockResolvedValue({})
 
     const result = await jobs.approve(
-      { id: "job-1" },
+      { id: ["job-1"] },
       // @ts-expect-error - needed because of mocked defineAction function
       makeContext("moderator-1", true, "jobModerator")
     )
@@ -575,8 +584,23 @@ describe("jobs.approve", () => {
     expect(mockUpdate).toHaveBeenCalledWith({
       where: { id: "job-1" },
       data: { onlineStatus: "published", rejectionReason: null },
+      select: expect.any(Object),
     })
     expect(result).toEqual({})
+  })
+
+  it("publishes every selected job offer", async () => {
+    mockCanModerateJobOffers.mockResolvedValue(true)
+    mockUpdate.mockResolvedValue({})
+
+    await jobs.approve(
+      { id: ["job-1", "job-2"] },
+      // @ts-expect-error - needed because of mocked defineAction function
+      makeContext("moderator-1", true, "jobModerator")
+    )
+
+    expect(mockUpdate).toHaveBeenCalledTimes(2)
+    expect(mockUpdate).toHaveBeenLastCalledWith(expect.objectContaining({ where: { id: "job-2" } }))
   })
 
   it("throws INTERNAL_SERVER_ERROR when the update fails", async () => {
@@ -586,7 +610,7 @@ describe("jobs.approve", () => {
 
     await expect(
       jobs.approve(
-        { id: "job-1" },
+        { id: ["job-1"] },
         // @ts-expect-error - needed because of mocked defineAction function
         makeContext("moderator-1", true, "jobModerator")
       )
@@ -598,7 +622,7 @@ describe("jobs.reject", () => {
   it("throws UNAUTHORIZED when not logged in", async () => {
     await expect(
       jobs.reject(
-        { id: "job-1" },
+        { id: ["job-1"], reason: "Spam" },
         // @ts-expect-error - needed because of mocked defineAction function
         makeContext()
       )
@@ -610,36 +634,19 @@ describe("jobs.reject", () => {
 
     await expect(
       jobs.reject(
-        { id: "job-1" },
+        { id: ["job-1"], reason: "Spam" },
         // @ts-expect-error - needed because of mocked defineAction function
         makeContext("user-1")
       )
     ).rejects.toMatchObject({ code: "FORBIDDEN" })
   })
 
-  it("sets onlineStatus to 'rejected' when the user can moderate job offers", async () => {
+  it("sets onlineStatus to 'rejected' and stores the reason when the user can moderate job offers", async () => {
     mockCanModerateJobOffers.mockResolvedValue(true)
     mockUpdate.mockResolvedValue({})
 
     const result = await jobs.reject(
-      { id: "job-1" },
-      // @ts-expect-error - needed because of mocked defineAction function
-      makeContext("moderator-1", true, "jobModerator")
-    )
-
-    expect(mockUpdate).toHaveBeenCalledWith({
-      where: { id: "job-1" },
-      data: { onlineStatus: "rejected", rejectionReason: null },
-    })
-    expect(result).toEqual({})
-  })
-
-  it("stores the given reason", async () => {
-    mockCanModerateJobOffers.mockResolvedValue(true)
-    mockUpdate.mockResolvedValue({})
-
-    await jobs.reject(
-      { id: "job-1", reason: "Doesn't meet posting guidelines" },
+      { id: ["job-1"], reason: "Doesn't meet posting guidelines" },
       // @ts-expect-error - needed because of mocked defineAction function
       makeContext("moderator-1", true, "jobModerator")
     )
@@ -647,7 +654,9 @@ describe("jobs.reject", () => {
     expect(mockUpdate).toHaveBeenCalledWith({
       where: { id: "job-1" },
       data: { onlineStatus: "rejected", rejectionReason: "Doesn't meet posting guidelines" },
+      select: expect.any(Object),
     })
+    expect(result).toEqual({})
   })
 
   it("throws INTERNAL_SERVER_ERROR when the update fails", async () => {
@@ -657,10 +666,95 @@ describe("jobs.reject", () => {
 
     await expect(
       jobs.reject(
-        { id: "job-1" },
+        { id: ["job-1"], reason: "Spam" },
         // @ts-expect-error - needed because of mocked defineAction function
         makeContext("moderator-1", true, "jobModerator")
       )
     ).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" })
+  })
+})
+
+describe("job owner notifications", () => {
+  const moderated = {
+    slug: "developer",
+    title: "Developer",
+    rejectionReason: "Bitte Stundenlohn angeben.",
+    owner: { id: "owner-1", email: "owner@example.com" },
+  }
+
+  beforeEach(() => {
+    mockCanModerateJobOffers.mockResolvedValue(true)
+  })
+
+  it("confirms a new submission to its owner", async () => {
+    mockCreate.mockResolvedValue({ slug: "developer" })
+
+    // @ts-expect-error - needed because of mocked defineAction function
+    await jobs.create(baseInput, makeContext("user-1"))
+
+    expect(mockSendMail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: "user-1@example.com",
+        text: expect.stringContaining("https://bambase.test/job/developer"),
+      })
+    )
+  })
+
+  it("tells the owner that the offer is live", async () => {
+    mockUpdate.mockResolvedValue(moderated)
+
+    // @ts-expect-error - needed because of mocked defineAction function
+    await jobs.approve({ id: ["job-1"] }, makeContext("moderator-1", true, "jobModerator"))
+
+    expect(mockSendMail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: "owner@example.com",
+        subject: expect.stringContaining("veröffentlicht"),
+      })
+    )
+  })
+
+  it("sends the owner the rejection reason and the edit link", async () => {
+    mockUpdate.mockResolvedValue(moderated)
+
+    await jobs.reject(
+      { id: ["job-1"], reason: "Bitte Stundenlohn angeben." },
+      // @ts-expect-error - needed because of mocked defineAction function
+      makeContext("moderator-1", true, "jobModerator")
+    )
+
+    const mail = mockSendMail.mock.calls[0][0]
+    expect(mail.to).toBe("owner@example.com")
+    expect(mail.text).toContain("Grund: Bitte Stundenlohn angeben.")
+    expect(mail.text).toContain("https://bambase.test/job/developer/edit")
+  })
+
+  it("sends nothing for an imported offer without owner", async () => {
+    mockUpdate.mockResolvedValue({ ...moderated, owner: null })
+
+    // @ts-expect-error - needed because of mocked defineAction function
+    await jobs.approve({ id: ["job-1"] }, makeContext("moderator-1", true, "jobModerator"))
+
+    expect(mockSendMail).not.toHaveBeenCalled()
+  })
+
+  it("sends nothing when a moderator decides on an own offer", async () => {
+    mockUpdate.mockResolvedValue(moderated)
+
+    // @ts-expect-error - needed because of mocked defineAction function
+    await jobs.approve({ id: ["job-1"] }, makeContext("owner-1", true, "jobModerator"))
+
+    expect(mockSendMail).not.toHaveBeenCalled()
+  })
+
+  it("keeps the decision when the mail fails", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {})
+    mockUpdate.mockResolvedValue(moderated)
+    mockSendMail.mockRejectedValue(new Error("mailgun down"))
+
+    await expect(
+      // @ts-expect-error - needed because of mocked defineAction function
+      jobs.approve({ id: ["job-1"] }, makeContext("moderator-1", true, "jobModerator"))
+    ).resolves.toEqual({})
   })
 })

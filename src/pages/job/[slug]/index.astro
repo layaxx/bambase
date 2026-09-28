@@ -11,11 +11,14 @@ import IconArrowLeft from "@/components/icons/IconArrowLeft.astro"
 import IconStore from "@/components/icons/IconStore.astro"
 import IconMapPin from "@/components/icons/IconMapPin.astro"
 import IconClock from "@/components/icons/IconClock.astro"
+import IconCalendar from "@/components/icons/IconCalendar.astro"
 import IconExternalLink from "@/components/icons/IconExternalLink.astro"
 import ReportModal from "@/components/ReportModal.astro"
 import ConfirmModal from "@/components/ConfirmModal.astro"
 import Alert from "@/components/Alert.astro"
 import JobTypeBadge from "@/components/jobs/JobTypeBadge.astro"
+import { formatJobLocation } from "@/utils/job-formatting"
+import { formatLongDate } from "@/utils/event-formatting"
 
 const t = useTranslations(Astro.locals.locale)
 
@@ -40,6 +43,9 @@ if (reportResult) {
 }
 
 const reported = Astro.url.searchParams.get("reported")
+const justSubmitted = isOwner && Astro.url.searchParams.has("submitted")
+// createdAt is only a meaningful "posted on" date once the listing has gone live.
+const showPostedOn = job?.online_status !== "submitted" && job?.online_status !== "rejected"
 
 const statusLabel: Record<string, string> = {
   submitted: t.auth.statusSubmitted,
@@ -115,13 +121,23 @@ const ogImage =
         )}
       </div>
 
+      {justSubmitted && <Alert variant="success">{t.jobs.submitSuccess}</Alert>}
       {job.online_status !== "published" && (
         <Alert variant={JOB_STATUS_ALERT_VARIANT[job.online_status] ?? "neutral"}>
           {statusLabel[job.online_status] ?? job.online_status} – {t.jobs.notPublishedHint}
-          {job.online_status === "rejected" && job.rejection_reason && (
+          {job.online_status === "submitted" && (
             <>
-              <br />
-              {t.jobs.rejectionReasonLabel(job.rejection_reason)}
+              <br /> {t.jobs.submittedReviewHint}
+            </>
+          )}
+          {job.online_status === "rejected" && (
+            <>
+              {job.rejection_reason && (
+                <>
+                  <br /> {t.jobs.rejectionReasonLabel(job.rejection_reason)}
+                </>
+              )}
+              <br /> {t.jobs.rejectedResubmitHint}
             </>
           )}
         </Alert>
@@ -154,12 +170,21 @@ const ogImage =
           <div class="mb-6 flex flex-wrap gap-4 text-sm text-base-content/70">
             <div class="flex items-center gap-1.5">
               <IconMapPin class="h-4 w-4 shrink-0" />
-              {job.location}
+              {formatJobLocation(job, {
+                remote: t.jobs.workModes.remote,
+                hybrid: t.jobs.workModes.hybrid,
+              })}
             </div>
             <div class="flex items-center gap-1.5">
               <IconClock class="h-4 w-4 shrink-0" />
               {t.jobs.workingHours(job.working_hours)}
             </div>
+            {showPostedOn && (
+              <div class="flex items-center gap-1.5">
+                <IconCalendar class="h-4 w-4 shrink-0" />
+                {t.jobs.postedOn(formatLongDate(job.createdAt, t.auth.dateLocale))}
+              </div>
+            )}
           </div>
 
           <div class="prose prose-sm max-w-none text-base-content/70">

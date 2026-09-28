@@ -25,8 +25,8 @@ async function createJob(page: Page, title: string): Promise<string> {
   await page.fill("#description", "Automated E2E test job — safe to delete.")
   await page.fill("#contact_name", "Test Contact")
   await page.click('button[type="submit"]')
-  await page.waitForURL(/\/job\/[a-z0-9-]+$/)
-  return page.url()
+  await page.waitForURL(/\/job\/[a-z0-9-]+\?submitted$/)
+  return page.url().split("?")[0]
 }
 
 async function deleteJob(page: Page) {
@@ -42,7 +42,10 @@ test("create job with required fields and redirect to detail page", async ({ pag
   await createJob(page, title)
 
   await expect(page.getByRole("heading", { level: 1 })).toContainText(title)
-  await expect(page).toHaveURL(/\/job\/[a-z0-9-]+$/)
+  await expect(page).toHaveURL(/\/job\/[a-z0-9-]+\?submitted$/)
+  await expect(page.getByText("Angebot erfolgreich eingereicht")).toBeVisible()
+  await expect(page.getByText("innerhalb weniger Tage")).toBeVisible()
+  await expect(page.getByText(/Veröffentlicht am/)).toHaveCount(0)
 
   await deleteJob(page)
 })

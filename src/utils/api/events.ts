@@ -3,6 +3,7 @@ import { withCache } from "./cache"
 import { apiResult, type ApiResult } from "./types"
 import { toMapLocation, type MapLocation } from "./locations"
 import { EventCategory } from "@/generated/prisma/enums"
+import type { EventModel, LocationModel } from "@/generated/prisma/models"
 
 export const EVENT_CATEGORIES = Object.values(EventCategory)
 
@@ -40,30 +41,11 @@ export type Event = {
   custom_location?: EventCustomLocation
 }
 
-type EventRow = {
-  id: string
-  slug: string
-  title: string
-  description: string
-  category: EventCategory
-  start: Date
-  end: Date
-  organizer: string
-  externalUrl: string | null
-  externalId: string | null
-  hidden: boolean
-  rejectionReason: string | null
-  ownerId: string | null
-  customLocationName: string | null
-  customLocationAddress: string | null
-  customLocationCity: string | null
-}
-
 function toEvent(
-  row: EventRow,
+  row: EventModel,
   extra?: {
     reports?: { id: string }[]
-    mapLocation?: Parameters<typeof toMapLocation>[0] | null
+    mapLocation?: LocationModel | null
   }
 ): Event {
   return {

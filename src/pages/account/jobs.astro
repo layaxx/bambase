@@ -56,6 +56,9 @@ const statusLabel: Record<string, string> = {
           <p class="text-sm text-base-content/70">
             {job.company} · {job.location}
           </p>
+          {job.online_status === "rejected" && job.rejection_reason && (
+            <p class="text-sm text-error">{t.jobs.rejectionReasonLabel(job.rejection_reason)}</p>
+          )}
           <p class="line-clamp-2 text-sm text-base-content/40">{job.description}</p>
         </a>
       ))}

@@ -1,6 +1,7 @@
 import prisma from "../prisma"
 import { withCache } from "./cache"
 import { apiResult, type ApiResult } from "./types"
+import type { StudentGroupModel } from "@/generated/prisma/models"
 
 export type StudentGroup = {
   id: string
@@ -13,16 +14,7 @@ export type StudentGroup = {
   instagram?: string
 }
 
-function toStudentGroup(row: {
-  id: string
-  slug: string
-  name: string
-  description: string
-  website: string | null
-  email: string | null
-  facebook: string | null
-  instagram: string | null
-}): StudentGroup {
+function toStudentGroup(row: StudentGroupModel): StudentGroup {
   return {
     id: row.id,
     slug: row.slug,
