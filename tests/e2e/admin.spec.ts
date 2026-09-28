@@ -120,7 +120,7 @@ test("moderator sees what waits and rejects several jobs at once", async ({ page
   const adminPage = await adminContext.newPage()
   await login(adminPage, "admin@example.com", "Admin1234!")
   await adminPage.goto("/admin")
-  await expect(adminPage.getByRole("link", { name: /Stellenangebote prüfen/ })).toContainText(
+  await expect(adminPage.getByRole("link", { name: /^Stellenangebote prüfen/ })).toContainText(
     /\d+ wartend/
   )
 

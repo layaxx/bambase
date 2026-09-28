@@ -106,7 +106,7 @@ test.describe("Report — authenticated seed user", () => {
     await page.fill("#description", "Automated E2E test — safe to delete.")
     await page.fill("#contact_name", "Test Contact")
     await page.click('button[type="submit"]')
-    await page.waitForURL(/\/job\/[a-z0-9-]+$/)
+    await page.waitForURL(/\/job\/[a-z0-9-]+\?submitted$/)
 
     await expect(page.getByRole("button", { name: "Job melden" })).not.toBeVisible()
     await expect(page.getByRole("button", { name: "Löschen" })).toBeVisible()
