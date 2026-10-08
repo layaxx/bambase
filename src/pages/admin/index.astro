@@ -11,7 +11,7 @@ import {
 } from "@/utils/authz"
 import { useTranslations } from "@/i18n/translations"
 import { countSubmittedJobOffers } from "@/utils/api/job-offers"
-import { fetchReportGroupsForAdmin } from "@/utils/api/reports"
+import { countOpenReportCases } from "@/utils/api/reports"
 
 const t = useTranslations(Astro.locals.locale)
 
@@ -37,9 +37,7 @@ const [
 ])
 
 const openReports = (targetType: "event" | "job") =>
-  fetchReportGroupsForAdmin({ caseStatus: "open", targetType, pageSize: 1 }).then(
-    ({ data }) => data.total
-  )
+  countOpenReportCases(targetType).then(({ data }) => data)
 
 const [submittedJobs, openEventReports, openJobReports] = await Promise.all([
   isJobModerator ? countSubmittedJobOffers().then(({ data }) => data) : 0,

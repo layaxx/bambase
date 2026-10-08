@@ -109,6 +109,20 @@ function resolveCaseStatus(group: Pick<ReportGroup, "target" | "openCount">): "o
 }
 
 /**
+ * Counts the open cases of one target type without loading the reports. It must stay in sync
+ * with `resolveCaseStatus`: a case is open if the target is published and has a report that is
+ * not dismissed.
+ */
+export function countOpenReportCases(targetType: "event" | "job"): Promise<ApiResult<number>> {
+  const reports = { some: { reviewStatus: "open" as const } }
+  return apiResult("Error counting open report cases", 0, () =>
+    targetType === "event"
+      ? prisma.event.count({ where: { hidden: false, reports } })
+      : prisma.jobOffer.count({ where: { onlineStatus: "published", reports } })
+  )
+}
+
+/**
  * Fetches the reports for the admin moderation queue. The reports are grouped by target and
  * sorted with the most-reported targets first, because those most probably need a decision.
  */
