@@ -98,20 +98,29 @@ export const events = {
     handler: async ({ id, reason }, context) => {
       const userId = requireUserId(context)
 
-      const event = await prisma.event.findUnique({ where: { id }, select: { ownerId: true } })
+      const event = await prisma.event.findUnique({
+        where: { id },
+        select: { ownerId: true, rejectionReason: true },
+      })
       if (!event) throw new ActionError({ code: "NOT_FOUND", message: "Event nicht gefunden." })
-      await assertOwnerOrPermission(
+      const isModerator = await assertOwnerOrPermission(
         context,
         userId,
         event.ownerId,
         canModerateEvents,
         "Depublizieren fehlgeschlagen."
       )
+      // Only a moderator sets or clears rejectionReason. Otherwise the owner could erase the
+      // reason of a moderator here, and then publish the event again.
+      if (!isModerator && event.rejectionReason) {
+        getLogger().warn({ eventId: id }, "action denied, event was unpublished by a moderator")
+        throw new ActionError({ code: "FORBIDDEN", message: "Depublizieren fehlgeschlagen." })
+      }
 
       try {
         await prisma.event.update({
           where: { id },
-          data: { hidden: true, rejectionReason: reason || null },
+          data: isModerator ? { hidden: true, rejectionReason: reason || null } : { hidden: true },
         })
       } catch (error) {
         getLogger().error({ err: error, eventId: id }, "event unpublish failed")
@@ -189,6 +198,8 @@ export const events = {
 
       const existing = await prisma.event.findUnique({ where: { id }, select: { ownerId: true } })
       if (!existing) throw new ActionError({ code: "NOT_FOUND", message: "Event nicht gefunden." })
+      // The owner may fix an event that a moderator unpublished. The edit keeps hidden and
+      // rejectionReason, thus only a moderator can publish the event again.
       await assertOwnerOrPermission(
         context,
         userId,

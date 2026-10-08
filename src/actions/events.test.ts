@@ -245,6 +245,22 @@ describe("events.create", () => {
 })
 
 describe("events.update", () => {
+  it("lets the owner fix an event a moderator unpublished without publishing it", async () => {
+    mockFindUnique.mockResolvedValue({ ownerId: "user-1" })
+    mockCanModerateEvents.mockResolvedValue(false)
+    mockUpdate.mockResolvedValue({ slug: "ev" })
+
+    await events.update(
+      { ...baseEventInput, id: "ev-1" },
+      // @ts-expect-error - needed because of mocked defineAction function
+      makeContext("user-1")
+    )
+
+    const { data } = mockUpdate.mock.calls[0][0]
+    expect(data).not.toHaveProperty("hidden")
+    expect(data).not.toHaveProperty("rejectionReason")
+  })
+
   it("throws UNAUTHORIZED when not logged in", async () => {
     await expect(
       events.update(
@@ -439,19 +455,47 @@ describe("events.unpublish", () => {
 
     expect(mockUpdate).toHaveBeenCalledWith({
       where: { id: "ev-1" },
-      data: { hidden: true, rejectionReason: null },
+      data: { hidden: true },
     })
     expect(result).toEqual({})
   })
 
-  it("stores the given reason", async () => {
-    mockFindUnique.mockResolvedValue({ ownerId: "user-1" })
+  it("ignores a reason from the owner", async () => {
+    mockFindUnique.mockResolvedValue({ ownerId: "user-1", rejectionReason: null })
     mockUpdate.mockResolvedValue({})
 
     await events.unpublish(
       { id: "ev-1", reason: "Duplicate listing" },
       // @ts-expect-error - needed because of mocked defineAction function
       makeContext("user-1")
+    )
+
+    expect(mockUpdate).toHaveBeenCalledWith({ where: { id: "ev-1" }, data: { hidden: true } })
+  })
+
+  it("throws FORBIDDEN when the owner unpublishes an event a moderator unpublished (keeps the reason)", async () => {
+    mockFindUnique.mockResolvedValue({ ownerId: "user-1", rejectionReason: "Spam" })
+    mockCanModerateEvents.mockResolvedValue(false)
+
+    await expect(
+      events.unpublish(
+        { id: "ev-1" },
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext("user-1")
+      )
+    ).rejects.toMatchObject({ code: "FORBIDDEN" })
+    expect(mockUpdate).not.toHaveBeenCalled()
+  })
+
+  it("stores the reason of a moderator", async () => {
+    mockFindUnique.mockResolvedValue({ ownerId: "someone-else" })
+    mockCanModerateEvents.mockResolvedValue(true)
+    mockUpdate.mockResolvedValue({})
+
+    await events.unpublish(
+      { id: "ev-1", reason: "Duplicate listing" },
+      // @ts-expect-error - needed because of mocked defineAction function
+      makeContext("mod-1", "eventModerator")
     )
 
     expect(mockUpdate).toHaveBeenCalledWith({
