@@ -18,7 +18,7 @@ const registerHref = redirect ? `/register?redirect=${encodeURIComponent(redirec
       <h1 class="text-2xl font-extrabold mb-2">{t.auth.loginTitle}</h1>
       {redirect && <p class="text-sm mb-2">{t.auth.loginRequiredHint}</p>}
       <p class="text-base-content/70 text-sm mb-6">
-        {t.auth.noAccount}
+        {t.auth.noAccount}{" "}
         <a class="link link-primary" href={registerHref}>
           {t.auth.registerLink}
         </a>

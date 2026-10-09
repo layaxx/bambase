@@ -15,7 +15,7 @@ const loginHref = redirect ? `/login?redirect=${encodeURIComponent(redirect)}` :
     <div class="w-full max-w-md">
       <h1 class="text-2xl font-extrabold mb-2">{t.auth.registerTitle}</h1>
       <p class="text-base-content/70 text-sm mb-6">
-        {t.auth.alreadyRegistered}
+        {t.auth.alreadyRegistered}{" "}
         <a class="link link-primary" href={loginHref}>
           {t.auth.loginLink}
         </a>
