@@ -185,7 +185,10 @@ const de = {
     clearFilters: "Filter zurücksetzen",
     resultSingular: "Stellenangebot",
     resultPlural: "Stellenangebote",
-    showingResults: (shown: number, total: number) => `${shown} von ${total} Ergebnissen`,
+    showingResults: (shown: number, total: number) =>
+      shown === total
+        ? `${total} ${total === 1 ? "Ergebnis" : "Ergebnisse"}`
+        : `${shown} von ${total} Ergebnissen`,
     sortNewest: "Neueste zuerst",
     sortOldest: "Älteste zuerst",
     paginationPrev: "Zurück",
@@ -748,7 +751,10 @@ const en: typeof de = {
     clearFilters: "Clear filters",
     resultSingular: "job listing",
     resultPlural: "job listings",
-    showingResults: (shown: number, total: number) => `Showing ${shown} of ${total} results`,
+    showingResults: (shown: number, total: number) =>
+      shown === total
+        ? `${total} ${total === 1 ? "result" : "results"}`
+        : `Showing ${shown} of ${total} results`,
     sortNewest: "Newest first",
     sortOldest: "Oldest first",
     paginationPrev: "Previous",
