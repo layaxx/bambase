@@ -1,0 +1,28 @@
+---
+import PageLayout from "@/layouts/PageLayout.astro"
+import IconArrowLeft from "@/components/icons/IconArrowLeft.astro"
+import { useTranslations } from "@/i18n/translations"
+
+const t = useTranslations(Astro.locals.locale)
+---
+
+<PageLayout description={t.jobsFaq.pageSubtitle} title={t.jobsFaq.pageTitle}>
+  <div class="mb-6">
+    <a class="btn btn-ghost btn-sm gap-1 pl-0" href="/jobs">
+      <IconArrowLeft class="h-4 w-4" />
+      {t.jobs.backToJobs}
+    </a>
+  </div>
+
+  <h1 class="text-3xl font-bold tracking-tight sm:text-4xl mb-1">{t.jobsFaq.pageTitle}</h1>
+  <p class="text-base-content/70 mb-6">{t.jobsFaq.pageSubtitle}</p>
+
+  <div class="flex flex-col gap-2 max-w-2xl">
+    {t.jobsFaq.items.map(({ q, a }) => (
+      <details class="collapse collapse-arrow border border-base-300">
+        <summary class="collapse-title font-semibold">{q}</summary>
+        <p class="collapse-content text-base-content/70">{a}</p>
+      </details>
+    ))}
+  </div>
+</PageLayout>

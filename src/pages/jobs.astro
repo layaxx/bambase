@@ -109,6 +109,15 @@ const workModeItems = WORK_MODES.map((wm) => ({
 
   {apiDown && <ApiDownBanner />}
 
+  <div class="alert alert-info alert-soft mb-6" role="status">
+    <span>
+      {t.jobs.movedNotice}{" "}
+      <a class="link font-medium" href="/jobs/faq">
+        {t.jobs.movedNoticeLink}
+      </a>
+    </span>
+  </div>
+
   <JobFilterMobile
     activeFilterCount={types.length + fields.length + workModes.length}
     fields={fields}
@@ -140,7 +149,10 @@ const workModeItems = WORK_MODES.map((wm) => ({
             value={search}
           />
         </div>
-        <select class="select select-bordered w-full lg:w-auto" id="sort-select">
+        <select
+          class="select select-bordered select-sm lg:select-md w-full lg:w-auto"
+          id="sort-select"
+        >
           <option selected={sort === "newest"} value="newest">
             {t.jobs.sortNewest}
           </option>
