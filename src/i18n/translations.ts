@@ -190,8 +190,7 @@ const de = {
     sortOldest: "Älteste zuerst",
     paginationPrev: "Zurück",
     paginationNext: "Weiter",
-    movedNotice:
-      "Die Jobbörse war bisher unter feki.de erreichbar und ist jetzt auf BamBase.de umgezogen. Ansonsten ändert sich nichts.",
+    movedNotice: "Die Feki.de Jobbörse ist zu BamBase.de umgezogen. Sonst ändert sich nichts.",
     movedNoticeLink: "Häufige Fragen zur Jobbörse",
   },
   jobsFaq: {
@@ -754,8 +753,7 @@ const en: typeof de = {
     sortOldest: "Oldest first",
     paginationPrev: "Previous",
     paginationNext: "Next",
-    movedNotice:
-      "The job market was previously available at feki.de and has now moved to BamBase.de. Nothing else has changed.",
+    movedNotice: "The feki.de jobmarket has moved to BamBase.de. Nothing else has changed.",
     movedNoticeLink: "Job market FAQ",
   },
   jobsFaq: {
