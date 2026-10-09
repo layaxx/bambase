@@ -1,6 +1,6 @@
 ---
 import PageLayout from "@/layouts/PageLayout.astro"
-import { fetchReportGroupsForAdmin } from "@/utils/api/reports"
+import { countOpenReportCases } from "@/utils/api/reports"
 import {
   canModerateAnyReports,
   canModerateEvents,
@@ -20,15 +20,9 @@ const [isEventModerator, isJobModerator] = await Promise.all([
   canModerateJobOffers(user.role),
 ])
 
-const emptyGroupPage = { groups: [], total: 0, page: 1, pageCount: 1 }
-
-const [{ data: eventGroups }, { data: jobGroups }] = await Promise.all([
-  isEventModerator
-    ? fetchReportGroupsForAdmin({ caseStatus: "open", targetType: "event", pageSize: 1 })
-    : Promise.resolve({ data: emptyGroupPage, apiDown: false }),
-  isJobModerator
-    ? fetchReportGroupsForAdmin({ caseStatus: "open", targetType: "job", pageSize: 1 })
-    : Promise.resolve({ data: emptyGroupPage, apiDown: false }),
+const [eventCount, jobCount] = await Promise.all([
+  isEventModerator ? countOpenReportCases("event").then(({ data }) => data) : 0,
+  isJobModerator ? countOpenReportCases("job").then(({ data }) => data) : 0,
 ])
 
 const sections = [
@@ -36,14 +30,14 @@ const sections = [
     href: "/admin/reports/events",
     title: t.admin.reportsEventsTitle,
     description: t.admin.reportsEventsDescription,
-    count: eventGroups.total,
+    count: eventCount,
     visible: isEventModerator,
   },
   {
     href: "/admin/reports/jobs",
     title: t.admin.reportsJobsTitle,
     description: t.admin.reportsJobsDescription,
-    count: jobGroups.total,
+    count: jobCount,
     visible: isJobModerator,
   },
 ].filter((section) => section.visible)

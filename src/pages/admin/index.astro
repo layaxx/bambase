@@ -10,6 +10,8 @@ import {
   canViewSystemStatus,
 } from "@/utils/authz"
 import { useTranslations } from "@/i18n/translations"
+import { countSubmittedJobOffers } from "@/utils/api/job-offers"
+import { countOpenReportCases } from "@/utils/api/reports"
 
 const t = useTranslations(Astro.locals.locale)
 
@@ -34,11 +36,21 @@ const [
   canViewSystemStatus(user.role),
 ])
 
+const openReports = (targetType: "event" | "job") =>
+  countOpenReportCases(targetType).then(({ data }) => data)
+
+const [submittedJobs, openEventReports, openJobReports] = await Promise.all([
+  isJobModerator ? countSubmittedJobOffers().then(({ data }) => data) : 0,
+  isEventModerator ? openReports("event") : 0,
+  isJobModerator ? openReports("job") : 0,
+])
+
 const sections = [
   {
     href: "/admin/jobs",
     title: t.admin.jobsQueueTitle,
     description: t.admin.overviewJobsDescription,
+    count: submittedJobs,
     visible: isJobModerator,
   },
   {
@@ -51,6 +63,7 @@ const sections = [
     href: "/admin/reports",
     title: t.admin.reportsTitle,
     description: t.admin.overviewReportsDescription,
+    count: openEventReports + openJobReports,
     visible: isReportModerator,
   },
   {
@@ -91,7 +104,14 @@ if (sections.length === 0) return Astro.redirect("/")
         class="block rounded-xl border border-base-300 bg-base-100 p-4 no-underline transition-colors hover:bg-base-200"
         href={section.href}
       >
-        <h2 class="font-semibold leading-snug text-base-content">{section.title}</h2>
+        <div class="flex items-center justify-between gap-2">
+          <h2 class="font-semibold leading-snug text-base-content">{section.title}</h2>
+          {!!section.count && (
+            <span class="badge badge-sm badge-error whitespace-nowrap">
+              {t.admin.pendingCount(section.count)}
+            </span>
+          )}
+        </div>
         <p class="mt-1 text-sm text-base-content/70">{section.description}</p>
       </a>
     ))}

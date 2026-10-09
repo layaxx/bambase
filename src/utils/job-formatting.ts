@@ -19,6 +19,6 @@ export function formatJobLocation(
   return `${job.location}`
 }
 
-export function formatJobOfferDate(dateString: string, locale: string): string {
-  return dayjs(dateString).locale(locale).fromNow()
+export function formatRelativeDate(date: string | Date, locale: string): string {
+  return dayjs(date).locale(locale).fromNow()
 }

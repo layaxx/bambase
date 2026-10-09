@@ -14,6 +14,7 @@ import prisma from "@/utils/prisma"
 import { httpUrl } from "./schemas"
 import { JobOnlineStatus } from "@/generated/prisma/enums"
 import { getLogger } from "@/utils/logger"
+import { notifyJobOwner } from "@/utils/job-notifications"
 
 const JOB_OFFER_LIFETIME_DAYS = 30
 
@@ -24,6 +25,65 @@ const JOB_OFFER_LIFETIME_DAYS = 30
  * for moderation or come after it, thus an edit keeps them unchanged.
  */
 const MODERATED_STATUSES: JobOnlineStatus[] = [JobOnlineStatus.published, JobOnlineStatus.rejected]
+
+type ModerationContext = { locals: Pick<App.Locals, "user">; url: URL }
+
+/** Publishes or rejects one offer and mails its owner. Returns false if the update failed. */
+async function moderate(
+  id: string,
+  status: "published" | "rejected",
+  reason: string | null,
+  context: ModerationContext
+): Promise<boolean> {
+  const verb = status === "published" ? "approve" : "reject"
+  let job
+  try {
+    job = await prisma.jobOffer.update({
+      where: { id },
+      data: { onlineStatus: status, rejectionReason: reason },
+      select: {
+        slug: true,
+        title: true,
+        rejectionReason: true,
+        owner: { select: { id: true, email: true } },
+      },
+    })
+  } catch (error) {
+    getLogger().error({ err: error, jobOfferId: id }, `job ${verb} failed`)
+    return false
+  }
+
+  getLogger().info({ jobOfferId: id }, `job ${verb}d`)
+  // A moderator who decides on an own offer needs no mail about it.
+  const to = job.owner && job.owner.id !== context.locals.user?.id ? job.owner.email : undefined
+  await notifyJobOwner(to, job, status, context.url.origin)
+  return true
+}
+
+/**
+ * Moderates several offers in one submit, so that a moderator can clear the queue at once. Each
+ * offer is saved and mailed on its own: a failed offer does not undo the others, and the error
+ * tells how many failed. The page then lists only the failed ones, so a retry mails nobody twice.
+ */
+async function moderateAll(
+  ids: string[],
+  status: "published" | "rejected",
+  reason: string | null,
+  context: ModerationContext
+): Promise<void> {
+  const results = await Promise.all(ids.map((id) => moderate(id, status, reason, context)))
+  invalidateCacheByPrefix("job-offers:")
+  const failed = results.filter((ok) => !ok).length
+  if (failed === 0) return
+  const failMessage =
+    status === "published" ? "Genehmigen fehlgeschlagen." : "Ablehnen fehlgeschlagen."
+  throw new ActionError({
+    code: "INTERNAL_SERVER_ERROR",
+    message: ids.length === 1 ? failMessage : `${failMessage} (${failed} von ${ids.length})`,
+  })
+}
+
+const moderationIds = z.array(z.string().min(1)).min(1, "Bitte mindestens eine Stelle auswählen.")
 
 /**
  * Tells if an update must send the offer back to moderation. Without this check, an owner who
@@ -117,50 +177,23 @@ export const jobs = {
 
   approve: defineAction({
     accept: "form",
-    input: z.object({ id: z.string().min(1) }),
+    input: z.object({ id: moderationIds }),
     handler: async ({ id }, context) => {
       await requirePermission(context, canModerateJobOffers)
-
-      try {
-        await prisma.jobOffer.update({
-          where: { id },
-          data: { onlineStatus: "published", rejectionReason: null },
-        })
-      } catch (error) {
-        getLogger().error({ err: error, jobOfferId: id }, "job approve failed")
-        throw new ActionError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Genehmigen fehlgeschlagen.",
-        })
-      }
-
-      getLogger().info({ jobOfferId: id }, "job approved")
-      invalidateCacheByPrefix("job-offers:")
+      await moderateAll(id, "published", null, context)
       return {}
     },
   }),
 
   reject: defineAction({
     accept: "form",
-    input: z.object({ id: z.string().min(1), reason: z.string().max(500).optional() }),
+    input: z.object({
+      id: moderationIds,
+      reason: z.string().trim().min(1).max(500),
+    }),
     handler: async ({ id, reason }, context) => {
       await requirePermission(context, canModerateJobOffers)
-
-      try {
-        await prisma.jobOffer.update({
-          where: { id },
-          data: { onlineStatus: "rejected", rejectionReason: reason || null },
-        })
-      } catch (error) {
-        getLogger().error({ err: error, jobOfferId: id }, "job reject failed")
-        throw new ActionError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Ablehnen fehlgeschlagen.",
-        })
-      }
-
-      getLogger().info({ jobOfferId: id, withReason: Boolean(reason) }, "job rejected")
-      invalidateCacheByPrefix("job-offers:")
+      await moderateAll(id, "rejected", reason, context)
       return {}
     },
   }),
@@ -280,6 +313,12 @@ export const jobs = {
       }
 
       invalidateCacheByPrefix("job-offers:")
+      await notifyJobOwner(
+        context.locals.user.email,
+        { slug: created.slug, title: input.title },
+        "received",
+        context.url.origin
+      )
       return { slug: created.slug }
     },
   }),

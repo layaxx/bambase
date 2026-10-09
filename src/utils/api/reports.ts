@@ -1,4 +1,5 @@
 import prisma from "../prisma"
+import type { Prisma } from "@/generated/prisma/client"
 import { apiResult, type ApiResult } from "./types"
 import { ReportReason } from "@/generated/prisma/enums"
 import type { ReportReviewStatus } from "@/generated/prisma/enums"
@@ -23,22 +24,12 @@ export type Report = {
   target: ReportTarget | null
 }
 
-type ReportRow = {
-  id: string
-  reason: ReportReason
-  details: string | null
-  reviewStatus: ReportReviewStatus
-  createdAt: Date
-  eventId: string | null
-  jobOfferId: string | null
-  event: { title: string; slug: string; hidden: boolean; rejectionReason: string | null } | null
-  jobOffer: {
-    title: string
-    slug: string
-    onlineStatus: string
-    rejectionReason: string | null
-  } | null
-}
+const REPORT_INCLUDE = {
+  event: { select: { title: true, slug: true, hidden: true, rejectionReason: true } },
+  jobOffer: { select: { title: true, slug: true, onlineStatus: true, rejectionReason: true } },
+} satisfies Prisma.ReportInclude
+
+type ReportRow = Prisma.ReportGetPayload<{ include: typeof REPORT_INCLUDE }>
 
 function toReport(row: ReportRow): Report {
   const target: ReportTarget | null = row.event
@@ -118,6 +109,20 @@ function resolveCaseStatus(group: Pick<ReportGroup, "target" | "openCount">): "o
 }
 
 /**
+ * Counts the open cases of one target type without loading the reports. It must stay in sync
+ * with `resolveCaseStatus`: a case is open if the target is published and has a report that is
+ * not dismissed.
+ */
+export function countOpenReportCases(targetType: "event" | "job"): Promise<ApiResult<number>> {
+  const reports = { some: { reviewStatus: "open" as const } }
+  return apiResult("Error counting open report cases", 0, () =>
+    targetType === "event"
+      ? prisma.event.count({ where: { hidden: false, reports } })
+      : prisma.jobOffer.count({ where: { onlineStatus: "published", reports } })
+  )
+}
+
+/**
  * Fetches the reports for the admin moderation queue. The reports are grouped by target and
  * sorted with the most-reported targets first, because those most probably need a decision.
  */
@@ -134,12 +139,7 @@ export function fetchReportGroupsForAdmin(
           : targetType === "job"
             ? { jobOfferId: { not: null } }
             : {},
-      include: {
-        event: { select: { title: true, slug: true, hidden: true, rejectionReason: true } },
-        jobOffer: {
-          select: { title: true, slug: true, onlineStatus: true, rejectionReason: true },
-        },
-      },
+      include: REPORT_INCLUDE,
       orderBy: { createdAt: "desc" },
     })
 
