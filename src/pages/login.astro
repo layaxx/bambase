@@ -28,7 +28,7 @@ const registerHref = redirect ? `/register?redirect=${encodeURIComponent(redirec
         <span></span>
       </div>
 
-      <form class="flex flex-col" data-locale={Astro.locals.locale} id="signin-form">
+      <form class="flex flex-col" data-locale={Astro.locals.locale} id="signin-form" method="POST">
         <fieldset class="fieldset">
           <legend class="fieldset-legend">{t.auth.emailLabel}</legend>
           <input
