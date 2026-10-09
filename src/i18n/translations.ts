@@ -17,7 +17,7 @@ const de = {
     admin: "Admin",
   },
   events: {
-    title: "Heutige Veranstaltungen",
+    title: "Heutige Events",
     countToday: (n: number) => `${n} Veranstaltung${n !== 1 ? "en" : ""} heute`,
     showAll: "Alle anzeigen",
     none: "Keine Veranstaltungen für heute geplant.",
