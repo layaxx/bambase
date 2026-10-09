@@ -95,13 +95,21 @@ const workModeItems = WORK_MODES.map((wm) => ({
 <PageLayout description={t.jobs.pageSubtitle} title={t.jobs.pageTitle}>
   <PageHeader color="success" subtitle={t.jobs.pageSubtitle} title={t.jobs.pageTitle}>
     <IconBriefcase class="h-5 w-5" slot="icon" />
-    <div class="flex items-center gap-2" slot="action">
+    <div class="flex items-center gap-3 md:gap-2" slot="action">
       {isLoggedIn && (
-        <a class="btn btn-outline btn-sm" href="/account/jobs">
-          {t.auth.myJobOffers}
-        </a>
+        <>
+          <a class="link text-sm md:hidden" href="/account/jobs">
+            {t.auth.myJobOffers}
+          </a>
+          <a class="btn btn-outline btn-sm hidden md:inline-flex" href="/account/jobs">
+            {t.auth.myJobOffers}
+          </a>
+        </>
       )}
-      <a class="btn btn-primary btn-sm" href="/job/new">
+      <a class="link link-primary text-sm md:hidden" href="/job/new">
+        {t.jobs.postJob}
+      </a>
+      <a class="btn btn-primary btn-sm hidden md:inline-flex" href="/job/new">
         {t.jobs.postJob}
       </a>
     </div>
@@ -170,7 +178,7 @@ const workModeItems = WORK_MODES.map((wm) => ({
         workModeItems={workModeItems}
       />
 
-      <p aria-live="polite" class="mb-4 text-sm text-base-content/40">
+      <p aria-live="polite" class="mb-4 text-sm text-base-content/70">
         {t.jobs.showingResults((actualPage - 1) * PAGE_SIZE + jobs.length, total)}
       </p>
 
