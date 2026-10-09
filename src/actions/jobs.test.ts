@@ -616,6 +616,23 @@ describe("jobs.approve", () => {
       )
     ).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" })
   })
+  it("saves the other job offers when one update fails and reports the count", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {})
+    mockCanModerateJobOffers.mockResolvedValue(true)
+    mockUpdate.mockRejectedValueOnce(new Error("db error")).mockResolvedValue({})
+
+    await expect(
+      jobs.approve(
+        { id: ["job-1", "job-2", "job-3"] },
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext("moderator-1", true, "jobModerator")
+      )
+    ).rejects.toMatchObject({
+      code: "INTERNAL_SERVER_ERROR",
+      message: expect.stringContaining("1 von 3"),
+    })
+    expect(mockUpdate).toHaveBeenCalledTimes(3)
+  })
 })
 
 describe("jobs.reject", () => {

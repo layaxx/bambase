@@ -132,8 +132,10 @@ test("moderator sees what waits and rejects several jobs at once", async ({ page
   await adminPage.getByRole("checkbox", { name: `${titleA} auswählen` }).check()
   await adminPage.getByRole("checkbox", { name: `${titleB} auswählen` }).check()
   const bulk = adminPage.locator("#bulk-moderation")
-  await bulk.getByRole("textbox", { name: "Grund für die Ablehnung" }).fill("Testeintrag")
-  await bulk.getByRole("button", { name: "Ablehnen" }).click()
+  const reason = bulk.getByRole("textbox", { name: "Grund für die Ablehnung" })
+  await reason.fill("Testeintrag")
+  // Enter submits via the first submit button of the form, which must be Ablehnen.
+  await reason.press("Enter")
 
   await expect(adminPage.getByTestId("job-queue")).not.toContainText(titleA)
   await expect(adminPage.getByTestId("job-queue")).not.toContainText(titleB)

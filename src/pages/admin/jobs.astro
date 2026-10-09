@@ -1,6 +1,7 @@
 ---
-import { actions } from "astro:actions"
+import { actions, isInputError } from "astro:actions"
 import PageLayout from "@/layouts/PageLayout.astro"
+import Alert from "@/components/Alert.astro"
 import { fetchSubmittedJobOffers, fetchRecentlyModeratedJobOffers } from "@/utils/api/job-offers"
 import { canModerateJobOffers, requireRole } from "@/utils/authz"
 import { JOB_STATUS_BADGE_CLASS } from "@/utils/job-status"
@@ -21,6 +22,11 @@ if (
   return Astro.redirect(Astro.url.pathname)
 }
 
+const actionError = approveResult?.error ?? rejectResult?.error
+const errorMessage = isInputError(actionError)
+  ? Object.values(actionError.fields).flat()[0]
+  : actionError?.message
+
 const { data: jobs } = await fetchSubmittedJobOffers()
 const { data: recentlyModerated } = await fetchRecentlyModeratedJobOffers()
 
@@ -39,6 +45,8 @@ const statusLabel: Record<string, string> = {
       </span>
     )}
   </div>
+
+  {errorMessage && <Alert variant="error">{errorMessage}</Alert>}
 
   {jobs.length === 0 ? (
     <p
@@ -60,14 +68,6 @@ const statusLabel: Record<string, string> = {
           {t.admin.selectAll}
         </label>
         <span class="text-sm font-medium text-base-content/70">{t.admin.bulkActionsLabel}</span>
-        <button
-          class="btn btn-success btn-sm"
-          formaction={actions.jobs.approve}
-          formnovalidate
-          type="submit"
-        >
-          {t.admin.approveJob}
-        </button>
         <div class="flex min-w-64 flex-1 gap-2">
           <input
             aria-label={t.admin.rejectReasonPlaceholder}
@@ -82,6 +82,14 @@ const statusLabel: Record<string, string> = {
             {t.admin.rejectJob}
           </button>
         </div>
+        <button
+          class="btn btn-success btn-sm"
+          formaction={actions.jobs.approve}
+          formnovalidate
+          type="submit"
+        >
+          {t.admin.approveJob}
+        </button>
       </form>
       <div class="flex flex-col gap-3" data-testid="job-queue">
         {jobs.map((job) => (
