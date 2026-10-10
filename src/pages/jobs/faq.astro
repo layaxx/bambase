@@ -9,12 +9,10 @@ const t = useTranslations(Astro.locals.locale)
 ---
 
 <PageLayout description={t.jobsFaq.pageSubtitle} title={t.jobsFaq.pageTitle}>
-  <div class="mb-6">
-    <a class="btn btn-ghost btn-sm gap-1 pl-0" href="/jobs">
-      <IconArrowLeft class="h-4 w-4" />
-      {t.jobs.backToJobs}
-    </a>
-  </div>
+  <a class="btn btn-ghost btn-sm gap-1 pl-0 mb-6" href="/jobs">
+    <IconArrowLeft class="h-4 w-4" />
+    {t.jobs.backToJobs}
+  </a>
 
   <PageHeader color="success" subtitle={t.jobsFaq.pageSubtitle} title={t.jobsFaq.pageTitle}>
     <IconBriefcase class="h-5 w-5" slot="icon" />

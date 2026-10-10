@@ -33,7 +33,7 @@ const t = useTranslations(Astro.locals.locale)
       <IconStore class="h-3.5 w-3.5 shrink-0" />
       <span class="truncate">{job.company}</span>
     </span>
-    {job.work_mode !== "remote" && Boolean(job.location) && (
+    {job.work_mode !== "remote" && job.location && (
       <span class="flex items-center gap-1.5">
         <IconMapPin class="h-3.5 w-3.5 shrink-0" />
         {job.location}
