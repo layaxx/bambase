@@ -2,7 +2,17 @@ import type { APIRoute } from "astro"
 import { fetchAllPublishedEventSlugs } from "@/utils/api/events"
 import { fetchJobOffers } from "@/utils/api/job-offers"
 
-const STATIC_PATHS = ["/", "/events", "/jobs", "/map", "/mensa", "/about", "/impressum", "/privacy"]
+const STATIC_PATHS = [
+  "/",
+  "/events",
+  "/jobs",
+  "/jobs/faq",
+  "/map",
+  "/mensa",
+  "/about",
+  "/impressum",
+  "/privacy",
+]
 
 function escapeXml(str: string): string {
   return str

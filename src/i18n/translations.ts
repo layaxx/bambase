@@ -17,7 +17,7 @@ const de = {
     admin: "Admin",
   },
   events: {
-    title: "Heutige Veranstaltungen",
+    title: "Aktuelle Events",
     countToday: (n: number) => `${n} Veranstaltung${n !== 1 ? "en" : ""} heute`,
     showAll: "Alle anzeigen",
     none: "Keine Veranstaltungen für heute geplant.",
@@ -185,11 +185,50 @@ const de = {
     clearFilters: "Filter zurücksetzen",
     resultSingular: "Stellenangebot",
     resultPlural: "Stellenangebote",
-    showingResults: (shown: number, total: number) => `${shown} von ${total} Ergebnissen`,
+    showingResults: (from: number, to: number, total: number) =>
+      to - from + 1 === total
+        ? `${total} ${total === 1 ? "Ergebnis" : "Ergebnisse"}`
+        : `${from}–${to} von ${total} Ergebnissen`,
     sortNewest: "Neueste zuerst",
     sortOldest: "Älteste zuerst",
     paginationPrev: "Zurück",
     paginationNext: "Weiter",
+    movedNotice: "Die Feki.de Jobbörse ist zu BamBase.de umgezogen. Sonst ändert sich nichts.",
+    movedNoticeLink: "Häufige Fragen zur Jobbörse",
+  },
+  jobsFaq: {
+    pageTitle: "FAQ zur Jobbörse",
+    pageSubtitle: "Die wichtigsten Infos zur Jobbörse auf BamBase.de.",
+    items: [
+      {
+        q: "Was ist mit feki.de passiert?",
+        a: "Der Verein feki.de musste aufgrund langanhaltend rückläufiger Mitgliedszahlen aufgelöst werden. Die Jobbörse wird weiterhin ehrenamtlich von Studierenden betrieben – jetzt unter dem Dach der Studierendenvertretung auf BamBase.de. Für dich ändert sich dadurch nichts.",
+      },
+      {
+        q: "Wie inseriere ich ein Stellenangebot?",
+        a: "Melde dich an, bestätige deine E-Mail-Adresse und klicke auf „Job inserieren“. Das Inserieren ist kostenlos.",
+      },
+      {
+        q: "Wann ist mein Angebot sichtbar?",
+        a: "Neue Angebote werden vor der Veröffentlichung geprüft, in der Regel innerhalb weniger Tage. Du bekommst eine E-Mail, sobald die Prüfung abgeschlossen ist.",
+      },
+      {
+        q: "Wie lange bleibt ein Angebot online?",
+        a: "Ein veröffentlichtes Angebot bleibt 30 Tage online und läuft danach automatisch ab.",
+      },
+      {
+        q: "Wie bearbeite oder entferne ich mein Angebot?",
+        a: "Unter „Meine Stellenangebote“ in deinem Konto kannst du deine Angebote bearbeiten, archivieren oder löschen.",
+      },
+      {
+        q: "Wie bewerbe ich mich auf eine Stelle?",
+        a: "Bewerbungen laufen direkt über das Unternehmen. Nutze die Kontaktdaten oder den Link in der jeweiligen Stellenanzeige.",
+      },
+      {
+        q: "Mir ist ein unseriöses Angebot aufgefallen. Was tun?",
+        a: "Nutze „Job melden“ auf der Seite des Angebots. Wir prüfen jede Meldung.",
+      },
+    ],
   },
   reports: {
     reportJob: "Job melden",
@@ -712,11 +751,50 @@ const en: typeof de = {
     clearFilters: "Clear filters",
     resultSingular: "job listing",
     resultPlural: "job listings",
-    showingResults: (shown: number, total: number) => `Showing ${shown} of ${total} results`,
+    showingResults: (from: number, to: number, total: number) =>
+      to - from + 1 === total
+        ? `${total} ${total === 1 ? "result" : "results"}`
+        : `Showing ${from}–${to} of ${total} results`,
     sortNewest: "Newest first",
     sortOldest: "Oldest first",
     paginationPrev: "Previous",
     paginationNext: "Next",
+    movedNotice: "The Feki.de job market has moved to BamBase.de. Nothing else has changed.",
+    movedNoticeLink: "Job market FAQ",
+  },
+  jobsFaq: {
+    pageTitle: "Job market FAQ",
+    pageSubtitle: "The most important information about the job market on BamBase.de.",
+    items: [
+      {
+        q: "What happened to feki.de?",
+        a: "The feki.de student club had to be disbanded because more students were leaving than joining. The job market is still run on a voluntary basis by students – now under the student council, here on BamBase.de. Nothing changes for you.",
+      },
+      {
+        q: "How do I post a job?",
+        a: "Log in, verify your email address and click “Post a job”. Posting is free.",
+      },
+      {
+        q: "When will my listing be visible?",
+        a: "New listings are reviewed before they go live, usually within a few days. You will get an email once the review is done.",
+      },
+      {
+        q: "How long does a listing stay online?",
+        a: "A published listing stays online for 30 days and then expires automatically.",
+      },
+      {
+        q: "How do I edit or remove my listing?",
+        a: "Under “My job listings” in your account you can edit, archive or delete your listings.",
+      },
+      {
+        q: "How do I apply for a job?",
+        a: "Applications go directly to the company. Use the contact details or link in the listing.",
+      },
+      {
+        q: "I found a suspicious listing. What should I do?",
+        a: "Use “Report listing” on the listing's page. We review every report.",
+      },
+    ],
   },
   reports: {
     reportJob: "Report listing",

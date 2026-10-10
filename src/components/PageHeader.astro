@@ -11,13 +11,13 @@ const { title, subtitle, color = "primary" } = Astro.props
 <div class="mb-6 flex flex-wrap gap-4 items-center justify-between">
   <div class="flex items-center gap-3">
     <div
-      class:list={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg badge-soft badge-${color}`}
+      class:list={`hidden md:flex h-10 w-10 shrink-0 items-center justify-center rounded-lg badge-soft badge-${color}`}
     >
       <slot name="icon" />
     </div>
     <div>
       <h1 class="text-xl font-semibold">{title}</h1>
-      <p class="text-sm text-base-content/70">{subtitle}</p>
+      <p class="hidden md:block text-sm text-base-content/70">{subtitle}</p>
     </div>
   </div>
   <slot name="action" />

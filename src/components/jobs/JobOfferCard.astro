@@ -2,7 +2,9 @@
 import type { JobOffer } from "@/utils/api/job-offers"
 import { useTranslations } from "@/i18n/translations"
 import IconStore from "../icons/IconStore.astro"
-import { formatJobLocation, formatRelativeDate } from "@/utils/job-formatting"
+import IconMapPin from "../icons/IconMapPin.astro"
+import IconClock from "../icons/IconClock.astro"
+import { formatRelativeDate } from "@/utils/job-formatting"
 import JobTypeBadge from "./JobTypeBadge.astro"
 
 interface Props {
@@ -26,21 +28,29 @@ const t = useTranslations(Astro.locals.locale)
   <h3 class="mb-1 font-semibold leading-tight text-base-content group-hover:text-primary">
     {job.title}
   </h3>
-  <div class="mb-2 flex flex-row items-center text-sm text-base-content/70">
-    <div class="flex items-center gap-1.5 truncate">
+  <div class="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-base-content/70">
+    <span class="flex min-w-0 items-center gap-1.5">
       <IconStore class="h-3.5 w-3.5 shrink-0" />
-      <span class="min-w-0 truncate">{job.company},</span>
-      <span class="shrink-0">
-        {formatJobLocation(job, {
-          remote: t.jobs.workModes.remote,
-          hybrid: t.jobs.workModes.hybrid,
-        })}
+      <span class="truncate">{job.company}</span>
+    </span>
+    {job.work_mode !== "remote" && job.location && (
+      <span class="flex items-center gap-1.5">
+        <IconMapPin class="h-3.5 w-3.5 shrink-0" />
+        {job.location}
       </span>
-    </div>
+    )}
+    {job.work_mode !== "on_site" && (
+      <span class="badge badge-ghost badge-sm">{t.jobs.workModes[job.work_mode]}</span>
+    )}
+    <span class="flex items-center gap-1.5">
+      <IconClock class="h-3.5 w-3.5 shrink-0" />
+      {t.jobs.workingHours(job.working_hours)}
+    </span>
   </div>
   <p class="mb-3 line-clamp-2 text-sm text-base-content/70">{job.description}</p>
-  <div class="mt-auto flex items-center justify-between gap-2 text-xs text-base-content/70">
-    <span class="badge badge-ghost badge-sm min-w-0 truncate">{t.jobs.jobFields[job.field]}</span>
-    <span class="shrink-0">{t.jobs.workingHours(job.working_hours)}</span>
-  </div>
+  {job.field !== "other" && (
+    <span class="mt-auto badge badge-ghost badge-sm max-w-full truncate">
+      {t.jobs.jobFields[job.field]}
+    </span>
+  )}
 </a>

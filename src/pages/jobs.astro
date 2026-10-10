@@ -52,6 +52,7 @@ const { data, apiDown } = await fetchJobOffersPaginated({
   pageSize: PAGE_SIZE,
 })
 const { jobs, total, page: actualPage, pageCount } = data
+const offset = (actualPage - 1) * PAGE_SIZE
 
 if (!apiDown && jobs.length === 0 && total > 0) {
   const redirectParams = new URLSearchParams(Astro.url.searchParams)
@@ -95,19 +96,31 @@ const workModeItems = WORK_MODES.map((wm) => ({
 <PageLayout description={t.jobs.pageSubtitle} title={t.jobs.pageTitle}>
   <PageHeader color="success" subtitle={t.jobs.pageSubtitle} title={t.jobs.pageTitle}>
     <IconBriefcase class="h-5 w-5" slot="icon" />
-    <div class="flex items-center gap-2" slot="action">
+    <div class="flex items-center gap-3 md:gap-2" slot="action">
       {isLoggedIn && (
-        <a class="btn btn-outline btn-sm" href="/account/jobs">
+        <a class="max-md:link max-md:text-sm md:btn md:btn-outline md:btn-sm" href="/account/jobs">
           {t.auth.myJobOffers}
         </a>
       )}
-      <a class="btn btn-primary btn-sm" href="/job/new">
+      <a
+        class="max-md:link max-md:link-primary max-md:text-sm md:btn md:btn-primary md:btn-sm"
+        href="/job/new"
+      >
         {t.jobs.postJob}
       </a>
     </div>
   </PageHeader>
 
   {apiDown && <ApiDownBanner />}
+
+  <div class="alert alert-success alert-outline mb-6" role="status">
+    <span>
+      {t.jobs.movedNotice}{" "}
+      <a class="link font-medium" href="/jobs/faq">
+        {t.jobs.movedNoticeLink}
+      </a>
+    </span>
+  </div>
 
   <JobFilterMobile
     activeFilterCount={types.length + fields.length + workModes.length}
@@ -140,7 +153,10 @@ const workModeItems = WORK_MODES.map((wm) => ({
             value={search}
           />
         </div>
-        <select class="select select-bordered w-full lg:w-auto" id="sort-select">
+        <select
+          class="select select-bordered select-sm lg:select-md w-full lg:w-auto"
+          id="sort-select"
+        >
           <option selected={sort === "newest"} value="newest">
             {t.jobs.sortNewest}
           </option>
@@ -158,8 +174,8 @@ const workModeItems = WORK_MODES.map((wm) => ({
         workModeItems={workModeItems}
       />
 
-      <p aria-live="polite" class="mb-4 text-sm text-base-content/40">
-        {t.jobs.showingResults((actualPage - 1) * PAGE_SIZE + jobs.length, total)}
+      <p aria-live="polite" class="mb-4 text-sm text-base-content/70">
+        {t.jobs.showingResults(offset + 1, offset + jobs.length, total)}
       </p>
 
       {!apiDown &&

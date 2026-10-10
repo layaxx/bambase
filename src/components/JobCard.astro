@@ -21,7 +21,7 @@ const { data: jobs, apiDown } = await fetchJobOffers(3)
         <a class="text-xl font-semibold hover:text-primary no-underline" href="/jobs">
           {t.jobs.title}
         </a>
-        <p class="text-sm text-base-content/70">{t.jobs.subtitle}</p>
+        <p class="hidden text-sm text-base-content/70 sm:block">{t.jobs.subtitle}</p>
       </div>
     </div>
     <a class="btn btn-ghost btn-sm flex gap-1" href="/jobs">

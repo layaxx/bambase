@@ -15,7 +15,7 @@ const loginHref = redirect ? `/login?redirect=${encodeURIComponent(redirect)}` :
     <div class="w-full max-w-md">
       <h1 class="text-2xl font-extrabold mb-2">{t.auth.registerTitle}</h1>
       <p class="text-base-content/70 text-sm mb-6">
-        {t.auth.alreadyRegistered}
+        {t.auth.alreadyRegistered}{" "}
         <a class="link link-primary" href={loginHref}>
           {t.auth.loginLink}
         </a>
@@ -32,7 +32,7 @@ const loginHref = redirect ? `/login?redirect=${encodeURIComponent(redirect)}` :
         </div>
       </div>
 
-      <form class="flex flex-col" data-locale={Astro.locals.locale} id="signup-form">
+      <form class="flex flex-col" data-locale={Astro.locals.locale} id="signup-form" method="POST">
         <input name="locale" type="hidden" value={Astro.locals.locale} />
         <fieldset class="fieldset">
           <legend class="fieldset-legend">{t.auth.emailLabel}</legend>
