@@ -97,19 +97,14 @@ const workModeItems = WORK_MODES.map((wm) => ({
     <IconBriefcase class="h-5 w-5" slot="icon" />
     <div class="flex items-center gap-3 md:gap-2" slot="action">
       {isLoggedIn && (
-        <>
-          <a class="link text-sm md:hidden" href="/account/jobs">
-            {t.auth.myJobOffers}
-          </a>
-          <a class="btn btn-outline btn-sm hidden md:inline-flex" href="/account/jobs">
-            {t.auth.myJobOffers}
-          </a>
-        </>
+        <a class="max-md:link max-md:text-sm md:btn md:btn-outline md:btn-sm" href="/account/jobs">
+          {t.auth.myJobOffers}
+        </a>
       )}
-      <a class="link link-primary text-sm md:hidden" href="/job/new">
-        {t.jobs.postJob}
-      </a>
-      <a class="btn btn-primary btn-sm hidden md:inline-flex" href="/job/new">
+      <a
+        class="max-md:link max-md:link-primary max-md:text-sm md:btn md:btn-primary md:btn-sm"
+        href="/job/new"
+      >
         {t.jobs.postJob}
       </a>
     </div>

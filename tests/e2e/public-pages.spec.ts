@@ -4,7 +4,7 @@ test.describe("Homepage", () => {
   test("loads without errors and shows key sections", async ({ page }) => {
     await page.goto("/")
 
-    expect(page.getByRole("link", { name: "Heutige Veranstaltungen" })).toBeVisible()
+    expect(page.getByRole("link", { name: "Aktuelle Events" })).toBeVisible()
     expect(page.locator("#mensa").getByRole("link", { name: "Mensaplan" })).toBeVisible()
     expect(page.getByRole("link", { name: "Aktuelle Stellenangebote" })).toBeVisible()
     expect(
