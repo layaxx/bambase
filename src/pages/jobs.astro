@@ -174,7 +174,11 @@ const workModeItems = WORK_MODES.map((wm) => ({
       />
 
       <p aria-live="polite" class="mb-4 text-sm text-base-content/70">
-        {t.jobs.showingResults((actualPage - 1) * PAGE_SIZE + jobs.length, total)}
+        {t.jobs.showingResults(
+          (actualPage - 1) * PAGE_SIZE + 1,
+          (actualPage - 1) * PAGE_SIZE + jobs.length,
+          total
+        )}
       </p>
 
       {!apiDown &&

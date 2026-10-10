@@ -185,10 +185,10 @@ const de = {
     clearFilters: "Filter zurücksetzen",
     resultSingular: "Stellenangebot",
     resultPlural: "Stellenangebote",
-    showingResults: (shown: number, total: number) =>
-      shown === total
+    showingResults: (from: number, to: number, total: number) =>
+      to - from + 1 === total
         ? `${total} ${total === 1 ? "Ergebnis" : "Ergebnisse"}`
-        : `${shown} von ${total} Ergebnissen`,
+        : `${from}–${to} von ${total} Ergebnissen`,
     sortNewest: "Neueste zuerst",
     sortOldest: "Älteste zuerst",
     paginationPrev: "Zurück",
@@ -751,10 +751,10 @@ const en: typeof de = {
     clearFilters: "Clear filters",
     resultSingular: "job listing",
     resultPlural: "job listings",
-    showingResults: (shown: number, total: number) =>
-      shown === total
+    showingResults: (from: number, to: number, total: number) =>
+      to - from + 1 === total
         ? `${total} ${total === 1 ? "result" : "results"}`
-        : `Showing ${shown} of ${total} results`,
+        : `Showing ${from}–${to} of ${total} results`,
     sortNewest: "Newest first",
     sortOldest: "Oldest first",
     paginationPrev: "Previous",
