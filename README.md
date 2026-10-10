@@ -71,10 +71,10 @@ bambase/
 ├── public/       # Static assets
 ├── tests/        # Playwright E2E tests (unit tests live beside their sources)
 ├── .github/      # CI/CD workflows
+├── docs/adr/     # architecture decision records
 ├── Dockerfile
 ├── docker-compose.dev.yml   # Local dev database only
-├── Makefile      # lint, format, git hook helpers
-└── ROADMAP.md    # planned features and architectural decisions
+└── Makefile      # lint, format, git hook helpers
 ```
 
 ## Scripts
@@ -159,7 +159,7 @@ Contributions are welcome. Here's how to get started:
 - All code is TypeScript; avoid `any` where possible.
 - Formatting is enforced by Prettier (config in `.prettierrc`). Run `yarn format:write` to fix issues.
 - New Prisma models belong in `prisma/schema.prisma`; new pages in `src/pages/`.
-- Check `ROADMAP.md` for planned work before starting something large — it may already have design notes.
+- Check the [GitHub Issues](https://github.com/layaxx/bambase/issues) for planned work before starting something large, and `docs/adr/` for past architectural decisions.
 
 ## License
 
