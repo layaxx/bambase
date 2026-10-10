@@ -759,7 +759,7 @@ const en: typeof de = {
     sortOldest: "Oldest first",
     paginationPrev: "Previous",
     paginationNext: "Next",
-    movedNotice: "The feki.de jobmarket has moved to BamBase.de. Nothing else has changed.",
+    movedNotice: "The Feki.de job market has moved to BamBase.de. Nothing else has changed.",
     movedNoticeLink: "Job market FAQ",
   },
   jobsFaq: {
