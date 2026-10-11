@@ -1,4 +1,5 @@
 ---
+import HelpMailLink from "@/components/HelpMailLink.astro"
 import PageLayout from "@/layouts/PageLayout.astro"
 import { useTranslations } from "@/i18n/translations"
 
@@ -12,5 +13,6 @@ const t = useTranslations(Astro.locals.locale)
     <a class="btn btn-neutral mt-2" href="/">
       {t.page500.backHome}
     </a>
+    <HelpMailLink />
   </div>
 </PageLayout>

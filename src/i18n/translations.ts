@@ -396,6 +396,12 @@ const de = {
     tagline: "Das Studierendenportal für Bamberg.",
     impressum: "Impressum",
     privacyPolicy: "Datenschutz",
+    contact: "Kontakt",
+  },
+  help: {
+    hint: "Fragen, Probleme oder Fehler?",
+    link: "Schreib uns eine E-Mail",
+    subject: "Supportanfrage",
   },
   about: {
     pageTitle: "Über uns",
@@ -961,6 +967,12 @@ const en: typeof de = {
     tagline: "The student portal for Bamberg.",
     impressum: "Legal Notice",
     privacyPolicy: "Privacy Policy",
+    contact: "Contact",
+  },
+  help: {
+    hint: "Questions, problems or errors?",
+    link: "Send us an email",
+    subject: "Help",
   },
   about: {
     pageTitle: "About us",

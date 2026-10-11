@@ -1,4 +1,5 @@
 ---
+import HelpMailLink from "@/components/HelpMailLink.astro"
 import type { actions } from "astro:actions"
 import { useTranslations } from "@/i18n/translations"
 
@@ -229,6 +230,7 @@ const t = useTranslations(Astro.locals.locale)
       {t.ui.cancel}
     </a>
   </div>
+  <HelpMailLink />
 </form>
 
 <script>
