@@ -317,7 +317,6 @@ const de = {
     sortByName: "Sortieren nach Name",
     showAll: "Alle Gruppen anzeigen",
     showLess: "Weniger Gruppen anzeigen",
-    sidebarAboutTitle: "Über uns",
     sidebarAboutText:
       "Unser Ziel ist es, Bamberger Studierenden eine zentrale Anlaufstelle für alle wichtigen Informationen rund ums Studium zu bieten.",
     sidebarResponsibleTitle: "Teilverantwortliche Gruppen",
@@ -326,7 +325,7 @@ const de = {
       { name: "FS WIAI", role: "Hosting" },
       { name: "Ex-Feki.de e.V. Mitglieder", role: "Entwicklung" },
     ],
-    sidebarJoinHint: "Lust, BamBase mitzugestalten? ",
+    sidebarJoinHint: "Lust, BamBase mitzugestalten?",
     sidebarJoinLink: "Meld dich bei uns!",
     sidebarJoinSubject: "Mithelfen bei BamBase",
   },
@@ -901,7 +900,6 @@ const en: typeof de = {
     sortByName: "Sort by name",
     showAll: "Show all groups",
     showLess: "Show fewer groups",
-    sidebarAboutTitle: "About us",
     sidebarAboutText:
       "Our goal is to give students in Bamberg one central place for all important information about student life.",
     sidebarResponsibleTitle: "Contributing groups",
@@ -910,7 +908,7 @@ const en: typeof de = {
       { name: "FS WIAI", role: "Hosting" },
       { name: "Former Feki.de e.V. members", role: "Development" },
     ],
-    sidebarJoinHint: "Want to help shape BamBase? ",
+    sidebarJoinHint: "Want to help shape BamBase?",
     sidebarJoinLink: "Get in touch!",
     sidebarJoinSubject: "Helping out with BamBase",
   },
