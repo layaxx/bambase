@@ -7,7 +7,9 @@ interface Props {
 }
 
 const t = useTranslations(Astro.locals.locale)
-const subject = encodeURIComponent(`BamBase: ${t.help.subject} (${Astro.url.pathname})`)
+const subject = encodeURIComponent(
+  `BamBase: ${t.help.subject} (${decodeURIComponent(Astro.url.pathname)})`
+)
 ---
 
 <p class:list={["text-base-content/70 text-sm", Astro.props.class]}>
