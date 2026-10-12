@@ -32,7 +32,7 @@ const registerHref = redirect ? `/register?redirect=${encodeURIComponent(redirec
         <fieldset class="fieldset">
           <legend class="fieldset-legend">{t.auth.emailLabel}</legend>
           <input
-            autocomplete="email"
+            autocomplete="username"
             class="input w-full"
             name="identifier"
             placeholder={t.auth.emailPlaceholder}
@@ -87,11 +87,10 @@ const registerHref = redirect ? `/register?redirect=${encodeURIComponent(redirec
         window.location.href
       )
       // callbackURL is where the verification link lands when an unverified sign-in resends it.
-      const authResponse = await authClient.signIn.email({
-        email,
-        password,
-        callbackURL: redirect,
-      })
+      // A rejected request (e.g. network failure) falls through to the generic error below.
+      const authResponse = await authClient.signIn
+        .email({ email, password, callbackURL: redirect })
+        .catch(() => ({ error: {} as { status?: number; code?: string } }))
       if (Boolean(authResponse.error) === false) {
         window.location.href = redirect
       } else {
