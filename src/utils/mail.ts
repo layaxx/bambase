@@ -3,6 +3,8 @@ import { getLogger } from "./logger"
 const MAILGUN_API_KEY = process.env.MAILGUN_API_KEY ?? import.meta.env.MAILGUN_API_KEY
 const MAILGUN_DOMAIN = process.env.MAILGUN_DOMAIN ?? import.meta.env.MAILGUN_DOMAIN
 
+export const HELP_EMAIL = "support@bambase.de"
+
 type MailMessage = {
   to: string
   subject: string

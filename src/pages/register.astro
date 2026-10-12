@@ -1,4 +1,5 @@
 ---
+import HelpMailLink from "@/components/HelpMailLink.astro"
 import AppLayout from "@/layouts/AppLayout.astro"
 import { useTranslations } from "@/i18n/translations"
 import { safeRedirect } from "@/utils/safe-redirect"
@@ -76,6 +77,7 @@ const loginHref = redirect ? `/login?redirect=${encodeURIComponent(redirect)}` :
           {t.auth.createAccountBtn}
         </button>
       </form>
+      <HelpMailLink class="mt-4" />
     </div>
   </main>
   <script>

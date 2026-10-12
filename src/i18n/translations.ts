@@ -317,6 +317,18 @@ const de = {
     sortByName: "Sortieren nach Name",
     showAll: "Alle Gruppen anzeigen",
     showLess: "Weniger Gruppen anzeigen",
+    sidebarAboutTitle: "Über uns",
+    sidebarAboutText:
+      "Unser Ziel ist es, Bamberger Studierenden eine zentrale Anlaufstelle für alle wichtigen Informationen rund ums Studium zu bieten.",
+    sidebarResponsibleTitle: "Teilverantwortliche Gruppen",
+    sidebarResponsible: [
+      { name: "StuVe", role: "Betrieb" },
+      { name: "FS WIAI", role: "Hosting" },
+      { name: "Ex-Feki.de e.V. Mitglieder", role: "Entwicklung" },
+    ],
+    sidebarJoinHint: "Lust, BamBase mitzugestalten?",
+    sidebarJoinLink: "Meld dich bei uns!",
+    sidebarJoinSubject: "Mithelfen bei BamBase",
   },
   auth: {
     loginTitle: "Einloggen",
@@ -396,6 +408,12 @@ const de = {
     tagline: "Das Studierendenportal für Bamberg.",
     impressum: "Impressum",
     privacyPolicy: "Datenschutz",
+    contact: "Kontakt",
+  },
+  help: {
+    hint: "Fragen, Probleme oder Fehler?",
+    link: "Schreib uns eine E-Mail",
+    subject: "Supportanfrage",
   },
   about: {
     pageTitle: "Über uns",
@@ -883,6 +901,18 @@ const en: typeof de = {
     sortByName: "Sort by name",
     showAll: "Show all groups",
     showLess: "Show fewer groups",
+    sidebarAboutTitle: "About us",
+    sidebarAboutText:
+      "Our goal is to give students in Bamberg one central place for all important information about student life.",
+    sidebarResponsibleTitle: "Contributing groups",
+    sidebarResponsible: [
+      { name: "StuVe", role: "Operations" },
+      { name: "FS WIAI", role: "Hosting" },
+      { name: "Former Feki.de e.V. members", role: "Development" },
+    ],
+    sidebarJoinHint: "Want to help shape BamBase?",
+    sidebarJoinLink: "Get in touch!",
+    sidebarJoinSubject: "Helping out with BamBase",
   },
   auth: {
     loginTitle: "Log in",
@@ -961,6 +991,12 @@ const en: typeof de = {
     tagline: "The student portal for Bamberg.",
     impressum: "Legal Notice",
     privacyPolicy: "Privacy Policy",
+    contact: "Contact",
+  },
+  help: {
+    hint: "Questions, problems or errors?",
+    link: "Send us an email",
+    subject: "Help",
   },
   about: {
     pageTitle: "About us",

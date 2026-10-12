@@ -1,51 +1,36 @@
 ---
-import IconGlobe from "./icons/IconGlobe.astro"
-import IconArrowRight from "./icons/IconArrowRight.astro"
+import { useTranslations } from "@/i18n/translations"
+import { HELP_EMAIL } from "@/utils/mail"
 
-const sidebarLinks = [
-  "FS WIAI - Jobbörse",
-  "FS SOWI - Terminkalender",
-  "FS HUWI",
-  "FS GuK",
-  "USI e.V. - Wandkalender",
-  "... und viele weitere!",
-]
+const t = useTranslations(Astro.locals.locale)
+const joinSubject = encodeURIComponent(`BamBase: ${t.groups.sidebarJoinSubject}`)
 ---
 
-<div class="flex flex-col gap-4 max-md:order-first md:row-span-2 md:col-start-3">
+<aside class="flex flex-col gap-4 max-md:order-first md:row-span-2 md:col-start-3">
   <div class="rounded-xl border border-base-300 bg-base-100 overflow-hidden">
-    <div class="bg-base-200 px-4 py-3">
-      <h2 class="font-semibold text-base-content">Über uns</h2>
-    </div>
-    <div class="p-4">
-      <p class="text-sm text-base-content/70">
-        Unser Ziel ist es, Bamberger Studierenden eine zentrale Anlaufstelle für alle wichtigen
-        Informationen rund ums Studium zu bieten.
-      </p>
-    </div>
+    <h3 class="bg-base-200 px-4 py-3 font-semibold text-base-content">
+      {t.groups.sidebarAboutTitle}
+    </h3>
+    <p class="p-4 text-sm text-base-content/70">{t.groups.sidebarAboutText}</p>
   </div>
 
-  <div class="rounded-xl border border-base-300 bg-base-100 p-4">
-    <h3 class="mb-3 text-sm font-semibold text-base-content">Entwicklung &amp; Betrieb</h3>
-    <ul class="mb-4 flex flex-col gap-2 text-sm">
-      <li>
-        <span class="flex items-center gap-1.5 text-base-content/70">
-          <IconGlobe class="h-3.5 w-3.5 shrink-0" />
-          Platzhalter e. V.
-        </span>
-      </li>
-    </ul>
-
-    <h3 class="mb-3 text-sm font-semibold text-base-content">Teilverantwortliche Gruppen</h3>
-    <ul class="flex flex-col gap-2 text-sm">
-      {sidebarLinks.map((name) => (
-        <li>
-          <span class="flex items-center gap-1.5 text-base-content/70">
-            <IconArrowRight class="h-3.5 w-3.5 shrink-0" />
-            {name}
-          </span>
+  <div class="rounded-xl border border-base-300 bg-base-100 overflow-hidden">
+    <h3 class="bg-base-200 px-4 py-3 font-semibold text-base-content">
+      {t.groups.sidebarResponsibleTitle}
+    </h3>
+    <ul class="flex flex-col gap-2 p-4 text-sm">
+      {t.groups.sidebarResponsible.map(({ name, role }) => (
+        <li class="flex justify-between gap-2">
+          <span class="text-base-content">{name}</span>
+          <span class="text-base-content/70">{role}</span>
         </li>
       ))}
     </ul>
+    <p class="border-t border-base-300 px-4 py-3 text-sm text-base-content/70">
+      {t.groups.sidebarJoinHint}{" "}
+      <a class="link link-primary" href={`mailto:${HELP_EMAIL}?subject=${joinSubject}`}>
+        {t.groups.sidebarJoinLink}
+      </a>
+    </p>
   </div>
-</div>
+</aside>

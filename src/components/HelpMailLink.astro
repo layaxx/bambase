@@ -1,0 +1,25 @@
+---
+import { useTranslations } from "@/i18n/translations"
+import { HELP_EMAIL } from "@/utils/mail"
+
+interface Props {
+  class?: string
+}
+
+const t = useTranslations(Astro.locals.locale)
+const pathname = (() => {
+  try {
+    return decodeURIComponent(Astro.url.pathname)
+  } catch {
+    return Astro.url.pathname
+  }
+})()
+const subject = encodeURIComponent(`BamBase: ${t.help.subject} (${pathname})`)
+---
+
+<p class:list={["text-base-content/70 text-sm", Astro.props.class]}>
+  {t.help.hint}{" "}
+  <a class="link link-primary" href={`mailto:${HELP_EMAIL}?subject=${subject}`}>
+    {t.help.link}
+  </a>
+</p>

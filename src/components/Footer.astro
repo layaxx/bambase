@@ -1,5 +1,6 @@
 ---
 import { useTranslations } from "@/i18n/translations"
+import { HELP_EMAIL } from "@/utils/mail"
 
 const t = useTranslations(Astro.locals.locale)
 ---
@@ -16,6 +17,9 @@ const t = useTranslations(Astro.locals.locale)
       <nav class="flex flex-wrap gap-x-5 gap-y-2 text-base-content/70 self-end">
         <a class="link link-hover underline" href="/about">
           {t.nav.about_us}
+        </a>
+        <a class="link link-hover underline" href={`mailto:${HELP_EMAIL}`}>
+          {t.footer.contact}
         </a>
         <a class="link link-hover underline" href="/impressum">
           {t.footer.impressum}
