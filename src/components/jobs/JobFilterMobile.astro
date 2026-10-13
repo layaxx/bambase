@@ -147,5 +147,10 @@ const mobileWorkMode = workModes.length === 1 ? workModes[0] : "all"
     mobileForm.querySelectorAll("select").forEach((sel) => {
       sel.addEventListener("change", () => mobileForm.requestSubmit())
     })
+
+    // "search" fires when the native ✕ clears the field
+    mobileForm.addEventListener("search", (e) => {
+      if (!(e.target as HTMLInputElement).value) mobileForm.requestSubmit()
+    })
   }
 </script>

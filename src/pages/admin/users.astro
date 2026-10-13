@@ -473,5 +473,10 @@ const invited = Astro.url.searchParams.get("invited") === "success"
     filterForm.querySelectorAll("select").forEach((select) => {
       select.addEventListener("change", () => filterForm.requestSubmit())
     })
+
+    // "search" fires when the native ✕ clears the field
+    filterForm.addEventListener("search", (e) => {
+      if (!(e.target as HTMLInputElement).value) filterForm.requestSubmit()
+    })
   }
 </script>
