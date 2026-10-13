@@ -27,7 +27,7 @@ const PAGE_SIZE = 12
 const rawTypes = Astro.url.searchParams.get("type")?.split(",").filter(Boolean) ?? []
 const rawFields = Astro.url.searchParams.get("field")?.split(",").filter(Boolean) ?? []
 const rawWorkModes = Astro.url.searchParams.get("work_mode")?.split(",").filter(Boolean) ?? []
-const search = Astro.url.searchParams.get("search") ?? ""
+const search = Astro.url.searchParams.get("search")?.trim() ?? ""
 const rawSort = Astro.url.searchParams.get("sort")
 const sort = rawSort === "oldest" ? "oldest" : "newest"
 const rawPage = parseInt(Astro.url.searchParams.get("page") ?? "1", 10)
@@ -142,8 +142,13 @@ const workModeItems = WORK_MODES.map((wm) => ({
     />
 
     <div>
-      <div class="mb-4 flex gap-3">
-        <form class="relative hidden flex-1 lg:flex" id="search-form" method="get" role="search">
+      <form class="mb-4 flex gap-3" id="search-form" method="get" role="search">
+        {types.length > 0 && <input name="type" type="hidden" value={types.join(",")} />}
+        {fields.length > 0 && <input name="field" type="hidden" value={fields.join(",")} />}
+        {workModes.length > 0 && (
+          <input name="work_mode" type="hidden" value={workModes.join(",")} />
+        )}
+        <div class="relative hidden flex-1 lg:flex">
           <IconSearch class="pointer-events-none absolute left-3 top-1/2 z-1 h-4 w-4 -translate-y-1/2 text-base-content/40" />
           <input
             aria-label={t.jobs.filterSearch}
@@ -155,10 +160,11 @@ const workModeItems = WORK_MODES.map((wm) => ({
             type="search"
             value={search}
           />
-        </form>
+        </div>
         <select
           class="select select-bordered select-sm lg:select-md w-full lg:w-auto"
           id="sort-select"
+          name="sort"
         >
           <option selected={sort === "newest"} value="newest">
             {t.jobs.sortNewest}
@@ -167,7 +173,7 @@ const workModeItems = WORK_MODES.map((wm) => ({
             {t.jobs.sortOldest}
           </option>
         </select>
-      </div>
+      </form>
 
       <JobFilterChips
         clearUrl={clearUrl}
@@ -215,30 +221,20 @@ const workModeItems = WORK_MODES.map((wm) => ({
 
 <script>
   const searchForm = document.getElementById("search-form") as HTMLFormElement | null
-  searchForm?.addEventListener("submit", (e) => {
-    e.preventDefault()
-    const params = new URLSearchParams(window.location.search)
-    const val = (new FormData(searchForm).get("search") as string).trim()
-    if (val) params.set("search", val)
-    else params.delete("search")
-    params.delete("page")
-    const qs = params.toString()
-    window.location.href = qs ? `?${qs}` : window.location.pathname
-  })
-  // "search" fires when the native ✕ clears the field
-  searchForm?.addEventListener("search", (e) => {
-    if (!(e.target as HTMLInputElement).value) searchForm.requestSubmit()
-  })
-
-  const sortSelect = document.getElementById("sort-select") as HTMLSelectElement | null
-  if (sortSelect) {
-    sortSelect.addEventListener("change", () => {
-      const params = new URLSearchParams(window.location.search)
-      if (sortSelect.value === "newest") params.delete("sort")
-      else params.set("sort", sortSelect.value)
-      params.delete("page")
-      const qs = params.toString()
-      window.location.href = qs ? `?${qs}` : window.location.pathname
+  if (searchForm) {
+    // keep the URL clean: drop empty and default values from the native GET submit
+    searchForm.addEventListener("formdata", (e) => {
+      for (const [key, value] of [...e.formData]) {
+        const blank = typeof value === "string" && value.trim() === ""
+        if (blank || (key === "sort" && value === "newest")) e.formData.delete(key)
+      }
+    })
+    searchForm
+      .querySelector("select")
+      ?.addEventListener("change", () => searchForm.requestSubmit())
+    // "search" fires when the native ✕ clears the field
+    searchForm.addEventListener("search", (e) => {
+      if (!(e.target as HTMLInputElement).value) searchForm.requestSubmit()
     })
   }
 </script>

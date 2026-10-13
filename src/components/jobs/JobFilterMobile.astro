@@ -49,6 +49,7 @@ const mobileWorkMode = workModes.length === 1 ? workModes[0] : "all"
       <div class="relative mb-3">
         <IconSearch class="pointer-events-none absolute left-3 top-1/2 z-1 h-4 w-4 -translate-y-1/2 text-base-content/40" />
         <input
+          aria-label={t.jobs.filterSearch}
           class="input input-bordered w-full pl-9"
           enterkeyhint="search"
           id="mobile-filter-search"
@@ -130,7 +131,7 @@ const mobileWorkMode = workModes.length === 1 ? workModes[0] : "all"
       const params = new URLSearchParams(window.location.search)
       params.delete("page")
       for (const [key, value] of data) {
-        const val = typeof value === "string" ? value : ""
+        const val = typeof value === "string" ? value.trim() : ""
         if (key === "sort") {
           if (val === "newest") params.delete("sort")
           else params.set("sort", val)
