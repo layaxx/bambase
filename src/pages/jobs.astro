@@ -143,16 +143,19 @@ const workModeItems = WORK_MODES.map((wm) => ({
 
     <div>
       <div class="mb-4 flex gap-3">
-        <div class="relative hidden flex-1 lg:flex">
+        <form class="relative hidden flex-1 lg:flex" id="search-form" method="get" role="search">
           <IconSearch class="pointer-events-none absolute left-3 top-1/2 z-1 h-4 w-4 -translate-y-1/2 text-base-content/40" />
           <input
+            aria-label={t.jobs.filterSearch}
             class="input input-bordered w-full pl-9"
+            enterkeyhint="search"
             id="search-input"
+            name="search"
             placeholder={t.jobs.filterSearch}
             type="search"
             value={search}
           />
-        </div>
+        </form>
         <select
           class="select select-bordered select-sm lg:select-md w-full lg:w-auto"
           id="sort-select"
@@ -211,27 +214,17 @@ const workModeItems = WORK_MODES.map((wm) => ({
 </PageLayout>
 
 <script>
-  const searchInput = document.getElementById("search-input") as HTMLInputElement | null
-  if (searchInput) {
-    if (searchInput.value) {
-      searchInput.focus()
-      const len = searchInput.value.length
-      searchInput.setSelectionRange(len, len)
-    }
-    let searchTimer: ReturnType<typeof setTimeout>
-    searchInput.addEventListener("input", () => {
-      clearTimeout(searchTimer)
-      searchTimer = setTimeout(() => {
-        const params = new URLSearchParams(window.location.search)
-        const val = searchInput.value.trim()
-        if (val) params.set("search", val)
-        else params.delete("search")
-        params.delete("page")
-        const qs = params.toString()
-        window.location.href = qs ? `?${qs}` : window.location.pathname
-      }, 300)
-    })
-  }
+  const searchForm = document.getElementById("search-form") as HTMLFormElement | null
+  searchForm?.addEventListener("submit", (e) => {
+    e.preventDefault()
+    const params = new URLSearchParams(window.location.search)
+    const val = (new FormData(searchForm).get("search") as string).trim()
+    if (val) params.set("search", val)
+    else params.delete("search")
+    params.delete("page")
+    const qs = params.toString()
+    window.location.href = qs ? `?${qs}` : window.location.pathname
+  })
 
   const sortSelect = document.getElementById("sort-select") as HTMLSelectElement | null
   if (sortSelect) {

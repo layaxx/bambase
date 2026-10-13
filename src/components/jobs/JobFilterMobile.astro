@@ -50,6 +50,7 @@ const mobileWorkMode = workModes.length === 1 ? workModes[0] : "all"
         <IconSearch class="pointer-events-none absolute left-3 top-1/2 z-1 h-4 w-4 -translate-y-1/2 text-base-content/40" />
         <input
           class="input input-bordered w-full pl-9"
+          enterkeyhint="search"
           id="mobile-filter-search"
           name="search"
           placeholder={t.jobs.filterSearch}
@@ -146,19 +147,5 @@ const mobileWorkMode = workModes.length === 1 ? workModes[0] : "all"
     mobileForm.querySelectorAll("select").forEach((sel) => {
       sel.addEventListener("change", () => mobileForm.requestSubmit())
     })
-
-    const mobileSearch = mobileForm.querySelector<HTMLInputElement>("input[name='search']")
-    if (mobileSearch) {
-      if (mobileSearch.value) {
-        mobileSearch.focus()
-        const len = mobileSearch.value.length
-        mobileSearch.setSelectionRange(len, len)
-      }
-      let mobileSearchTimer: ReturnType<typeof setTimeout>
-      mobileSearch.addEventListener("input", () => {
-        clearTimeout(mobileSearchTimer)
-        mobileSearchTimer = setTimeout(() => mobileForm.requestSubmit(), 300)
-      })
-    }
   }
 </script>
