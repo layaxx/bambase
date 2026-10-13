@@ -46,18 +46,23 @@ const mobileWorkMode = workModes.length === 1 ? workModes[0] : "all"
       <IconChevronDown class="h-4 w-4 text-base-content/40 transition-transform group-open:rotate-180" />
     </summary>
     <div class="px-4 pb-3">
-      <div class="relative mb-3">
-        <IconSearch class="pointer-events-none absolute left-3 top-1/2 z-1 h-4 w-4 -translate-y-1/2 text-base-content/40" />
-        <input
-          aria-label={t.jobs.filterSearch}
-          class="input input-bordered w-full pl-9"
-          enterkeyhint="search"
-          id="mobile-filter-search"
-          name="search"
-          placeholder={t.jobs.filterSearch}
-          type="search"
-          value={search}
-        />
+      <div class="join mb-3 w-full">
+        <div class="relative flex-1">
+          <IconSearch class="pointer-events-none absolute left-3 top-1/2 z-1 h-4 w-4 -translate-y-1/2 text-base-content/40" />
+          <input
+            aria-label={t.jobs.filterSearch}
+            class="input input-bordered join-item w-full pl-9"
+            enterkeyhint="search"
+            id="mobile-filter-search"
+            name="search"
+            placeholder={t.jobs.filterSearch}
+            type="search"
+            value={search}
+          />
+        </div>
+        <button class="btn btn-primary join-item" type="submit">
+          {t.jobs.filterSearchButton}
+        </button>
       </div>
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div class="flex flex-col gap-1.5">

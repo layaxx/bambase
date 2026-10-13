@@ -148,18 +148,23 @@ const workModeItems = WORK_MODES.map((wm) => ({
         {workModes.length > 0 && (
           <input name="work_mode" type="hidden" value={workModes.join(",")} />
         )}
-        <div class="relative hidden flex-1 lg:flex">
-          <IconSearch class="pointer-events-none absolute left-3 top-1/2 z-1 h-4 w-4 -translate-y-1/2 text-base-content/40" />
-          <input
-            aria-label={t.jobs.filterSearch}
-            class="input input-bordered w-full pl-9"
-            enterkeyhint="search"
-            id="search-input"
-            name="search"
-            placeholder={t.jobs.filterSearch}
-            type="search"
-            value={search}
-          />
+        <div class="join hidden flex-1 lg:flex">
+          <div class="relative flex-1">
+            <IconSearch class="pointer-events-none absolute left-3 top-1/2 z-1 h-4 w-4 -translate-y-1/2 text-base-content/40" />
+            <input
+              aria-label={t.jobs.filterSearch}
+              class="input input-bordered join-item w-full pl-9"
+              enterkeyhint="search"
+              id="search-input"
+              name="search"
+              placeholder={t.jobs.filterSearch}
+              type="search"
+              value={search}
+            />
+          </div>
+          <button class="btn btn-primary join-item" type="submit">
+            {t.jobs.filterSearchButton}
+          </button>
         </div>
         <select
           class="select select-bordered select-sm lg:select-md w-full lg:w-auto"
@@ -229,9 +234,7 @@ const workModeItems = WORK_MODES.map((wm) => ({
         if (blank || (key === "sort" && value === "newest")) e.formData.delete(key)
       }
     })
-    searchForm
-      .querySelector("select")
-      ?.addEventListener("change", () => searchForm.requestSubmit())
+    searchForm.querySelector("select")?.addEventListener("change", () => searchForm.requestSubmit())
     // "search" fires when the native ✕ clears the field
     searchForm.addEventListener("search", (e) => {
       if (!(e.target as HTMLInputElement).value) searchForm.requestSubmit()
