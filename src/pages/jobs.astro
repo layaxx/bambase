@@ -28,8 +28,6 @@ const rawTypes = Astro.url.searchParams.get("type")?.split(",").filter(Boolean) 
 const rawFields = Astro.url.searchParams.get("field")?.split(",").filter(Boolean) ?? []
 const rawWorkModes = Astro.url.searchParams.get("work_mode")?.split(",").filter(Boolean) ?? []
 const search = Astro.url.searchParams.get("search")?.trim() ?? ""
-const rawSort = Astro.url.searchParams.get("sort")
-const sort = rawSort === "oldest" ? "oldest" : "newest"
 const rawPage = parseInt(Astro.url.searchParams.get("page") ?? "1", 10)
 
 const types = rawTypes.filter((v) => (JOB_TYPES as readonly string[]).includes(v)) as JobType[]
@@ -47,7 +45,6 @@ const { data, apiDown } = await fetchJobOffersPaginated({
   fields,
   workModes,
   search,
-  sort,
   page: currentPage,
   pageSize: PAGE_SIZE,
 })
@@ -127,7 +124,6 @@ const workModeItems = WORK_MODES.map((wm) => ({
     fields={fields}
     hasActiveFilter={hasActiveFilter}
     search={search}
-    sort={sort}
     types={types}
     workModes={workModes}
   />
@@ -142,13 +138,13 @@ const workModeItems = WORK_MODES.map((wm) => ({
     />
 
     <div>
-      <form class="mb-4 flex gap-3" id="search-form" method="get" role="search">
+      <form class="mb-4 hidden lg:flex" id="search-form" method="get" role="search">
         {types.length > 0 && <input name="type" type="hidden" value={types.join(",")} />}
         {fields.length > 0 && <input name="field" type="hidden" value={fields.join(",")} />}
         {workModes.length > 0 && (
           <input name="work_mode" type="hidden" value={workModes.join(",")} />
         )}
-        <div class="join hidden flex-1 lg:flex">
+        <div class="join flex-1">
           <div class="relative flex-1">
             <IconSearch class="pointer-events-none absolute left-3 top-1/2 z-1 h-4 w-4 -translate-y-1/2 text-base-content/40" />
             <input
@@ -166,18 +162,6 @@ const workModeItems = WORK_MODES.map((wm) => ({
             {t.jobs.filterSearchButton}
           </button>
         </div>
-        <select
-          class="select select-bordered select-sm lg:select-md w-full lg:w-auto"
-          id="sort-select"
-          name="sort"
-        >
-          <option selected={sort === "newest"} value="newest">
-            {t.jobs.sortNewest}
-          </option>
-          <option selected={sort === "oldest"} value="oldest">
-            {t.jobs.sortOldest}
-          </option>
-        </select>
       </form>
 
       <JobFilterChips
@@ -227,14 +211,12 @@ const workModeItems = WORK_MODES.map((wm) => ({
 <script>
   const searchForm = document.getElementById("search-form") as HTMLFormElement | null
   if (searchForm) {
-    // keep the URL clean: drop empty and default values from the native GET submit
+    // keep the URL clean: drop empty values from the native GET submit
     searchForm.addEventListener("formdata", (e) => {
       for (const [key, value] of [...e.formData]) {
-        const blank = typeof value === "string" && value.trim() === ""
-        if (blank || (key === "sort" && value === "newest")) e.formData.delete(key)
+        if (typeof value === "string" && value.trim() === "") e.formData.delete(key)
       }
     })
-    searchForm.querySelector("select")?.addEventListener("change", () => searchForm.requestSubmit())
     // "search" fires when the native ✕ clears the field
     searchForm.addEventListener("search", (e) => {
       if (!(e.target as HTMLInputElement).value) searchForm.requestSubmit()

@@ -190,8 +190,6 @@ const de = {
       to - from + 1 === total
         ? `${total} ${total === 1 ? "Ergebnis" : "Ergebnisse"}`
         : `${from}–${to} von ${total} Ergebnissen`,
-    sortNewest: "Neueste zuerst",
-    sortOldest: "Älteste zuerst",
     paginationPrev: "Zurück",
     paginationNext: "Weiter",
     movedNotice: "Die Feki.de Jobbörse ist zu BamBase.de umgezogen. Sonst ändert sich nichts.",
@@ -775,8 +773,6 @@ const en: typeof de = {
       to - from + 1 === total
         ? `${total} ${total === 1 ? "result" : "results"}`
         : `Showing ${from}–${to} of ${total} results`,
-    sortNewest: "Newest first",
-    sortOldest: "Oldest first",
     paginationPrev: "Previous",
     paginationNext: "Next",
     movedNotice: "The Feki.de job market has moved to BamBase.de. Nothing else has changed.",

@@ -15,14 +15,13 @@ import { useTranslations } from "@/i18n/translations"
 interface Props {
   hasActiveFilter: boolean
   activeFilterCount: number
-  sort: string
   search: string
   types: JobType[]
   fields: JobField[]
   workModes: WorkMode[]
 }
 
-const { hasActiveFilter, activeFilterCount, sort, search, types, fields, workModes } = Astro.props
+const { hasActiveFilter, activeFilterCount, search, types, fields, workModes } = Astro.props
 const t = useTranslations(Astro.locals.locale)
 
 const mobileType = types.length === 1 ? types[0] : "all"
@@ -31,7 +30,6 @@ const mobileWorkMode = workModes.length === 1 ? workModes[0] : "all"
 ---
 
 <form class="mb-4 lg:hidden" id="mobile-filter-form" method="get">
-  <input name="sort" type="hidden" value={sort} />
   <details class="group rounded-xl border border-base-300" open={hasActiveFilter || undefined}>
     <summary class="flex cursor-pointer list-none items-center justify-between p-3">
       <div class="flex items-center gap-2">
@@ -137,10 +135,7 @@ const mobileWorkMode = workModes.length === 1 ? workModes[0] : "all"
       params.delete("page")
       for (const [key, value] of data) {
         const val = typeof value === "string" ? value.trim() : ""
-        if (key === "sort") {
-          if (val === "newest") params.delete("sort")
-          else params.set("sort", val)
-        } else if (val === "all" || val === "") {
+        if (val === "all" || val === "") {
           params.delete(key)
         } else {
           params.set(key, val)
