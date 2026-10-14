@@ -159,19 +159,11 @@ describe("fetchJobOffersPaginated", () => {
     ])
   })
 
-  it("sorts by createdAt descending by default", async () => {
+  it("sorts by createdAt descending", async () => {
     await fetchJobOffersPaginated()
 
     expect(mockFindMany).toHaveBeenCalledWith(
       expect.objectContaining({ orderBy: { createdAt: "desc" } })
-    )
-  })
-
-  it("sorts by createdAt ascending when sort is 'oldest'", async () => {
-    await fetchJobOffersPaginated({ sort: "oldest" })
-
-    expect(mockFindMany).toHaveBeenCalledWith(
-      expect.objectContaining({ orderBy: { createdAt: "asc" } })
     )
   })
 

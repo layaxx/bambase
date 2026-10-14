@@ -40,7 +40,6 @@ export type JobOffersFilter = {
   fields?: JobField[]
   workModes?: WorkMode[]
   search?: string
-  sort?: string
   page?: number
   pageSize?: number
 }
@@ -84,7 +83,7 @@ function toJobOffer(row: JobOfferModel, extra?: { reports?: { id: string }[] }):
 export function fetchJobOffersPaginated(
   filter: JobOffersFilter = {}
 ): Promise<ApiResult<JobOfferPage>> {
-  const { types, fields, workModes, search, sort = "newest", page = 1, pageSize = 12 } = filter
+  const { types, fields, workModes, search, page = 1, pageSize = 12 } = filter
 
   const where = { onlineStatus: JobOnlineStatus.published } as {
     onlineStatus: JobOnlineStatus
@@ -109,7 +108,7 @@ export function fetchJobOffersPaginated(
       const [rows, total] = await Promise.all([
         prisma.jobOffer.findMany({
           where,
-          orderBy: { createdAt: sort === "oldest" ? "asc" : "desc" },
+          orderBy: { createdAt: "desc" },
           skip: (page - 1) * pageSize,
           take: pageSize,
         }),

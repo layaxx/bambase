@@ -15,14 +15,13 @@ import { useTranslations } from "@/i18n/translations"
 interface Props {
   hasActiveFilter: boolean
   activeFilterCount: number
-  sort: string
   search: string
   types: JobType[]
   fields: JobField[]
   workModes: WorkMode[]
 }
 
-const { hasActiveFilter, activeFilterCount, sort, search, types, fields, workModes } = Astro.props
+const { hasActiveFilter, activeFilterCount, search, types, fields, workModes } = Astro.props
 const t = useTranslations(Astro.locals.locale)
 
 const mobileType = types.length === 1 ? types[0] : "all"
@@ -31,7 +30,6 @@ const mobileWorkMode = workModes.length === 1 ? workModes[0] : "all"
 ---
 
 <form class="mb-4 lg:hidden" id="mobile-filter-form" method="get">
-  <input name="sort" type="hidden" value={sort} />
   <details class="group rounded-xl border border-base-300" open={hasActiveFilter || undefined}>
     <summary class="flex cursor-pointer list-none items-center justify-between p-3">
       <div class="flex items-center gap-2">
@@ -46,16 +44,23 @@ const mobileWorkMode = workModes.length === 1 ? workModes[0] : "all"
       <IconChevronDown class="h-4 w-4 text-base-content/40 transition-transform group-open:rotate-180" />
     </summary>
     <div class="px-4 pb-3">
-      <div class="relative mb-3">
-        <IconSearch class="pointer-events-none absolute left-3 top-1/2 z-1 h-4 w-4 -translate-y-1/2 text-base-content/40" />
-        <input
-          class="input input-bordered w-full pl-9"
-          id="mobile-filter-search"
-          name="search"
-          placeholder={t.jobs.filterSearch}
-          type="search"
-          value={search}
-        />
+      <div class="join mb-3 w-full">
+        <div class="relative flex-1">
+          <IconSearch class="pointer-events-none absolute left-3 top-1/2 z-1 h-4 w-4 -translate-y-1/2 text-base-content/40" />
+          <input
+            aria-label={t.jobs.filterSearch}
+            class="input input-bordered join-item w-full pl-9"
+            enterkeyhint="search"
+            id="mobile-filter-search"
+            name="search"
+            placeholder={t.jobs.filterSearch}
+            type="search"
+            value={search}
+          />
+        </div>
+        <button class="btn btn-soft join-item" type="submit">
+          {t.jobs.filterSearchButton}
+        </button>
       </div>
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div class="flex flex-col gap-1.5">
@@ -129,11 +134,8 @@ const mobileWorkMode = workModes.length === 1 ? workModes[0] : "all"
       const params = new URLSearchParams(window.location.search)
       params.delete("page")
       for (const [key, value] of data) {
-        const val = typeof value === "string" ? value : ""
-        if (key === "sort") {
-          if (val === "newest") params.delete("sort")
-          else params.set("sort", val)
-        } else if (val === "all" || val === "") {
+        const val = typeof value === "string" ? value.trim() : ""
+        if (val === "all" || val === "") {
           params.delete(key)
         } else {
           params.set(key, val)
@@ -147,18 +149,9 @@ const mobileWorkMode = workModes.length === 1 ? workModes[0] : "all"
       sel.addEventListener("change", () => mobileForm.requestSubmit())
     })
 
-    const mobileSearch = mobileForm.querySelector<HTMLInputElement>("input[name='search']")
-    if (mobileSearch) {
-      if (mobileSearch.value) {
-        mobileSearch.focus()
-        const len = mobileSearch.value.length
-        mobileSearch.setSelectionRange(len, len)
-      }
-      let mobileSearchTimer: ReturnType<typeof setTimeout>
-      mobileSearch.addEventListener("input", () => {
-        clearTimeout(mobileSearchTimer)
-        mobileSearchTimer = setTimeout(() => mobileForm.requestSubmit(), 300)
-      })
-    }
+    // "search" fires when the native ✕ clears the field
+    mobileForm.addEventListener("search", (e) => {
+      if (!(e.target as HTMLInputElement).value) mobileForm.requestSubmit()
+    })
   }
 </script>
