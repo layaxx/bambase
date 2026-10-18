@@ -13,6 +13,9 @@ import IconMapPin from "@/components/icons/IconMapPin.astro"
 import IconClock from "@/components/icons/IconClock.astro"
 import IconCalendar from "@/components/icons/IconCalendar.astro"
 import IconExternalLink from "@/components/icons/IconExternalLink.astro"
+import IconPencil from "@/components/icons/IconPencil.astro"
+import IconArchive from "@/components/icons/IconArchive.astro"
+import IconTrash from "@/components/icons/IconTrash.astro"
 import ReportModal from "@/components/ReportModal.astro"
 import ConfirmModal from "@/components/ConfirmModal.astro"
 import Alert from "@/components/Alert.astro"
@@ -88,36 +91,42 @@ const ogImage =
     </div>
   ) : (
     <>
-      <div class="mb-4 md:mb-6 flex items-center justify-between gap-4">
+      <div class="mb-4 md:mb-6 flex flex-wrap items-center justify-between gap-1 md:gap-4">
         <a class="btn btn-ghost btn-sm gap-1 pl-0" href="/jobs">
           <IconArrowLeft class="h-4 w-4" />
           {t.jobs.backToJobs}
         </a>
         {isOwner && (
-          <div class="flex items-center gap-2">
-            <a class="btn btn-ghost btn-sm" href="/account/jobs">
+          <div class="flex items-center gap-2 max-sm:w-full">
+            <a class="btn btn-ghost btn-sm max-sm:mr-auto max-sm:pl-0" href="/account/jobs">
               {t.auth.myJobOffers}
             </a>
             {canEditJob(job.online_status) && (
-              <a class="btn btn-outline btn-sm" href={`/job/${job.slug}/edit`}>
-                {t.jobs.editJob}
+              <a
+                class="btn btn-outline btn-sm relative max-sm:btn-square"
+                href={`/job/${job.slug}/edit`}
+              >
+                <IconPencil class="h-4 w-4 sm:hidden" />
+                <span class="sr-only sm:not-sr-only">{t.jobs.editJob}</span>
               </a>
             )}
             {canArchive ? (
               <button
-                class="btn btn-outline btn-sm"
+                class="btn btn-outline btn-sm relative max-sm:btn-square"
                 onclick="document.getElementById('archiveJobModal').showModal()"
                 type="button"
               >
-                {t.jobs.archiveJob}
+                <IconArchive class="h-4 w-4 sm:hidden" />
+                <span class="sr-only sm:not-sr-only">{t.jobs.archiveJob}</span>
               </button>
             ) : null}
             <button
-              class="btn btn-outline btn-error btn-sm"
+              class="btn btn-outline btn-error btn-sm relative max-sm:btn-square"
               onclick="document.getElementById('deleteJobModal').showModal()"
               type="button"
             >
-              {t.jobs.deleteJob}
+              <IconTrash class="h-4 w-4 sm:hidden" />
+              <span class="sr-only sm:not-sr-only">{t.jobs.deleteJob}</span>
             </button>
           </div>
         )}
