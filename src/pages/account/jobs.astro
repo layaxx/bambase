@@ -3,11 +3,11 @@ import { actions } from "astro:actions"
 import PageLayout from "@/layouts/PageLayout.astro"
 import IconArrowLeft from "@/components/icons/IconArrowLeft.astro"
 import IconBriefcase from "@/components/icons/IconBriefcase.astro"
-import IconSearch from "@/components/icons/IconSearch.astro"
 import IconPencil from "@/components/icons/IconPencil.astro"
 import IconArchive from "@/components/icons/IconArchive.astro"
 import ApiDownBanner from "@/components/ApiDownBanner.astro"
 import Pagination from "@/components/Pagination.astro"
+import SearchForm from "@/components/SearchForm.astro"
 import ConfirmModal from "@/components/ConfirmModal.astro"
 import Alert from "@/components/Alert.astro"
 import { fetchMyJobOffers } from "@/utils/api/job-offers"
@@ -24,13 +24,8 @@ if (!user) return Astro.redirect("/login?redirect=/account/jobs")
 const listParams = new URLSearchParams(Astro.url.searchParams)
 listParams.delete("_action")
 const archiveResult = Astro.getActionResult(actions.jobs.archive)
-if (archiveResult && !archiveResult.error) {
-  return Astro.redirect(listParams.size ? `/account/jobs?${listParams}` : "/account/jobs")
-}
-const archiveFormAction = `?${new URLSearchParams([
-  ...listParams,
-  ...new URLSearchParams(String(actions.jobs.archive)),
-])}`
+if (archiveResult && !archiveResult.error) return Astro.redirect(`/account/jobs?${listParams}`)
+const archiveFormAction = `${actions.jobs.archive}${listParams.size ? `&${listParams}` : ""}`
 
 const search = Astro.url.searchParams.get("search")?.trim() ?? ""
 const rawPage = parseInt(Astro.url.searchParams.get("page") ?? "1", 10)
@@ -70,28 +65,7 @@ const statusLabel: Record<string, string> = {
     )}
   </div>
 
-  {!apiDown && !hasNoJobs && (
-    <form class="mb-4 flex" id="search-form" method="get" role="search">
-      <div class="join flex-1">
-        <div class="relative flex-1">
-          <IconSearch class="pointer-events-none absolute left-3 top-1/2 z-1 h-4 w-4 -translate-y-1/2 text-base-content/40" />
-          <input
-            aria-label={t.jobs.filterSearch}
-            class="input input-bordered join-item w-full pl-9"
-            enterkeyhint="search"
-            name="search"
-            placeholder={t.jobs.filterSearch}
-            type="search"
-            value={search}
-          />
-        </div>
-        <button class="btn btn-soft join-item max-sm:btn-square" type="submit">
-          <IconSearch class="h-4 w-4 sm:hidden" />
-          <span class="sr-only sm:not-sr-only">{t.jobs.filterSearchButton}</span>
-        </button>
-      </div>
-    </form>
-  )}
+  {!apiDown && !hasNoJobs && <SearchForm class="flex" value={search} />}
 
   {archiveResult?.error && <Alert variant="error">{archiveResult.error.message}</Alert>}
 
@@ -208,17 +182,3 @@ const statusLabel: Record<string, string> = {
     prevLabel={t.jobs.paginationPrev}
   />
 </PageLayout>
-
-<script>
-  const searchForm = document.getElementById("search-form") as HTMLFormElement | null
-  if (searchForm) {
-    // keep the URL clean: drop an empty search from the native GET submit
-    searchForm.addEventListener("formdata", (e) => {
-      if (String(e.formData.get("search") ?? "").trim() === "") e.formData.delete("search")
-    })
-    // "search" fires when the native ✕ clears the field
-    searchForm.addEventListener("search", (e) => {
-      if (!(e.target as HTMLInputElement).value) searchForm.requestSubmit()
-    })
-  }
-</script>

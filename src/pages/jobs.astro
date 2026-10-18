@@ -2,13 +2,13 @@
 import PageLayout from "@/layouts/PageLayout.astro"
 import PageHeader from "@/components/PageHeader.astro"
 import IconBriefcase from "@/components/icons/IconBriefcase.astro"
-import IconSearch from "@/components/icons/IconSearch.astro"
 import JobOfferCard from "@/components/jobs/JobOfferCard.astro"
 import JobFilterSidebar from "@/components/jobs/JobFilterSidebar.astro"
 import JobFilterMobile from "@/components/jobs/JobFilterMobile.astro"
 import JobFilterChips from "@/components/jobs/JobFilterChips.astro"
 import ApiDownBanner from "@/components/ApiDownBanner.astro"
 import Pagination from "@/components/Pagination.astro"
+import SearchForm from "@/components/SearchForm.astro"
 import {
   fetchJobOffersPaginated,
   JOB_TYPES,
@@ -138,31 +138,13 @@ const workModeItems = WORK_MODES.map((wm) => ({
     />
 
     <div>
-      <form class="mb-4 hidden lg:flex" id="search-form" method="get" role="search">
+      <SearchForm class="hidden lg:flex" value={search}>
         {types.length > 0 && <input name="type" type="hidden" value={types.join(",")} />}
         {fields.length > 0 && <input name="field" type="hidden" value={fields.join(",")} />}
         {workModes.length > 0 && (
           <input name="work_mode" type="hidden" value={workModes.join(",")} />
         )}
-        <div class="join flex-1">
-          <div class="relative flex-1">
-            <IconSearch class="pointer-events-none absolute left-3 top-1/2 z-1 h-4 w-4 -translate-y-1/2 text-base-content/40" />
-            <input
-              aria-label={t.jobs.filterSearch}
-              class="input input-bordered join-item w-full pl-9"
-              enterkeyhint="search"
-              id="search-input"
-              name="search"
-              placeholder={t.jobs.filterSearch}
-              type="search"
-              value={search}
-            />
-          </div>
-          <button class="btn btn-soft join-item" type="submit">
-            {t.jobs.filterSearchButton}
-          </button>
-        </div>
-      </form>
+      </SearchForm>
 
       <JobFilterChips
         clearUrl={clearUrl}
@@ -207,19 +189,3 @@ const workModeItems = WORK_MODES.map((wm) => ({
     </div>
   </div>
 </PageLayout>
-
-<script>
-  const searchForm = document.getElementById("search-form") as HTMLFormElement | null
-  if (searchForm) {
-    // keep the URL clean: drop empty values from the native GET submit
-    searchForm.addEventListener("formdata", (e) => {
-      for (const [key, value] of [...e.formData]) {
-        if (typeof value === "string" && value.trim() === "") e.formData.delete(key)
-      }
-    })
-    // "search" fires when the native ✕ clears the field
-    searchForm.addEventListener("search", (e) => {
-      if (!(e.target as HTMLInputElement).value) searchForm.requestSubmit()
-    })
-  }
-</script>

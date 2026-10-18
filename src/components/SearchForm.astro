@@ -1,0 +1,50 @@
+---
+import IconSearch from "@/components/icons/IconSearch.astro"
+import { useTranslations } from "@/i18n/translations"
+
+interface Props {
+  class?: string
+  value: string
+}
+
+const { class: className, value } = Astro.props
+const t = useTranslations(Astro.locals.locale)
+---
+
+<form class:list={["mb-4", className]} id="search-form" method="get" role="search">
+  <slot />
+  <div class="join flex-1">
+    <div class="relative flex-1">
+      <IconSearch class="pointer-events-none absolute left-3 top-1/2 z-1 h-4 w-4 -translate-y-1/2 text-base-content/40" />
+      <input
+        aria-label={t.jobs.filterSearch}
+        class="input input-bordered join-item w-full pl-9"
+        enterkeyhint="search"
+        name="search"
+        placeholder={t.jobs.filterSearch}
+        type="search"
+        value={value}
+      />
+    </div>
+    <button class="btn btn-soft join-item max-sm:btn-square" type="submit">
+      <IconSearch class="h-4 w-4 sm:hidden" />
+      <span class="sr-only sm:not-sr-only">{t.jobs.filterSearchButton}</span>
+    </button>
+  </div>
+</form>
+
+<script>
+  const searchForm = document.getElementById("search-form") as HTMLFormElement | null
+  if (searchForm) {
+    // keep the URL clean: drop empty values from the native GET submit
+    searchForm.addEventListener("formdata", (e) => {
+      for (const [key, value] of [...e.formData]) {
+        if (typeof value === "string" && value.trim() === "") e.formData.delete(key)
+      }
+    })
+    // "search" fires when the native ✕ clears the field
+    searchForm.addEventListener("search", (e) => {
+      if (!(e.target as HTMLInputElement).value) searchForm.requestSubmit()
+    })
+  }
+</script>
