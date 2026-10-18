@@ -154,13 +154,31 @@ export function fetchJobOffer(
   })
 }
 
-export function fetchMyJobOffers(ownerId: string): Promise<ApiResult<JobOffer[]>> {
-  return apiResult("Error fetching own job offers", [], async () => {
-    const rows = await prisma.jobOffer.findMany({
-      where: { ownerId },
-      orderBy: { createdAt: "desc" },
-    })
-    return rows.map((row) => toJobOffer(row))
+export function fetchMyJobOffers(
+  ownerId: string,
+  { page = 1, pageSize = 20, search }: Pick<JobOffersFilter, "page" | "pageSize" | "search"> = {}
+): Promise<ApiResult<JobOfferPage>> {
+  return apiResult("Error fetching own job offers", EMPTY_PAGE, async () => {
+    const where = {
+      ownerId,
+      ...(search && {
+        OR: [
+          { title: { contains: search, mode: "insensitive" as const } },
+          { company: { contains: search, mode: "insensitive" as const } },
+        ],
+      }),
+    }
+    const [rows, total] = await Promise.all([
+      prisma.jobOffer.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      prisma.jobOffer.count({ where }),
+    ])
+    const pageCount = Math.max(1, Math.ceil(total / pageSize))
+    return { jobs: rows.map((row) => toJobOffer(row)), total, page, pageCount }
   })
 }
 

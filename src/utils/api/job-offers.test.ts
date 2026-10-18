@@ -290,23 +290,48 @@ describe("fetchJobOffer", () => {
 })
 
 describe("fetchMyJobOffers", () => {
-  it("filters by the given ownerId and sorts by createdAt descending", async () => {
+  it("filters by the given ownerId, sorts by createdAt descending and paginates", async () => {
     mockFindMany.mockResolvedValue([])
+    mockCount.mockResolvedValue(0)
 
-    await fetchMyJobOffers("user-42")
+    await fetchMyJobOffers("user-42", { page: 3, pageSize: 10 })
 
     expect(mockFindMany).toHaveBeenCalledWith({
       where: { ownerId: "user-42" },
       orderBy: { createdAt: "desc" },
+      skip: 20,
+      take: 10,
     })
+    expect(mockCount).toHaveBeenCalledWith({ where: { ownerId: "user-42" } })
   })
 
-  it("returns mapped job offers from the response", async () => {
+  it("matches the search term against title and company", async () => {
+    mockFindMany.mockResolvedValue([])
+    mockCount.mockResolvedValue(0)
+
+    await fetchMyJobOffers("user-42", { search: "barista" })
+
+    const where = {
+      ownerId: "user-42",
+      OR: [
+        { title: { contains: "barista", mode: "insensitive" } },
+        { company: { contains: "barista", mode: "insensitive" } },
+      ],
+    }
+    expect(mockFindMany).toHaveBeenCalledWith(expect.objectContaining({ where }))
+    expect(mockCount).toHaveBeenCalledWith({ where })
+  })
+
+  it("returns mapped job offers with page info", async () => {
     mockFindMany.mockResolvedValue([makeRow()])
+    mockCount.mockResolvedValue(45)
 
     const result = await fetchMyJobOffers("user-42")
 
-    expect(result).toEqual({ data: [mappedSampleJob], apiDown: false })
+    expect(result).toEqual({
+      data: { jobs: [mappedSampleJob], total: 45, page: 1, pageCount: 3 },
+      apiDown: false,
+    })
   })
 
   it("logs an error and returns an empty array when the query fails", async () => {
@@ -315,7 +340,7 @@ describe("fetchMyJobOffers", () => {
 
     const result = await fetchMyJobOffers("user-42")
 
-    expect(result).toEqual({ data: [], apiDown: true })
+    expect(result).toEqual({ data: { jobs: [], total: 0, page: 1, pageCount: 1 }, apiDown: true })
     expect(consoleSpy).toHaveBeenCalledWith(
       { err: expect.any(Error), operation: "Error fetching own job offers" },
       "data query failed"

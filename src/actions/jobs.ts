@@ -4,6 +4,7 @@ import { JOB_TYPES, JOB_FIELDS, WORK_MODES } from "@/utils/api/job-offers"
 import { invalidateCacheByPrefix } from "@/utils/api/cache"
 import { createWithUniqueSlug } from "@/utils/slugify"
 import { canModerateJobOffers } from "@/utils/authz"
+import { canEditJob } from "@/utils/job-status"
 import {
   requireUserId,
   requirePermission,
@@ -21,8 +22,9 @@ const JOB_OFFER_LIFETIME_DAYS = 30
 /**
  * The statuses on which a moderator already made a decision. An edit by the owner must thus
  * cancel that decision. `published` is live on the site, and `rejected` holds the reason of
- * the moderator. The other statuses (`submitted`, `expired`, `archived`) are offline and wait
- * for moderation or come after it, thus an edit keeps them unchanged.
+ * the moderator. The other statuses (`submitted`, `expired`) are offline and wait for
+ * moderation or come after it, thus an edit keeps them unchanged. `archived` is final and
+ * cannot be edited at all.
  */
 const MODERATED_STATUSES: JobOnlineStatus[] = [JobOnlineStatus.published, JobOnlineStatus.rejected]
 
@@ -234,6 +236,12 @@ export const jobs = {
         canModerateJobOffers,
         "Aktualisierung fehlgeschlagen."
       )
+      if (!canEditJob(existing.onlineStatus)) {
+        throw new ActionError({
+          code: "CONFLICT",
+          message: "Archivierte Stellen können nicht bearbeitet werden.",
+        })
+      }
 
       const content = {
         title: fields.title,

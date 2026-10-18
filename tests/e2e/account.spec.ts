@@ -15,7 +15,7 @@ test.describe("My Job Listings (/account/jobs)", () => {
   test("each job entry is a link to its detail page", async ({ page }) => {
     await page.goto("/account/jobs")
 
-    const firstLink = page.locator('a[href^="/job/"]').first()
+    const firstLink = page.locator('li a[href^="/job/"]').first()
     await expect(firstLink).toBeVisible()
     await expect(firstLink).not.toHaveAttribute("href", "/job/new")
   })

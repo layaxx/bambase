@@ -1,15 +1,49 @@
 ---
+import { actions } from "astro:actions"
 import PageLayout from "@/layouts/PageLayout.astro"
 import IconArrowLeft from "@/components/icons/IconArrowLeft.astro"
+import IconBriefcase from "@/components/icons/IconBriefcase.astro"
+import IconSearch from "@/components/icons/IconSearch.astro"
+import IconPencil from "@/components/icons/IconPencil.astro"
+import IconArchive from "@/components/icons/IconArchive.astro"
+import ApiDownBanner from "@/components/ApiDownBanner.astro"
+import Pagination from "@/components/Pagination.astro"
+import ConfirmModal from "@/components/ConfirmModal.astro"
+import Alert from "@/components/Alert.astro"
 import { fetchMyJobOffers } from "@/utils/api/job-offers"
-import { JOB_STATUS_BADGE_CLASS } from "@/utils/job-status"
+import { JOB_STATUS_BADGE_CLASS, canArchiveJob, canEditJob } from "@/utils/job-status"
+import { formatJobLocation, formatRelativeDate } from "@/utils/job-formatting"
 import { useTranslations } from "@/i18n/translations"
 
 const t = useTranslations(Astro.locals.locale)
 
 const user = Astro.locals.user
 if (!user) return Astro.redirect("/login?redirect=/account/jobs")
-const { data: jobs } = await fetchMyJobOffers(user.id)
+
+// After archiving, return to the same page and search, minus Astro's action marker.
+const listParams = new URLSearchParams(Astro.url.searchParams)
+listParams.delete("_action")
+const archiveResult = Astro.getActionResult(actions.jobs.archive)
+if (archiveResult && !archiveResult.error) {
+  return Astro.redirect(listParams.size ? `/account/jobs?${listParams}` : "/account/jobs")
+}
+const archiveFormAction = `?${new URLSearchParams([
+  ...listParams,
+  ...new URLSearchParams(String(actions.jobs.archive)),
+])}`
+
+const search = Astro.url.searchParams.get("search")?.trim() ?? ""
+const rawPage = parseInt(Astro.url.searchParams.get("page") ?? "1", 10)
+const currentPage = isNaN(rawPage) || rawPage < 1 ? 1 : rawPage
+const { data, apiDown } = await fetchMyJobOffers(user.id, { page: currentPage, search })
+const { jobs, total, pageCount } = data
+if (!apiDown && currentPage > pageCount) {
+  const params = new URLSearchParams(Astro.url.searchParams)
+  params.set("page", String(pageCount))
+  return Astro.redirect(`/account/jobs?${params}`)
+}
+// No listings at all, as opposed to none matching the search.
+const hasNoJobs = total === 0 && !search
 
 const statusLabel: Record<string, string> = {
   submitted: t.auth.statusSubmitted,
@@ -27,47 +61,164 @@ const statusLabel: Record<string, string> = {
       {t.nav.myAccount}
     </a>
   </div>
-  <h1 class="text-3xl font-bold tracking-tight sm:text-4xl mb-6">{t.auth.myJobOffers}</h1>
+  <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
+    <h1 class="text-3xl font-bold tracking-tight sm:text-4xl">{t.auth.myJobOffers}</h1>
+    {!hasNoJobs && (
+      <a class="btn btn-primary btn-sm" href="/job/new">
+        {t.jobs.postJob}
+      </a>
+    )}
+  </div>
 
-  {jobs.length === 0 ? (
-    <p class="rounded-xl border border-base-300 bg-base-100 p-6 text-base-content/70">
-      {t.auth.noMyJobOffers}
-    </p>
-  ) : (
-    <div class="flex flex-col gap-3">
-      {jobs.map((job) => (
-        <a
-          class="group flex flex-col gap-1 rounded-xl border border-base-300 bg-base-100 p-4 no-underline transition-all hover:shadow-md"
-          href={`/job/${job.slug}`}
-        >
-          <div class="flex items-start justify-between gap-2">
-            <h2 class="font-semibold leading-snug text-base-content group-hover:text-primary">
-              {job.title}
-            </h2>
-            <span
-              class:list={[
-                `badge badge-sm shrink-0`,
-                `${JOB_STATUS_BADGE_CLASS[job.online_status] ?? "badge-neutral"}`,
-              ]}
-            >
-              {statusLabel[job.online_status] ?? job.online_status}
-            </span>
-          </div>
-          <p class="text-sm text-base-content/70">
-            {job.company} · {job.location}
-          </p>
-          {job.online_status === "rejected" && job.rejection_reason && (
-            <p class="text-sm text-error">{t.jobs.rejectionReasonLabel(job.rejection_reason)}</p>
-          )}
-          <p class="line-clamp-2 text-sm text-base-content/40">{job.description}</p>
-        </a>
-      ))}
-    </div>
+  {!apiDown && !hasNoJobs && (
+    <form class="mb-4 flex" id="search-form" method="get" role="search">
+      <div class="join flex-1">
+        <div class="relative flex-1">
+          <IconSearch class="pointer-events-none absolute left-3 top-1/2 z-1 h-4 w-4 -translate-y-1/2 text-base-content/40" />
+          <input
+            aria-label={t.jobs.filterSearch}
+            class="input input-bordered join-item w-full pl-9"
+            enterkeyhint="search"
+            name="search"
+            placeholder={t.jobs.filterSearch}
+            type="search"
+            value={search}
+          />
+        </div>
+        <button class="btn btn-soft join-item max-sm:btn-square" type="submit">
+          <IconSearch class="h-4 w-4 sm:hidden" />
+          <span class="sr-only sm:not-sr-only">{t.jobs.filterSearchButton}</span>
+        </button>
+      </div>
+    </form>
   )}
 
-  <div class="mt-6">
-    <a class="btn btn-primary btn-sm" href="/job/new">
-      {t.jobs.postJob}
-    </a>
-  </div>
+  {archiveResult?.error && <Alert variant="error">{archiveResult.error.message}</Alert>}
+
+  {apiDown ? (
+    <ApiDownBanner />
+  ) : jobs.length === 0 && search ? (
+    <div class="rounded-xl border border-base-300 py-16 text-center">
+      <p class="mb-1 font-medium">{t.jobs.noJobsFoundTitle}</p>
+      <p class="mb-4 text-sm text-base-content/70">{t.jobs.noJobsFoundHint}</p>
+      <a class="btn btn-outline btn-sm" href="/account/jobs">
+        {t.jobs.clearFilters}
+      </a>
+    </div>
+  ) : hasNoJobs ? (
+    <div class="flex flex-col items-center gap-4 rounded-xl border border-dashed border-base-300 bg-base-100 p-10 text-center">
+      <div class="flex h-12 w-12 items-center justify-center rounded-lg badge-soft badge-success">
+        <IconBriefcase class="h-6 w-6" />
+      </div>
+      <p class="text-base-content/70">{t.auth.noMyJobOffers}</p>
+      <a class="btn btn-primary btn-sm" href="/job/new">
+        {t.jobs.postJob}
+      </a>
+    </div>
+  ) : (
+    <>
+      <ul class="list rounded-box border border-base-300 bg-base-100">
+        {jobs.map((job) => (
+          <li class="list-row items-center transition-colors hover:bg-base-200/50">
+            <div class="list-col-grow min-w-0">
+              {/* after:inset-0 stretches the link over the whole row for a bigger tap target */}
+              <a
+                class="link link-hover line-clamp-2 font-semibold after:absolute after:inset-0"
+                href={`/job/${job.slug}`}
+              >
+                {job.title}
+              </a>
+              <p class="mt-1 text-sm text-base-content/70">
+                <span
+                  class:list={[
+                    "badge badge-sm mr-1",
+                    JOB_STATUS_BADGE_CLASS[job.online_status] ?? "badge-neutral",
+                  ]}
+                >
+                  {statusLabel[job.online_status] ?? job.online_status}
+                </span>
+                {job.company} ·{" "}
+                <span class="max-sm:hidden">
+                  {formatJobLocation(job, {
+                    remote: t.jobs.workModes.remote,
+                    hybrid: t.jobs.workModes.hybrid,
+                  })}{" "}
+                  ·{" "}
+                </span>
+                {formatRelativeDate(job.createdAt, Astro.locals.locale)}
+              </p>
+              {job.online_status === "rejected" && (
+                <p class="mt-1 text-sm text-error">
+                  {job.rejection_reason &&
+                    `${t.jobs.rejectionReasonLabel(job.rejection_reason)} – `}
+                  {t.jobs.rejectedResubmitHint}
+                </p>
+              )}
+            </div>
+            {/* An archivable listing is always editable, thus canEditJob covers both buttons. */}
+            {canEditJob(job.online_status) && (
+              <div class="flex gap-1">
+                {canArchiveJob(job.online_status) && (
+                  <button
+                    class="btn btn-ghost btn-sm relative max-sm:btn-square"
+                    onclick={`document.getElementById('archive-${job.id}').showModal()`}
+                    type="button"
+                  >
+                    <IconArchive class="h-4 w-4 sm:hidden" />
+                    <span class="sr-only sm:not-sr-only">{t.jobs.archiveJob}</span>
+                  </button>
+                )}
+                <a
+                  class:list={[
+                    "btn btn-sm relative max-sm:btn-square",
+                    {
+                      "btn-soft btn-primary": job.online_status === "rejected",
+                      "btn-ghost": job.online_status !== "rejected",
+                    },
+                  ]}
+                  href={`/job/${job.slug}/edit`}
+                >
+                  <IconPencil class="h-4 w-4 sm:hidden" />
+                  <span class="sr-only sm:not-sr-only">{t.jobs.editJob}</span>
+                </a>
+              </div>
+            )}
+          </li>
+        ))}
+      </ul>
+      {jobs
+        .filter((job) => canArchiveJob(job.online_status))
+        .map((job) => (
+          <ConfirmModal
+            confirmClass="btn btn-warning"
+            confirmLabel={t.jobs.archiveJob}
+            formAction={archiveFormAction}
+            hiddenInputs={[{ name: "id", value: job.id }]}
+            id={`archive-${job.id}`}
+            message={t.jobs.archiveConfirm}
+          />
+        ))}
+    </>
+  )}
+
+  <Pagination
+    nextLabel={t.jobs.paginationNext}
+    page={currentPage}
+    pageCount={pageCount}
+    prevLabel={t.jobs.paginationPrev}
+  />
 </PageLayout>
+
+<script>
+  const searchForm = document.getElementById("search-form") as HTMLFormElement | null
+  if (searchForm) {
+    // keep the URL clean: drop an empty search from the native GET submit
+    searchForm.addEventListener("formdata", (e) => {
+      if (String(e.formData.get("search") ?? "").trim() === "") e.formData.delete("search")
+    })
+    // "search" fires when the native ✕ clears the field
+    searchForm.addEventListener("search", (e) => {
+      if (!(e.target as HTMLInputElement).value) searchForm.requestSubmit()
+    })
+  }
+</script>

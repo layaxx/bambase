@@ -343,17 +343,17 @@ describe("jobs.update", () => {
     expect(mockUpdate.mock.calls[0][0].data).not.toHaveProperty("onlineStatus")
   })
 
-  it("leaves an archived job offer archived when its owner edits it", async () => {
+  it("refuses to edit an archived job offer", async () => {
     mockFindUnique.mockResolvedValue(makeExistingJob({ onlineStatus: "archived" }))
-    mockUpdate.mockResolvedValue({ slug: "updated-slug" })
 
-    await jobs.update(
-      { ...baseInput, id: "job-1", title: "Senior Developer" },
-      // @ts-expect-error - needed because of mocked defineAction function
-      makeContext("user-1")
-    )
-
-    expect(mockUpdate.mock.calls[0][0].data).not.toHaveProperty("onlineStatus")
+    await expect(
+      jobs.update(
+        { ...baseInput, id: "job-1", title: "Senior Developer" },
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext("user-1")
+      )
+    ).rejects.toMatchObject({ code: "CONFLICT" })
+    expect(mockUpdate).not.toHaveBeenCalled()
   })
 
   it("keeps a published job offer online when a moderator edits it", async () => {

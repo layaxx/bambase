@@ -29,3 +29,13 @@ export const JOB_STATUS_BADGE_CLASS: Record<JobStatus, string> = {
   rejected: "badge-error",
   archived: "badge-info",
 }
+
+/** Only listings that are live or still under review can be archived. */
+export function canArchiveJob(status: JobStatus): boolean {
+  return status === "published" || status === "submitted"
+}
+
+/** Archiving is final, thus an archived listing can no longer be edited. */
+export function canEditJob(status: JobStatus): boolean {
+  return status !== "archived"
+}

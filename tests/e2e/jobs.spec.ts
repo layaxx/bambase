@@ -92,7 +92,33 @@ test("archive job redirects to same page and shows status alert", async ({ page 
 
   await expect(page.locator('[role="alert"]').first()).toBeVisible()
   await expect(archiveBtn).not.toBeVisible()
+  await expect(page.getByRole("link", { name: "Bearbeiten" })).toHaveCount(0)
 
+  // An archived job cannot be edited, not even through the URL.
+  await page.goto(`${jobUrl}/edit`)
+  await expect(page).toHaveURL(jobUrl)
+
+  await deleteJob(page)
+})
+
+test("archive job from My Job Listings keeps the search and marks it archived", async ({
+  page,
+}) => {
+  const title = uniqueTitle()
+  const jobUrl = await createJob(page, title)
+
+  const listUrl = `/account/jobs?${new URLSearchParams({ search: title })}`
+  await page.goto(listUrl)
+  const row = page.locator("li", { hasText: title })
+  await row.getByRole("button", { name: "Archivieren" }).click()
+  await page.getByRole("dialog").getByRole("button", { name: "Archivieren" }).click()
+
+  await expect(page).toHaveURL(listUrl)
+  await expect(row).toContainText("Archiviert")
+  await expect(row.getByRole("button", { name: "Archivieren" })).toHaveCount(0)
+  await expect(row.getByRole("link", { name: "Bearbeiten" })).toHaveCount(0)
+
+  await page.goto(jobUrl)
   await deleteJob(page)
 })
 

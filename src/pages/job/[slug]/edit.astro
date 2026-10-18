@@ -2,6 +2,7 @@
 import { actions, isInputError } from "astro:actions"
 import PageLayout from "@/layouts/PageLayout.astro"
 import { fetchJobOffer } from "@/utils/api/job-offers"
+import { canEditJob } from "@/utils/job-status"
 import { useTranslations } from "@/i18n/translations"
 import IconArrowLeft from "@/components/icons/IconArrowLeft.astro"
 import JobForm from "@/components/jobs/JobForm.astro"
@@ -14,7 +15,9 @@ const { slug } = Astro.params
 const { data: job } = slug ? await fetchJobOffer(slug, { userId: me.id }) : { data: null }
 
 if (!job) return Astro.redirect("/jobs")
-if (job.ownerId !== me.id) return Astro.redirect(`/job/${job.slug}`)
+if (job.ownerId !== me.id || !canEditJob(job.online_status)) {
+  return Astro.redirect(`/job/${job.slug}`)
+}
 
 const result = Astro.getActionResult(actions.jobs.update)
 if (result?.data) return Astro.redirect(`/job/${result.data.slug}`)
