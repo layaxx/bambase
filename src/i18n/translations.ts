@@ -128,7 +128,8 @@ const de = {
     editTitle: "Stellenangebot bearbeiten",
     editJob: "Bearbeiten",
     archiveJob: "Archivieren",
-    archiveConfirm: "Angebot archivieren? Das kann nicht rückgängig gemacht werden.",
+    archiveConfirm:
+      "Angebot archivieren? Es wird dann nicht mehr öffentlich angezeigt. Das kann nicht rückgängig gemacht werden.",
     deleteJob: "Löschen",
     deleteConfirm: "Stellenangebot wirklich löschen?",
     updateJob: "Änderungen speichern",
@@ -711,7 +712,8 @@ const en: typeof de = {
     editTitle: "Edit job listing",
     editJob: "Edit",
     archiveJob: "Archive",
-    archiveConfirm: "Archive this job listing? This cannot be undone.",
+    archiveConfirm:
+      "Archive this job listing? It will be removed from the public listings. This cannot be undone.",
     deleteJob: "Delete",
     deleteConfirm: "Really delete this job listing?",
     updateJob: "Save changes",
