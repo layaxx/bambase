@@ -10,10 +10,11 @@ import {
 
 const mockFindMany = vi.hoisted(() => vi.fn())
 const mockFindFirst = vi.hoisted(() => vi.fn())
+const mockCount = vi.hoisted(() => vi.fn())
 
 vi.mock("../prisma", () => ({
   default: {
-    event: { findMany: mockFindMany, findFirst: mockFindFirst },
+    event: { findMany: mockFindMany, findFirst: mockFindFirst, count: mockCount },
   },
 }))
 
@@ -24,6 +25,7 @@ vi.mock("./cache", () => ({
 beforeEach(() => {
   mockFindMany.mockReset()
   mockFindFirst.mockReset()
+  mockCount.mockReset()
 })
 
 function makeRow(overrides: Partial<Record<string, unknown>> = {}) {
@@ -336,23 +338,48 @@ describe("fetchAllPublishedEventSlugs", () => {
 })
 
 describe("fetchMyEvents", () => {
-  it("filters by the given ownerId and sorts by start descending", async () => {
+  it("filters by the given ownerId, sorts by start descending and paginates", async () => {
     mockFindMany.mockResolvedValue([])
+    mockCount.mockResolvedValue(0)
 
-    await fetchMyEvents("user-42")
+    await fetchMyEvents("user-42", { page: 3, pageSize: 10 })
 
     expect(mockFindMany).toHaveBeenCalledWith({
       where: { ownerId: "user-42" },
       orderBy: { start: "desc" },
+      skip: 20,
+      take: 10,
     })
+    expect(mockCount).toHaveBeenCalledWith({ where: { ownerId: "user-42" } })
   })
 
-  it("returns mapped events from the response", async () => {
+  it("matches the search term against title and organizer", async () => {
+    mockFindMany.mockResolvedValue([])
+    mockCount.mockResolvedValue(0)
+
+    await fetchMyEvents("user-42", { search: "party" })
+
+    const where = {
+      ownerId: "user-42",
+      OR: [
+        { title: { contains: "party", mode: "insensitive" } },
+        { organizer: { contains: "party", mode: "insensitive" } },
+      ],
+    }
+    expect(mockFindMany).toHaveBeenCalledWith(expect.objectContaining({ where }))
+    expect(mockCount).toHaveBeenCalledWith({ where })
+  })
+
+  it("returns mapped events with page info", async () => {
     mockFindMany.mockResolvedValue([makeRow()])
+    mockCount.mockResolvedValue(45)
 
     const result = await fetchMyEvents("user-42")
 
-    expect(result).toEqual({ data: [mappedSampleEvent], apiDown: false })
+    expect(result).toEqual({
+      data: { events: [mappedSampleEvent], total: 45, page: 1, pageCount: 3 },
+      apiDown: false,
+    })
   })
 
   it("logs an error and returns an empty array when the query fails", async () => {
@@ -361,7 +388,7 @@ describe("fetchMyEvents", () => {
 
     const result = await fetchMyEvents("user-42")
 
-    expect(result).toEqual({ data: [], apiDown: true })
+    expect(result).toEqual({ data: { events: [], total: 0, page: 1, pageCount: 1 }, apiDown: true })
     expect(consoleSpy).toHaveBeenCalledWith(
       { err: expect.any(Error), operation: "Error fetching own events" },
       "data query failed"

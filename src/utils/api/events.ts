@@ -1,4 +1,5 @@
 import prisma from "../prisma"
+import type { Prisma } from "@/generated/prisma/client"
 import { withCache } from "./cache"
 import { apiResult, type ApiResult } from "./types"
 import { toMapLocation, type MapLocation } from "./locations"
@@ -189,13 +190,29 @@ export function fetchAllPublishedEventSlugs(limit = 500): Promise<ApiResult<stri
   })
 }
 
-export function fetchMyEvents(ownerId: string): Promise<ApiResult<Event[]>> {
-  return apiResult("Error fetching own events", [], async () => {
-    const rows = await prisma.event.findMany({
-      where: { ownerId },
-      orderBy: { start: "desc" },
-    })
-    return rows.map((row) => toEvent(row))
+export function fetchMyEvents(
+  ownerId: string,
+  { page = 1, pageSize = 20, search }: { page?: number; pageSize?: number; search?: string } = {}
+): Promise<ApiResult<EventPage>> {
+  const where: Prisma.EventWhereInput = { ownerId }
+  if (search) {
+    where.OR = [
+      { title: { contains: search, mode: "insensitive" } },
+      { organizer: { contains: search, mode: "insensitive" } },
+    ]
+  }
+  return apiResult("Error fetching own events", EMPTY_PAGE, async () => {
+    const [rows, total] = await Promise.all([
+      prisma.event.findMany({
+        where,
+        orderBy: { start: "desc" },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      prisma.event.count({ where }),
+    ])
+    const pageCount = Math.max(1, Math.ceil(total / pageSize))
+    return { events: rows.map((row) => toEvent(row)), total, page, pageCount }
   })
 }
 

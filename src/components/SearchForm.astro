@@ -4,11 +4,13 @@ import { useTranslations } from "@/i18n/translations"
 
 interface Props {
   class?: string
+  placeholder?: string
   value: string
 }
 
 const { class: className, value } = Astro.props
 const t = useTranslations(Astro.locals.locale)
+const placeholder = Astro.props.placeholder ?? t.jobs.filterSearch
 ---
 
 <form class:list={["mb-4", className]} id="search-form" method="get" role="search">
@@ -17,11 +19,11 @@ const t = useTranslations(Astro.locals.locale)
     <div class="relative flex-1">
       <IconSearch class="pointer-events-none absolute left-3 top-1/2 z-1 h-4 w-4 -translate-y-1/2 text-base-content/40" />
       <input
-        aria-label={t.jobs.filterSearch}
+        aria-label={placeholder}
         class="input input-bordered join-item w-full pl-9"
         enterkeyhint="search"
         name="search"
-        placeholder={t.jobs.filterSearch}
+        placeholder={placeholder}
         type="search"
         value={value}
       />

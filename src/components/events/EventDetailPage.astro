@@ -12,6 +12,8 @@ import Alert from "../Alert.astro"
 import EventCategoryBadge from "./EventCategoryBadge.astro"
 import type { Event } from "@/utils/api/events"
 import IconMapPin from "../icons/IconMapPin.astro"
+import IconPencil from "../icons/IconPencil.astro"
+import IconTrash from "../icons/IconTrash.astro"
 import { formatAddress } from "@/utils/map"
 
 type Props = {
@@ -32,25 +34,30 @@ const location = event?.map_location ?? event?.custom_location
 ---
 
 <>
-  <div class="mb-6 flex items-center justify-between gap-4">
+  <div class="mb-6 flex flex-wrap items-center justify-between gap-1 md:gap-4">
     <a class="btn btn-ghost btn-sm gap-1 pl-0" href="/events">
       <IconArrowLeft class="h-4 w-4" />
       {t.events.backToEvents}
     </a>
     {isOwner && (
-      <div class="flex items-center gap-2">
-        <a class="btn btn-ghost btn-sm" href="/account/events">
+      <div class="flex items-center gap-2 max-sm:w-full">
+        <a class="btn btn-ghost btn-sm max-sm:mr-auto max-sm:pl-0" href="/account/events">
           {t.auth.myEvents}
         </a>
-        <a class="btn btn-outline btn-sm" href={`/event/${event.slug}/edit`}>
-          {t.events.editEvent}
+        <a
+          class="btn btn-outline btn-sm relative max-sm:btn-square"
+          href={`/event/${event.slug}/edit`}
+        >
+          <IconPencil class="h-4 w-4 sm:hidden" />
+          <span class="sr-only sm:not-sr-only">{t.events.editEvent}</span>
         </a>
         <button
-          class="btn btn-outline btn-error btn-sm"
+          class="btn btn-outline btn-error btn-sm relative max-sm:btn-square"
           onclick="document.getElementById('deleteEventModal').showModal()"
           type="button"
         >
-          {t.events.deleteEvent}
+          <IconTrash class="h-4 w-4 sm:hidden" />
+          <span class="sr-only sm:not-sr-only">{t.events.deleteEvent}</span>
         </button>
       </div>
     )}
