@@ -34,7 +34,9 @@ if (reportResult) {
 const hasBeenReported = Astro.url.searchParams.get("reported")
 
 const description = event?.description?.slice(0, 155)
-const ogImage = event ? `${Astro.url.origin}/api/og/event/${event.slug}.png` : undefined
+// The image route only renders published events, thus a hidden one keeps the default image.
+const ogImage =
+  event && !event.hidden ? `${Astro.url.origin}/api/og/event/${event.slug}.png` : undefined
 ---
 
 <PageLayout description={description} ogImage={ogImage} title={event?.title ?? t.events.pageTitle}>

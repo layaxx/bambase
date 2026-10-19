@@ -1,4 +1,5 @@
 ---
+import { parsePageParam } from "@/utils/pagination"
 import { actions } from "astro:actions"
 import PageLayout from "@/layouts/PageLayout.astro"
 import IconArrowLeft from "@/components/icons/IconArrowLeft.astro"
@@ -31,11 +32,11 @@ if (archiveResult && !archiveResult.error) {
 const archiveFormAction = `${actions.jobs.archive}${listParams.size ? `&${listParams}` : ""}`
 
 const search = Astro.url.searchParams.get("search")?.trim() ?? ""
-const rawPage = parseInt(Astro.url.searchParams.get("page") ?? "1", 10)
-const currentPage = isNaN(rawPage) || rawPage < 1 ? 1 : rawPage
+const currentPage = parsePageParam(Astro.url)
 const { data, apiDown } = await fetchMyJobOffers(user.id, { page: currentPage, search })
 const { jobs, total, pageCount } = data
-if (!apiDown && currentPage > pageCount) {
+// A failed archive renders its error here, as a redirect would drop it.
+if (!apiDown && !archiveResult?.error && currentPage > pageCount) {
   listParams.set("page", String(pageCount))
   return Astro.redirect(`/account/jobs?${listParams}`)
 }

@@ -14,6 +14,7 @@ import {
 import prisma from "@/utils/prisma"
 import { httpUrl } from "./schemas"
 import { JobOnlineStatus } from "@/generated/prisma/enums"
+import { Prisma } from "@/generated/prisma/client"
 import { getLogger } from "@/utils/logger"
 import { notifyJobOwner } from "@/utils/job-notifications"
 
@@ -28,6 +29,22 @@ const JOB_OFFER_LIFETIME_DAYS = 30
  */
 const MODERATED_STATUSES: JobOnlineStatus[] = [JobOnlineStatus.published, JobOnlineStatus.rejected]
 
+/**
+ * Converts the error of a write that is guarded by the status of the offer. There, P2025 means
+ * that the offer was deleted or changed its status after the check, thus it becomes CONFLICT.
+ */
+function guardedWriteError(error: unknown, logLabel: string, message: string): ActionError {
+  if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
+    getLogger().warn({ operation: logLabel }, "job changed concurrently")
+    return new ActionError({
+      code: "CONFLICT",
+      message:
+        "Die Stelle wurde zwischenzeitlich geändert oder gelöscht. Bitte lade die Seite neu.",
+    })
+  }
+  return mutationError(error, logLabel, message)
+}
+
 type ModerationContext = { locals: Pick<App.Locals, "user">; url: URL }
 
 /** Publishes or rejects one offer and mails its owner. Returns false if the update failed. */
@@ -40,8 +57,9 @@ async function moderate(
   const verb = status === "published" ? "approve" : "reject"
   let job
   try {
+    // Archiving is final, thus a stale moderation queue must not publish an archived offer again.
     job = await prisma.jobOffer.update({
-      where: { id },
+      where: { id, onlineStatus: { not: JobOnlineStatus.archived } },
       data: { onlineStatus: status, rejectionReason: reason },
       select: {
         slug: true,
@@ -171,13 +189,16 @@ export const jobs = {
       }
 
       try {
-        await prisma.jobOffer.update({ where: { id }, data: { onlineStatus: "archived" } })
-      } catch (error) {
-        getLogger().error({ err: error, jobOfferId: id }, "job archive failed")
-        throw new ActionError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Archivieren fehlgeschlagen.",
+        // The status condition guards against a moderation landing after the check above.
+        await prisma.jobOffer.update({
+          where: {
+            id,
+            onlineStatus: { in: [JobOnlineStatus.published, JobOnlineStatus.submitted] },
+          },
+          data: { onlineStatus: JobOnlineStatus.archived },
         })
+      } catch (error) {
+        throw guardedWriteError(error, "Job archive failed", "Archivieren fehlgeschlagen.")
       }
 
       getLogger().info({ jobOfferId: id }, "job archived")
@@ -245,9 +266,11 @@ export const jobs = {
         canModerateJobOffers,
         "Aktualisierung fehlgeschlagen."
       )
-      const archivedMessage = "Archivierte Stellen können nicht bearbeitet werden."
       if (!canEditJob(existing.onlineStatus)) {
-        throw new ActionError({ code: "CONFLICT", message: archivedMessage })
+        throw new ActionError({
+          code: "CONFLICT",
+          message: "Archivierte Stellen können nicht bearbeitet werden.",
+        })
       }
 
       const content = {
@@ -281,12 +304,7 @@ export const jobs = {
           },
         })
       } catch (error) {
-        throw mutationError(
-          error,
-          "Job update failed",
-          "Aktualisierung fehlgeschlagen.",
-          archivedMessage
-        )
+        throw guardedWriteError(error, "Job update failed", "Aktualisierung fehlgeschlagen.")
       }
 
       invalidateCacheByPrefix("job-offers:")

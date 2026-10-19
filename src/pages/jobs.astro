@@ -1,4 +1,5 @@
 ---
+import { parsePageParam } from "@/utils/pagination"
 import PageLayout from "@/layouts/PageLayout.astro"
 import PageHeader from "@/components/PageHeader.astro"
 import IconBriefcase from "@/components/icons/IconBriefcase.astro"
@@ -29,14 +30,13 @@ const rawTypes = Astro.url.searchParams.get("type")?.split(",").filter(Boolean) 
 const rawFields = Astro.url.searchParams.get("field")?.split(",").filter(Boolean) ?? []
 const rawWorkModes = Astro.url.searchParams.get("work_mode")?.split(",").filter(Boolean) ?? []
 const search = Astro.url.searchParams.get("search")?.trim() ?? ""
-const rawPage = parseInt(Astro.url.searchParams.get("page") ?? "1", 10)
 
 const types = rawTypes.filter((v) => (JOB_TYPES as readonly string[]).includes(v)) as JobType[]
 const fields = rawFields.filter((v) => (JOB_FIELDS as readonly string[]).includes(v)) as JobField[]
 const workModes = rawWorkModes.filter((v) =>
   (WORK_MODES as readonly string[]).includes(v)
 ) as WorkMode[]
-const currentPage = isNaN(rawPage) || rawPage < 1 ? 1 : rawPage
+const currentPage = parsePageParam(Astro.url)
 
 const hasActiveFilter =
   types.length > 0 || fields.length > 0 || workModes.length > 0 || search !== ""

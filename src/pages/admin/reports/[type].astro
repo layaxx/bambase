@@ -1,4 +1,5 @@
 ---
+import { parsePageParam } from "@/utils/pagination"
 import { actions } from "astro:actions"
 import PageLayout from "@/layouts/PageLayout.astro"
 import ReportGroupList from "@/components/ReportGroupList.astro"
@@ -49,8 +50,7 @@ const rawStatus = Astro.url.searchParams.get("status")
 const statusFilter: "open" | "resolved" | "all" =
   rawStatus === "resolved" || rawStatus === "all" ? rawStatus : "open"
 
-const rawPage = parseInt(Astro.url.searchParams.get("page") ?? "1", 10)
-const currentPage = isNaN(rawPage) || rawPage < 1 ? 1 : rawPage
+const currentPage = parsePageParam(Astro.url)
 
 const { data, apiDown } = await fetchReportGroupsForAdmin({
   caseStatus: statusFilter === "all" ? undefined : statusFilter,

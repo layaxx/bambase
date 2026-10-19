@@ -372,7 +372,7 @@ describe("jobs.update", () => {
         // @ts-expect-error - needed because of mocked defineAction function
         makeContext("user-1")
       )
-    ).rejects.toMatchObject({ message: "Archivierte Stellen können nicht bearbeitet werden." })
+    ).rejects.toMatchObject({ code: "CONFLICT" })
   })
 
   it("keeps a published job offer online when a moderator edits it", async () => {
@@ -546,7 +546,7 @@ describe("jobs.archive", () => {
     )
 
     expect(mockUpdate).toHaveBeenCalledWith({
-      where: { id: "job-1" },
+      where: { id: "job-1", onlineStatus: { in: ["published", "submitted"] } },
       data: { onlineStatus: "archived" },
     })
     expect(result).toEqual({})
@@ -563,6 +563,25 @@ describe("jobs.archive", () => {
       )
     ).rejects.toMatchObject({ code: "CONFLICT" })
     expect(mockUpdate).not.toHaveBeenCalled()
+  })
+
+  it("throws CONFLICT when the listing was moderated after it was read", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {})
+    mockFindUnique.mockResolvedValue({ ownerId: "user-1", onlineStatus: "submitted" })
+    mockUpdate.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Record to update not found", {
+        code: "P2025",
+        clientVersion: "test",
+      })
+    )
+
+    await expect(
+      jobs.archive(
+        { id: "job-1" },
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext("user-1")
+      )
+    ).rejects.toMatchObject({ code: "CONFLICT" })
   })
 
   it("throws INTERNAL_SERVER_ERROR when the update fails", async () => {
@@ -614,7 +633,7 @@ describe("jobs.approve", () => {
     )
 
     expect(mockUpdate).toHaveBeenCalledWith({
-      where: { id: "job-1" },
+      where: { id: "job-1", onlineStatus: { not: "archived" } },
       data: { onlineStatus: "published", rejectionReason: null },
       select: expect.any(Object),
     })
@@ -632,7 +651,9 @@ describe("jobs.approve", () => {
     )
 
     expect(mockUpdate).toHaveBeenCalledTimes(2)
-    expect(mockUpdate).toHaveBeenLastCalledWith(expect.objectContaining({ where: { id: "job-2" } }))
+    expect(mockUpdate).toHaveBeenLastCalledWith(
+      expect.objectContaining({ where: { id: "job-2", onlineStatus: { not: "archived" } } })
+    )
   })
 
   it("throws INTERNAL_SERVER_ERROR when the update fails", async () => {
@@ -701,7 +722,7 @@ describe("jobs.reject", () => {
     )
 
     expect(mockUpdate).toHaveBeenCalledWith({
-      where: { id: "job-1" },
+      where: { id: "job-1", onlineStatus: { not: "archived" } },
       data: { onlineStatus: "rejected", rejectionReason: "Doesn't meet posting guidelines" },
       select: expect.any(Object),
     })
