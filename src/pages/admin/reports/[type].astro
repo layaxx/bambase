@@ -1,5 +1,5 @@
 ---
-import { parsePageParam } from "@/utils/pagination"
+import { lastPageRedirect, parsePageParam } from "@/utils/pagination"
 import { actions } from "astro:actions"
 import PageLayout from "@/layouts/PageLayout.astro"
 import ReportGroupList from "@/components/ReportGroupList.astro"
@@ -59,6 +59,8 @@ const { data, apiDown } = await fetchReportGroupsForAdmin({
   pageSize: PAGE_SIZE,
 })
 const { groups, page: actualPage, pageCount } = data
+const lastPage = lastPageRedirect(Astro.url, actualPage, pageCount)
+if (!apiDown && lastPage) return Astro.redirect(lastPage)
 ---
 
 <PageLayout title={config.title}>

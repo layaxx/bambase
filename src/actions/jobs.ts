@@ -14,7 +14,6 @@ import {
 import prisma from "@/utils/prisma"
 import { httpUrl } from "./schemas"
 import { JobOnlineStatus } from "@/generated/prisma/enums"
-import { Prisma } from "@/generated/prisma/client"
 import { getLogger } from "@/utils/logger"
 import { notifyJobOwner } from "@/utils/job-notifications"
 
@@ -30,30 +29,21 @@ const JOB_OFFER_LIFETIME_DAYS = 30
 const MODERATED_STATUSES: JobOnlineStatus[] = [JobOnlineStatus.published, JobOnlineStatus.rejected]
 
 /**
- * Converts the error of a write that is guarded by the status of the offer. There, P2025 means
- * that the offer was deleted or changed its status after the check, thus it becomes CONFLICT.
+ * The P2025 message of a write that is guarded by the status of the offer. There, P2025 means
+ * that the offer was deleted or changed its status after the check.
  */
-function guardedWriteError(error: unknown, logLabel: string, message: string): ActionError {
-  if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
-    getLogger().warn({ operation: logLabel }, "job changed concurrently")
-    return new ActionError({
-      code: "CONFLICT",
-      message:
-        "Die Stelle wurde zwischenzeitlich geändert oder gelöscht. Bitte lade die Seite neu.",
-    })
-  }
-  return mutationError(error, logLabel, message)
-}
+const STALE_MESSAGE =
+  "Die Stelle wurde zwischenzeitlich geändert oder gelöscht. Bitte lade die Seite neu."
 
 type ModerationContext = { locals: Pick<App.Locals, "user">; url: URL }
 
-/** Publishes or rejects one offer and mails its owner. Returns false if the update failed. */
+/** Publishes or rejects one offer and mails its owner. Returns the error if the update failed. */
 async function moderate(
   id: string,
   status: "published" | "rejected",
   reason: string | null,
   context: ModerationContext
-): Promise<boolean> {
+): Promise<ActionError | null> {
   const verb = status === "published" ? "approve" : "reject"
   let job
   try {
@@ -69,15 +59,16 @@ async function moderate(
       },
     })
   } catch (error) {
-    getLogger().error({ err: error, jobOfferId: id }, `job ${verb} failed`)
-    return false
+    const failMessage =
+      status === "published" ? "Genehmigen fehlgeschlagen." : "Ablehnen fehlgeschlagen."
+    return mutationError(error, `Job ${verb} failed`, failMessage, STALE_MESSAGE)
   }
 
   getLogger().info({ jobOfferId: id }, `job ${verb}d`)
   // A moderator who decides on an own offer needs no mail about it.
   const to = job.owner && job.owner.id !== context.locals.user?.id ? job.owner.email : undefined
   await notifyJobOwner(to, job, status, context.url.origin)
-  return true
+  return null
 }
 
 /**
@@ -93,13 +84,14 @@ async function moderateAll(
 ): Promise<void> {
   const results = await Promise.all(ids.map((id) => moderate(id, status, reason, context)))
   invalidateCacheByPrefix("job-offers:")
-  const failed = results.filter((ok) => !ok).length
-  if (failed === 0) return
-  const failMessage =
-    status === "published" ? "Genehmigen fehlgeschlagen." : "Ablehnen fehlgeschlagen."
+  const errors = results.filter((error) => error !== null)
+  if (errors.length === 0) return
+  // A stale offer only needs a reload, thus each other failure is the one to report.
+  const error = errors.find((e) => e.code !== "NOT_FOUND") ?? errors[0]
   throw new ActionError({
-    code: "INTERNAL_SERVER_ERROR",
-    message: ids.length === 1 ? failMessage : `${failMessage} (${failed} von ${ids.length})`,
+    code: error.code,
+    message:
+      ids.length === 1 ? error.message : `${error.message} (${errors.length} von ${ids.length})`,
   })
 }
 
@@ -198,7 +190,12 @@ export const jobs = {
           data: { onlineStatus: JobOnlineStatus.archived },
         })
       } catch (error) {
-        throw guardedWriteError(error, "Job archive failed", "Archivieren fehlgeschlagen.")
+        throw mutationError(
+          error,
+          "Job archive failed",
+          "Archivieren fehlgeschlagen.",
+          STALE_MESSAGE
+        )
       }
 
       getLogger().info({ jobOfferId: id }, "job archived")
@@ -304,7 +301,12 @@ export const jobs = {
           },
         })
       } catch (error) {
-        throw guardedWriteError(error, "Job update failed", "Aktualisierung fehlgeschlagen.")
+        throw mutationError(
+          error,
+          "Job update failed",
+          "Aktualisierung fehlgeschlagen.",
+          STALE_MESSAGE
+        )
       }
 
       invalidateCacheByPrefix("job-offers:")

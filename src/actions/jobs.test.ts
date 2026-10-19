@@ -372,7 +372,7 @@ describe("jobs.update", () => {
         // @ts-expect-error - needed because of mocked defineAction function
         makeContext("user-1")
       )
-    ).rejects.toMatchObject({ code: "CONFLICT" })
+    ).rejects.toMatchObject({ code: "NOT_FOUND" })
   })
 
   it("keeps a published job offer online when a moderator edits it", async () => {
@@ -565,8 +565,8 @@ describe("jobs.archive", () => {
     expect(mockUpdate).not.toHaveBeenCalled()
   })
 
-  it("throws CONFLICT when the listing was moderated after it was read", async () => {
-    vi.spyOn(console, "warn").mockImplementation(() => {})
+  it("throws NOT_FOUND when the listing was moderated after it was read", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {})
     mockFindUnique.mockResolvedValue({ ownerId: "user-1", onlineStatus: "submitted" })
     mockUpdate.mockRejectedValue(
       new Prisma.PrismaClientKnownRequestError("Record to update not found", {
@@ -581,7 +581,7 @@ describe("jobs.archive", () => {
         // @ts-expect-error - needed because of mocked defineAction function
         makeContext("user-1")
       )
-    ).rejects.toMatchObject({ code: "CONFLICT" })
+    ).rejects.toMatchObject({ code: "NOT_FOUND" })
   })
 
   it("throws INTERNAL_SERVER_ERROR when the update fails", async () => {
@@ -669,6 +669,25 @@ describe("jobs.approve", () => {
       )
     ).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" })
   })
+  it("tells the moderator to reload when the offer was archived meanwhile", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {})
+    mockCanModerateJobOffers.mockResolvedValue(true)
+    mockUpdate.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Record to update not found", {
+        code: "P2025",
+        clientVersion: "test",
+      })
+    )
+
+    await expect(
+      jobs.approve(
+        { id: ["job-1"] },
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext("moderator-1", true, "jobModerator")
+      )
+    ).rejects.toMatchObject({ code: "NOT_FOUND", message: expect.stringContaining("neu") })
+  })
+
   it("saves the other job offers when one update fails and reports the count", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {})
     mockCanModerateJobOffers.mockResolvedValue(true)

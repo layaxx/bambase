@@ -1,5 +1,5 @@
 ---
-import { parsePageParam } from "@/utils/pagination"
+import { lastPageRedirect, parsePageParam } from "@/utils/pagination"
 import { actions } from "astro:actions"
 import type { Prisma } from "@/generated/prisma/client"
 import { formatRelativeDate } from "@/utils/job-formatting"
@@ -136,14 +136,8 @@ const [totalUsers, verifiedCount, bannedCount, matchedCount, pagedUsers] = await
 
 const pageCount = Math.max(1, Math.ceil(matchedCount / PAGE_SIZE))
 
-// A filter or an old bookmark can make `page` larger than the last page of results. Go back
-// to page 1, because the table is empty although `matchedCount` is not 0.
-if (pagedUsers.length === 0 && matchedCount > 0) {
-  const redirectParams = new URLSearchParams(Astro.url.searchParams)
-  redirectParams.delete("page")
-  const qs = redirectParams.toString()
-  return Astro.redirect(qs ? `?${qs}` : Astro.url.pathname)
-}
+const lastPage = lastPageRedirect(Astro.url, currentPage, pageCount)
+if (lastPage) return Astro.redirect(lastPage)
 
 const lastActiveRows = pagedUsers.length
   ? await prisma.session.groupBy({

@@ -94,6 +94,20 @@ export type EventPage = {
 
 const EMPTY_PAGE: EventPage = { events: [], total: 0, page: 1, pageCount: 1 }
 
+async function findEventPage(
+  where: Prisma.EventWhereInput,
+  orderBy: Prisma.EventOrderByWithRelationInput,
+  page: number,
+  pageSize: number
+): Promise<EventPage> {
+  const [rows, total] = await Promise.all([
+    prisma.event.findMany({ where, orderBy, skip: (page - 1) * pageSize, take: pageSize }),
+    prisma.event.count({ where }),
+  ])
+  const pageCount = Math.max(1, Math.ceil(total / pageSize))
+  return { events: rows.map((row) => toEvent(row)), total, page, pageCount }
+}
+
 export function fetchEventsPaginated(filter: EventsFilter = {}): Promise<ApiResult<EventPage>> {
   const { category, dateFilter = "upcoming", page = 1, pageSize = 15 } = filter
 
@@ -109,22 +123,9 @@ export function fetchEventsPaginated(filter: EventsFilter = {}): Promise<ApiResu
   else if (dateFilter === "month") where.start = { lte: new Date(now.getTime() + 31 * 86_400_000) }
 
   const key = `events:paginated:${JSON.stringify({ category, dateFilter, page, pageSize })}`
-  return apiResult("Error fetching events (paginated)", EMPTY_PAGE, async () => {
-    const { rows, total } = await withCache(key, async () => {
-      const [rows, total] = await Promise.all([
-        prisma.event.findMany({
-          where,
-          orderBy: { start: "asc" },
-          skip: (page - 1) * pageSize,
-          take: pageSize,
-        }),
-        prisma.event.count({ where }),
-      ])
-      return { rows, total }
-    })
-    const pageCount = Math.max(1, Math.ceil(total / pageSize))
-    return { events: rows.map((row) => toEvent(row)), total, page, pageCount }
-  })
+  return apiResult("Error fetching events (paginated)", EMPTY_PAGE, () =>
+    withCache(key, () => findEventPage(where, { start: "asc" }, page, pageSize))
+  )
 }
 
 export function fetchOngoingOrUpcomingEvents(limit = 100): Promise<ApiResult<Event[]>> {
@@ -204,19 +205,9 @@ export function fetchMyEvents(
       { organizer: { contains: search, mode: "insensitive" } },
     ]
   }
-  return apiResult("Error fetching own events", EMPTY_PAGE, async () => {
-    const [rows, total] = await Promise.all([
-      prisma.event.findMany({
-        where,
-        orderBy: { start: "desc" },
-        skip: (page - 1) * pageSize,
-        take: pageSize,
-      }),
-      prisma.event.count({ where }),
-    ])
-    const pageCount = Math.max(1, Math.ceil(total / pageSize))
-    return { events: rows.map((row) => toEvent(row)), total, page, pageCount }
-  })
+  return apiResult("Error fetching own events", EMPTY_PAGE, () =>
+    findEventPage(where, { start: "desc" }, page, pageSize)
+  )
 }
 
 /** Fetches one event for the admin editor, also if the event is hidden. */

@@ -1,5 +1,5 @@
 ---
-import { parsePageParam } from "@/utils/pagination"
+import { lastPageRedirect, parsePageParam } from "@/utils/pagination"
 import { actions } from "astro:actions"
 import PageLayout from "@/layouts/PageLayout.astro"
 import IconArrowLeft from "@/components/icons/IconArrowLeft.astro"
@@ -11,7 +11,7 @@ import Pagination from "@/components/Pagination.astro"
 import SearchForm from "@/components/SearchForm.astro"
 import ConfirmModal from "@/components/ConfirmModal.astro"
 import Alert from "@/components/Alert.astro"
-import NoJobsFound from "@/components/jobs/NoJobsFound.astro"
+import EmptyState from "@/components/EmptyState.astro"
 import { fetchMyJobOffers } from "@/utils/api/job-offers"
 import { JOB_STATUS_BADGE_CLASS, canArchiveJob, canEditJob } from "@/utils/job-status"
 import { formatJobLocation, formatRelativeDate } from "@/utils/job-formatting"
@@ -35,11 +35,9 @@ const search = Astro.url.searchParams.get("search")?.trim() ?? ""
 const currentPage = parsePageParam(Astro.url)
 const { data, apiDown } = await fetchMyJobOffers(user.id, { page: currentPage, search })
 const { jobs, total, pageCount } = data
+const lastPage = lastPageRedirect(Astro.url, currentPage, pageCount)
 // A failed archive renders its error here, as a redirect would drop it.
-if (!apiDown && !archiveResult?.error && currentPage > pageCount) {
-  listParams.set("page", String(pageCount))
-  return Astro.redirect(`/account/jobs?${listParams}`)
-}
+if (!apiDown && !archiveResult?.error && lastPage) return Astro.redirect(lastPage)
 // No listings at all, as opposed to none matching the search.
 const hasNoJobs = !apiDown && total === 0 && !search
 
@@ -75,17 +73,19 @@ const statusLabel: Record<string, string> = {
   {apiDown ? (
     <ApiDownBanner />
   ) : jobs.length === 0 && search ? (
-    <NoJobsFound clearUrl="/account/jobs" />
+    <EmptyState
+      action={{ href: "/account/jobs", label: t.jobs.clearFilters }}
+      icon={IconBriefcase}
+      text={t.jobs.noJobsFoundHint}
+      title={t.jobs.noJobsFoundTitle}
+    />
   ) : hasNoJobs ? (
-    <div class="flex flex-col items-center gap-4 rounded-xl border border-dashed border-base-300 bg-base-100 p-10 text-center">
-      <div class="flex h-12 w-12 items-center justify-center rounded-lg badge-soft badge-success">
-        <IconBriefcase class="h-6 w-6" />
-      </div>
-      <p class="text-base-content/70">{t.auth.noMyJobOffers}</p>
-      <a class="btn btn-primary btn-sm" href="/job/new">
-        {t.jobs.postJob}
-      </a>
-    </div>
+    <EmptyState
+      action={{ href: "/job/new", label: t.jobs.postJob }}
+      badge="badge-success"
+      icon={IconBriefcase}
+      text={t.auth.noMyJobOffers}
+    />
   ) : (
     <>
       <ul class="list rounded-box border border-base-300 bg-base-100">

@@ -23,10 +23,10 @@ const { data: job } = slug
   ? await fetchJobOffer(slug, { userId: user.id, isModerator: true })
   : { data: null }
 if (!job) return Astro.redirect("/admin/jobs")
-if (!canEditJob(job.online_status)) return Astro.redirect(`/job/${job.slug}`)
-
 const result = Astro.getActionResult(actions.jobs.update)
 if (result?.data) return Astro.redirect("/admin/jobs")
+// A save that failed because the job was archived meanwhile renders its error and keeps the input.
+if (!canEditJob(job.online_status) && !result?.error) return Astro.redirect(`/job/${job.slug}`)
 
 const inputErrors = isInputError(result?.error) ? result.error.fields : {}
 const generalError = result?.error && !isInputError(result.error) ? result.error.message : null
