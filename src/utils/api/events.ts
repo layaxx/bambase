@@ -1,6 +1,7 @@
 import prisma from "../prisma"
 import type { Prisma } from "@/generated/prisma/client"
 import { withCache } from "./cache"
+import { findPage } from "../pagination"
 import { apiResult, type ApiResult } from "./types"
 import { toMapLocation, type MapLocation } from "./locations"
 import { EventCategory } from "@/generated/prisma/enums"
@@ -100,12 +101,13 @@ async function findEventPage(
   page: number,
   pageSize: number
 ): Promise<EventPage> {
-  const [rows, total] = await Promise.all([
-    prisma.event.findMany({ where, orderBy, skip: (page - 1) * pageSize, take: pageSize }),
-    prisma.event.count({ where }),
-  ])
-  const pageCount = Math.max(1, Math.ceil(total / pageSize))
-  return { events: rows.map((row) => toEvent(row)), total, page, pageCount }
+  const { rows, ...rest } = await findPage(
+    page,
+    pageSize,
+    (window) => prisma.event.findMany({ where, orderBy, ...window }),
+    () => prisma.event.count({ where })
+  )
+  return { events: rows.map((row) => toEvent(row)), ...rest }
 }
 
 export function fetchEventsPaginated(filter: EventsFilter = {}): Promise<ApiResult<EventPage>> {

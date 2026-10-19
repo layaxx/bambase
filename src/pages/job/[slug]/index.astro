@@ -66,6 +66,7 @@ const archiveResult = Astro.getActionResult(actions.jobs.archive)
 if (archiveResult?.data !== undefined && !archiveResult.error) {
   return Astro.redirect(Astro.url.pathname)
 }
+const actionError = archiveResult?.error ?? deleteResult?.error
 
 const toExternalUrl = (url: string) => (/^https?:\/\//i.test(url) ? url : `https://${url}`)
 
@@ -133,6 +134,7 @@ const ogImage =
       </div>
 
       {justSubmitted && <Alert variant="success">{t.jobs.submitSuccess}</Alert>}
+      {actionError && <Alert variant="error">{actionError.message}</Alert>}
       {job.online_status !== "published" && (
         <Alert variant={JOB_STATUS_ALERT_VARIANT[job.online_status] ?? "neutral"}>
           {statusLabel[job.online_status] ?? job.online_status} – {t.jobs.notPublishedHint}

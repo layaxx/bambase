@@ -20,3 +20,17 @@ export function lastPageRedirect(url: URL, page: number, pageCount: number): str
   else params.delete("page")
   return params.size ? `${url.pathname}?${params}` : url.pathname
 }
+
+/** Loads one page of rows plus the total. `pageCount` is at least 1, so an empty list is page 1 of 1. */
+export async function findPage<T>(
+  page: number,
+  pageSize: number,
+  findMany: (window: { skip: number; take: number }) => Promise<T[]>,
+  count: () => Promise<number>
+): Promise<{ rows: T[]; total: number; page: number; pageCount: number }> {
+  const [rows, total] = await Promise.all([
+    findMany({ skip: (page - 1) * pageSize, take: pageSize }),
+    count(),
+  ])
+  return { rows, total, page, pageCount: Math.max(1, Math.ceil(total / pageSize)) }
+}

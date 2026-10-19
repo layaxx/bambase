@@ -1,6 +1,7 @@
 import prisma from "../prisma"
 import type { Prisma } from "@/generated/prisma/client"
 import { withCache } from "./cache"
+import { findPage } from "../pagination"
 import { apiResult, type ApiResult } from "./types"
 import { JobType, JobField, WorkMode, JobOnlineStatus } from "@/generated/prisma/enums"
 import type { JobOfferModel } from "@/generated/prisma/models"
@@ -96,17 +97,13 @@ async function findJobPage(
   page: number,
   pageSize: number
 ): Promise<JobOfferPage> {
-  const [rows, total] = await Promise.all([
-    prisma.jobOffer.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-    }),
-    prisma.jobOffer.count({ where }),
-  ])
-  const pageCount = Math.max(1, Math.ceil(total / pageSize))
-  return { jobs: rows.map((row) => toJobOffer(row)), total, page, pageCount }
+  const { rows, ...rest } = await findPage(
+    page,
+    pageSize,
+    (window) => prisma.jobOffer.findMany({ where, orderBy: { createdAt: "desc" }, ...window }),
+    () => prisma.jobOffer.count({ where })
+  )
+  return { jobs: rows.map((row) => toJobOffer(row)), ...rest }
 }
 
 export function fetchJobOffersPaginated(

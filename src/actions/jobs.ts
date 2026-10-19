@@ -4,7 +4,7 @@ import { JOB_TYPES, JOB_FIELDS, WORK_MODES } from "@/utils/api/job-offers"
 import { invalidateCacheByPrefix } from "@/utils/api/cache"
 import { createWithUniqueSlug } from "@/utils/slugify"
 import { canModerateJobOffers } from "@/utils/authz"
-import { canArchiveJob, canEditJob } from "@/utils/job-status"
+import { ARCHIVABLE_STATUSES, canArchiveJob, canEditJob } from "@/utils/job-status"
 import {
   requireUserId,
   requirePermission,
@@ -185,7 +185,7 @@ export const jobs = {
         await prisma.jobOffer.update({
           where: {
             id,
-            onlineStatus: { in: [JobOnlineStatus.published, JobOnlineStatus.submitted] },
+            onlineStatus: { in: ARCHIVABLE_STATUSES },
           },
           data: { onlineStatus: JobOnlineStatus.archived },
         })

@@ -1,8 +1,8 @@
 ---
-import type { AstroComponentFactory } from "astro/runtime/server/index.js"
+import type IconBase from "./icons/IconBase.astro"
 
 interface Props {
-  icon: AstroComponentFactory
+  icon: typeof IconBase
   text: string
   title?: string
   /** A button below the text, for example to clear a search or to create the first item. */
