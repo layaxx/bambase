@@ -284,7 +284,7 @@ describe("jobs.update", () => {
 
     expect(mockUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { id: "job-1" },
+        where: { id: "job-1", onlineStatus: { not: "archived" } },
         data: expect.objectContaining({ title: "Senior Developer" }),
       })
     )
@@ -354,6 +354,25 @@ describe("jobs.update", () => {
       )
     ).rejects.toMatchObject({ code: "CONFLICT" })
     expect(mockUpdate).not.toHaveBeenCalled()
+  })
+
+  it("refuses the edit when the job offer was archived after it was read", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {})
+    mockFindUnique.mockResolvedValue(makeExistingJob())
+    mockUpdate.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Record to update not found", {
+        code: "P2025",
+        clientVersion: "test",
+      })
+    )
+
+    await expect(
+      jobs.update(
+        { ...baseInput, id: "job-1", title: "Senior Developer" },
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext("user-1")
+      )
+    ).rejects.toMatchObject({ message: "Archivierte Stellen können nicht bearbeitet werden." })
   })
 
   it("keeps a published job offer online when a moderator edits it", async () => {
@@ -517,7 +536,7 @@ describe("jobs.archive", () => {
   })
 
   it("sets onlineStatus to 'archived' when the user is the owner", async () => {
-    mockFindUnique.mockResolvedValue({ ownerId: "user-1" })
+    mockFindUnique.mockResolvedValue({ ownerId: "user-1", onlineStatus: "published" })
     mockUpdate.mockResolvedValue({})
 
     const result = await jobs.archive(
@@ -533,9 +552,22 @@ describe("jobs.archive", () => {
     expect(result).toEqual({})
   })
 
+  it("throws CONFLICT for a listing that cannot be archived", async () => {
+    mockFindUnique.mockResolvedValue({ ownerId: "user-1", onlineStatus: "rejected" })
+
+    await expect(
+      jobs.archive(
+        { id: "job-1" },
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext("user-1")
+      )
+    ).rejects.toMatchObject({ code: "CONFLICT" })
+    expect(mockUpdate).not.toHaveBeenCalled()
+  })
+
   it("throws INTERNAL_SERVER_ERROR when the update fails", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {})
-    mockFindUnique.mockResolvedValue({ ownerId: "user-1" })
+    mockFindUnique.mockResolvedValue({ ownerId: "user-1", onlineStatus: "published" })
     mockUpdate.mockRejectedValue(new Error("db error"))
 
     await expect(

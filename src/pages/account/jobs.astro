@@ -10,6 +10,7 @@ import Pagination from "@/components/Pagination.astro"
 import SearchForm from "@/components/SearchForm.astro"
 import ConfirmModal from "@/components/ConfirmModal.astro"
 import Alert from "@/components/Alert.astro"
+import NoJobsFound from "@/components/jobs/NoJobsFound.astro"
 import { fetchMyJobOffers } from "@/utils/api/job-offers"
 import { JOB_STATUS_BADGE_CLASS, canArchiveJob, canEditJob } from "@/utils/job-status"
 import { formatJobLocation, formatRelativeDate } from "@/utils/job-formatting"
@@ -24,7 +25,9 @@ if (!user) return Astro.redirect("/login?redirect=/account/jobs")
 const listParams = new URLSearchParams(Astro.url.searchParams)
 listParams.delete("_action")
 const archiveResult = Astro.getActionResult(actions.jobs.archive)
-if (archiveResult && !archiveResult.error) return Astro.redirect(`/account/jobs?${listParams}`)
+if (archiveResult && !archiveResult.error) {
+  return Astro.redirect(listParams.size ? `/account/jobs?${listParams}` : "/account/jobs")
+}
 const archiveFormAction = `${actions.jobs.archive}${listParams.size ? `&${listParams}` : ""}`
 
 const search = Astro.url.searchParams.get("search")?.trim() ?? ""
@@ -33,12 +36,11 @@ const currentPage = isNaN(rawPage) || rawPage < 1 ? 1 : rawPage
 const { data, apiDown } = await fetchMyJobOffers(user.id, { page: currentPage, search })
 const { jobs, total, pageCount } = data
 if (!apiDown && currentPage > pageCount) {
-  const params = new URLSearchParams(Astro.url.searchParams)
-  params.set("page", String(pageCount))
-  return Astro.redirect(`/account/jobs?${params}`)
+  listParams.set("page", String(pageCount))
+  return Astro.redirect(`/account/jobs?${listParams}`)
 }
 // No listings at all, as opposed to none matching the search.
-const hasNoJobs = total === 0 && !search
+const hasNoJobs = !apiDown && total === 0 && !search
 
 const statusLabel: Record<string, string> = {
   submitted: t.auth.statusSubmitted,
@@ -72,13 +74,7 @@ const statusLabel: Record<string, string> = {
   {apiDown ? (
     <ApiDownBanner />
   ) : jobs.length === 0 && search ? (
-    <div class="rounded-xl border border-base-300 py-16 text-center">
-      <p class="mb-1 font-medium">{t.jobs.noJobsFoundTitle}</p>
-      <p class="mb-4 text-sm text-base-content/70">{t.jobs.noJobsFoundHint}</p>
-      <a class="btn btn-outline btn-sm" href="/account/jobs">
-        {t.jobs.clearFilters}
-      </a>
-    </div>
+    <NoJobsFound clearUrl="/account/jobs" />
   ) : hasNoJobs ? (
     <div class="flex flex-col items-center gap-4 rounded-xl border border-dashed border-base-300 bg-base-100 p-10 text-center">
       <div class="flex h-12 w-12 items-center justify-center rounded-lg badge-soft badge-success">
@@ -135,7 +131,7 @@ const statusLabel: Record<string, string> = {
                 {canArchiveJob(job.online_status) && (
                   <button
                     class="btn btn-ghost btn-sm relative max-sm:btn-square"
-                    onclick={`document.getElementById('archive-${job.id}').showModal()`}
+                    onclick={`const m = document.getElementById('archive-modal'); m.querySelector('[name=id]').value = '${job.id}'; m.showModal()`}
                     type="button"
                   >
                     <IconArchive class="h-4 w-4 sm:hidden" />
@@ -160,18 +156,15 @@ const statusLabel: Record<string, string> = {
           </li>
         ))}
       </ul>
-      {jobs
-        .filter((job) => canArchiveJob(job.online_status))
-        .map((job) => (
-          <ConfirmModal
-            confirmClass="btn btn-warning"
-            confirmLabel={t.jobs.archiveJob}
-            formAction={archiveFormAction}
-            hiddenInputs={[{ name: "id", value: job.id }]}
-            id={`archive-${job.id}`}
-            message={t.jobs.archiveConfirm}
-          />
-        ))}
+      {/* One modal for all rows: the row's button fills in the job id before opening it. */}
+      <ConfirmModal
+        confirmClass="btn btn-warning"
+        confirmLabel={t.jobs.archiveJob}
+        formAction={archiveFormAction}
+        hiddenInputs={[{ name: "id", value: "" }]}
+        id="archive-modal"
+        message={t.jobs.archiveConfirm}
+      />
     </>
   )}
 

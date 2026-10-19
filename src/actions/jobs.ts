@@ -4,7 +4,7 @@ import { JOB_TYPES, JOB_FIELDS, WORK_MODES } from "@/utils/api/job-offers"
 import { invalidateCacheByPrefix } from "@/utils/api/cache"
 import { createWithUniqueSlug } from "@/utils/slugify"
 import { canModerateJobOffers } from "@/utils/authz"
-import { canEditJob } from "@/utils/job-status"
+import { canArchiveJob, canEditJob } from "@/utils/job-status"
 import {
   requireUserId,
   requirePermission,
@@ -151,7 +151,10 @@ export const jobs = {
     handler: async ({ id }, context) => {
       const userId = requireUserId(context)
 
-      const job = await prisma.jobOffer.findUnique({ where: { id }, select: { ownerId: true } })
+      const job = await prisma.jobOffer.findUnique({
+        where: { id },
+        select: { ownerId: true, onlineStatus: true },
+      })
       if (!job) throw new ActionError({ code: "NOT_FOUND", message: "Stelle nicht gefunden." })
       await assertOwnerOrPermission(
         context,
@@ -160,6 +163,12 @@ export const jobs = {
         undefined,
         "Archivieren fehlgeschlagen."
       )
+      if (!canArchiveJob(job.onlineStatus)) {
+        throw new ActionError({
+          code: "CONFLICT",
+          message: "Diese Stelle kann nicht archiviert werden.",
+        })
+      }
 
       try {
         await prisma.jobOffer.update({ where: { id }, data: { onlineStatus: "archived" } })
@@ -236,11 +245,9 @@ export const jobs = {
         canModerateJobOffers,
         "Aktualisierung fehlgeschlagen."
       )
+      const archivedMessage = "Archivierte Stellen können nicht bearbeitet werden."
       if (!canEditJob(existing.onlineStatus)) {
-        throw new ActionError({
-          code: "CONFLICT",
-          message: "Archivierte Stellen können nicht bearbeitet werden.",
-        })
+        throw new ActionError({ code: "CONFLICT", message: archivedMessage })
       }
 
       const content = {
@@ -263,8 +270,9 @@ export const jobs = {
 
       let updated: { slug: string }
       try {
+        // The status condition guards against an archive landing after the check above.
         updated = await prisma.jobOffer.update({
-          where: { id },
+          where: { id, onlineStatus: { not: JobOnlineStatus.archived } },
           data: {
             ...content,
             ...(needsRemoderation(isModerator, contentChanged, existing.onlineStatus)
@@ -273,7 +281,12 @@ export const jobs = {
           },
         })
       } catch (error) {
-        throw mutationError(error, "Job update failed", "Aktualisierung fehlgeschlagen.")
+        throw mutationError(
+          error,
+          "Job update failed",
+          "Aktualisierung fehlgeschlagen.",
+          archivedMessage
+        )
       }
 
       invalidateCacheByPrefix("job-offers:")
