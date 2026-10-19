@@ -63,6 +63,12 @@ const location = event?.map_location ?? event?.custom_location
     )}
   </div>
 
+  {event.hidden && (
+    <Alert variant="warning">
+      {t.events.unpublishedHint}
+      {event.rejection_reason && ` ${t.events.rejectionReasonLabel(event.rejection_reason)}`}
+    </Alert>
+  )}
   {hasReports && (
     <Alert outline variant="warning">
       {t.reports.warningHint}

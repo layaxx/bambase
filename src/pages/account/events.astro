@@ -105,16 +105,13 @@ function formatDateTime(iso: string) {
               </p>
             )}
           </div>
-          {/* The edit page only loads published events, see fetchEvent. */}
-          {!event.hidden && (
-            <a
-              class="btn btn-ghost btn-sm relative max-sm:btn-square"
-              href={`/event/${event.slug}/edit`}
-            >
-              <IconPencil class="h-4 w-4 sm:hidden" />
-              <span class="sr-only sm:not-sr-only">{t.events.editEvent}</span>
-            </a>
-          )}
+          <a
+            class="btn btn-ghost btn-sm relative max-sm:btn-square"
+            href={`/event/${event.slug}/edit`}
+          >
+            <IconPencil class="h-4 w-4 sm:hidden" />
+            <span class="sr-only sm:not-sr-only">{t.events.editEvent}</span>
+          </a>
         </li>
       ))}
     </ul>

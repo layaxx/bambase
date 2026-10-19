@@ -15,7 +15,7 @@ if (!me) return Astro.redirect(`/login?redirect=/event/${Astro.params.slug}/edit
 
 const { slug } = Astro.params
 const [{ data: event }, { data: allLocations }] = await Promise.all([
-  slug ? fetchEvent(slug) : Promise.resolve({ data: null }),
+  slug ? fetchEvent(slug, me.id) : Promise.resolve({ data: null }),
   fetchLocations(),
 ])
 

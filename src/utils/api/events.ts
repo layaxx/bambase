@@ -165,10 +165,13 @@ export function fetchUpcomingMapEvents(limit = 200): Promise<ApiResult<Event[]>>
   })
 }
 
-export function fetchEvent(slug: string): Promise<ApiResult<Event | null>> {
+/** Fetches a published event. With `viewerId`, the viewer's own unpublished events are found too. */
+export function fetchEvent(slug: string, viewerId?: string): Promise<ApiResult<Event | null>> {
   return apiResult("Error fetching event", null, async () => {
     const row = await prisma.event.findFirst({
-      where: { slug, hidden: false },
+      where: viewerId
+        ? { slug, OR: [{ hidden: false }, { ownerId: viewerId }] }
+        : { slug, hidden: false },
       include: {
         reports: { where: { reviewStatus: { not: "dismissed" } }, select: { id: true } },
         mapLocation: true,

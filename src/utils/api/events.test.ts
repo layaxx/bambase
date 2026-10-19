@@ -76,6 +76,18 @@ describe("fetchEvent", () => {
     )
   })
 
+  it("also finds the viewer's own hidden event", async () => {
+    mockFindFirst.mockResolvedValue(makeRow())
+
+    await fetchEvent("test-event", "user-42")
+
+    expect(mockFindFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { slug: "test-event", OR: [{ hidden: false }, { ownerId: "user-42" }] },
+      })
+    )
+  })
+
   it("filters reports to non-dismissed and includes the map location", async () => {
     mockFindFirst.mockResolvedValue(makeRow())
 
