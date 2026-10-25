@@ -4,7 +4,7 @@ import PageLayout from "@/layouts/PageLayout.astro"
 import { fetchJobOffer, type JobOffer } from "@/utils/api/job-offers"
 import { REPORT_WARNING_THRESHOLD } from "@/utils/api/reports"
 import ApiDownBanner from "@/components/ApiDownBanner.astro"
-import { JOB_STATUS_ALERT_VARIANT } from "@/utils/job-status"
+import { JOB_STATUS_ALERT_VARIANT, canArchiveJob, canEditJob } from "@/utils/job-status"
 import { canModerateJobOffers } from "@/utils/authz"
 import { useTranslations } from "@/i18n/translations"
 import IconArrowLeft from "@/components/icons/IconArrowLeft.astro"
@@ -13,6 +13,9 @@ import IconMapPin from "@/components/icons/IconMapPin.astro"
 import IconClock from "@/components/icons/IconClock.astro"
 import IconCalendar from "@/components/icons/IconCalendar.astro"
 import IconExternalLink from "@/components/icons/IconExternalLink.astro"
+import IconPencil from "@/components/icons/IconPencil.astro"
+import IconArchive from "@/components/icons/IconArchive.astro"
+import IconTrash from "@/components/icons/IconTrash.astro"
 import ReportModal from "@/components/ReportModal.astro"
 import ConfirmModal from "@/components/ConfirmModal.astro"
 import Alert from "@/components/Alert.astro"
@@ -33,7 +36,7 @@ const apiDown = jobResult.apiDown
 const isOwner = !!(me && job?.ownerId === me.id)
 
 const hasReports = (job?.reports?.length ?? 0) >= REPORT_WARNING_THRESHOLD
-const canArchive = job?.online_status === "published" || job?.online_status === "submitted"
+const canArchive = !!job && canArchiveJob(job.online_status)
 
 const reportResult = Astro.getActionResult(actions.reports.submit)
 if (reportResult) {
@@ -63,6 +66,7 @@ const archiveResult = Astro.getActionResult(actions.jobs.archive)
 if (archiveResult?.data !== undefined && !archiveResult.error) {
   return Astro.redirect(Astro.url.pathname)
 }
+const actionError = archiveResult?.error ?? deleteResult?.error
 
 const toExternalUrl = (url: string) => (/^https?:\/\//i.test(url) ? url : `https://${url}`)
 
@@ -88,40 +92,49 @@ const ogImage =
     </div>
   ) : (
     <>
-      <div class="mb-4 md:mb-6 flex items-center justify-between gap-4">
+      <div class="mb-4 md:mb-6 flex flex-wrap items-center justify-between gap-1 md:gap-4">
         <a class="btn btn-ghost btn-sm gap-1 pl-0" href="/jobs">
           <IconArrowLeft class="h-4 w-4" />
           {t.jobs.backToJobs}
         </a>
         {isOwner && (
-          <div class="flex items-center gap-2">
-            <a class="btn btn-ghost btn-sm" href="/account/jobs">
+          <div class="flex items-center gap-2 max-sm:w-full">
+            <a class="btn btn-ghost btn-sm max-sm:mr-auto max-sm:pl-0" href="/account/jobs">
               {t.auth.myJobOffers}
             </a>
-            <a class="btn btn-outline btn-sm" href={`/job/${job.slug}/edit`}>
-              {t.jobs.editJob}
-            </a>
+            {canEditJob(job.online_status) && (
+              <a
+                class="btn btn-outline btn-sm relative max-sm:btn-square"
+                href={`/job/${job.slug}/edit`}
+              >
+                <IconPencil class="h-4 w-4 sm:hidden" />
+                <span class="sr-only sm:not-sr-only">{t.jobs.editJob}</span>
+              </a>
+            )}
             {canArchive ? (
               <button
-                class="btn btn-outline btn-sm"
+                class="btn btn-outline btn-sm relative max-sm:btn-square"
                 onclick="document.getElementById('archiveJobModal').showModal()"
                 type="button"
               >
-                {t.jobs.archiveJob}
+                <IconArchive class="h-4 w-4 sm:hidden" />
+                <span class="sr-only sm:not-sr-only">{t.jobs.archiveJob}</span>
               </button>
             ) : null}
             <button
-              class="btn btn-outline btn-error btn-sm"
+              class="btn btn-outline btn-error btn-sm relative max-sm:btn-square"
               onclick="document.getElementById('deleteJobModal').showModal()"
               type="button"
             >
-              {t.jobs.deleteJob}
+              <IconTrash class="h-4 w-4 sm:hidden" />
+              <span class="sr-only sm:not-sr-only">{t.jobs.deleteJob}</span>
             </button>
           </div>
         )}
       </div>
 
       {justSubmitted && <Alert variant="success">{t.jobs.submitSuccess}</Alert>}
+      {actionError && <Alert variant="error">{actionError.message}</Alert>}
       {job.online_status !== "published" && (
         <Alert variant={JOB_STATUS_ALERT_VARIANT[job.online_status] ?? "neutral"}>
           {statusLabel[job.online_status] ?? job.online_status} – {t.jobs.notPublishedHint}

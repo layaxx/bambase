@@ -1,14 +1,16 @@
 ---
+import { lastPageRedirect, parsePageParam } from "@/utils/pagination"
 import PageLayout from "@/layouts/PageLayout.astro"
 import PageHeader from "@/components/PageHeader.astro"
 import IconBriefcase from "@/components/icons/IconBriefcase.astro"
-import IconSearch from "@/components/icons/IconSearch.astro"
 import JobOfferCard from "@/components/jobs/JobOfferCard.astro"
+import EmptyState from "@/components/EmptyState.astro"
 import JobFilterSidebar from "@/components/jobs/JobFilterSidebar.astro"
 import JobFilterMobile from "@/components/jobs/JobFilterMobile.astro"
 import JobFilterChips from "@/components/jobs/JobFilterChips.astro"
 import ApiDownBanner from "@/components/ApiDownBanner.astro"
 import Pagination from "@/components/Pagination.astro"
+import SearchForm from "@/components/SearchForm.astro"
 import {
   fetchJobOffersPaginated,
   JOB_TYPES,
@@ -28,14 +30,13 @@ const rawTypes = Astro.url.searchParams.get("type")?.split(",").filter(Boolean) 
 const rawFields = Astro.url.searchParams.get("field")?.split(",").filter(Boolean) ?? []
 const rawWorkModes = Astro.url.searchParams.get("work_mode")?.split(",").filter(Boolean) ?? []
 const search = Astro.url.searchParams.get("search")?.trim() ?? ""
-const rawPage = parseInt(Astro.url.searchParams.get("page") ?? "1", 10)
 
 const types = rawTypes.filter((v) => (JOB_TYPES as readonly string[]).includes(v)) as JobType[]
 const fields = rawFields.filter((v) => (JOB_FIELDS as readonly string[]).includes(v)) as JobField[]
 const workModes = rawWorkModes.filter((v) =>
   (WORK_MODES as readonly string[]).includes(v)
 ) as WorkMode[]
-const currentPage = isNaN(rawPage) || rawPage < 1 ? 1 : rawPage
+const currentPage = parsePageParam(Astro.url)
 
 const hasActiveFilter =
   types.length > 0 || fields.length > 0 || workModes.length > 0 || search !== ""
@@ -51,12 +52,8 @@ const { data, apiDown } = await fetchJobOffersPaginated({
 const { jobs, total, page: actualPage, pageCount } = data
 const offset = (actualPage - 1) * PAGE_SIZE
 
-if (!apiDown && jobs.length === 0 && total > 0) {
-  const redirectParams = new URLSearchParams(Astro.url.searchParams)
-  redirectParams.delete("page")
-  const qs = redirectParams.toString()
-  return Astro.redirect(qs ? `?${qs}` : Astro.url.pathname)
-}
+const lastPage = lastPageRedirect(Astro.url, actualPage, pageCount)
+if (!apiDown && lastPage) return Astro.redirect(lastPage)
 
 const isLoggedIn = !!Astro.locals.user
 const clearUrl = Astro.url.pathname
@@ -138,31 +135,13 @@ const workModeItems = WORK_MODES.map((wm) => ({
     />
 
     <div>
-      <form class="mb-4 hidden lg:flex" id="search-form" method="get" role="search">
+      <SearchForm class="hidden lg:flex" value={search}>
         {types.length > 0 && <input name="type" type="hidden" value={types.join(",")} />}
         {fields.length > 0 && <input name="field" type="hidden" value={fields.join(",")} />}
         {workModes.length > 0 && (
           <input name="work_mode" type="hidden" value={workModes.join(",")} />
         )}
-        <div class="join flex-1">
-          <div class="relative flex-1">
-            <IconSearch class="pointer-events-none absolute left-3 top-1/2 z-1 h-4 w-4 -translate-y-1/2 text-base-content/40" />
-            <input
-              aria-label={t.jobs.filterSearch}
-              class="input input-bordered join-item w-full pl-9"
-              enterkeyhint="search"
-              id="search-input"
-              name="search"
-              placeholder={t.jobs.filterSearch}
-              type="search"
-              value={search}
-            />
-          </div>
-          <button class="btn btn-soft join-item" type="submit">
-            {t.jobs.filterSearchButton}
-          </button>
-        </div>
-      </form>
+      </SearchForm>
 
       <JobFilterChips
         clearUrl={clearUrl}
@@ -178,18 +157,12 @@ const workModeItems = WORK_MODES.map((wm) => ({
 
       {!apiDown &&
         (jobs.length === 0 ? (
-          <div class="rounded-xl border border-base-300 py-16 text-center">
-            <IconBriefcase class="mx-auto mb-4 h-10 w-10 text-base-content/40" />
-            <p class="mb-1 font-medium">{t.jobs.noJobsFoundTitle}</p>
-            <p class="mb-4 text-sm text-base-content/70">
-              {hasActiveFilter ? t.jobs.noJobsFoundHint : t.jobs.noJobs}
-            </p>
-            {hasActiveFilter && (
-              <a class="btn btn-outline btn-sm" href={clearUrl}>
-                {t.jobs.clearFilters}
-              </a>
-            )}
-          </div>
+          <EmptyState
+            action={hasActiveFilter ? { href: clearUrl, label: t.jobs.clearFilters } : undefined}
+            icon={IconBriefcase}
+            text={hasActiveFilter ? t.jobs.noJobsFoundHint : t.jobs.noJobs}
+            title={t.jobs.noJobsFoundTitle}
+          />
         ) : (
           <div class="grid gap-4 sm:grid-cols-2">
             {jobs.map((job) => (
@@ -207,19 +180,3 @@ const workModeItems = WORK_MODES.map((wm) => ({
     </div>
   </div>
 </PageLayout>
-
-<script>
-  const searchForm = document.getElementById("search-form") as HTMLFormElement | null
-  if (searchForm) {
-    // keep the URL clean: drop empty values from the native GET submit
-    searchForm.addEventListener("formdata", (e) => {
-      for (const [key, value] of [...e.formData]) {
-        if (typeof value === "string" && value.trim() === "") e.formData.delete(key)
-      }
-    })
-    // "search" fires when the native ✕ clears the field
-    searchForm.addEventListener("search", (e) => {
-      if (!(e.target as HTMLInputElement).value) searchForm.requestSubmit()
-    })
-  }
-</script>

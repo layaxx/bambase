@@ -284,7 +284,7 @@ describe("jobs.update", () => {
 
     expect(mockUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { id: "job-1" },
+        where: { id: "job-1", onlineStatus: { not: "archived" } },
         data: expect.objectContaining({ title: "Senior Developer" }),
       })
     )
@@ -343,17 +343,36 @@ describe("jobs.update", () => {
     expect(mockUpdate.mock.calls[0][0].data).not.toHaveProperty("onlineStatus")
   })
 
-  it("leaves an archived job offer archived when its owner edits it", async () => {
+  it("refuses to edit an archived job offer", async () => {
     mockFindUnique.mockResolvedValue(makeExistingJob({ onlineStatus: "archived" }))
-    mockUpdate.mockResolvedValue({ slug: "updated-slug" })
 
-    await jobs.update(
-      { ...baseInput, id: "job-1", title: "Senior Developer" },
-      // @ts-expect-error - needed because of mocked defineAction function
-      makeContext("user-1")
+    await expect(
+      jobs.update(
+        { ...baseInput, id: "job-1", title: "Senior Developer" },
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext("user-1")
+      )
+    ).rejects.toMatchObject({ code: "CONFLICT" })
+    expect(mockUpdate).not.toHaveBeenCalled()
+  })
+
+  it("refuses the edit when the job offer was archived after it was read", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {})
+    mockFindUnique.mockResolvedValue(makeExistingJob())
+    mockUpdate.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Record to update not found", {
+        code: "P2025",
+        clientVersion: "test",
+      })
     )
 
-    expect(mockUpdate.mock.calls[0][0].data).not.toHaveProperty("onlineStatus")
+    await expect(
+      jobs.update(
+        { ...baseInput, id: "job-1", title: "Senior Developer" },
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext("user-1")
+      )
+    ).rejects.toMatchObject({ code: "NOT_FOUND" })
   })
 
   it("keeps a published job offer online when a moderator edits it", async () => {
@@ -517,7 +536,7 @@ describe("jobs.archive", () => {
   })
 
   it("sets onlineStatus to 'archived' when the user is the owner", async () => {
-    mockFindUnique.mockResolvedValue({ ownerId: "user-1" })
+    mockFindUnique.mockResolvedValue({ ownerId: "user-1", onlineStatus: "published" })
     mockUpdate.mockResolvedValue({})
 
     const result = await jobs.archive(
@@ -527,15 +546,47 @@ describe("jobs.archive", () => {
     )
 
     expect(mockUpdate).toHaveBeenCalledWith({
-      where: { id: "job-1" },
+      where: { id: "job-1", onlineStatus: { in: ["published", "submitted"] } },
       data: { onlineStatus: "archived" },
     })
     expect(result).toEqual({})
   })
 
+  it("throws CONFLICT for a listing that cannot be archived", async () => {
+    mockFindUnique.mockResolvedValue({ ownerId: "user-1", onlineStatus: "rejected" })
+
+    await expect(
+      jobs.archive(
+        { id: "job-1" },
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext("user-1")
+      )
+    ).rejects.toMatchObject({ code: "CONFLICT" })
+    expect(mockUpdate).not.toHaveBeenCalled()
+  })
+
+  it("throws NOT_FOUND when the listing was moderated after it was read", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {})
+    mockFindUnique.mockResolvedValue({ ownerId: "user-1", onlineStatus: "submitted" })
+    mockUpdate.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Record to update not found", {
+        code: "P2025",
+        clientVersion: "test",
+      })
+    )
+
+    await expect(
+      jobs.archive(
+        { id: "job-1" },
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext("user-1")
+      )
+    ).rejects.toMatchObject({ code: "NOT_FOUND" })
+  })
+
   it("throws INTERNAL_SERVER_ERROR when the update fails", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {})
-    mockFindUnique.mockResolvedValue({ ownerId: "user-1" })
+    mockFindUnique.mockResolvedValue({ ownerId: "user-1", onlineStatus: "published" })
     mockUpdate.mockRejectedValue(new Error("db error"))
 
     await expect(
@@ -582,7 +633,7 @@ describe("jobs.approve", () => {
     )
 
     expect(mockUpdate).toHaveBeenCalledWith({
-      where: { id: "job-1" },
+      where: { id: "job-1", onlineStatus: { not: "archived" } },
       data: { onlineStatus: "published", rejectionReason: null },
       select: expect.any(Object),
     })
@@ -600,7 +651,9 @@ describe("jobs.approve", () => {
     )
 
     expect(mockUpdate).toHaveBeenCalledTimes(2)
-    expect(mockUpdate).toHaveBeenLastCalledWith(expect.objectContaining({ where: { id: "job-2" } }))
+    expect(mockUpdate).toHaveBeenLastCalledWith(
+      expect.objectContaining({ where: { id: "job-2", onlineStatus: { not: "archived" } } })
+    )
   })
 
   it("throws INTERNAL_SERVER_ERROR when the update fails", async () => {
@@ -616,6 +669,25 @@ describe("jobs.approve", () => {
       )
     ).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" })
   })
+  it("tells the moderator to reload when the offer was archived meanwhile", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {})
+    mockCanModerateJobOffers.mockResolvedValue(true)
+    mockUpdate.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Record to update not found", {
+        code: "P2025",
+        clientVersion: "test",
+      })
+    )
+
+    await expect(
+      jobs.approve(
+        { id: ["job-1"] },
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext("moderator-1", true, "jobModerator")
+      )
+    ).rejects.toMatchObject({ code: "NOT_FOUND", message: expect.stringContaining("neu") })
+  })
+
   it("saves the other job offers when one update fails and reports the count", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {})
     mockCanModerateJobOffers.mockResolvedValue(true)
@@ -669,7 +741,7 @@ describe("jobs.reject", () => {
     )
 
     expect(mockUpdate).toHaveBeenCalledWith({
-      where: { id: "job-1" },
+      where: { id: "job-1", onlineStatus: { not: "archived" } },
       data: { onlineStatus: "rejected", rejectionReason: "Doesn't meet posting guidelines" },
       select: expect.any(Object),
     })

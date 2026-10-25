@@ -131,8 +131,14 @@ test("moderator can unpublish and republish a reported event directly from the q
   await expect(unpublishedCard).toBeVisible()
   await expect(unpublishedCard.getByText("Depubliziert")).toBeVisible()
 
+  // The owner still sees the event, everyone else does not.
   await page.goto(eventUrl)
-  await expect(page.getByRole("heading", { name: /nicht gefunden/i })).toBeVisible()
+  await expect(page.getByText("nur für dich sichtbar")).toBeVisible()
+  const anonContext = await browser.newContext()
+  const anonPage = await anonContext.newPage()
+  await anonPage.goto(eventUrl)
+  await expect(anonPage.getByRole("heading", { name: /nicht gefunden/i })).toBeVisible()
+  await anonContext.close()
 
   await unpublishedCard.getByRole("button", { name: "Veröffentlichen" }).click()
   await expect(adminPage).toHaveURL(/\/admin\/reports\/events$/)

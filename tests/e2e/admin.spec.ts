@@ -100,7 +100,7 @@ test("moderator can reject a submitted job", async ({ page, browser }) => {
   await expect(page.getByText(/Veröffentlicht am/)).toHaveCount(0)
 
   await page.goto("/account/jobs")
-  await expect(page.locator("a", { hasText: title })).toContainText(
+  await expect(page.locator("li", { hasText: title })).toContainText(
     "Grund: Bitte Stundenlohn angeben."
   )
   await page.goto(jobUrl)

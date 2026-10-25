@@ -2,7 +2,7 @@
 import { actions } from "astro:actions"
 import ApiDownBanner from "@/components/ApiDownBanner.astro"
 import Pagination from "@/components/Pagination.astro"
-import { REPORT_WARNING_THRESHOLD, type ReportGroup } from "@/utils/api/reports"
+import { REPORT_WARNING_THRESHOLD, type ReportGroup, type ReportTarget } from "@/utils/api/reports"
 import { useTranslations } from "@/i18n/translations"
 import { formatLongDate } from "@/utils/event-formatting"
 
@@ -30,6 +30,8 @@ const reasonInputLabel =
   kind === "job" ? t.admin.rejectReasonPlaceholder : t.admin.reasonPlaceholder
 const rejectionReasonLabel =
   kind === "event" ? t.events.rejectionReasonLabel : t.jobs.rejectionReasonLabel
+
+const isArchived = (target: ReportTarget) => target.type === "job" && target.archived
 
 const reasonLabel: Record<string, string> = {
   spam: t.reports.reasonSpam,
@@ -117,7 +119,11 @@ const statusFilters = [
                     </span>
                   ))}
                   {group.target && !group.target.published && (
-                    <span class="badge badge-sm badge-ghost">{t.admin.reportsUnpublished}</span>
+                    <span class="badge badge-sm badge-ghost">
+                      {isArchived(group.target)
+                        ? t.auth.statusArchived
+                        : t.admin.reportsUnpublished}
+                    </span>
                   )}
                   {group.caseStatus === "resolved" && group.target?.published && (
                     <span class="badge badge-sm badge-ghost">{t.admin.reportsStatusResolved}</span>
@@ -152,12 +158,14 @@ const statusFilters = [
               </div>
               {group.target && (
                 <div class="flex flex-wrap gap-2">
-                  <a
-                    class="btn btn-outline btn-sm"
-                    href={`${editBasePath}/${group.target.slug}/edit`}
-                  >
-                    {editLabel}
-                  </a>
+                  {!isArchived(group.target) && (
+                    <a
+                      class="btn btn-outline btn-sm"
+                      href={`${editBasePath}/${group.target.slug}/edit`}
+                    >
+                      {editLabel}
+                    </a>
+                  )}
                   {group.openCount === 0 ? (
                     <form action={actions.reports.reopenGroup} method="POST">
                       <input name="target_type" type="hidden" value={group.target.type} />
@@ -195,7 +203,7 @@ const statusFilters = [
                         {t.admin.reportsUnpublish}
                       </button>
                     </form>
-                  ) : (
+                  ) : isArchived(group.target) ? null : (
                     <form action={publishAction} method="POST">
                       <input name="id" type="hidden" value={targetId} />
                       <button class="btn btn-outline btn-success btn-sm" type="submit">

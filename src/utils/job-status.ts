@@ -1,4 +1,4 @@
-import type { JobOnlineStatus } from "@/generated/prisma/enums"
+import { JobOnlineStatus } from "@/generated/prisma/enums"
 import type { JobType } from "./api/job-offers"
 
 export type JobStatus = JobOnlineStatus
@@ -28,4 +28,19 @@ export const JOB_STATUS_BADGE_CLASS: Record<JobStatus, string> = {
   expired: "badge-neutral",
   rejected: "badge-error",
   archived: "badge-info",
+}
+
+/** Only listings that are live or still under review can be archived. */
+export const ARCHIVABLE_STATUSES: JobStatus[] = [
+  JobOnlineStatus.published,
+  JobOnlineStatus.submitted,
+]
+
+export function canArchiveJob(status: JobStatus): boolean {
+  return ARCHIVABLE_STATUSES.includes(status)
+}
+
+/** Archiving is final, thus an archived listing can no longer be edited. */
+export function canEditJob(status: JobStatus): boolean {
+  return status !== "archived"
 }

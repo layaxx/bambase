@@ -4,6 +4,7 @@ import { JOB_TYPES, JOB_FIELDS, WORK_MODES } from "@/utils/api/job-offers"
 import { invalidateCacheByPrefix } from "@/utils/api/cache"
 import { createWithUniqueSlug } from "@/utils/slugify"
 import { canModerateJobOffers } from "@/utils/authz"
+import { ARCHIVABLE_STATUSES, canArchiveJob, canEditJob } from "@/utils/job-status"
 import {
   requireUserId,
   requirePermission,
@@ -21,25 +22,34 @@ const JOB_OFFER_LIFETIME_DAYS = 30
 /**
  * The statuses on which a moderator already made a decision. An edit by the owner must thus
  * cancel that decision. `published` is live on the site, and `rejected` holds the reason of
- * the moderator. The other statuses (`submitted`, `expired`, `archived`) are offline and wait
- * for moderation or come after it, thus an edit keeps them unchanged.
+ * the moderator. The other statuses (`submitted`, `expired`) are offline and wait for
+ * moderation or come after it, thus an edit keeps them unchanged. `archived` is final and
+ * cannot be edited at all.
  */
 const MODERATED_STATUSES: JobOnlineStatus[] = [JobOnlineStatus.published, JobOnlineStatus.rejected]
 
+/**
+ * The P2025 message of a write that is guarded by the status of the offer. There, P2025 means
+ * that the offer was deleted or changed its status after the check.
+ */
+const STALE_MESSAGE =
+  "Die Stelle wurde zwischenzeitlich geändert oder gelöscht. Bitte lade die Seite neu."
+
 type ModerationContext = { locals: Pick<App.Locals, "user">; url: URL }
 
-/** Publishes or rejects one offer and mails its owner. Returns false if the update failed. */
+/** Publishes or rejects one offer and mails its owner. Returns the error if the update failed. */
 async function moderate(
   id: string,
   status: "published" | "rejected",
   reason: string | null,
   context: ModerationContext
-): Promise<boolean> {
+): Promise<ActionError | null> {
   const verb = status === "published" ? "approve" : "reject"
   let job
   try {
+    // Archiving is final, thus a stale moderation queue must not publish an archived offer again.
     job = await prisma.jobOffer.update({
-      where: { id },
+      where: { id, onlineStatus: { not: JobOnlineStatus.archived } },
       data: { onlineStatus: status, rejectionReason: reason },
       select: {
         slug: true,
@@ -49,15 +59,16 @@ async function moderate(
       },
     })
   } catch (error) {
-    getLogger().error({ err: error, jobOfferId: id }, `job ${verb} failed`)
-    return false
+    const failMessage =
+      status === "published" ? "Genehmigen fehlgeschlagen." : "Ablehnen fehlgeschlagen."
+    return mutationError(error, `Job ${verb} failed`, failMessage, STALE_MESSAGE)
   }
 
   getLogger().info({ jobOfferId: id }, `job ${verb}d`)
   // A moderator who decides on an own offer needs no mail about it.
   const to = job.owner && job.owner.id !== context.locals.user?.id ? job.owner.email : undefined
   await notifyJobOwner(to, job, status, context.url.origin)
-  return true
+  return null
 }
 
 /**
@@ -73,13 +84,14 @@ async function moderateAll(
 ): Promise<void> {
   const results = await Promise.all(ids.map((id) => moderate(id, status, reason, context)))
   invalidateCacheByPrefix("job-offers:")
-  const failed = results.filter((ok) => !ok).length
-  if (failed === 0) return
-  const failMessage =
-    status === "published" ? "Genehmigen fehlgeschlagen." : "Ablehnen fehlgeschlagen."
+  const errors = results.filter((error) => error !== null)
+  if (errors.length === 0) return
+  // A stale offer only needs a reload, thus each other failure is the one to report.
+  const error = errors.find((e) => e.code !== "NOT_FOUND") ?? errors[0]
   throw new ActionError({
-    code: "INTERNAL_SERVER_ERROR",
-    message: ids.length === 1 ? failMessage : `${failMessage} (${failed} von ${ids.length})`,
+    code: error.code,
+    message:
+      ids.length === 1 ? error.message : `${error.message} (${errors.length} von ${ids.length})`,
   })
 }
 
@@ -149,7 +161,10 @@ export const jobs = {
     handler: async ({ id }, context) => {
       const userId = requireUserId(context)
 
-      const job = await prisma.jobOffer.findUnique({ where: { id }, select: { ownerId: true } })
+      const job = await prisma.jobOffer.findUnique({
+        where: { id },
+        select: { ownerId: true, onlineStatus: true },
+      })
       if (!job) throw new ActionError({ code: "NOT_FOUND", message: "Stelle nicht gefunden." })
       await assertOwnerOrPermission(
         context,
@@ -158,15 +173,29 @@ export const jobs = {
         undefined,
         "Archivieren fehlgeschlagen."
       )
+      if (!canArchiveJob(job.onlineStatus)) {
+        throw new ActionError({
+          code: "CONFLICT",
+          message: "Diese Stelle kann nicht archiviert werden.",
+        })
+      }
 
       try {
-        await prisma.jobOffer.update({ where: { id }, data: { onlineStatus: "archived" } })
-      } catch (error) {
-        getLogger().error({ err: error, jobOfferId: id }, "job archive failed")
-        throw new ActionError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Archivieren fehlgeschlagen.",
+        // The status condition guards against a moderation landing after the check above.
+        await prisma.jobOffer.update({
+          where: {
+            id,
+            onlineStatus: { in: ARCHIVABLE_STATUSES },
+          },
+          data: { onlineStatus: JobOnlineStatus.archived },
         })
+      } catch (error) {
+        throw mutationError(
+          error,
+          "Job archive failed",
+          "Archivieren fehlgeschlagen.",
+          STALE_MESSAGE
+        )
       }
 
       getLogger().info({ jobOfferId: id }, "job archived")
@@ -234,6 +263,12 @@ export const jobs = {
         canModerateJobOffers,
         "Aktualisierung fehlgeschlagen."
       )
+      if (!canEditJob(existing.onlineStatus)) {
+        throw new ActionError({
+          code: "CONFLICT",
+          message: "Archivierte Stellen können nicht bearbeitet werden.",
+        })
+      }
 
       const content = {
         title: fields.title,
@@ -255,8 +290,9 @@ export const jobs = {
 
       let updated: { slug: string }
       try {
+        // The status condition guards against an archive landing after the check above.
         updated = await prisma.jobOffer.update({
-          where: { id },
+          where: { id, onlineStatus: { not: JobOnlineStatus.archived } },
           data: {
             ...content,
             ...(needsRemoderation(isModerator, contentChanged, existing.onlineStatus)
@@ -265,7 +301,12 @@ export const jobs = {
           },
         })
       } catch (error) {
-        throw mutationError(error, "Job update failed", "Aktualisierung fehlgeschlagen.")
+        throw mutationError(
+          error,
+          "Job update failed",
+          "Aktualisierung fehlgeschlagen.",
+          STALE_MESSAGE
+        )
       }
 
       invalidateCacheByPrefix("job-offers:")

@@ -1,6 +1,13 @@
 ---
+import { lastPageRedirect, parsePageParam } from "@/utils/pagination"
 import PageLayout from "@/layouts/PageLayout.astro"
 import IconArrowLeft from "@/components/icons/IconArrowLeft.astro"
+import IconCalendar from "@/components/icons/IconCalendar.astro"
+import IconPencil from "@/components/icons/IconPencil.astro"
+import EmptyState from "@/components/EmptyState.astro"
+import ApiDownBanner from "@/components/ApiDownBanner.astro"
+import Pagination from "@/components/Pagination.astro"
+import SearchForm from "@/components/SearchForm.astro"
 import { fetchMyEvents } from "@/utils/api/events"
 import { useTranslations } from "@/i18n/translations"
 
@@ -9,7 +16,15 @@ const t = useTranslations(Astro.locals.locale)
 const user = Astro.locals.user
 if (!user) return Astro.redirect("/login?redirect=/account/events")
 
-const { data: events } = await fetchMyEvents(user.id)
+const search = Astro.url.searchParams.get("search")?.trim() ?? ""
+const currentPage = parsePageParam(Astro.url)
+const { data, apiDown } = await fetchMyEvents(user.id, { page: currentPage, search })
+const { events, total, pageCount } = data
+const lastPage = lastPageRedirect(Astro.url, currentPage, pageCount)
+if (!apiDown && lastPage) return Astro.redirect(lastPage)
+// No events at all, as opposed to none matching the search.
+const hasNoEvents = !apiDown && total === 0 && !search
+
 const dateLocale = t.mensa.dateLocale
 
 function formatDateTime(iso: string) {
@@ -30,45 +45,75 @@ function formatDateTime(iso: string) {
       {t.nav.myAccount}
     </a>
   </div>
-  <h1 class="text-3xl font-bold tracking-tight sm:text-4xl mb-6">{t.auth.myEvents}</h1>
+  <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
+    <h1 class="text-3xl font-bold tracking-tight sm:text-4xl">{t.auth.myEvents}</h1>
+    {!hasNoEvents && (
+      <a class="btn btn-primary btn-sm" href="/event/new">
+        {t.events.submitEvent}
+      </a>
+    )}
+  </div>
 
-  {events.length === 0 ? (
-    <p class="rounded-xl border border-base-300 bg-base-100 p-6 text-base-content/70">
-      {t.auth.noMyEvents}
-    </p>
-  ) : (
-    <div class="flex flex-col gap-3">
-      {events.map((event) => (
-        <a
-          class="group flex flex-col gap-1 rounded-xl border border-base-300 bg-base-100 p-4 no-underline transition-all hover:shadow-md"
-          href={`/event/${event.slug}`}
-        >
-          <div class="flex items-start justify-between gap-2">
-            <h2 class="font-semibold leading-snug text-base-content group-hover:text-primary">
-              {event.title}
-            </h2>
-            {event.hidden && (
-              <span class="badge badge-sm badge-ghost shrink-0">{t.events.unpublishedBadge}</span>
-            )}
-          </div>
-          <p class="text-sm text-base-content/70">
-            {formatDateTime(event.start)} – {formatDateTime(event.end)}
-          </p>
-          <p class="text-sm text-base-content/70">{event.organizer}</p>
-          <p class="line-clamp-2 text-sm text-base-content/40">{event.description}</p>
-          {event.hidden && event.rejection_reason && (
-            <p class="text-sm text-base-content/70">
-              {t.events.rejectionReasonLabel(event.rejection_reason)}
-            </p>
-          )}
-        </a>
-      ))}
-    </div>
+  {!apiDown && !hasNoEvents && (
+    <SearchForm class="flex" placeholder={t.events.searchPlaceholder} value={search} />
   )}
 
-  <div class="mt-6">
-    <a class="btn btn-primary btn-sm" href="/event/new">
-      {t.events.submitEvent}
-    </a>
-  </div>
+  {apiDown ? (
+    <ApiDownBanner />
+  ) : events.length === 0 && search ? (
+    <EmptyState
+      action={{ href: "/account/events", label: t.events.clearFilters }}
+      icon={IconCalendar}
+      text={t.events.noEventsFiltered}
+    />
+  ) : hasNoEvents ? (
+    <EmptyState
+      action={{ href: "/event/new", label: t.events.submitEvent }}
+      badge="badge-primary"
+      icon={IconCalendar}
+      text={t.auth.noMyEvents}
+    />
+  ) : (
+    <ul class="list rounded-box border border-base-300 bg-base-100">
+      {events.map((event) => (
+        <li class="list-row items-center transition-colors hover:bg-base-200/50">
+          <div class="list-col-grow min-w-0">
+            {/* after:inset-0 stretches the link over the whole row for a bigger tap target */}
+            <a
+              class="link link-hover line-clamp-2 font-semibold after:absolute after:inset-0"
+              href={`/event/${event.slug}`}
+            >
+              {event.title}
+            </a>
+            <p class="mt-1 text-sm text-base-content/70">
+              {event.hidden && (
+                <span class="badge badge-sm badge-ghost mr-1">{t.events.unpublishedBadge}</span>
+              )}
+              {formatDateTime(event.start)}
+              <span class="max-sm:hidden"> · {event.organizer}</span>
+            </p>
+            {event.hidden && event.rejection_reason && (
+              <p class="mt-1 text-sm text-error">
+                {t.events.rejectionReasonLabel(event.rejection_reason)}
+              </p>
+            )}
+          </div>
+          <a
+            class="btn btn-ghost btn-sm relative max-sm:btn-square"
+            href={`/event/${event.slug}/edit`}
+          >
+            <IconPencil class="h-4 w-4 sm:hidden" />
+            <span class="sr-only sm:not-sr-only">{t.events.editEvent}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  )}
+
+  <Pagination
+    nextLabel={t.jobs.paginationNext}
+    page={currentPage}
+    pageCount={pageCount}
+    prevLabel={t.jobs.paginationPrev}
+  />
 </PageLayout>

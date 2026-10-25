@@ -1,5 +1,7 @@
 import prisma from "../prisma"
+import type { Prisma } from "@/generated/prisma/client"
 import { withCache } from "./cache"
+import { findPage } from "../pagination"
 import { apiResult, type ApiResult } from "./types"
 import { JobType, JobField, WorkMode, JobOnlineStatus } from "@/generated/prisma/enums"
 import type { JobOfferModel } from "@/generated/prisma/models"
@@ -80,45 +82,47 @@ function toJobOffer(row: JobOfferModel, extra?: { reports?: { id: string }[] }):
   }
 }
 
+function searchWhere(search?: string): Prisma.JobOfferWhereInput {
+  if (!search) return {}
+  return {
+    OR: [
+      { title: { contains: search, mode: "insensitive" } },
+      { company: { contains: search, mode: "insensitive" } },
+    ],
+  }
+}
+
+async function findJobPage(
+  where: Prisma.JobOfferWhereInput,
+  page: number,
+  pageSize: number
+): Promise<JobOfferPage> {
+  const { rows, ...rest } = await findPage(
+    page,
+    pageSize,
+    (window) => prisma.jobOffer.findMany({ where, orderBy: { createdAt: "desc" }, ...window }),
+    () => prisma.jobOffer.count({ where })
+  )
+  return { jobs: rows.map((row) => toJobOffer(row)), ...rest }
+}
+
 export function fetchJobOffersPaginated(
   filter: JobOffersFilter = {}
 ): Promise<ApiResult<JobOfferPage>> {
   const { types, fields, workModes, search, page = 1, pageSize = 12 } = filter
 
-  const where = { onlineStatus: JobOnlineStatus.published } as {
-    onlineStatus: JobOnlineStatus
-    jobType?: { in: JobType[] }
-    field?: { in: JobField[] }
-    workMode?: { in: WorkMode[] }
-    OR?: { title?: object; company?: object }[]
+  const where: Prisma.JobOfferWhereInput = {
+    onlineStatus: JobOnlineStatus.published,
+    ...searchWhere(search),
   }
   if (types && types.length > 0) where.jobType = { in: types }
   if (fields && fields.length > 0) where.field = { in: fields }
   if (workModes && workModes.length > 0) where.workMode = { in: workModes }
-  if (search) {
-    where.OR = [
-      { title: { contains: search, mode: "insensitive" } },
-      { company: { contains: search, mode: "insensitive" } },
-    ]
-  }
 
   const key = `job-offers:paginated:${JSON.stringify(filter)}`
-  return apiResult("Error fetching job offers (paginated)", EMPTY_PAGE, async () => {
-    const { rows, total } = await withCache(key, async () => {
-      const [rows, total] = await Promise.all([
-        prisma.jobOffer.findMany({
-          where,
-          orderBy: { createdAt: "desc" },
-          skip: (page - 1) * pageSize,
-          take: pageSize,
-        }),
-        prisma.jobOffer.count({ where }),
-      ])
-      return { rows, total }
-    })
-    const pageCount = Math.max(1, Math.ceil(total / pageSize))
-    return { jobs: rows.map((row) => toJobOffer(row)), total, page, pageCount }
-  })
+  return apiResult("Error fetching job offers (paginated)", EMPTY_PAGE, () =>
+    withCache(key, () => findJobPage(where, page, pageSize))
+  )
 }
 
 export function fetchJobOffers(limit = 100): Promise<ApiResult<JobOffer[]>> {
@@ -154,14 +158,13 @@ export function fetchJobOffer(
   })
 }
 
-export function fetchMyJobOffers(ownerId: string): Promise<ApiResult<JobOffer[]>> {
-  return apiResult("Error fetching own job offers", [], async () => {
-    const rows = await prisma.jobOffer.findMany({
-      where: { ownerId },
-      orderBy: { createdAt: "desc" },
-    })
-    return rows.map((row) => toJobOffer(row))
-  })
+export function fetchMyJobOffers(
+  ownerId: string,
+  { page = 1, pageSize = 20, search }: Pick<JobOffersFilter, "page" | "pageSize" | "search"> = {}
+): Promise<ApiResult<JobOfferPage>> {
+  return apiResult("Error fetching own job offers", EMPTY_PAGE, () =>
+    findJobPage({ ownerId, ...searchWhere(search) }, page, pageSize)
+  )
 }
 
 export function fetchSubmittedJobOffers(): Promise<ApiResult<JobOffer[]>> {

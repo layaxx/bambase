@@ -37,7 +37,7 @@ test.describe("Map (/map) — category filter behavior", () => {
       await expect(page.getByRole("button", { name, exact: true })).toBeDisabled()
     }
 
-    releaseRoute!()
+    if (releaseRoute) releaseRoute()
   })
 
   test("successful category switch updates the active button and list", async ({ page }) => {

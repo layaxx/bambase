@@ -13,7 +13,15 @@ export type { ReportReason, ReportReviewStatus }
 
 export type ReportTarget =
   | { type: "event"; title: string; slug: string; published: boolean; rejectionReason?: string }
-  | { type: "job"; title: string; slug: string; published: boolean; rejectionReason?: string }
+  | {
+      type: "job"
+      title: string
+      slug: string
+      published: boolean
+      rejectionReason?: string
+      /** Archiving is final: an archived job can be neither published nor edited again. */
+      archived: boolean
+    }
 
 export type Report = {
   id: string
@@ -47,6 +55,7 @@ function toReport(row: ReportRow): Report {
           slug: row.jobOffer.slug,
           published: row.jobOffer.onlineStatus === "published",
           rejectionReason: row.jobOffer.rejectionReason ?? undefined,
+          archived: row.jobOffer.onlineStatus === "archived",
         }
       : null
 

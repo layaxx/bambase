@@ -1,5 +1,7 @@
 import prisma from "../prisma"
+import type { Prisma } from "@/generated/prisma/client"
 import { withCache } from "./cache"
+import { findPage } from "../pagination"
 import { apiResult, type ApiResult } from "./types"
 import { toMapLocation, type MapLocation } from "./locations"
 import { EventCategory } from "@/generated/prisma/enums"
@@ -93,6 +95,21 @@ export type EventPage = {
 
 const EMPTY_PAGE: EventPage = { events: [], total: 0, page: 1, pageCount: 1 }
 
+async function findEventPage(
+  where: Prisma.EventWhereInput,
+  orderBy: Prisma.EventOrderByWithRelationInput,
+  page: number,
+  pageSize: number
+): Promise<EventPage> {
+  const { rows, ...rest } = await findPage(
+    page,
+    pageSize,
+    (window) => prisma.event.findMany({ where, orderBy, ...window }),
+    () => prisma.event.count({ where })
+  )
+  return { events: rows.map((row) => toEvent(row)), ...rest }
+}
+
 export function fetchEventsPaginated(filter: EventsFilter = {}): Promise<ApiResult<EventPage>> {
   const { category, dateFilter = "upcoming", page = 1, pageSize = 15 } = filter
 
@@ -108,22 +125,9 @@ export function fetchEventsPaginated(filter: EventsFilter = {}): Promise<ApiResu
   else if (dateFilter === "month") where.start = { lte: new Date(now.getTime() + 31 * 86_400_000) }
 
   const key = `events:paginated:${JSON.stringify({ category, dateFilter, page, pageSize })}`
-  return apiResult("Error fetching events (paginated)", EMPTY_PAGE, async () => {
-    const { rows, total } = await withCache(key, async () => {
-      const [rows, total] = await Promise.all([
-        prisma.event.findMany({
-          where,
-          orderBy: { start: "asc" },
-          skip: (page - 1) * pageSize,
-          take: pageSize,
-        }),
-        prisma.event.count({ where }),
-      ])
-      return { rows, total }
-    })
-    const pageCount = Math.max(1, Math.ceil(total / pageSize))
-    return { events: rows.map((row) => toEvent(row)), total, page, pageCount }
-  })
+  return apiResult("Error fetching events (paginated)", EMPTY_PAGE, () =>
+    withCache(key, () => findEventPage(where, { start: "asc" }, page, pageSize))
+  )
 }
 
 export function fetchOngoingOrUpcomingEvents(limit = 100): Promise<ApiResult<Event[]>> {
@@ -164,10 +168,13 @@ export function fetchUpcomingMapEvents(limit = 200): Promise<ApiResult<Event[]>>
   })
 }
 
-export function fetchEvent(slug: string): Promise<ApiResult<Event | null>> {
+/** Fetches a published event. With `viewerId`, the viewer's own unpublished events are found too. */
+export function fetchEvent(slug: string, viewerId?: string): Promise<ApiResult<Event | null>> {
   return apiResult("Error fetching event", null, async () => {
     const row = await prisma.event.findFirst({
-      where: { slug, hidden: false },
+      where: viewerId
+        ? { slug, OR: [{ hidden: false }, { ownerId: viewerId }] }
+        : { slug, hidden: false },
       include: {
         reports: { where: { reviewStatus: { not: "dismissed" } }, select: { id: true } },
         mapLocation: true,
@@ -189,14 +196,20 @@ export function fetchAllPublishedEventSlugs(limit = 500): Promise<ApiResult<stri
   })
 }
 
-export function fetchMyEvents(ownerId: string): Promise<ApiResult<Event[]>> {
-  return apiResult("Error fetching own events", [], async () => {
-    const rows = await prisma.event.findMany({
-      where: { ownerId },
-      orderBy: { start: "desc" },
-    })
-    return rows.map((row) => toEvent(row))
-  })
+export function fetchMyEvents(
+  ownerId: string,
+  { page = 1, pageSize = 20, search }: { page?: number; pageSize?: number; search?: string } = {}
+): Promise<ApiResult<EventPage>> {
+  const where: Prisma.EventWhereInput = { ownerId }
+  if (search) {
+    where.OR = [
+      { title: { contains: search, mode: "insensitive" } },
+      { organizer: { contains: search, mode: "insensitive" } },
+    ]
+  }
+  return apiResult("Error fetching own events", EMPTY_PAGE, () =>
+    findEventPage(where, { start: "desc" }, page, pageSize)
+  )
 }
 
 /** Fetches one event for the admin editor, also if the event is hidden. */

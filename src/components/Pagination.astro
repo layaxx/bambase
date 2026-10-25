@@ -18,6 +18,8 @@ const pageNumbers = Array.from({ length: windowEnd - windowStart + 1 }, (_, i) =
 
 function pageUrl(p: number) {
   const params = new URLSearchParams(Astro.url.searchParams)
+  // a failed form action leaves its marker in the URL, links must not repeat it
+  params.delete("_action")
   if (p === 1) params.delete("page")
   else params.set("page", String(p))
   const qs = params.toString()
