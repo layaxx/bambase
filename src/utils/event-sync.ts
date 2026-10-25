@@ -1,5 +1,5 @@
 import { UnivISClient } from "univis-api"
-import he from "he"
+import { decode } from "he"
 import removeMd from "remove-markdown"
 import { EventCategory } from "@/generated/prisma/enums"
 import prisma from "./prisma"
@@ -12,7 +12,7 @@ const log = baseLogger.child({ job: "event-sync" })
 const UNIVIS_PREFIX = "univis:"
 
 function parse(str: string): string {
-  const decoded = he.decode(str)
+  const decoded = decode(str)
   const linkReplaced = decoded.replace(/\[(https?:\/\/\S+)\]\s+\1(?=\s|$)/g, "$1")
   const noMarkdown = removeMd(linkReplaced)
 
