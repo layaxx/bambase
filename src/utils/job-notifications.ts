@@ -20,7 +20,7 @@ function jobMail(job: NotifiedJob, kind: JobNotificationKind, origin: string) {
     case "published":
       return {
         subject: `Stellenangebot veröffentlicht: ${job.title}`,
-        text: `Dein Stellenangebot „${job.title}“ ist jetzt auf BamBase online:\n\n${url}`,
+        text: `Dein Stellenangebot „${job.title}“ ist jetzt auf BamBase online:\n\n${url}\n\nIst die Stelle besetzt, kannst du das Angebot auf deiner Kontoseite archivieren:\n\n${origin}/account/jobs`,
       }
     case "rejected":
       return {

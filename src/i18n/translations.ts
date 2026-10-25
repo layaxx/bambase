@@ -136,7 +136,8 @@ const de = {
     deleteConfirm: "Stellenangebot wirklich löschen?",
     updateJob: "Änderungen speichern",
     createTitle: "Stellenangebot inserieren",
-    createSubtitle: "Das Angebot wird nach einer kurzen Prüfung veröffentlicht.",
+    createSubtitle:
+      "Das Angebot wird nach einer kurzen Prüfung veröffentlicht. Du bekommst eine Bestätigung per E-Mail, sobald du es eingereicht hast, und eine weitere, sobald es veröffentlicht ist. Ist die Stelle besetzt, kannst du das Angebot auf deiner Kontoseite archivieren.",
     fieldTitle: "Stellenbezeichnung",
     fieldCompany: "Unternehmen",
     fieldLocation: "Ort",
@@ -722,7 +723,8 @@ const en: typeof de = {
     deleteConfirm: "Really delete this job listing?",
     updateJob: "Save changes",
     createTitle: "Post a job listing",
-    createSubtitle: "Your listing will be reviewed before it goes live.",
+    createSubtitle:
+      "Your listing will be reviewed before it goes live. You'll get a confirmation email when you submit it, and another one once it's published. Once the position is filled, you can archive the listing from your account page.",
     fieldTitle: "Job title",
     fieldCompany: "Company",
     fieldLocation: "Location",
