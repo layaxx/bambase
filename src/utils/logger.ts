@@ -1,4 +1,5 @@
 import { AsyncLocalStorage } from "node:async_hooks"
+import { createRequire } from "node:module"
 import { format } from "node:util"
 import pino from "pino"
 import { version } from "../../package.json"
@@ -74,11 +75,13 @@ export const loggerOptions = {
 export const baseLogger = pino({
   ...loggerOptions,
   // pino-pretty is a devDependency, so it is only ever referenced outside production.
+  // Resolved to an absolute path because pino >=10.4 finds its caller via util.getCallSites(),
+  // which reports an empty script name for modules evaluated by Vite's SSR runner.
   transport:
     import.meta.env.PROD || import.meta.env.TEST
       ? undefined
       : {
-          target: "pino-pretty",
+          target: createRequire(import.meta.url).resolve("pino-pretty"),
           options: { colorize: true, translateTime: "SYS:HH:MM:ss.l", ignore: "pid,hostname" },
         },
 })

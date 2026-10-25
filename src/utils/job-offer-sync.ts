@@ -1,4 +1,4 @@
-import he from "he"
+import { decode } from "he"
 import { JobField, JobOnlineStatus, JobType, WorkMode } from "@/generated/prisma/enums"
 import prisma from "./prisma"
 import { createWithUniqueSlug } from "./slugify"
@@ -10,16 +10,15 @@ const log = baseLogger.child({ job: "job-offer-sync" })
 const FEKI_JOBS_URL = "https://feki.de/api/jobboerse/jobs"
 
 function htmlToText(html: string): string {
-  return he
-    .decode(
-      html
-        .replace(/<br\s*\/?>/gi, "\n")
-        .replace(/<\/p>/gi, "\n")
-        .replace(/<[^>]+>/g, "")
-        .replace(/\r\n/g, "\n")
-        .replace(/\n{3,}/g, "\n\n")
-        .trim()
-    )
+  return decode(
+    html
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<\/p>/gi, "\n")
+      .replace(/<[^>]+>/g, "")
+      .replace(/\r\n/g, "\n")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim()
+  )
     .replace(/\n{3,}/g, "\n\n")
     .trim()
 }
@@ -143,7 +142,7 @@ export async function syncJobOffers(): Promise<void> {
       continue
     }
 
-    const title = he.decode(job.title)
+    const title = decode(job.title)
 
     try {
       // eslint-disable-next-line no-await-in-loop -- inserts stay sequential to keep DB load bounded
@@ -153,8 +152,8 @@ export async function syncJobOffers(): Promise<void> {
             slug,
             title,
             description: htmlToText(job.description),
-            company: he.decode(job.company_name),
-            location: he.decode(job.location),
+            company: decode(job.company_name),
+            location: decode(job.location),
             externalUrl: job.url,
             externalId: job.uuid,
             createdAt: new Date(job.creation_date),
@@ -162,8 +161,8 @@ export async function syncJobOffers(): Promise<void> {
             jobType: getJobType(job),
             field: JobField.other,
             workMode: WorkMode.on_site,
-            contactName: he.decode(job.contact_person),
-            contactMail: he.decode(job.contact_mail),
+            contactName: decode(job.contact_person),
+            contactMail: decode(job.contact_mail),
             contactPhone: job.contact_tel,
             onlineStatus: getStatus(job, now),
             offlineAfter: new Date(job.offline_date),
