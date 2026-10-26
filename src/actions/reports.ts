@@ -2,7 +2,7 @@ import { defineAction, ActionError } from "astro:actions"
 import { z } from "astro/zod"
 import { ReportReason } from "@/generated/prisma/enums"
 import { canModerateReport } from "@/utils/authz"
-import { requireUserId } from "@/utils/action-guards"
+import { requireUserId, mutationError } from "@/utils/action-guards"
 import prisma from "@/utils/prisma"
 import { getLogger } from "@/utils/logger"
 
@@ -36,7 +36,7 @@ export const reports = {
       target_type: z.enum(["event", "job"]),
       target_id: z.string().min(1),
       reason: z.enum(ReportReason),
-      details: z.string().optional(),
+      details: z.string().max(2000).optional(),
     }),
     handler: async ({ target_type, target_id, reason, details }) => {
       try {
@@ -49,11 +49,8 @@ export const reports = {
           },
         })
       } catch (error) {
-        getLogger().error(
-          { err: error, targetType: target_type, targetId: target_id },
-          "report create failed"
-        )
-        throw new ActionError({ code: "INTERNAL_SERVER_ERROR", message: "Meldung fehlgeschlagen." })
+        // An unknown target_id fails the foreign key, which is a bad request and not a 500.
+        throw mutationError(error, "Report create failed", "Meldung fehlgeschlagen.")
       }
 
       getLogger().info({ targetType: target_type, targetId: target_id, reason }, "report submitted")

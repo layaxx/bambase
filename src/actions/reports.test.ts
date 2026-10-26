@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import { Prisma } from "@/generated/prisma/client"
 
 const mockCreate = vi.hoisted(() => vi.fn())
 
@@ -158,6 +159,24 @@ describe("reports.submit", () => {
         reason: "spam",
       })
     ).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" })
+  })
+
+  it("throws BAD_REQUEST when the target does not exist", async () => {
+    mockCreate.mockRejectedValueOnce(
+      new Prisma.PrismaClientKnownRequestError("Foreign key constraint violated", {
+        code: "P2003",
+        clientVersion: "test",
+      })
+    )
+
+    await expect(
+      reports.submit({
+        // @ts-expect-error - needed because of mocked defineAction
+        target_type: "job",
+        target_id: "no-such-job",
+        reason: "spam",
+      })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" })
   })
 })
 
