@@ -69,7 +69,14 @@ test("edit job title and verify updated title on detail page", async ({ page }) 
   await page.getByRole("link", { name: "Bearbeiten" }).click()
   await expect(page).toHaveURL(/\/job\/.+\/edit$/)
 
+  await page.selectOption("#work_mode", "remote")
   await page.fill("#title", updatedTitle)
+  await page.click('button[type="submit"]')
+  await expect(page).toHaveURL(jobUrl)
+
+  // The edit form must show the stored work mode, or the next save silently resets it.
+  await page.getByRole("link", { name: "Bearbeiten" }).click()
+  await expect(page.locator("#work_mode")).toHaveValue("remote")
   await page.click('button[type="submit"]')
   await expect(page).toHaveURL(jobUrl)
 
