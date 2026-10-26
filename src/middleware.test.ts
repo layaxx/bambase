@@ -170,6 +170,13 @@ describe("onRequest middleware", () => {
     })
   })
 
+  it("forbids framing and MIME sniffing", async () => {
+    const response = await onRequest(makeContext({ cookieLocale: "de" }), next)
+    expect(response?.headers.get("X-Frame-Options")).toBe("DENY")
+    expect(response?.headers.get("Content-Security-Policy")).toBe("frame-ancestors 'none'")
+    expect(response?.headers.get("X-Content-Type-Options")).toBe("nosniff")
+  })
+
   describe("request logging", () => {
     afterEach(() => vi.restoreAllMocks())
 
