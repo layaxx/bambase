@@ -112,6 +112,9 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
     try {
       response.headers.set("X-Request-ID", requestId)
+      response.headers.set("X-Frame-Options", "DENY")
+      response.headers.set("Content-Security-Policy", "frame-ancestors 'none'")
+      response.headers.set("X-Content-Type-Options", "nosniff")
     } catch {
       // Some responses (redirects from Response.redirect) have immutable headers.
       // The id still appears in the log line below.

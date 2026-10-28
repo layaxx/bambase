@@ -46,6 +46,7 @@ const t = useTranslations(Astro.locals.locale)
         <textarea
           class="textarea textarea-bordered w-full"
           id="report-details"
+          maxlength="2000"
           name="details"
           placeholder={t.reports.detailsPlaceholder}
           rows="3"
