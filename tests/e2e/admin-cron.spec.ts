@@ -3,7 +3,7 @@ import { expect, test, type Page } from "@playwright/test"
 /**
  * /admin/cron needs the "system:view" permission from the better-auth `admin` plugin.
  * The tests start only the "job-offer-expiry" job. It changes only the local database and
- * sends no request to feki.de, UniVIS or the Mensa API, which the sync jobs do. It is thus
+ * sends no request to UniVIS or the Mensa API, which the sync jobs do. It is thus
  * safe to start it in an e2e test.
  */
 

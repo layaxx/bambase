@@ -580,7 +580,6 @@ const de = {
     cronJobLabels: {
       "mensa-sync": "Mensa-Sync",
       "event-sync": "UniVis-Veranstaltungs-Sync",
-      "job-offer-sync": "Stellenangebote-Sync",
       "job-offer-expiry": "Stellenangebote-Ablauf",
     },
     cronScheduleLabel: (schedule: string) => `Zeitplan: ${schedule}`,
@@ -1170,7 +1169,6 @@ const en: typeof de = {
     cronJobLabels: {
       "mensa-sync": "Cafeteria sync",
       "event-sync": "UniVis event sync",
-      "job-offer-sync": "Job offer sync",
       "job-offer-expiry": "Job offer expiry",
     },
     cronScheduleLabel: (schedule: string) => `Schedule: ${schedule}`,

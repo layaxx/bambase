@@ -5,13 +5,11 @@ import { requirePermission } from "@/utils/action-guards"
 import { runTrackedCronJob, CRON_JOB_KEYS, type CronJobKey } from "@/utils/cron-tracking"
 import { syncMensaMeals } from "@/utils/mensa-sync"
 import { syncUnivisEvents } from "@/utils/event-sync"
-import { syncJobOffers } from "@/utils/job-offer-sync"
 import { expireJobOffers } from "@/utils/job-offer-expiry"
 
 const JOB_RUNNERS: Record<CronJobKey, () => Promise<unknown>> = {
   "mensa-sync": syncMensaMeals,
   "event-sync": syncUnivisEvents,
-  "job-offer-sync": syncJobOffers,
   "job-offer-expiry": expireJobOffers,
 }
 
