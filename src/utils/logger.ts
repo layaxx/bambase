@@ -61,7 +61,6 @@ const REDACTED_PATHS = [
   "DATABASE_URL",
   "BETTER_AUTH_SECRET",
   "MAILGUN_API_KEY",
-  "JOB_OFFER_MIGRATION_COOKIE",
 ].flatMap((field) => [field, `*.${field}`])
 
 /** Exported so tests can build a logger with the real production configuration. */

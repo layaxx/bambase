@@ -6,7 +6,6 @@ import { auth } from "./utils/auth"
 import { registerCronJob } from "@/utils/register-cron-job"
 import { syncMensaMeals } from "@/utils/mensa-sync"
 import { syncUnivisEvents } from "@/utils/event-sync"
-import { syncJobOffers } from "@/utils/job-offer-sync"
 import { expireJobOffers } from "@/utils/job-offer-expiry"
 
 registerCronJob("mensa-sync", syncMensaMeals, {
@@ -14,9 +13,6 @@ registerCronJob("mensa-sync", syncMensaMeals, {
 })
 registerCronJob("event-sync", syncUnivisEvents, {
   startupEnvVar: "LOAD_EVENTS_ON_STARTUP",
-})
-registerCronJob("job-offer-sync", syncJobOffers, {
-  startupEnvVar: "LOAD_JOB_OFFERS_ON_STARTUP",
 })
 registerCronJob("job-offer-expiry", expireJobOffers)
 

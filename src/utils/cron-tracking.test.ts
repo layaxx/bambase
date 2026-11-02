@@ -50,12 +50,12 @@ describe("runTrackedCronJob", () => {
     const consoleSpy = vi.spyOn(baseLogger, "error").mockImplementation(() => {})
     mockCreate.mockRejectedValue(new Error("db down"))
 
-    await expect(runTrackedCronJob("job-offer-sync", async () => "ok")).resolves.toEqual({
+    await expect(runTrackedCronJob("job-offer-expiry", async () => "ok")).resolves.toEqual({
       status: "success",
     })
 
     expect(consoleSpy).toHaveBeenCalledWith(
-      { err: expect.any(Error), jobName: "job-offer-sync" },
+      { err: expect.any(Error), jobName: "job-offer-expiry" },
       "cron run record failed"
     )
   })

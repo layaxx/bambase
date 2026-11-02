@@ -21,15 +21,13 @@ vi.mock("@/utils/authz", () => ({
 const mockRunTrackedCronJob = vi.hoisted(() => vi.fn())
 vi.mock("@/utils/cron-tracking", () => ({
   runTrackedCronJob: mockRunTrackedCronJob,
-  CRON_JOB_KEYS: ["mensa-sync", "event-sync", "job-offer-sync", "job-offer-expiry"],
+  CRON_JOB_KEYS: ["mensa-sync", "event-sync", "job-offer-expiry"],
 }))
 
 const mockSyncMensaMeals = vi.hoisted(() => vi.fn())
 vi.mock("@/utils/mensa-sync", () => ({ syncMensaMeals: mockSyncMensaMeals }))
 const mockSyncUnivisEvents = vi.hoisted(() => vi.fn())
 vi.mock("@/utils/event-sync", () => ({ syncUnivisEvents: mockSyncUnivisEvents }))
-const mockSyncJobOffers = vi.hoisted(() => vi.fn())
-vi.mock("@/utils/job-offer-sync", () => ({ syncJobOffers: mockSyncJobOffers }))
 const mockExpireJobOffers = vi.hoisted(() => vi.fn())
 vi.mock("@/utils/job-offer-expiry", () => ({ expireJobOffers: mockExpireJobOffers }))
 
@@ -101,7 +99,7 @@ describe("cron.run", () => {
 
     await expect(
       cron.run(
-        { key: "job-offer-sync" },
+        { key: "mensa-sync" },
         // @ts-expect-error - needed because of mocked defineAction function
         makeContext("admin-1", "admin")
       )
