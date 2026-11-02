@@ -5,6 +5,8 @@ import InfomapCard from "@/components/InfomapCard.astro"
 import PageLayout from "@/layouts/PageLayout.astro"
 import MensaCard from "@/components/MensaCard.astro"
 import StudentGroupsCard from "@/components/StudentGroupsCard.astro"
+import IconMegaphone from "@/components/icons/IconMegaphone.astro"
+import IconArrowRight from "@/components/icons/IconArrowRight.astro"
 import { useTranslations } from "@/i18n/translations"
 
 const t = useTranslations(Astro.locals.locale)
@@ -12,6 +14,17 @@ const t = useTranslations(Astro.locals.locale)
 
 <PageLayout description={t.footer.tagline}>
   <h1 class="sr-only">{t.footer.tagline}</h1>
+  <div class="alert alert-soft alert-vertical sm:alert-horizontal mb-8 shadow-md" role="status">
+    <IconMegaphone class="h-8 w-8 shrink-0" />
+    <div>
+      <p class="text-lg font-bold">{t.home.movedTitle}</p>
+      <p>{t.home.movedNotice}</p>
+    </div>
+    <a class="btn btn-sm btn-ghost" href="/jobs/faq">
+      {t.home.movedNoticeLink}
+      <IconArrowRight class="h-4 w-4" />
+    </a>
+  </div>
   <EventsCard />
   <MensaCard />
   <JobCard />
