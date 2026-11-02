@@ -19,11 +19,17 @@ const t = useTranslations(Astro.locals.locale)
   </PageHeader>
 
   <div class="flex flex-col gap-2 max-w-2xl">
-    {t.jobsFaq.items.map(({ q, a }) => (
-      <details class="collapse collapse-arrow border border-base-300">
+    {t.jobsFaq.items.map(({ id, q, a }) => (
+      <details class="collapse collapse-arrow border border-base-300" id={id}>
         <summary class="collapse-title font-semibold">{q}</summary>
         <p class="collapse-content text-base-content/70">{a}</p>
       </details>
     ))}
   </div>
 </PageLayout>
+
+<script>
+  // Opens the question a link points to, e.g. /jobs/faq#feki from the homepage banner.
+  const target = location.hash && document.getElementById(location.hash.slice(1))
+  if (target instanceof HTMLDetailsElement) target.open = true
+</script>

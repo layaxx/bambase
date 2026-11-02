@@ -204,6 +204,7 @@ const de = {
     pageSubtitle: "Die wichtigsten Infos zur Jobbörse auf BamBase.de.",
     items: [
       {
+        id: "feki",
         q: "Was ist mit feki.de passiert?",
         a: "Der Verein feki.de musste aufgrund langanhaltend rückläufiger Mitgliedszahlen aufgelöst werden. Die Jobbörse wird weiterhin ehrenamtlich von Studierenden betrieben – jetzt unter dem Dach der Studierendenvertretung auf BamBase.de. Für dich ändert sich dadurch nichts.",
       },
@@ -796,6 +797,7 @@ const en: typeof de = {
     pageSubtitle: "The most important information about the job market on BamBase.de.",
     items: [
       {
+        id: "feki",
         q: "What happened to feki.de?",
         a: "The feki.de student club had to be disbanded because more students were leaving than joining. The job market is still run on a voluntary basis by students – now under the student council, here on BamBase.de. Nothing changes for you.",
       },
