@@ -413,6 +413,12 @@ const de = {
     privacyPolicy: "Datenschutz",
     contact: "Kontakt",
   },
+  home: {
+    movedTitle: "Feki.de ist jetzt BamBase.de!",
+    movedNotice:
+      "Die Jobbörse findest du weiterhin hier – dazu Veranstaltungen, Mensapläne und mehr.",
+    movedNoticeLink: "Was ist mit feki.de passiert?",
+  },
   help: {
     hint: "Fragen, Probleme oder Fehler?",
     link: "Schreib uns eine E-Mail",
@@ -998,6 +1004,11 @@ const en: typeof de = {
     impressum: "Legal Notice",
     privacyPolicy: "Privacy Policy",
     contact: "Contact",
+  },
+  home: {
+    movedTitle: "Feki.de is now BamBase.de!",
+    movedNotice: "The job market is still here – plus events, cafeteria menus and more.",
+    movedNoticeLink: "What happened to feki.de?",
   },
   help: {
     hint: "Questions, problems or errors?",
