@@ -31,6 +31,7 @@ vi.mock("better-auth", () => ({
 const mockBanUser = vi.hoisted(() => vi.fn())
 const mockUnbanUser = vi.hoisted(() => vi.fn())
 const mockSetRole = vi.hoisted(() => vi.fn())
+const mockAdminUpdateUser = vi.hoisted(() => vi.fn())
 const mockCreateUser = vi.hoisted(() => vi.fn())
 const mockRequestPasswordReset = vi.hoisted(() => vi.fn())
 
@@ -40,6 +41,7 @@ vi.mock("@/utils/auth", () => ({
       banUser: mockBanUser,
       unbanUser: mockUnbanUser,
       setRole: mockSetRole,
+      adminUpdateUser: mockAdminUpdateUser,
       createUser: mockCreateUser,
       requestPasswordReset: mockRequestPasswordReset,
     },
@@ -49,11 +51,13 @@ vi.mock("@/utils/auth", () => ({
 const mockCanManageUsers = vi.hoisted(() => vi.fn())
 const mockCanSetUserRoles = vi.hoisted(() => vi.fn())
 const mockCanInviteUsers = vi.hoisted(() => vi.fn())
+const mockCanVerifyUserEmails = vi.hoisted(() => vi.fn())
 
 vi.mock("@/utils/authz", () => ({
   canManageUsers: mockCanManageUsers,
   canSetUserRoles: mockCanSetUserRoles,
   canInviteUsers: mockCanInviteUsers,
+  canVerifyUserEmails: mockCanVerifyUserEmails,
   USER_ROLES: ["user", "jobModerator", "eventModerator", "admin"],
 }))
 
@@ -70,11 +74,13 @@ beforeEach(() => {
   mockBanUser.mockReset()
   mockUnbanUser.mockReset()
   mockSetRole.mockReset()
+  mockAdminUpdateUser.mockReset()
   mockCreateUser.mockReset()
   mockRequestPasswordReset.mockReset()
   mockCanManageUsers.mockReset()
   mockCanSetUserRoles.mockReset()
   mockCanInviteUsers.mockReset()
+  mockCanVerifyUserEmails.mockReset()
 })
 
 afterEach(() => {
@@ -196,6 +202,75 @@ describe("users.unban", () => {
 
     await expect(
       users.unban(
+        { id: "user-1" },
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext("admin-1", "admin")
+      )
+    ).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" })
+  })
+})
+
+describe("users.verifyEmail", () => {
+  it("throws UNAUTHORIZED when not logged in", async () => {
+    await expect(
+      users.verifyEmail(
+        { id: "user-1" },
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext()
+      )
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" })
+  })
+
+  it("throws FORBIDDEN when the user cannot verify emails", async () => {
+    mockCanVerifyUserEmails.mockResolvedValue(false)
+
+    await expect(
+      users.verifyEmail(
+        { id: "user-1" },
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext("mod-1", "eventModerator")
+      )
+    ).rejects.toMatchObject({ code: "FORBIDDEN" })
+    expect(mockAdminUpdateUser).not.toHaveBeenCalled()
+  })
+
+  it("marks the target user's email as verified when allowed", async () => {
+    mockCanVerifyUserEmails.mockResolvedValue(true)
+    mockAdminUpdateUser.mockResolvedValue({})
+
+    const result = await users.verifyEmail(
+      { id: "user-1" },
+      // @ts-expect-error - needed because of mocked defineAction function
+      makeContext("admin-1", "admin")
+    )
+
+    expect(mockAdminUpdateUser).toHaveBeenCalledWith({
+      headers: expect.any(Headers),
+      body: { userId: "user-1", data: { emailVerified: true } },
+    })
+    expect(result).toEqual({})
+  })
+
+  it("throws BAD_REQUEST when better-auth rejects the update (e.g. user not found)", async () => {
+    mockCanVerifyUserEmails.mockResolvedValue(true)
+    mockAdminUpdateUser.mockRejectedValue(new MockAPIError("NOT_FOUND"))
+
+    await expect(
+      users.verifyEmail(
+        { id: "user-1" },
+        // @ts-expect-error - needed because of mocked defineAction function
+        makeContext("admin-1", "admin")
+      )
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" })
+  })
+
+  it("throws INTERNAL_SERVER_ERROR when the update fails", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {})
+    mockCanVerifyUserEmails.mockResolvedValue(true)
+    mockAdminUpdateUser.mockRejectedValue(new Error("db error"))
+
+    await expect(
+      users.verifyEmail(
         { id: "user-1" },
         // @ts-expect-error - needed because of mocked defineAction function
         makeContext("admin-1", "admin")

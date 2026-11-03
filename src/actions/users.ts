@@ -1,7 +1,13 @@
 import { defineAction, ActionError } from "astro:actions"
 import { z } from "astro/zod"
 import { APIError } from "better-auth"
-import { canManageUsers, canSetUserRoles, canInviteUsers, USER_ROLES } from "@/utils/authz"
+import {
+  canManageUsers,
+  canSetUserRoles,
+  canInviteUsers,
+  canVerifyUserEmails,
+  USER_ROLES,
+} from "@/utils/authz"
 import { requirePermission } from "@/utils/action-guards"
 import { auth } from "@/utils/auth"
 import { getLogger } from "@/utils/logger"
@@ -58,6 +64,37 @@ export const users = {
       }
 
       getLogger().info({ targetUserId: id }, "user unbanned")
+
+      return {}
+    },
+  }),
+
+  verifyEmail: defineAction({
+    accept: "form",
+    input: z.object({ id: z.string().min(1) }),
+    handler: async ({ id }, context) => {
+      await requirePermission(context, canVerifyUserEmails)
+
+      try {
+        await auth.api.adminUpdateUser({
+          headers: context.request.headers,
+          body: { userId: id, data: { emailVerified: true } },
+        })
+      } catch (error) {
+        if (error instanceof APIError) {
+          throw new ActionError({
+            code: "BAD_REQUEST",
+            message: "E-Mail-Adresse konnte nicht verifiziert werden.",
+          })
+        }
+        getLogger().error({ err: error, targetUserId: id }, "user email verification failed")
+        throw new ActionError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "E-Mail-Adresse konnte nicht verifiziert werden.",
+        })
+      }
+
+      getLogger().info({ targetUserId: id }, "user email verified manually")
 
       return {}
     },
