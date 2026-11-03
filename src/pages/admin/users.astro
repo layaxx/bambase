@@ -16,6 +16,7 @@ import {
   canManageUsers,
   canSetUserRoles,
   canInviteUsers,
+  canVerifyUserEmails,
   requireRole,
   USER_ROLES,
 } from "@/utils/authz"
@@ -36,16 +37,18 @@ const { user: currentUser } = guard
 const banResult = Astro.getActionResult(actions.users.ban)
 const unbanResult = Astro.getActionResult(actions.users.unban)
 const setRoleResult = Astro.getActionResult(actions.users.setRole)
+const verifyEmailResult = Astro.getActionResult(actions.users.verifyEmail)
 if (
   (banResult?.data !== undefined && !banResult.error) ||
   (unbanResult?.data !== undefined && !unbanResult.error) ||
-  (setRoleResult?.data !== undefined && !setRoleResult.error)
+  (setRoleResult?.data !== undefined && !setRoleResult.error) ||
+  (verifyEmailResult?.data !== undefined && !verifyEmailResult.error)
 ) {
   // A form POST without JavaScript goes to `?_action=...` on this same page. That query
   // string replaces the query string of the page, thus `Astro.url` no longer has the active
   // filters. The Referer header still has the filtered URL on which the form was rendered.
-  // A redirect to that URL keeps the filters of the admin after each ban, unban and role
-  // change.
+  // A redirect to that URL keeps the filters of the admin after each ban, unban, role change
+  // and email verification.
   const referer = Astro.request.headers.get("referer")
   let redirectTarget = Astro.url.pathname
   if (referer) {
@@ -64,10 +67,12 @@ if (
 const banError = banResult?.error?.message ?? null
 const unbanError = unbanResult?.error?.message ?? null
 const setRoleError = setRoleResult?.error?.message ?? null
+const verifyEmailError = verifyEmailResult?.error?.message ?? null
 
-const [canSetRole, canInvite] = await Promise.all([
+const [canSetRole, canInvite, canVerifyEmail] = await Promise.all([
   canSetUserRoles(currentUser.role),
   canInviteUsers(currentUser.role),
+  canVerifyUserEmails(currentUser.role),
 ])
 
 const searchQuery = Astro.url.searchParams.get("q")?.trim() ?? ""
@@ -188,6 +193,7 @@ const invited = Astro.url.searchParams.get("invited") === "success"
   {banError && <Alert variant="error">{banError}</Alert>}
   {unbanError && <Alert variant="error">{unbanError}</Alert>}
   {setRoleError && <Alert variant="error">{setRoleError}</Alert>}
+  {verifyEmailError && <Alert variant="error">{verifyEmailError}</Alert>}
 
   <div class="mb-6 grid gap-4 sm:grid-cols-3">
     <div class="flex items-center gap-3 rounded-xl border border-base-300 bg-base-100 p-4">
@@ -359,7 +365,21 @@ const invited = Astro.url.searchParams.get("invited") === "success"
                       {t.admin.statusVerified}
                     </span>
                   ) : (
-                    <span class="badge badge-sm badge-ghost">{t.admin.statusUnverified}</span>
+                    <div class="flex items-center gap-2">
+                      <span class="badge badge-sm badge-ghost">{t.admin.statusUnverified}</span>
+                      {canVerifyEmail && (
+                        <form action={actions.users.verifyEmail} method="POST">
+                          <input name="id" type="hidden" value={user.id} />
+                          <button
+                            aria-label={t.admin.verifyEmailLabel(user.name || user.email)}
+                            class="btn btn-ghost btn-xs"
+                            type="submit"
+                          >
+                            {t.admin.verifyEmailAction}
+                          </button>
+                        </form>
+                      )}
+                    </div>
                   )}
                 </td>
                 <td>

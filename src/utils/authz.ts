@@ -86,6 +86,11 @@ export function canSetUserRoles(role: string | null | undefined): Promise<boolea
   return hasPermission(role, { user: ["set-role"] })
 }
 
+// better-auth's adminUpdateUser requires both permissions to change `emailVerified`.
+export function canVerifyUserEmails(role: string | null | undefined): Promise<boolean> {
+  return hasPermission(role, { user: ["update", "set-email"] })
+}
+
 export function canInviteUsers(role: string | null | undefined): Promise<boolean> {
   return hasPermission(role, { user: ["create"] })
 }
