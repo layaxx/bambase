@@ -4,18 +4,18 @@ test.describe("Homepage", () => {
   test("loads without errors and shows key sections", async ({ page }) => {
     await page.goto("/")
 
-    expect(page.getByRole("link", { name: "Aktuelle Events" })).toBeVisible()
-    expect(page.locator("#mensa").getByRole("link", { name: "Mensaplan" })).toBeVisible()
-    expect(page.getByRole("link", { name: "Aktuelle Stellenangebote" })).toBeVisible()
-    expect(
+    await expect(page.getByRole("link", { name: "Aktuelle Events" })).toBeVisible()
+    await expect(page.locator("#mensa").getByRole("link", { name: "Mensaplan" })).toBeVisible()
+    await expect(page.getByRole("link", { name: "Aktuelle Stellenangebote" })).toBeVisible()
+    await expect(
       page.locator("#map").getByRole("link", { name: "Campuskarte", exact: true })
     ).toBeVisible()
-    expect(page.getByRole("heading", { name: "Aktiv in Bamberg" })).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Aktiv in Bamberg" })).toBeVisible()
   })
 
   test("login link is visible when unauthenticated", async ({ page }) => {
     await page.goto("/")
-    expect(page.getByRole("link", { name: "Einloggen" })).toBeVisible()
+    await expect(page.getByRole("link", { name: "Einloggen" })).toBeVisible()
   })
 })
 
@@ -38,10 +38,68 @@ test.describe("Event detail — not found", () => {
 })
 
 test.describe("Jobs listing (/jobs)", () => {
-  test("seeded published jobs are listed (not submitted/expired)", async ({ page }) => {
+  test("seeded published jobs are listed (not submitted/archived)", async ({ page }) => {
+    // The search narrows the list, thus the checks do not depend on the page that a job is on.
+    await page.goto("/jobs?search=Feki")
+    await expect(
+      page.locator('a[href="/job/werkstudent-in-softwareentwicklung-feki-de-e-v"]')
+    ).toBeVisible()
+
+    // The seed has a submitted job (Data Science) and an archived job (Nachhilfeinstitut).
+    await page.goto("/jobs?search=Data+Science")
+    await expect(page.getByText("Keine Stellen gefunden")).toBeVisible()
+    await page.goto("/jobs?search=Nachhilfeinstitut")
+    await expect(page.getByText("Keine Stellen gefunden")).toBeVisible()
+  })
+
+  test("filtering by job type and work mode keeps only matching jobs", async ({ page }) => {
+    const internship = page.locator('a[href="/job/praktikum-marketing-social-media-bambus-e-v"]')
+    // The search narrows the list to seeded jobs, thus the checks do not depend on the page that
+    // a job is on. "e. V." finds Feki (hybrid), BamBuS (on site) and cogita (remote).
+    await page.goto(`/jobs?${new URLSearchParams({ search: "e. V." })}`)
+    const sidebar = page.locator("aside", { hasText: "Stellenart" })
+
+    // Each seeded type has one published job, thus the work mode filter is checked on its own.
+    await sidebar.getByRole("link", { name: "Vor Ort", exact: true }).click()
+    await expect(page).toHaveURL(/work_mode=on_site/)
+    await expect(internship).toBeVisible()
+    await expect(
+      page.locator('a[href="/job/werkstudent-in-softwareentwicklung-feki-de-e-v"]')
+    ).toHaveCount(0)
+    await expect(
+      page.locator('a[href="/job/remote-junior-consultant-m-w-d-cogita-e-v"]')
+    ).toHaveCount(0)
+
+    await sidebar.getByRole("link", { name: "Praktikum", exact: true }).click()
+    await expect(page).toHaveURL(/type=internship/)
+    await expect(internship).toBeVisible()
+
+    // The Schlenkerla job is on site too, thus only a type filter that is combined with AND
+    // removes it.
+    const schlenkerla = page.locator('a[href="/job/aushilfe-service-kueche-schlenkerla"]')
+    await page.goto("/jobs?search=Schlenkerla&work_mode=on_site")
+    await expect(schlenkerla).toBeVisible()
+    await sidebar.getByRole("link", { name: "Praktikum", exact: true }).click()
+    await expect(schlenkerla).toHaveCount(0)
+  })
+
+  test("a search finds a job whose detail page shows how to apply", async ({ page }) => {
     await page.goto("/jobs")
-    // "Werkstudent" is part of the title of a published job in the seed data.
-    await expect(page.locator("body")).toContainText("Werkstudent")
+    await page
+      .getByRole("searchbox", { name: "Nach Stelle oder Unternehmen suchen…" })
+      .fill("Schlenkerla")
+    await page.getByRole("button", { name: "Suchen", exact: true }).click()
+
+    await expect(page).toHaveURL(/search=Schlenkerla/)
+    const schlenkerla = page.locator('a[href="/job/aushilfe-service-kueche-schlenkerla"]')
+    await expect(schlenkerla).toBeVisible()
+    await expect(
+      page.locator('a[href="/job/werkstudent-in-softwareentwicklung-feki-de-e-v"]')
+    ).toHaveCount(0)
+    await schlenkerla.click()
+
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("Aushilfe Service & Küche")
+    await expect(page.getByRole("link", { name: "0951 56060" })).toHaveAttribute("href", /^tel:/)
   })
 })
 
@@ -72,9 +130,8 @@ test.describe("Map (/map)", () => {
 
   test("map container is rendered", async ({ page }) => {
     await page.goto("/map")
-    // Leaflet makes a div with the id "map" or with a class that contains "leaflet".
-    const mapContainer = page.locator("#map, .leaflet-container, [id*=map]").first()
-    await expect(mapContainer).toBeAttached()
+    // Leaflet adds this class only after it starts, thus the check fails if the map script breaks.
+    await expect(page.locator(".leaflet-container")).toBeVisible()
   })
 })
 

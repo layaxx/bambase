@@ -1,4 +1,5 @@
-import { expect, test, type Browser, type Page } from "@playwright/test"
+import { type Browser } from "@playwright/test"
+import { expect, login, moderate, test } from "./fixtures"
 
 /**
  * A report has no permission of its own: /admin/reports/events needs "event:moderate" and
@@ -7,28 +8,8 @@ import { expect, test, type Browser, type Page } from "@playwright/test"
  * or sends an anonymous report, and the seeded admin@example.com account.
  */
 
-async function login(page: Page, email: string, password: string) {
-  await page.goto("/login")
-  await page.fill('[name="identifier"]', email)
-  await page.fill('[name="password"]', password)
-  await page.click('button[type="submit"]')
-  await page.waitForURL("/")
-}
-
 function uniqueTitle() {
   return `E2E Admin Report Test Event ${Date.now()}`
-}
-
-async function createEvent(page: Page, title: string): Promise<string> {
-  await page.goto("/event/new")
-  await page.fill("#title", title)
-  await page.fill("#organizer", "E2E Organizer")
-  await page.fill("#start", "2099-12-01T18:00")
-  await page.fill("#end", "2099-12-01T20:00")
-  await page.fill("#description", "Automated E2E test event — safe to delete.")
-  await page.click('button[type="submit"]')
-  await page.waitForURL(/\/event\/[a-z0-9-]+$/)
-  return page.url()
 }
 
 async function reportEvent(browser: Browser, eventUrl: string) {
@@ -67,10 +48,10 @@ test("reports hub links to the events and jobs queues", async ({ page }) => {
   )
 })
 
-test("moderator can dismiss and reopen a report", async ({ page, browser }) => {
+test("moderator can dismiss and reopen a report", async ({ page, browser, listings }) => {
   await login(page, "seed@example.com", "Seed1234!")
   const title = uniqueTitle()
-  const eventUrl = await createEvent(page, title)
+  const eventUrl = await listings.createEvent(title)
   await reportEvent(browser, eventUrl)
 
   const adminContext = await browser.newContext()
@@ -95,20 +76,16 @@ test("moderator can dismiss and reopen a report", async ({ page, browser }) => {
   await expect(adminPage).toHaveURL(/\/admin\/reports\/events$/)
   await expect(adminPage.locator(".rounded-xl", { hasText: title })).toBeVisible()
   await adminContext.close()
-
-  await page.goto(eventUrl)
-  await page.getByRole("button", { name: "Löschen" }).click()
-  await page.getByRole("dialog").getByRole("button", { name: "Löschen" }).click()
-  await expect(page).toHaveURL("/account/events")
 })
 
 test("moderator can unpublish and republish a reported event directly from the queue", async ({
   page,
   browser,
+  listings,
 }) => {
   await login(page, "seed@example.com", "Seed1234!")
   const title = uniqueTitle()
-  const eventUrl = await createEvent(page, title)
+  const eventUrl = await listings.createEvent(title)
   await reportEvent(browser, eventUrl)
 
   const adminContext = await browser.newContext()
@@ -148,7 +125,57 @@ test("moderator can unpublish and republish a reported event directly from the q
 
   await page.goto(eventUrl)
   await expect(page.getByRole("heading", { name: title })).toBeVisible()
-  await page.getByRole("button", { name: "Löschen" }).click()
-  await page.getByRole("dialog").getByRole("button", { name: "Löschen" }).click()
-  await expect(page).toHaveURL("/account/events")
+})
+
+test("moderator can take a reported job offline from the queue and publish it again", async ({
+  page,
+  browser,
+  listings,
+}) => {
+  test.slow()
+  await login(page, "seed@example.com", "Seed1234!")
+  const title = `E2E Admin Report Test Job ${Date.now()}`
+  const jobUrl = await listings.createJob(title)
+
+  const adminContext = await browser.newContext()
+  const adminPage = await adminContext.newPage()
+  await login(adminPage, "admin@example.com", "Admin1234!")
+  // Only a published job can be reported, because nobody else sees a submitted one.
+  await moderate(adminPage, title)
+
+  const anonContext = await browser.newContext()
+  const anonPage = await anonContext.newPage()
+  await anonPage.goto(jobUrl)
+  await anonPage.getByRole("button", { name: "Job melden" }).click()
+  await anonPage.selectOption("#report-reason", "spam")
+  await anonPage.locator("#reportModal").getByRole("button", { name: "Melden" }).click()
+  await expect(anonPage).toHaveURL(/\?reported=success/)
+
+  await adminPage.goto("/admin/reports/jobs")
+  const reportCard = adminPage.locator(".rounded-xl", { hasText: title })
+  await expect(reportCard).toBeVisible()
+  // For a job, the unpublish is a rejection, thus the reason is required.
+  await reportCard.getByRole("textbox", { name: "Grund für die Ablehnung" }).fill("Spam")
+  await reportCard.getByRole("button", { name: "Depublizieren" }).click()
+  await expect(adminPage).toHaveURL(/\/admin\/reports\/jobs$/)
+  await expect(adminPage.getByTestId("reports-queue")).not.toContainText(title)
+
+  await adminPage.goto("/admin/reports/jobs?status=resolved")
+  const unpublishedCard = adminPage.locator(".rounded-xl", { hasText: title })
+  await expect(unpublishedCard.getByText("Depubliziert")).toBeVisible()
+
+  // The owner sees the rejection and its reason, everyone else sees nothing.
+  await page.goto(jobUrl)
+  await expect(page.getByRole("alert")).toContainText("Grund: Spam")
+  await anonPage.goto(jobUrl)
+  await expect(anonPage.getByRole("heading", { name: "Angebot nicht gefunden" })).toBeVisible()
+
+  await unpublishedCard.getByRole("button", { name: "Veröffentlichen" }).click()
+  await expect(adminPage).toHaveURL(/\/admin\/reports\/jobs$/)
+  await expect(adminPage.locator(".rounded-xl", { hasText: title })).toBeVisible()
+  await adminContext.close()
+
+  await anonPage.goto(jobUrl)
+  await expect(anonPage.getByRole("heading", { level: 1 })).toContainText(title)
+  await anonContext.close()
 })
