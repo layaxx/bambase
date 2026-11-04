@@ -45,7 +45,12 @@ export default defineConfig({
         ...devices["Desktop Chrome"],
         storageState: AUTH_FILE,
       },
-      testMatch: ["**/jobs.spec.ts", "**/events.spec.ts", "**/account.spec.ts"],
+      testMatch: [
+        "**/jobs.spec.ts",
+        "**/events.spec.ts",
+        "**/account.spec.ts",
+        "**/reports.spec.ts",
+      ],
       dependencies: ["setup"],
     },
 
@@ -56,7 +61,6 @@ export default defineConfig({
         "**/auth.spec.ts",
         "**/public-pages.spec.ts",
         "**/map.spec.ts",
-        "**/reports.spec.ts",
         "**/og-images.spec.ts",
         "**/admin.spec.ts",
         "**/admin-users.spec.ts",

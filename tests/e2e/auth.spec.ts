@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test"
-import { AUTH_FILE } from "../../playwright.config"
+import { login } from "./fixtures"
 
 test.describe("Login", () => {
   test("posting a job while logged out explains the login and keeps the target", async ({
@@ -218,9 +218,9 @@ test.describe("Logout", () => {
 })
 
 test.describe("Auth pages while signed in", () => {
-  test.use({ storageState: AUTH_FILE })
-
   test("/login and /register redirect to /account, honouring ?redirect", async ({ page }) => {
+    await login(page, "seed@example.com", "Seed1234!")
+
     await page.goto("/login")
     await expect(page).toHaveURL("/account")
 

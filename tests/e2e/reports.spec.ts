@@ -1,7 +1,6 @@
 /* eslint-disable no-await-in-loop */
 
-import { expect, test } from "@playwright/test"
-import { AUTH_FILE } from "../../playwright.config"
+import { expect, login, moderate, test } from "./fixtures"
 
 /**
  * Tests for the report submission flows.
@@ -19,10 +18,15 @@ import { AUTH_FILE } from "../../playwright.config"
 
 const UNOWNED_JOB_URL = "/job/werkstudent-in-softwareentwicklung-feki-de-e-v"
 const UNOWNED_EVENT_URL = "/event/ersti-party"
+// Part of t.reports.warningHint. Not .alert-warning, because the "In Prüfung" alert and
+// ApiDownBanner use that class too.
+const WARNING_HINT = "Dieser Inhalt wurde mehrfach gemeldet"
 
 // ─── Anonymous visitor ──────────────────────────────────────────────────────
 
 test.describe("Report — anonymous visitor", () => {
+  test.use({ storageState: { cookies: [], origins: [] } })
+
   test("can submit a job report and see success alert", async ({ page }) => {
     await page.goto(UNOWNED_JOB_URL)
 
@@ -64,8 +68,6 @@ test.describe("Report — anonymous visitor", () => {
 // ─── Authenticated seed user ────────────────────────────────────────────────
 
 test.describe("Report — authenticated seed user", () => {
-  test.use({ storageState: AUTH_FILE })
-
   test("can submit a job report and see success alert", async ({ page }) => {
     await page.goto(UNOWNED_JOB_URL)
 
@@ -96,41 +98,18 @@ test.describe("Report — authenticated seed user", () => {
     await expect(page.locator(".alert-success")).toBeVisible()
   })
 
-  test("owner does not see report button on their own job", async ({ page }) => {
+  test("owner does not see report button on their own job", async ({ page, listings }) => {
     // Create a new job that the seed user owns, thus the test does not change the seed data.
-    await page.goto("/job/new")
-    await page.fill("#title", `Owner report test job ${Date.now()}`)
-    await page.fill("#company", "E2E Corp")
-    await page.fill("#location", "Bamberg")
-    await page.fill("#working_hours", "20")
-    await page.fill("#description", "Automated E2E test — safe to delete.")
-    await page.fill("#contact_name", "Test Contact")
-    await page.click('button[type="submit"]')
-    await page.waitForURL(/\/job\/[a-z0-9-]+\?submitted$/)
+    await listings.createJob(`Owner report test job ${Date.now()}`)
 
     await expect(page.getByRole("button", { name: "Job melden" })).not.toBeVisible()
     await expect(page.getByRole("button", { name: "Löschen" })).toBeVisible()
-
-    await page.getByRole("button", { name: "Löschen" }).click()
-    await page.getByRole("dialog").getByRole("button", { name: "Löschen" }).click()
-    await expect(page).toHaveURL("/account/jobs")
   })
 
-  test("owner does not see report button on their own event", async ({ page }) => {
-    await page.goto("/event/new")
-    await page.fill("#title", `Owner report test event ${Date.now()}`)
-    await page.fill("#organizer", "TestOrg")
-    await page.fill("#start", "2099-12-01T18:00")
-    await page.fill("#end", "2099-12-01T20:00")
-    await page.fill("#description", "Testing report button visibility for event owner.")
-    await page.click('button[type="submit"]')
-    await page.waitForURL(/\/event\//)
+  test("owner does not see report button on their own event", async ({ page, listings }) => {
+    await listings.createEvent(`Owner report test event ${Date.now()}`)
 
     await expect(page.getByRole("button", { name: "Veranstaltung melden" })).not.toBeVisible()
-
-    await page.getByRole("button", { name: "Löschen" }).click()
-    await page.getByRole("dialog").getByRole("button", { name: "Löschen" }).click()
-    await expect(page).toHaveURL("/account/events")
   })
 })
 
@@ -140,32 +119,31 @@ test.describe("Report warning — threshold reached", () => {
   /**
    * Each test creates a separate listing that the seed user owns. Then it sends
    * REPORT_WARNING_THRESHOLD (3) reports from independent anonymous browser contexts, and
-   * makes sure that the page shows the warning alert to each subsequent visitor. The test
-   * deletes the listing at the end, thus the database stays clean.
+   * makes sure that the page shows the warning alert to each subsequent visitor. The
+   * `listings` fixture deletes the listing, also after a failure, thus the database stays clean.
    *
    * A separate browser context gives each report a new session. This is equal to the real
    * condition, in which different users send the reports.
    */
 
-  test.use({ storageState: AUTH_FILE })
+  test("job page shows warning alert after 3 reports", async ({ page, browser, listings }) => {
+    test.slow()
+    const title = `Warning threshold test job ${Date.now()}`
+    const jobUrl = await listings.createJob(title)
 
-  test.skip("job page shows warning alert after 3 reports", async ({ page, browser }) => {
-    await page.goto("/job/new")
-    await page.fill("#title", `Warning threshold test job ${Date.now()}`)
-    await page.fill("#company", "E2E Corp")
-    await page.fill("#location", "Bamberg")
-    await page.fill("#working_hours", "20")
-    await page.fill("#description", "Automated E2E test — safe to delete.")
-    await page.fill("#contact_name", "Test Contact")
-    await page.click('button[type="submit"]')
-    await page.waitForURL(/\/job\/[a-z0-9-]+$/)
-    const jobUrl = page.url()
+    // A new job is submitted and only its owner sees it. An anonymous visitor can thus only
+    // report it after a moderator publishes it.
+    const adminCtx = await browser.newContext({ storageState: undefined })
+    const adminPage = await adminCtx.newPage()
+    await login(adminPage, "admin@example.com", "Admin1234!")
+    await moderate(adminPage, title)
+    await adminCtx.close()
 
     for (let i = 0; i < 3; i++) {
       const anonCtx = await browser.newContext({ storageState: undefined })
       const anonPage = await anonCtx.newPage()
       await anonPage.goto(jobUrl)
-      await expect(anonPage.locator(".alert-warning")).not.toBeVisible()
+      await expect(anonPage.getByText(WARNING_HINT)).not.toBeVisible()
       await anonPage.getByRole("button", { name: "Job melden" }).click()
       await expect(anonPage.locator("#reportModal")).toBeVisible()
       await anonPage.selectOption("#report-reason", "spam")
@@ -175,25 +153,13 @@ test.describe("Report warning — threshold reached", () => {
     }
 
     await page.goto(jobUrl)
-    await expect(page.locator(".alert-warning")).toBeVisible()
-
-    await page.getByRole("button", { name: "Löschen" }).click()
-    await page.getByRole("dialog").getByRole("button", { name: "Löschen" }).click()
-    await expect(page).toHaveURL("/account/jobs")
+    await expect(page.getByText(WARNING_HINT)).toBeVisible()
   })
 
-  test("event page shows warning alert after 3 reports", async ({ browser, page }) => {
-    await page.goto("/event/new")
-    await page.fill("#title", `Warning threshold test event ${Date.now()}`)
-    await page.fill("#organizer", "E2E Organizer")
-    await page.fill("#start", "2099-12-01T18:00")
-    await page.fill("#end", "2099-12-01T20:00")
-    await page.fill("#description", "Automated E2E test — safe to delete.")
-    await page.click('button[type="submit"]')
-    await page.waitForURL(/\/event\/[a-z0-9-]+$/)
-    const eventUrl = page.url()
+  test("event page shows warning alert after 3 reports", async ({ browser, page, listings }) => {
+    const eventUrl = await listings.createEvent(`Warning threshold test event ${Date.now()}`)
 
-    await expect(page.locator(".alert-warning")).not.toBeVisible()
+    await expect(page.getByText(WARNING_HINT)).not.toBeVisible()
 
     for (let i = 0; i < 3; i++) {
       const anonCtx = await browser.newContext({ storageState: undefined })
@@ -208,10 +174,6 @@ test.describe("Report warning — threshold reached", () => {
     }
 
     await page.goto(eventUrl)
-    await expect(page.locator(".alert-warning")).toBeVisible()
-
-    await page.getByRole("button", { name: "Löschen" }).click()
-    await page.getByRole("dialog").getByRole("button", { name: "Löschen" }).click()
-    await expect(page).toHaveURL("/account/events")
+    await expect(page.getByText(WARNING_HINT)).toBeVisible()
   })
 })
