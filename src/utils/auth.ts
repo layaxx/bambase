@@ -23,14 +23,7 @@ const userRole = ac.newRole({})
 // moderation for their own target type, and for no other type.
 const jobModeratorRole = ac.newRole({ jobOffer: ["moderate"] })
 const eventModeratorRole = ac.newRole({ event: ["moderate"] })
-const adminRole = ac.newRole({
-  ...defaultStatements,
-  jobOffer: ["moderate"],
-  event: ["moderate"],
-  location: ["manage"],
-  studentGroup: ["manage"],
-  system: ["view"],
-})
+const adminRole = ac.newRole(statement)
 
 export const roles = {
   user: userRole,

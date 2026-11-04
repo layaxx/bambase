@@ -19,7 +19,10 @@ RUN yarn build
 FROM node:22-alpine AS runner
 WORKDIR /app
 
+# The date helpers use the server's local time (Mensa closing hour, today, event inputs).
+# Node's bundled ICU resolves the zone, no tzdata needed.
 ENV NODE_ENV=production \
+    TZ=Europe/Berlin \
     HOST=0.0.0.0 \
     PORT=4321
 

@@ -46,5 +46,5 @@ export function formatRelativeDate(date: string | Date, locale: string): string 
     formatter = new Intl.RelativeTimeFormat(locale, { numeric: "always" })
     formatters.set(locale, formatter)
   }
-  return formatter.format(Math.round(seconds / size), unit)
+  return formatter.format(Math.round(seconds / size) || -1, unit)
 }

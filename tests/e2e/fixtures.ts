@@ -79,7 +79,7 @@ export const test = base.extend<{ listings: Listings }>({
           await page.fill("#description", "Automated E2E test event — safe to delete.")
           await fill?.()
           await page.click('button[type="submit"]')
-          return waitForListing(page, urls, /\/event\/[a-z0-9-]+$/)
+          return waitForListing(page, urls, /\/event\/(?!new$)[a-z0-9-]+$/)
         },
       })
 

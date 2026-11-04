@@ -53,6 +53,12 @@ describe("formatRelativeDate", () => {
     expect(formatRelativeDate(ago(364 * 24 * 60 * 60), "de")).toBe("vor 1 Jahr")
   })
 
+  it("never says 0 seconds", () => {
+    vi.useFakeTimers({ now: new Date("2026-04-15T12:00:00Z") })
+    expect(formatRelativeDate(new Date(Date.now() + 200), "de")).toBe("vor 1 Sekunde")
+    expect(formatRelativeDate(new Date(Date.now() - 200), "de")).toBe("vor 1 Sekunde")
+  })
+
   it("returns an empty string for an invalid date", () => {
     expect(formatRelativeDate("not a date", "de")).toBe("")
   })
