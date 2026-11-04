@@ -1,8 +1,6 @@
 ---
 import "../global.css"
 import { Font } from "astro:assets"
-import { SEO } from "astro-seo"
-import { escape } from "he"
 import Header from "@/components/Header.astro"
 import Footer from "@/components/Footer.astro"
 import CookieBanner from "@/components/CookieBanner.astro"
@@ -14,6 +12,7 @@ interface Props {
 }
 const { title, description, ogImage } = Astro.props
 const seoTitle = title ? `${title} – BamBase.de` : "BamBase.de"
+const canonicalUrl = `${Astro.url.origin}${Astro.url.pathname}`
 ---
 
 <!doctype html>
@@ -21,45 +20,23 @@ const seoTitle = title ? `${title} – BamBase.de` : "BamBase.de"
   <head>
     <Font cssVariable="--font-inter" preload />
     <Font cssVariable="--font-archivo" preload />
-    <SEO
-      canonical={`${Astro.url.origin}${Astro.url.pathname}`}
-      charset="UTF-8"
-      description={description}
-      extend={{
-        link: [
-          {
-            href: "/favicon.svg",
-            rel: "icon",
-            type: "image/svg+xml",
-          },
-          {
-            href: "/favicon.ico",
-            rel: "icon",
-            type: "image/x-icon",
-          },
-          {
-            href: "/sitemap.xml",
-            rel: "sitemap",
-          },
-        ],
-        meta: [
-          {
-            name: "generator",
-            content: Astro.generator,
-          },
-          { name: "viewport", content: "width=device-width, initial-scale=1" },
-        ],
-      }}
-      openGraph={{
-        basic: {
-          title: seoTitle,
-          type: "website",
-          image: ogImage ?? `${Astro.url.origin}/og-image.png`,
-        },
-        optional: { description, localeAlternate: ["de", "en"] },
-      }}
-      title={escape(seoTitle)}
-    />
+    <meta charset="UTF-8" />
+    <meta content="width=device-width, initial-scale=1" name="viewport" />
+    <meta content={Astro.generator} name="generator" />
+    <title>{seoTitle}</title>
+    {description && <meta content={description} name="description" />}
+    <meta content="index, follow" name="robots" />
+    <link href={canonicalUrl} rel="canonical" />
+    <link href="/favicon.svg" rel="icon" type="image/svg+xml" />
+    <link href="/favicon.ico" rel="icon" type="image/x-icon" />
+    <link href="/sitemap.xml" rel="sitemap" />
+    <meta content={seoTitle} property="og:title" />
+    <meta content="website" property="og:type" />
+    <meta content={ogImage ?? `${Astro.url.origin}/og-image.png`} property="og:image" />
+    <meta content={canonicalUrl} property="og:url" />
+    {description && <meta content={description} property="og:description" />}
+    <meta content="de" property="og:locale:alternate" />
+    <meta content="en" property="og:locale:alternate" />
     <script is:inline>
       const saved = localStorage.getItem("theme")
       const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches

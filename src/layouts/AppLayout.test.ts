@@ -9,7 +9,7 @@ beforeAll(async () => {
 })
 
 describe("AppLayout", () => {
-  it("escapes a user-supplied title in <title>, which astro-seo renders as raw HTML", async () => {
+  it("escapes a user-supplied title in <title>", async () => {
     const html = await container.renderToString(AppLayout, {
       props: { title: "</title><script>alert(1)</script>" },
       locals: { locale: "de", user: null, session: null },

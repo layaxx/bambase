@@ -9,7 +9,7 @@ Shared links to events and jobs should show a preview card with the entity's own
 
 ## Decision
 
-- `astro-seo`'s `<SEO>` in the layout emits title, description, canonical, OG and Twitter tags. Pages pass `title`, `description` and `ogImage` through the layout chain.
+- The `<head>` of `AppLayout` emits title, description, canonical and OG tags as plain elements. Pages pass `title`, `description` and `ogImage` through the layout chain.
 - `/api/og/[type]/[slug].png` builds an element tree (`imageContent.ts`), renders it to SVG with `satori` and then to PNG with `@resvg/resvg-js` (`render.ts`).
 - Fonts for satori are read from `@fontsource/inter`'s `.woff` files with `fs.readFile` and cached at module scope.
 - If the type or slug is unknown, the event is hidden, the job is not published, or rendering fails, the endpoint returns a **302 to `/og-image.png`** (the static fallback) instead of a 404, so crawlers always get an image.
