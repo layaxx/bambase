@@ -1,7 +1,6 @@
 import { defineAction, ActionError } from "astro:actions"
 import { z } from "astro/zod"
 import { JOB_TYPES, JOB_FIELDS, WORK_MODES } from "@/utils/api/job-offers"
-import { invalidateCacheByPrefix } from "@/utils/api/cache"
 import { createWithUniqueSlug } from "@/utils/slugify"
 import { canModerateJobOffers } from "@/utils/authz"
 import { ARCHIVABLE_STATUSES, canArchiveJob, canEditJob } from "@/utils/job-status"
@@ -83,7 +82,6 @@ async function moderateAll(
   context: ModerationContext
 ): Promise<void> {
   const results = await Promise.all(ids.map((id) => moderate(id, status, reason, context)))
-  invalidateCacheByPrefix("job-offers:")
   const errors = results.filter((error) => error !== null)
   if (errors.length === 0) return
   // A stale offer only needs a reload, thus each other failure is the one to report.
@@ -150,7 +148,6 @@ export const jobs = {
       }
 
       getLogger().info({ jobOfferId: id }, "job deleted")
-      invalidateCacheByPrefix("job-offers:")
       return {}
     },
   }),
@@ -199,7 +196,6 @@ export const jobs = {
       }
 
       getLogger().info({ jobOfferId: id }, "job archived")
-      invalidateCacheByPrefix("job-offers:")
       return {}
     },
   }),
@@ -309,7 +305,6 @@ export const jobs = {
         )
       }
 
-      invalidateCacheByPrefix("job-offers:")
       return { slug: updated.slug }
     },
   }),
@@ -353,7 +348,6 @@ export const jobs = {
         throw mutationError(error, "Job create failed", "Einreichung fehlgeschlagen.")
       }
 
-      invalidateCacheByPrefix("job-offers:")
       await notifyJobOwner(
         context.locals.user.email,
         { slug: created.slug, title: input.title },

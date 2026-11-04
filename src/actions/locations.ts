@@ -1,7 +1,6 @@
 import { defineAction } from "astro:actions"
 import { z } from "astro/zod"
 import { LOCATION_CATEGORIES } from "@/utils/api/locations"
-import { invalidateCacheByPrefix } from "@/utils/api/cache"
 import { createWithUniqueSlug } from "@/utils/slugify"
 import { canManageLocations } from "@/utils/authz"
 import { requirePermission, mutationError } from "@/utils/action-guards"
@@ -41,7 +40,6 @@ export const locations = {
         )
       }
 
-      invalidateCacheByPrefix("locations:")
       return {}
     },
   }),
@@ -78,7 +76,6 @@ export const locations = {
         )
       }
 
-      invalidateCacheByPrefix("locations:")
       return { slug: updated.slug }
     },
   }),
@@ -112,7 +109,6 @@ export const locations = {
         throw mutationError(error, "Location create failed", "Erstellen fehlgeschlagen.")
       }
 
-      invalidateCacheByPrefix("locations:")
       return { slug: created.slug }
     },
   }),

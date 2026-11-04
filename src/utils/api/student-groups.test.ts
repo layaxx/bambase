@@ -15,10 +15,6 @@ vi.mock("../prisma", () => ({
   },
 }))
 
-vi.mock("./cache", () => ({
-  withCache: (_key: string, fn: () => Promise<unknown>) => fn(),
-}))
-
 beforeEach(() => {
   mockFindMany.mockReset()
   mockFindFirst.mockReset()

@@ -1,6 +1,5 @@
 import prisma from "../prisma"
 import type { Prisma } from "@/generated/prisma/client"
-import { withCache } from "./cache"
 import { findPage } from "../pagination"
 import { apiResult, type ApiResult } from "./types"
 import { JobType, JobField, WorkMode, JobOnlineStatus } from "@/generated/prisma/enums"
@@ -119,21 +118,18 @@ export function fetchJobOffersPaginated(
   if (fields && fields.length > 0) where.field = { in: fields }
   if (workModes && workModes.length > 0) where.workMode = { in: workModes }
 
-  const key = `job-offers:paginated:${JSON.stringify(filter)}`
   return apiResult("Error fetching job offers (paginated)", EMPTY_PAGE, () =>
-    withCache(key, () => findJobPage(where, page, pageSize))
+    findJobPage(where, page, pageSize)
   )
 }
 
 export function fetchJobOffers(limit = 100): Promise<ApiResult<JobOffer[]>> {
   return apiResult("Error fetching job offers", [], async () => {
-    const rows = await withCache(`job-offers:all:${limit}`, () =>
-      prisma.jobOffer.findMany({
-        where: { onlineStatus: "published" },
-        orderBy: { createdAt: "desc" },
-        take: limit,
-      })
-    )
+    const rows = await prisma.jobOffer.findMany({
+      where: { onlineStatus: "published" },
+      orderBy: { createdAt: "desc" },
+      take: limit,
+    })
     return rows.map((row) => toJobOffer(row))
   })
 }

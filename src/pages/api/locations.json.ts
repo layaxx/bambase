@@ -14,6 +14,7 @@ export const GET: APIRoute = async ({ url }) => {
   }
 
   return new Response(JSON.stringify(locations), {
-    headers: { "Content-Type": "application/json" },
+    // Staff-curated data that the map fetches on each filter click; 5 min staleness is fine.
+    headers: { "Content-Type": "application/json", "Cache-Control": "public, max-age=300" },
   })
 }

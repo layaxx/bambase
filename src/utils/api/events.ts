@@ -1,6 +1,5 @@
 import prisma from "../prisma"
 import type { Prisma } from "@/generated/prisma/client"
-import { withCache } from "./cache"
 import { findPage } from "../pagination"
 import { apiResult, type ApiResult } from "./types"
 import { toMapLocation, type MapLocation } from "./locations"
@@ -124,9 +123,8 @@ export function fetchEventsPaginated(filter: EventsFilter = {}): Promise<ApiResu
   if (dateFilter === "week") where.start = { lte: new Date(now.getTime() + 7 * 86_400_000) }
   else if (dateFilter === "month") where.start = { lte: new Date(now.getTime() + 31 * 86_400_000) }
 
-  const key = `events:paginated:${JSON.stringify({ category, dateFilter, page, pageSize })}`
   return apiResult("Error fetching events (paginated)", EMPTY_PAGE, () =>
-    withCache(key, () => findEventPage(where, { start: "asc" }, page, pageSize))
+    findEventPage(where, { start: "asc" }, page, pageSize)
   )
 }
 
@@ -136,19 +134,14 @@ export function fetchOngoingOrUpcomingEvents(limit = 100): Promise<ApiResult<Eve
     const endOfToday = new Date(now)
     endOfToday.setHours(23, 59, 59, 999)
 
-    const rows = await withCache(`events:ongoing-or-upcoming:${limit}`, () =>
-      prisma.event.findMany({
-        where: {
-          hidden: false,
-          OR: [
-            { start: { gte: now, lte: endOfToday } },
-            { start: { lte: now }, end: { gte: now } },
-          ],
-        },
-        orderBy: { start: "asc" },
-        take: limit,
-      })
-    )
+    const rows = await prisma.event.findMany({
+      where: {
+        hidden: false,
+        OR: [{ start: { gte: now, lte: endOfToday } }, { start: { lte: now }, end: { gte: now } }],
+      },
+      orderBy: { start: "asc" },
+      take: limit,
+    })
     return rows.map((row) => toEvent(row))
   })
 }
@@ -156,14 +149,12 @@ export function fetchOngoingOrUpcomingEvents(limit = 100): Promise<ApiResult<Eve
 /** Fetches the events that did not end, together with their map location, for the map page. */
 export function fetchUpcomingMapEvents(limit = 200): Promise<ApiResult<Event[]>> {
   return apiResult("Error fetching upcoming events", [], async () => {
-    const rows = await withCache(`events:upcoming-map:${limit}`, () =>
-      prisma.event.findMany({
-        where: { end: { gte: new Date() }, mapLocationId: { not: null }, hidden: false },
-        include: { mapLocation: true },
-        orderBy: { start: "asc" },
-        take: limit,
-      })
-    )
+    const rows = await prisma.event.findMany({
+      where: { end: { gte: new Date() }, mapLocationId: { not: null }, hidden: false },
+      include: { mapLocation: true },
+      orderBy: { start: "asc" },
+      take: limit,
+    })
     return rows.map((row) => toEvent(row, { mapLocation: row.mapLocation }))
   })
 }

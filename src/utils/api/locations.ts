@@ -1,5 +1,4 @@
 import prisma from "../prisma"
-import { withCache } from "./cache"
 import { apiResult, type ApiResult } from "./types"
 import { LocationCategory } from "@/generated/prisma/enums"
 import type { LocationModel } from "@/generated/prisma/models"
@@ -54,13 +53,11 @@ export function fetchLocations(
   category?: MapLocation["category"]
 ): Promise<ApiResult<MapLocation[]>> {
   return apiResult("Error fetching locations", [], async () => {
-    const rows = await withCache(`locations:${category ?? "all"}`, () =>
-      prisma.location.findMany({
-        where: category ? { category } : undefined,
-        orderBy: { name: "asc" },
-        take: 500,
-      })
-    )
+    const rows = await prisma.location.findMany({
+      where: category ? { category } : undefined,
+      orderBy: { name: "asc" },
+      take: 500,
+    })
     return rows.map(toMapLocation)
   })
 }

@@ -1,5 +1,4 @@
 import prisma from "../prisma"
-import { withCache } from "./cache"
 import { apiResult, type ApiResult } from "./types"
 import type { StudentGroupModel } from "@/generated/prisma/models"
 
@@ -29,12 +28,10 @@ function toStudentGroup(row: StudentGroupModel): StudentGroup {
 
 export function fetchStudentGroups(limit = 200): Promise<ApiResult<StudentGroup[]>> {
   return apiResult("Error fetching student groups", [], async () => {
-    const groups = await withCache(`student-groups:${limit}`, () =>
-      prisma.studentGroup.findMany({
-        orderBy: { name: "asc" },
-        take: limit,
-      })
-    )
+    const groups = await prisma.studentGroup.findMany({
+      orderBy: { name: "asc" },
+      take: limit,
+    })
     return groups.map(toStudentGroup)
   })
 }
