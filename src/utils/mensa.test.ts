@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import dayjs from "dayjs"
+import { isoDay } from "./dates"
 import { getRelevantDay, groupMealsByDay, MENSA_CLOSING_HOUR } from "./mensa"
 import type { GroupLabels } from "./mensa"
 
@@ -12,42 +12,42 @@ import type { GroupLabels } from "./mensa"
 describe("getRelevantDay", () => {
   describe("weekday before closing time", () => {
     it("returns today on a Monday morning", () => {
-      const now = dayjs("2026-04-13T09:00:00")
-      expect(getRelevantDay(now).format("YYYY-MM-DD")).toBe("2026-04-13")
+      const now = new Date("2026-04-13T09:00:00")
+      expect(isoDay(getRelevantDay(now))).toBe("2026-04-13")
     })
 
     it("returns today one minute before closing (14:59)", () => {
-      const now = dayjs(`2026-04-13T${MENSA_CLOSING_HOUR - 1}:59:00`)
-      expect(getRelevantDay(now).format("YYYY-MM-DD")).toBe("2026-04-13")
+      const now = new Date(`2026-04-13T${MENSA_CLOSING_HOUR - 1}:59:00`)
+      expect(isoDay(getRelevantDay(now))).toBe("2026-04-13")
     })
   })
 
   describe("weekday at/after closing time", () => {
     it("returns tomorrow on a Monday at exactly 15:00", () => {
-      const now = dayjs("2026-04-13T15:00:00")
-      expect(getRelevantDay(now).format("YYYY-MM-DD")).toBe("2026-04-14")
+      const now = new Date("2026-04-13T15:00:00")
+      expect(isoDay(getRelevantDay(now))).toBe("2026-04-14")
     })
 
     it("returns tomorrow on a Tuesday afternoon", () => {
-      const now = dayjs("2026-04-14T16:30:00")
-      expect(getRelevantDay(now).format("YYYY-MM-DD")).toBe("2026-04-15")
+      const now = new Date("2026-04-14T16:30:00")
+      expect(isoDay(getRelevantDay(now))).toBe("2026-04-15")
     })
 
     it("returns Monday (+3 days) on a Friday after closing", () => {
-      const now = dayjs("2026-04-17T15:30:00")
-      expect(getRelevantDay(now).format("YYYY-MM-DD")).toBe("2026-04-20")
+      const now = new Date("2026-04-17T15:30:00")
+      expect(isoDay(getRelevantDay(now))).toBe("2026-04-20")
     })
   })
 
   describe("weekend", () => {
     it("returns Monday (+2 days) on a Saturday", () => {
-      const now = dayjs("2026-04-18T10:00:00")
-      expect(getRelevantDay(now).format("YYYY-MM-DD")).toBe("2026-04-20")
+      const now = new Date("2026-04-18T10:00:00")
+      expect(isoDay(getRelevantDay(now))).toBe("2026-04-20")
     })
 
     it("returns Monday (+1 day) on a Sunday", () => {
-      const now = dayjs("2026-04-19T10:00:00")
-      expect(getRelevantDay(now).format("YYYY-MM-DD")).toBe("2026-04-20")
+      const now = new Date("2026-04-19T10:00:00")
+      expect(isoDay(getRelevantDay(now))).toBe("2026-04-20")
     })
   })
 })
@@ -63,7 +63,7 @@ const labels: GroupLabels = {
 }
 
 function day(iso: string) {
-  return { day: dayjs(iso), meals: [] }
+  return { day: new Date(`${iso}T00:00`), meals: [] }
 }
 
 describe("groupMealsByDay", () => {
@@ -140,7 +140,7 @@ describe("groupMealsByDay", () => {
         isVegetarian: true,
       },
     ]
-    const result = groupMealsByDay([{ day: dayjs("2026-04-13"), meals }], labels)
+    const result = groupMealsByDay([{ day: new Date("2026-04-13T00:00"), meals }], labels)
     expect(result[0].type).toBe("weekday")
     if (result[0].type === "weekday") {
       expect(result[0].meals).toEqual(meals)

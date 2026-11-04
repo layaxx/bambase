@@ -1,4 +1,5 @@
 import type { Event } from "./api/events"
+import { isoDay } from "./dates"
 
 /** Example (de-DE): "Mittwoch, 15. April" */
 export function formatDate(iso: string, locale: string): string {
@@ -29,8 +30,8 @@ export function formatTime(iso: string, locale: string): string {
 /** Converts an ISO datetime to the value format of a datetime-local input, in server time. */
 function toLocalInput(iso: string): string {
   const d = new Date(iso)
-  const pad = (n: number) => String(n).padStart(2, "0")
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+  // toTimeString() starts with the local "HH:mm:ss".
+  return `${isoDay(d)}T${d.toTimeString().slice(0, 5)}`
 }
 
 /** The `initialValues` of `EventForm` for editing `event`. */

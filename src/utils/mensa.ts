@@ -1,5 +1,5 @@
-import type { Dayjs } from "dayjs"
 import type { MensaMeal } from "./api/mensa"
+import { addDays, isoDay } from "./dates"
 
 export const MENSA_CLOSING_HOUR = 15
 
@@ -11,16 +11,16 @@ export const MENSA_CLOSING_HOUR = 15
  * - Saturday → Monday (plus 2 days)
  * - Sunday → Monday (plus 1 day)
  */
-export function getRelevantDay(now: Dayjs): Dayjs {
-  const dow = now.day() // 0 = Sunday, 6 = Saturday
+export function getRelevantDay(now: Date): Date {
+  const dow = now.getDay() // 0 = Sunday, 6 = Saturday
 
   if (dow >= 1 && dow <= 5) {
-    if (now.hour() < MENSA_CLOSING_HOUR) return now
-    return now.add(dow === 5 ? 3 : 1, "day") // Friday → Monday, else +1
+    if (now.getHours() < MENSA_CLOSING_HOUR) return now
+    return addDays(now, dow === 5 ? 3 : 1) // Friday → Monday, else +1
   }
 
-  if (dow === 6) return now.add(2, "day") // Saturday → Monday
-  return now.add(1, "day") // Sunday → Monday
+  if (dow === 6) return addDays(now, 2) // Saturday → Monday
+  return addDays(now, 1) // Sunday → Monday
 }
 
 export type WeekdayEntry = {
@@ -56,11 +56,11 @@ export type GroupLabels = {
  *   Each other weekday entry gets the name of its weekday.
  */
 export function groupMealsByDay(
-  mealsByDay: Array<{ day: Dayjs; meals: MensaMeal[] }>,
+  mealsByDay: Array<{ day: Date; meals: MensaMeal[] }>,
   labels: GroupLabels
 ): DayEntry[] {
-  function formatDate(d: Dayjs): string {
-    return d.toDate().toLocaleDateString(labels.dateLocale, { day: "numeric", month: "long" })
+  function formatDate(d: Date): string {
+    return d.toLocaleDateString(labels.dateLocale, { day: "numeric", month: "long" })
   }
 
   const grouped: DayEntry[] = []
@@ -68,17 +68,17 @@ export function groupMealsByDay(
 
   while (i < mealsByDay.length) {
     const { day, meals } = mealsByDay[i]
-    const dow = day.day()
-    const nextDow = i + 1 < mealsByDay.length ? mealsByDay[i + 1].day.day() : -1
+    const dow = day.getDay()
+    const nextDow = i + 1 < mealsByDay.length ? mealsByDay[i + 1].day.getDay() : -1
 
     if (dow === 6 && nextDow === 0) {
       const heading = labels.weekendHeading(formatDate(day), formatDate(mealsByDay[i + 1].day))
-      grouped.push({ type: "weekend", id: day.format("YYYY-MM-DD"), heading })
+      grouped.push({ type: "weekend", id: isoDay(day), heading })
       i += 2
     } else if (dow === 0 || dow === 6) {
       grouped.push({
         type: "weekend",
-        id: day.format("YYYY-MM-DD"),
+        id: isoDay(day),
         heading: `${labels.weekdays[dow]}, ${formatDate(day)}`,
       })
       i++
@@ -86,7 +86,7 @@ export function groupMealsByDay(
       const label = i === 0 ? labels.today : i === 1 ? labels.tomorrow : labels.weekdays[dow]
       grouped.push({
         type: "weekday",
-        id: day.format("YYYY-MM-DD"),
+        id: isoDay(day),
         heading: `${label}, ${formatDate(day)}`,
         meals,
       })

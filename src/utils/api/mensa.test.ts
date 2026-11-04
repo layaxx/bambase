@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import dayjs from "dayjs"
 import { Decimal } from "@/generated/prisma/internal/prismaNamespace"
 import { fetchMensaMeals, fetchMensaMealsRange } from "./mensa"
 import { baseLogger } from "@/utils/logger"
@@ -33,7 +32,7 @@ describe("fetchMensaMeals", () => {
 
   it("queries by the date formatted as UTC midnight", async () => {
     mockFindMany.mockResolvedValue([])
-    const date = dayjs("2026-04-15")
+    const date = new Date("2026-04-15T00:00")
 
     await fetchMensaMeals(date)
 
@@ -45,7 +44,7 @@ describe("fetchMensaMeals", () => {
   it("maps rows to MensaMeal, formatting the date back to YYYY-MM-DD", async () => {
     mockFindMany.mockResolvedValue([makeRow({ allergens: ["Gluten"] })])
 
-    const result = await fetchMensaMeals(dayjs("2026-04-15"))
+    const result = await fetchMensaMeals(new Date("2026-04-15T00:00"))
 
     expect(result).toEqual({
       data: [
@@ -67,7 +66,7 @@ describe("fetchMensaMeals", () => {
   it("returns an empty array when no rows are found", async () => {
     mockFindMany.mockResolvedValue([])
 
-    const result = await fetchMensaMeals(dayjs("2026-04-15"))
+    const result = await fetchMensaMeals(new Date("2026-04-15T00:00"))
 
     expect(result).toEqual({ data: [], apiDown: false })
   })
@@ -76,7 +75,7 @@ describe("fetchMensaMeals", () => {
     const consoleSpy = vi.spyOn(baseLogger, "error").mockImplementation(() => {})
     mockFindMany.mockRejectedValue(new Error("connection refused"))
 
-    const result = await fetchMensaMeals(dayjs("2026-04-15"))
+    const result = await fetchMensaMeals(new Date("2026-04-15T00:00"))
 
     expect(result).toEqual({ data: [], apiDown: true })
     expect(consoleSpy).toHaveBeenCalledWith(
@@ -101,7 +100,11 @@ describe("fetchMensaMealsRange", () => {
 
   it("queries all dates as UTC midnight via an `in` filter", async () => {
     mockFindMany.mockResolvedValue([])
-    const dates = [dayjs("2026-04-15"), dayjs("2026-04-16"), dayjs("2026-04-17")]
+    const dates = [
+      new Date("2026-04-15T00:00"),
+      new Date("2026-04-16T00:00"),
+      new Date("2026-04-17T00:00"),
+    ]
 
     await fetchMensaMealsRange(dates)
 
@@ -124,7 +127,10 @@ describe("fetchMensaMealsRange", () => {
       makeRow({ id: "2", name: "Salad", date: new Date("2026-04-16T00:00:00.000Z") }),
     ])
 
-    const result = await fetchMensaMealsRange([dayjs("2026-04-15"), dayjs("2026-04-16")])
+    const result = await fetchMensaMealsRange([
+      new Date("2026-04-15T00:00"),
+      new Date("2026-04-16T00:00"),
+    ])
 
     expect(result.apiDown).toBe(false)
     expect(result.data).toHaveLength(2)
@@ -135,7 +141,7 @@ describe("fetchMensaMealsRange", () => {
     const consoleSpy = vi.spyOn(baseLogger, "error").mockImplementation(() => {})
     mockFindMany.mockRejectedValue(new Error("connection refused"))
 
-    const result = await fetchMensaMealsRange([dayjs("2026-04-15")])
+    const result = await fetchMensaMealsRange([new Date("2026-04-15T00:00")])
 
     expect(result).toEqual({ data: [], apiDown: true })
     consoleSpy.mockRestore()

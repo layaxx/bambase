@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest"
-import { formatJobLocation } from "./job-formatting"
+import { afterEach, describe, expect, it, vi } from "vitest"
+import { formatJobLocation, formatRelativeDate } from "./job-formatting"
 import type { JobOffer } from "./api/job-offers"
 
 const labels = { remote: "Remote", hybrid: "Hybrid" }
@@ -31,5 +31,29 @@ describe("formatJobLocation", () => {
     expect(
       formatJobLocation(makeJob("hybrid", "Nürnberg"), { remote: "Remote", hybrid: "Gemischt" })
     ).toBe("Nürnberg (Gemischt)")
+  })
+})
+
+describe("formatRelativeDate", () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it("picks the largest unit that fits", () => {
+    vi.useFakeTimers({ now: new Date("2026-04-15T12:00:00Z") })
+    expect(formatRelativeDate("2026-04-12T12:00:00Z", "de")).toBe("vor 3 Tagen")
+    expect(formatRelativeDate(new Date("2026-04-15T10:00:00Z"), "en")).toBe("2 hours ago")
+  })
+
+  it("does not round into the next unit", () => {
+    vi.useFakeTimers({ now: new Date("2026-04-15T12:00:00Z") })
+    const ago = (seconds: number) => new Date(Date.now() - seconds * 1000)
+    expect(formatRelativeDate(ago(59.6 * 60), "de")).toBe("vor 1 Stunde")
+    expect(formatRelativeDate(ago(23.6 * 60 * 60), "de")).toBe("vor 1 Tag")
+    expect(formatRelativeDate(ago(364 * 24 * 60 * 60), "de")).toBe("vor 1 Jahr")
+  })
+
+  it("returns an empty string for an invalid date", () => {
+    expect(formatRelativeDate("not a date", "de")).toBe("")
   })
 })

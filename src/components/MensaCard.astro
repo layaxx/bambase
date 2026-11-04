@@ -2,7 +2,7 @@
 import { fetchMensaMeals } from "@/utils/api/mensa"
 import ApiDownBanner from "./ApiDownBanner.astro"
 import { getRelevantDay } from "@/utils/mensa"
-import dayjs from "dayjs"
+import { isoDay } from "@/utils/dates"
 import { useTranslations } from "@/i18n/translations"
 import IconUtensils from "./icons/IconUtensils.astro"
 import IconArrowRight from "./icons/IconArrowRight.astro"
@@ -10,11 +10,11 @@ import MealBadge from "./mensa/MealBadge.astro"
 
 const t = useTranslations(Astro.locals.locale)
 
-const now = dayjs()
+const now = new Date()
 const relevantDay = getRelevantDay(now)
-const isToday = relevantDay.isSame(now, "day")
-const relevantDayId = relevantDay.format("YYYY-MM-DD")
-const relevantDayFormatted = relevantDay.toDate().toLocaleDateString(t.mensa.dateLocale, {
+const isToday = isoDay(relevantDay) === isoDay(now)
+const relevantDayId = isoDay(relevantDay)
+const relevantDayFormatted = relevantDay.toLocaleDateString(t.mensa.dateLocale, {
   day: "numeric",
   month: "long",
 })

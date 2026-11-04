@@ -6,19 +6,19 @@ import MensaDaySection from "@/components/mensa/MensaDaySection.astro"
 import MensaWeekendSection from "@/components/mensa/MensaWeekendSection.astro"
 import ApiDownBanner from "@/components/ApiDownBanner.astro"
 import { fetchMensaMealsRange } from "@/utils/api/mensa"
+import { addDays, isoDay } from "@/utils/dates"
 import { groupMealsByDay } from "@/utils/mensa"
-import dayjs from "dayjs"
 import { useTranslations } from "@/i18n/translations"
 
 const t = useTranslations(Astro.locals.locale)
 
-const today = dayjs()
-const days = Array.from({ length: 7 }, (_, i) => today.add(i, "day"))
+const today = new Date()
+const days = Array.from({ length: 7 }, (_, i) => addDays(today, i))
 
 const { data: allMeals, apiDown } = await fetchMensaMealsRange(days)
 const mealsByDay = days.map((day) => ({
   day,
-  meals: allMeals.filter((m) => m.date === day.format("YYYY-MM-DD")),
+  meals: allMeals.filter((m) => m.date === isoDay(day)),
 }))
 
 const grouped = groupMealsByDay(mealsByDay, {
