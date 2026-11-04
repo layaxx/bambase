@@ -6,7 +6,6 @@ import IconArrowLeft from "@/components/icons/IconArrowLeft.astro"
 import IconBriefcase from "@/components/icons/IconBriefcase.astro"
 import IconPencil from "@/components/icons/IconPencil.astro"
 import IconArchive from "@/components/icons/IconArchive.astro"
-import ApiDownBanner from "@/components/ApiDownBanner.astro"
 import Pagination from "@/components/Pagination.astro"
 import SearchForm from "@/components/SearchForm.astro"
 import ConfirmModal from "@/components/ConfirmModal.astro"
@@ -33,13 +32,12 @@ const archiveFormAction = `${actions.jobs.archive}${listParams.size ? `&${listPa
 
 const search = Astro.url.searchParams.get("search")?.trim() ?? ""
 const currentPage = parsePageParam(Astro.url)
-const { data, apiDown } = await fetchMyJobOffers(user.id, { page: currentPage, search })
-const { jobs, total, pageCount } = data
+const { jobs, total, pageCount } = await fetchMyJobOffers(user.id, { page: currentPage, search })
 const lastPage = lastPageRedirect(Astro.url, currentPage, pageCount)
 // A failed archive renders its error here, as a redirect would drop it.
-if (!apiDown && !archiveResult?.error && lastPage) return Astro.redirect(lastPage)
+if (!archiveResult?.error && lastPage) return Astro.redirect(lastPage)
 // No listings at all, as opposed to none matching the search.
-const hasNoJobs = !apiDown && total === 0 && !search
+const hasNoJobs = total === 0 && !search
 
 const statusLabel: Record<string, string> = {
   submitted: t.auth.statusSubmitted,
@@ -66,13 +64,11 @@ const statusLabel: Record<string, string> = {
     )}
   </div>
 
-  {!apiDown && !hasNoJobs && <SearchForm class="flex" value={search} />}
+  {!hasNoJobs && <SearchForm class="flex" value={search} />}
 
   {archiveResult?.error && <Alert variant="error">{archiveResult.error.message}</Alert>}
 
-  {apiDown ? (
-    <ApiDownBanner />
-  ) : jobs.length === 0 && search ? (
+  {jobs.length === 0 && search ? (
     <EmptyState
       action={{ href: "/account/jobs", label: t.jobs.clearFilters }}
       icon={IconBriefcase}

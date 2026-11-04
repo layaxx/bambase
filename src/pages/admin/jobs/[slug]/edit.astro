@@ -19,9 +19,7 @@ if (guard instanceof Response) return guard
 const { user } = guard
 
 const { slug } = Astro.params
-const { data: job } = slug
-  ? await fetchJobOffer(slug, { userId: user.id, isModerator: true })
-  : { data: null }
+const job = slug ? await fetchJobOffer(slug, { userId: user.id, isModerator: true }) : null
 if (!job) return Astro.redirect("/admin/jobs")
 const result = Astro.getActionResult(actions.jobs.update)
 if (result?.data) return Astro.redirect("/admin/jobs")

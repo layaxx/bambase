@@ -17,7 +17,7 @@ const guard = await requireRole(
 if (guard instanceof Response) return guard
 
 const { slug } = Astro.params
-const { data: location } = slug ? await fetchLocationForAdmin(slug) : { data: null }
+const location = slug ? await fetchLocationForAdmin(slug) : null
 if (!location) return Astro.redirect("/admin/locations")
 
 const result = Astro.getActionResult(actions.locations.update)

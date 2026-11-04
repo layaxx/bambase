@@ -15,8 +15,8 @@ const guard = await requireRole(Astro, canModerateEvents, `/admin/events/${Astro
 if (guard instanceof Response) return guard
 
 const { slug } = Astro.params
-const [{ data: event }, { data: allLocations }] = await Promise.all([
-  slug ? fetchEventForAdmin(slug) : Promise.resolve({ data: null }),
+const [event, allLocations] = await Promise.all([
+  slug ? fetchEventForAdmin(slug) : Promise.resolve(null),
   fetchLocations(),
 ])
 

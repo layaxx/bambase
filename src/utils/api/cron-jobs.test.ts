@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { fetchCronJobStatuses } from "./cron-jobs"
-import { baseLogger } from "@/utils/logger"
 
 const mockFindMany = vi.hoisted(() => vi.fn())
 
@@ -19,9 +18,7 @@ describe("fetchCronJobStatuses", () => {
     mockFindMany.mockResolvedValue([])
 
     const result = await fetchCronJobStatuses()
-
-    expect(result.apiDown).toBe(false)
-    expect(result.data).toEqual([
+    expect(result).toEqual([
       { key: "mensa-sync", schedule: "0 5,8,10,11,12,14,16 * * *", lastRun: null },
       { key: "event-sync", schedule: "0 2 * * *", lastRun: null },
       { key: "job-offer-expiry", schedule: "0 1 * * *", lastRun: null },
@@ -44,14 +41,14 @@ describe("fetchCronJobStatuses", () => {
 
     const result = await fetchCronJobStatuses()
 
-    expect(result.data.find((job) => job.key === "event-sync")?.lastRun).toEqual({
+    expect(result.find((job) => job.key === "event-sync")?.lastRun).toEqual({
       status: "error",
       startedAt,
       finishedAt,
       durationMs: 5000,
       error: "network error",
     })
-    expect(result.data.find((job) => job.key === "mensa-sync")?.lastRun).toBeNull()
+    expect(result.find((job) => job.key === "mensa-sync")?.lastRun).toBeNull()
   })
 
   it("requests only the most recent run per job", async () => {
@@ -64,19 +61,6 @@ describe("fetchCronJobStatuses", () => {
         orderBy: { startedAt: "desc" },
         distinct: ["jobName"],
       })
-    )
-  })
-
-  it("logs an error and returns an empty list when the query fails", async () => {
-    const consoleSpy = vi.spyOn(baseLogger, "error").mockImplementation(() => {})
-    mockFindMany.mockRejectedValue(new Error("db error"))
-
-    const result = await fetchCronJobStatuses()
-
-    expect(result).toEqual({ data: [], apiDown: true })
-    expect(consoleSpy).toHaveBeenCalledWith(
-      { err: expect.any(Error), operation: "Error fetching cron job statuses" },
-      "data query failed"
     )
   })
 })

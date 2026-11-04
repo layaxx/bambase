@@ -1,21 +1,22 @@
-# 9. A failed data query is shown as "unavailable", never as an empty result
+# 9. A failed data query is shown as an error, never as an empty result
 
 - Status: Accepted
-- Source: `src/utils/api/types.ts`, `src/components/ApiDownBanner.astro`, `src/pages/500.astro`
+- Source: `src/utils/api/`, `src/pages/500.astro`
 
 ## Context
 
 Read helpers used to swallow errors and return `[]` or `null`. When the backend failed, pages said "no events found" or "not found". That was wrong, and it hid outages.
 
+An `ApiResult` wrapper with an "unavailable" banner later let each page and homepage card degrade on its own. It dates from the remote API. With the in-app backend (ADR 1), every page, the login and the session lookup use the same database, so a partially rendered page has little left to show.
+
 ## Decision
 
-- Read helpers in `src/utils/api/` return `ApiResult<T> = { data: T; apiDown: boolean }`, built with `apiResult(label, fallback, load)`. That function logs the error and returns the fallback with `apiDown: true`.
-- Pages and homepage cards render `<ApiDownBanner />` when `apiDown` is true. Detail pages tell "unavailable" apart from "not found".
-- Each homepage card fetches its own data and degrades on its own.
-- Unhandled SSR exceptions render `src/pages/500.astro`.
-- Non-UI consumers (sitemap, OG images, account lists) may ignore `apiDown` and degrade to the fallback.
+- Read helpers in `src/utils/api/` don't catch query errors. They return the data or throw.
+- An unhandled SSR exception renders `src/pages/500.astro`.
+- Queries run in the page frontmatter and the page passes the data to its components. A component renders while the response already streams, so a query error there would cut the page off and not render the 500 page.
+- The map page's browser-side fetch of `/api/locations.json` shows the "unavailable" message when that request fails.
 
 ## Consequences
 
-- New read helpers should return `ApiResult` through `apiResult()`, and their callers must handle `apiDown`.
-- An empty state is only correct when `apiDown` is false.
+- An empty state or "not found" always means the query succeeded.
+- One failing query fails the whole page, homepage cards included.

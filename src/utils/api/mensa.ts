@@ -1,4 +1,3 @@
-import { apiResult, type ApiResult } from "./types"
 import type { MensaMealModel } from "@/generated/prisma/models"
 import prisma from "../prisma"
 import { isoDay } from "../dates"
@@ -31,19 +30,15 @@ function toMensaMeal(row: MensaMealModel): MensaMeal {
   }
 }
 
-export function fetchMensaMeals(date: Date): Promise<ApiResult<MensaMeal[]>> {
-  return apiResult("Error fetching Mensa meals", [], async () => {
-    const meals = await prisma.mensaMeal.findMany({ where: { date: toDateOnly(date) } })
-    return meals.map(toMensaMeal)
-  })
+export async function fetchMensaMeals(date: Date): Promise<MensaMeal[]> {
+  const meals = await prisma.mensaMeal.findMany({ where: { date: toDateOnly(date) } })
+  return meals.map(toMensaMeal)
 }
 
-export function fetchMensaMealsRange(dates: Date[]): Promise<ApiResult<MensaMeal[]>> {
-  return apiResult("Error fetching Mensa meals", [], async () => {
-    if (dates.length === 0) return []
-    const meals = await prisma.mensaMeal.findMany({
-      where: { date: { in: dates.map(toDateOnly) } },
-    })
-    return meals.map(toMensaMeal)
+export async function fetchMensaMealsRange(dates: Date[]): Promise<MensaMeal[]> {
+  if (dates.length === 0) return []
+  const meals = await prisma.mensaMeal.findMany({
+    where: { date: { in: dates.map(toDateOnly) } },
   })
+  return meals.map(toMensaMeal)
 }

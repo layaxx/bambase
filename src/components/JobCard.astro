@@ -1,14 +1,16 @@
 ---
-import { fetchJobOffers } from "@/utils/api/job-offers"
+import type { JobOffer } from "@/utils/api/job-offers"
 import { useTranslations } from "@/i18n/translations"
 import IconBriefcase from "./icons/IconBriefcase.astro"
 import IconArrowRight from "./icons/IconArrowRight.astro"
 import JobOfferCard from "./jobs/JobOfferCard.astro"
-import ApiDownBanner from "./ApiDownBanner.astro"
 
 const t = useTranslations(Astro.locals.locale)
 
-const { data: jobs, apiDown } = await fetchJobOffers(3)
+interface Props {
+  jobs: JobOffer[]
+}
+const { jobs } = Astro.props
 ---
 
 <section class="mb-12" id="jobs">
@@ -30,18 +32,14 @@ const { data: jobs, apiDown } = await fetchJobOffers(3)
     </a>
   </div>
 
-  {apiDown ? (
-    <ApiDownBanner />
-  ) : (
-    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {jobs.length === 0 && (
-        <p class="text-base-content/70 rounded-xl border border-base-300 bg-base-100 p-6">
-          {t.jobs.noJobs}
-        </p>
-      )}
-      {jobs.map((job) => (
-        <JobOfferCard job={job} />
-      ))}
-    </div>
-  )}
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    {jobs.length === 0 && (
+      <p class="text-base-content/70 rounded-xl border border-base-300 bg-base-100 p-6">
+        {t.jobs.noJobs}
+      </p>
+    )}
+    {jobs.map((job) => (
+      <JobOfferCard job={job} />
+    ))}
+  </div>
 </section>

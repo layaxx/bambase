@@ -14,7 +14,7 @@ type Card = Parameters<typeof makeImageContent>[0]
 /** The card content for each entity type. Returns null if there is no public content. */
 const CARDS: Record<string, (slug: string) => Promise<Card | null>> = {
   event: async (slug) => {
-    const { data: event } = await fetchEvent(slug)
+    const event = await fetchEvent(slug)
     if (!event) return null
     return {
       category: "Events",
@@ -23,7 +23,7 @@ const CARDS: Record<string, (slug: string) => Promise<Card | null>> = {
     }
   },
   job: async (slug) => {
-    const { data: job } = await fetchJobOffer(slug)
+    const job = await fetchJobOffer(slug)
     if (job?.online_status !== "published") return null
     return {
       category: "Jobs",

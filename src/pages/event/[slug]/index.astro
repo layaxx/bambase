@@ -1,20 +1,17 @@
 ---
 import { actions } from "astro:actions"
 import PageLayout from "@/layouts/PageLayout.astro"
-import { fetchEvent, type Event } from "@/utils/api/events"
+import { fetchEvent } from "@/utils/api/events"
 import { REPORT_WARNING_THRESHOLD } from "@/utils/api/reports"
 import { useTranslations } from "@/i18n/translations"
 import ConfirmModal from "@/components/ConfirmModal.astro"
-import ApiDownBanner from "@/components/ApiDownBanner.astro"
 import EventDetailPage from "@/components/events/EventDetailPage.astro"
 
 const t = useTranslations(Astro.locals.locale)
 
 const { slug } = Astro.params
 const me = Astro.locals.user
-const { data: event, apiDown } = slug
-  ? await fetchEvent(slug, me?.id)
-  : { data: null as Event | null, apiDown: false }
+const event = slug ? await fetchEvent(slug, me?.id) : null
 const isOwner = !!(me && event?.ownerId === me.id)
 
 const deleteResult = Astro.getActionResult(actions.events.delete)
@@ -40,9 +37,7 @@ const ogImage =
 ---
 
 <PageLayout description={description} ogImage={ogImage} title={event?.title ?? t.events.pageTitle}>
-  {apiDown ? (
-    <ApiDownBanner />
-  ) : !event ? (
+  {!event ? (
     <div class="py-20 text-center">
       <h1 class="mb-4 text-3xl font-bold">{t.events.notFound.headline}</h1>
       <p class="text-base-content/70">{t.events.notFound.description}</p>

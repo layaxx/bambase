@@ -8,7 +8,6 @@ import EmptyState from "@/components/EmptyState.astro"
 import JobFilterSidebar from "@/components/jobs/JobFilterSidebar.astro"
 import JobFilterMobile from "@/components/jobs/JobFilterMobile.astro"
 import JobFilterChips from "@/components/jobs/JobFilterChips.astro"
-import ApiDownBanner from "@/components/ApiDownBanner.astro"
 import Pagination from "@/components/Pagination.astro"
 import SearchForm from "@/components/SearchForm.astro"
 import {
@@ -41,7 +40,12 @@ const currentPage = parsePageParam(Astro.url)
 const hasActiveFilter =
   types.length > 0 || fields.length > 0 || workModes.length > 0 || search !== ""
 
-const { data, apiDown } = await fetchJobOffersPaginated({
+const {
+  jobs,
+  total,
+  page: actualPage,
+  pageCount,
+} = await fetchJobOffersPaginated({
   types,
   fields,
   workModes,
@@ -49,11 +53,10 @@ const { data, apiDown } = await fetchJobOffersPaginated({
   page: currentPage,
   pageSize: PAGE_SIZE,
 })
-const { jobs, total, page: actualPage, pageCount } = data
 const offset = (actualPage - 1) * PAGE_SIZE
 
 const lastPage = lastPageRedirect(Astro.url, actualPage, pageCount)
-if (!apiDown && lastPage) return Astro.redirect(lastPage)
+if (lastPage) return Astro.redirect(lastPage)
 
 const isLoggedIn = !!Astro.locals.user
 const clearUrl = Astro.url.pathname
@@ -105,8 +108,6 @@ const workModeItems = WORK_MODES.map((wm) => ({
     </div>
   </PageHeader>
 
-  {apiDown && <ApiDownBanner />}
-
   <div class="alert alert-success alert-outline mb-6" role="status">
     <span>
       {t.jobs.movedNotice}{" "}
@@ -155,21 +156,20 @@ const workModeItems = WORK_MODES.map((wm) => ({
         {t.jobs.showingResults(offset + 1, offset + jobs.length, total)}
       </p>
 
-      {!apiDown &&
-        (jobs.length === 0 ? (
-          <EmptyState
-            action={hasActiveFilter ? { href: clearUrl, label: t.jobs.clearFilters } : undefined}
-            icon={IconBriefcase}
-            text={hasActiveFilter ? t.jobs.noJobsFoundHint : t.jobs.noJobs}
-            title={t.jobs.noJobsFoundTitle}
-          />
-        ) : (
-          <div class="grid gap-4 sm:grid-cols-2">
-            {jobs.map((job) => (
-              <JobOfferCard job={job} />
-            ))}
-          </div>
-        ))}
+      {jobs.length === 0 ? (
+        <EmptyState
+          action={hasActiveFilter ? { href: clearUrl, label: t.jobs.clearFilters } : undefined}
+          icon={IconBriefcase}
+          text={hasActiveFilter ? t.jobs.noJobsFoundHint : t.jobs.noJobs}
+          title={t.jobs.noJobsFoundTitle}
+        />
+      ) : (
+        <div class="grid gap-4 sm:grid-cols-2">
+          {jobs.map((job) => (
+            <JobOfferCard job={job} />
+          ))}
+        </div>
+      )}
 
       <Pagination
         nextLabel={t.jobs.paginationNext}

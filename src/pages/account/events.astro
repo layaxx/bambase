@@ -5,7 +5,6 @@ import IconArrowLeft from "@/components/icons/IconArrowLeft.astro"
 import IconCalendar from "@/components/icons/IconCalendar.astro"
 import IconPencil from "@/components/icons/IconPencil.astro"
 import EmptyState from "@/components/EmptyState.astro"
-import ApiDownBanner from "@/components/ApiDownBanner.astro"
 import Pagination from "@/components/Pagination.astro"
 import SearchForm from "@/components/SearchForm.astro"
 import { fetchMyEvents } from "@/utils/api/events"
@@ -18,12 +17,11 @@ if (!user) return Astro.redirect("/login?redirect=/account/events")
 
 const search = Astro.url.searchParams.get("search")?.trim() ?? ""
 const currentPage = parsePageParam(Astro.url)
-const { data, apiDown } = await fetchMyEvents(user.id, { page: currentPage, search })
-const { events, total, pageCount } = data
+const { events, total, pageCount } = await fetchMyEvents(user.id, { page: currentPage, search })
 const lastPage = lastPageRedirect(Astro.url, currentPage, pageCount)
-if (!apiDown && lastPage) return Astro.redirect(lastPage)
+if (lastPage) return Astro.redirect(lastPage)
 // No events at all, as opposed to none matching the search.
-const hasNoEvents = !apiDown && total === 0 && !search
+const hasNoEvents = total === 0 && !search
 
 const dateLocale = t.mensa.dateLocale
 
@@ -54,13 +52,11 @@ function formatDateTime(iso: string) {
     )}
   </div>
 
-  {!apiDown && !hasNoEvents && (
+  {!hasNoEvents && (
     <SearchForm class="flex" placeholder={t.events.searchPlaceholder} value={search} />
   )}
 
-  {apiDown ? (
-    <ApiDownBanner />
-  ) : events.length === 0 && search ? (
+  {events.length === 0 && search ? (
     <EmptyState
       action={{ href: "/account/events", label: t.events.clearFilters }}
       icon={IconCalendar}

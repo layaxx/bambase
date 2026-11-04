@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { Decimal } from "@/generated/prisma/internal/prismaNamespace"
 import { fetchMensaMeals, fetchMensaMealsRange } from "./mensa"
-import { baseLogger } from "@/utils/logger"
 
 const mockFindMany = vi.hoisted(() => vi.fn())
 
@@ -46,21 +45,18 @@ describe("fetchMensaMeals", () => {
 
     const result = await fetchMensaMeals(new Date("2026-04-15T00:00"))
 
-    expect(result).toEqual({
-      data: [
-        {
-          id: "1",
-          name: "Pasta",
-          date: "2026-04-15",
-          location: "Feki",
-          priceStudents: 2.5,
-          isVegan: false,
-          isVegetarian: true,
-          allergens: ["Gluten"],
-        },
-      ],
-      apiDown: false,
-    })
+    expect(result).toEqual([
+      {
+        id: "1",
+        name: "Pasta",
+        date: "2026-04-15",
+        location: "Feki",
+        priceStudents: 2.5,
+        isVegan: false,
+        isVegetarian: true,
+        allergens: ["Gluten"],
+      },
+    ])
   })
 
   it("returns an empty array when no rows are found", async () => {
@@ -68,21 +64,7 @@ describe("fetchMensaMeals", () => {
 
     const result = await fetchMensaMeals(new Date("2026-04-15T00:00"))
 
-    expect(result).toEqual({ data: [], apiDown: false })
-  })
-
-  it("logs an error and returns apiDown: true when the query fails", async () => {
-    const consoleSpy = vi.spyOn(baseLogger, "error").mockImplementation(() => {})
-    mockFindMany.mockRejectedValue(new Error("connection refused"))
-
-    const result = await fetchMensaMeals(new Date("2026-04-15T00:00"))
-
-    expect(result).toEqual({ data: [], apiDown: true })
-    expect(consoleSpy).toHaveBeenCalledWith(
-      { err: expect.any(Error), operation: "Error fetching Mensa meals" },
-      "data query failed"
-    )
-    consoleSpy.mockRestore()
+    expect(result).toEqual([])
   })
 })
 
@@ -94,7 +76,7 @@ describe("fetchMensaMealsRange", () => {
   it("returns early without querying when given no dates", async () => {
     const result = await fetchMensaMealsRange([])
 
-    expect(result).toEqual({ data: [], apiDown: false })
+    expect(result).toEqual([])
     expect(mockFindMany).not.toHaveBeenCalled()
   })
 
@@ -131,19 +113,7 @@ describe("fetchMensaMealsRange", () => {
       new Date("2026-04-15T00:00"),
       new Date("2026-04-16T00:00"),
     ])
-
-    expect(result.apiDown).toBe(false)
-    expect(result.data).toHaveLength(2)
-    expect(result.data.map((m) => m.name)).toEqual(["Pasta", "Salad"])
-  })
-
-  it("returns empty array and apiDown true on error", async () => {
-    const consoleSpy = vi.spyOn(baseLogger, "error").mockImplementation(() => {})
-    mockFindMany.mockRejectedValue(new Error("connection refused"))
-
-    const result = await fetchMensaMealsRange([new Date("2026-04-15T00:00")])
-
-    expect(result).toEqual({ data: [], apiDown: true })
-    consoleSpy.mockRestore()
+    expect(result).toHaveLength(2)
+    expect(result.map((m) => m.name)).toEqual(["Pasta", "Salad"])
   })
 })

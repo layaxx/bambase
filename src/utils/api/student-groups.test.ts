@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { baseLogger } from "@/utils/logger"
 import {
   fetchStudentGroups,
   fetchStudentGroupForAdmin,
@@ -61,21 +60,18 @@ describe("fetchStudentGroups", () => {
 
     const result = await fetchStudentGroups()
 
-    expect(result).toEqual({
-      data: [
-        {
-          id: "grp-1",
-          slug: "asta",
-          name: "AStA",
-          description: "Student union",
-          website: undefined,
-          email: undefined,
-          facebook: undefined,
-          instagram: undefined,
-        },
-      ],
-      apiDown: false,
-    })
+    expect(result).toEqual([
+      {
+        id: "grp-1",
+        slug: "asta",
+        name: "AStA",
+        description: "Student union",
+        website: undefined,
+        email: undefined,
+        facebook: undefined,
+        instagram: undefined,
+      },
+    ])
   })
 
   it("returns an empty array when no rows are found", async () => {
@@ -83,21 +79,7 @@ describe("fetchStudentGroups", () => {
 
     const result = await fetchStudentGroups()
 
-    expect(result).toEqual({ data: [], apiDown: false })
-  })
-
-  it("logs an error and returns an empty array when the API response is unexpected", async () => {
-    const consoleSpy = vi.spyOn(baseLogger, "error").mockImplementation(() => {})
-    mockFindMany.mockResolvedValue(null)
-
-    const result = await fetchStudentGroups()
-
-    expect(result).toEqual({ data: [], apiDown: true })
-    expect(consoleSpy).toHaveBeenCalledWith(
-      { err: expect.any(TypeError), operation: "Error fetching student groups" },
-      "data query failed"
-    )
-    consoleSpy.mockRestore()
+    expect(result).toEqual([])
   })
 })
 
@@ -115,7 +97,7 @@ describe("fetchStudentGroupForAdmin", () => {
 
     const result = await fetchStudentGroupForAdmin("missing")
 
-    expect(result).toEqual({ data: null, apiDown: false })
+    expect(result).toEqual(null)
   })
 
   it("maps the found row to a StudentGroup", async () => {
@@ -123,17 +105,7 @@ describe("fetchStudentGroupForAdmin", () => {
 
     const result = await fetchStudentGroupForAdmin("asta")
 
-    expect(result.data).toMatchObject({ id: "grp-1", slug: "asta", name: "AStA" })
-  })
-
-  it("logs an error and returns apiDown when the lookup throws", async () => {
-    const consoleSpy = vi.spyOn(baseLogger, "error").mockImplementation(() => {})
-    mockFindFirst.mockRejectedValue(new Error("db error"))
-
-    const result = await fetchStudentGroupForAdmin("asta")
-
-    expect(result).toEqual({ data: null, apiDown: true })
-    consoleSpy.mockRestore()
+    expect(result).toMatchObject({ id: "grp-1", slug: "asta", name: "AStA" })
   })
 })
 
@@ -152,15 +124,5 @@ describe("fetchAllStudentGroupsForAdmin", () => {
     await fetchAllStudentGroupsForAdmin(10)
 
     expect(mockFindMany).toHaveBeenCalledWith(expect.objectContaining({ take: 10 }))
-  })
-
-  it("logs an error and returns an empty array when the query throws", async () => {
-    const consoleSpy = vi.spyOn(baseLogger, "error").mockImplementation(() => {})
-    mockFindMany.mockRejectedValue(new Error("db error"))
-
-    const result = await fetchAllStudentGroupsForAdmin()
-
-    expect(result).toEqual({ data: [], apiDown: true })
-    consoleSpy.mockRestore()
   })
 })

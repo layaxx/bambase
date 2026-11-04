@@ -8,8 +8,23 @@ import StudentGroupsCard from "@/components/StudentGroupsCard.astro"
 import IconMegaphone from "@/components/icons/IconMegaphone.astro"
 import IconArrowRight from "@/components/icons/IconArrowRight.astro"
 import { useTranslations } from "@/i18n/translations"
+import { fetchOngoingOrUpcomingEvents } from "@/utils/api/events"
+import { fetchJobOffers } from "@/utils/api/job-offers"
+import { fetchMensaMeals } from "@/utils/api/mensa"
+import { fetchStudentGroups } from "@/utils/api/student-groups"
+import { getRelevantDay } from "@/utils/mensa"
 
 const t = useTranslations(Astro.locals.locale)
+
+// The queries run here and not in the cards: a card renders while the response already streams,
+// so an error there could not become the 500 page (ADR 9).
+const mensaDay = getRelevantDay(new Date())
+const [events, meals, jobs, groups] = await Promise.all([
+  fetchOngoingOrUpcomingEvents(4),
+  fetchMensaMeals(mensaDay),
+  fetchJobOffers(3),
+  fetchStudentGroups(),
+])
 ---
 
 <PageLayout description={t.footer.tagline}>
@@ -25,9 +40,9 @@ const t = useTranslations(Astro.locals.locale)
       <IconArrowRight class="h-4 w-4" />
     </a>
   </div>
-  <EventsCard />
-  <MensaCard />
-  <JobCard />
+  <EventsCard events={events} />
+  <MensaCard day={mensaDay} meals={meals} />
+  <JobCard jobs={jobs} />
   <InfomapCard />
-  <StudentGroupsCard />
+  <StudentGroupsCard groups={groups} />
 </PageLayout>

@@ -23,13 +23,10 @@ const activeCategory = (categories as string[]).includes(rawFilter)
   ? (rawFilter as MapLocation["category"])
   : "university"
 
-const [locResult, eventsResult] = await Promise.all([
+const [locations, upcomingEvents] = await Promise.all([
   fetchLocations(activeCategory),
   fetchUpcomingMapEvents(),
 ])
-const locations = locResult.data
-const upcomingEvents = eventsResult.data
-const apiDown = locResult.apiDown || eventsResult.apiDown
 
 const mapEvents: MapEvent[] = upcomingEvents
   .filter((ev): ev is Event & { map_location: EventMapLocation } => ev.map_location != null)
@@ -208,7 +205,6 @@ const apiDownMessage = t.apiDown.message
     dateLocale,
     allCategoryLabels,
     apiDownMessage,
-    apiDown,
   }}
   is:inline
 >
@@ -218,7 +214,6 @@ const apiDownMessage = t.apiDown.message
   window.__dateLocale = dateLocale
   window.__categoryLabels = allCategoryLabels
   window.__apiDownMessage = apiDownMessage
-  window.__apiDown = apiDown
 </script>
 
 <script>
@@ -244,7 +239,6 @@ const apiDownMessage = t.apiDown.message
     .__categoryLabels
 
   const apiDownMessage = (window as unknown as { __apiDownMessage: string }).__apiDownMessage
-  const apiDown = (window as unknown as { __apiDown: boolean }).__apiDown
 
   function setParam(key: string, value: string): void {
     const params = new URLSearchParams(location.search)
@@ -480,12 +474,8 @@ const apiDownMessage = t.apiDown.message
 
     const locationList = document.getElementById("location-list")
     if (locationList) {
-      if (apiDown) {
-        locationList.innerHTML = `<div class="p-3"><div class="alert alert-warning text-xs" role="alert"><span>${escHtml(apiDownMessage)}</span></div></div>`
-      } else {
-        locationList.innerHTML = locations.map(buildListItemHtml).join("")
-        attachListClickHandlers(locationList)
-      }
+      locationList.innerHTML = locations.map(buildListItemHtml).join("")
+      attachListClickHandlers(locationList)
     }
 
     // ── initialise from URL params ────────────────────────────────────────────
