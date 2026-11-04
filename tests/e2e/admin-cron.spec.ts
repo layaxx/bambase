@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test"
+import { expect, login, test } from "./fixtures"
 
 /**
  * /admin/cron needs the "system:view" permission from the better-auth `admin` plugin.
@@ -6,14 +6,6 @@ import { expect, test, type Page } from "@playwright/test"
  * sends no request to UniVIS or the Mensa API, which the sync jobs do. It is thus
  * safe to start it in an e2e test.
  */
-
-async function login(page: Page, email: string, password: string) {
-  await page.goto("/login")
-  await page.fill('[name="identifier"]', email)
-  await page.fill('[name="password"]', password)
-  await page.click('button[type="submit"]')
-  await page.waitForURL("/")
-}
 
 test("non-system-viewer visiting /admin/cron is redirected away", async ({ page }) => {
   await login(page, "seed@example.com", "Seed1234!")

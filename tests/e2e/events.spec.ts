@@ -1,11 +1,10 @@
-import { expect, test, type Page } from "@playwright/test"
+import { type Page } from "@playwright/test"
 import { AUTH_FILE } from "../../playwright.config"
+import { EVENT_END, EVENT_START, expect, test } from "./fixtures"
 
 // An event from the seed data. It has no owner (ownerId is null), thus the seed user is
 // never its owner and the tests can use it for assertions about a different user.
 const SEEDED_EVENT_URL = "/event/offene-sozialberatung"
-
-// A test that creates an event must also delete it at the end.
 
 test.use({ storageState: AUTH_FILE })
 
@@ -16,26 +15,12 @@ function uniqueTitle() {
 }
 
 /** The value format of a datetime-local input: YYYY-MM-DDTHH:mm */
-const FUTURE_START = "2099-12-01T18:00"
-const FUTURE_END = "2099-12-01T20:00"
 const INVALID_START = "2099-12-01T20:00" // start after end (invalid)
 const INVALID_END = "2099-12-01T18:00"
 
-async function createEvent(page: Page, title: string): Promise<string> {
-  await page.goto("/event/new")
-  await page.fill("#title", title)
-  await page.fill("#organizer", "E2E Organizer")
-  await page.fill("#start", FUTURE_START)
-  await page.fill("#end", FUTURE_END)
-  await page.fill("#description", "Automated E2E test event — safe to delete.")
-  await page.click('button[type="submit"]')
-  await page.waitForURL(/\/event\/[a-z0-9-]+$/)
-  return page.url()
-}
-
 /**
  * The /events page shows the events on more than one page, sorted by start date, earliest
- * first. FUTURE_START (2099) comes after each other event, thus a new test event is on the
+ * first. EVENT_START (2099) comes after each other event, thus a new test event is on the
  * last page and not on the first page.
  */
 async function goToLastEventsPage(page: Page) {
@@ -43,22 +28,14 @@ async function goToLastEventsPage(page: Page) {
   if (await lastPageLink.count()) await lastPageLink.click()
 }
 
-async function deleteEvent(page: Page) {
-  await page.getByRole("button", { name: "Löschen" }).click()
-  await page.getByRole("dialog").getByRole("button", { name: "Löschen" }).click()
-  await expect(page).toHaveURL("/account/events")
-}
-
 // ─── Tests ─────────────────────────────────────────────────────────────────
 
-test("create event with valid dates and redirect to detail page", async ({ page }) => {
+test("create event with valid dates and redirect to detail page", async ({ page, listings }) => {
   const title = uniqueTitle()
-  await createEvent(page, title)
+  await listings.createEvent(title)
 
   await expect(page.getByRole("heading", { level: 1 })).toContainText(title)
   await expect(page).toHaveURL(/\/event\/[a-z0-9-]+$/)
-
-  await deleteEvent(page)
 })
 
 test("create event with start after end shows validation error", async ({ page }) => {
@@ -75,20 +52,18 @@ test("create event with start after end shows validation error", async ({ page }
   await expect(page).toHaveURL(/event\/new\??.*/)
 })
 
-test("event detail shows owner controls (Edit, Delete) for creator", async ({ page }) => {
+test("event detail shows owner controls (Edit, Delete) for creator", async ({ page, listings }) => {
   const title = uniqueTitle()
-  await createEvent(page, title)
+  await listings.createEvent(title)
 
   await expect(page.getByRole("link", { name: "Bearbeiten" })).toBeVisible()
   await expect(page.getByRole("button", { name: "Löschen" })).toBeVisible()
-
-  await deleteEvent(page)
 })
 
-test("edit event updates title and detail page reflects change", async ({ page }) => {
+test("edit event updates title and detail page reflects change", async ({ page, listings }) => {
   const title = uniqueTitle()
   const updatedTitle = `${title} (updated)`
-  const eventUrl = await createEvent(page, title)
+  const eventUrl = await listings.createEvent(title)
 
   await page.getByRole("link", { name: "Bearbeiten" }).click()
   await expect(page).toHaveURL(/\/event\/.+\/edit$/)
@@ -98,14 +73,11 @@ test("edit event updates title and detail page reflects change", async ({ page }
   await expect(page).toHaveURL(eventUrl)
 
   await expect(page.getByRole("heading", { level: 1 })).toContainText(updatedTitle)
-
-  await deleteEvent(page)
 })
 
-test("edit event — datetime fields are pre-populated correctly", async ({ page }) => {
+test("edit event — datetime fields are pre-populated correctly", async ({ page, listings }) => {
   const title = uniqueTitle()
-  await createEvent(page, title)
-  const eventUrl = page.url()
+  await listings.createEvent(title)
 
   await page.getByRole("link", { name: "Bearbeiten" }).click()
   await expect(page).toHaveURL(/\/event\/.+\/edit$/)
@@ -113,16 +85,16 @@ test("edit event — datetime fields are pre-populated correctly", async ({ page
   const startValue = await page.locator("#start").inputValue()
   const endValue = await page.locator("#end").inputValue()
 
-  expect(startValue).toBe(FUTURE_START)
-  expect(endValue).toBe(FUTURE_END)
-
-  await page.goto(eventUrl)
-  await deleteEvent(page)
+  expect(startValue).toBe(EVENT_START)
+  expect(endValue).toBe(EVENT_END)
 })
 
-test("delete event redirects to /account/events and removes it from the list", async ({ page }) => {
+test("delete event redirects to /account/events and removes it from the list", async ({
+  page,
+  listings,
+}) => {
   const title = uniqueTitle()
-  await createEvent(page, title)
+  await listings.createEvent(title)
 
   await page.getByRole("button", { name: "Löschen" }).click()
   await page.getByRole("dialog").getByRole("button", { name: "Löschen" }).click()
@@ -219,91 +191,67 @@ test.describe("Ownership enforcement — events", () => {
 
 // ─── Location variant tests ────────────────────────────────────────────────
 
-test("create event with no location — EventLocation section is not rendered", async ({ page }) => {
+test("create event with no location — EventLocation section is not rendered", async ({
+  page,
+  listings,
+}) => {
   const title = uniqueTitle()
-  await page.goto("/event/new")
-  await page.fill("#title", title)
-  await page.fill("#organizer", "E2E Organizer")
-  await page.fill("#start", FUTURE_START)
-  await page.fill("#end", FUTURE_END)
-  await page.fill("#description", "Automated E2E test event — safe to delete.")
   // location_type has the default value "none". Do not change it.
-  await page.click('button[type="submit"]')
-  await page.waitForURL(/\/event\/[a-z0-9-]+$/)
+  await listings.createEvent(title)
 
   await expect(page.getByRole("heading", { level: 1 })).toContainText(title)
   // The page renders EventLocation only for an event with a location, thus the "Ort" label
   // must be absent.
   await expect(page.locator("dt").filter({ hasText: "Ort" })).toHaveCount(0)
-
-  await deleteEvent(page)
 })
 
 test("create event with map location (linked) — location name appears on detail page", async ({
   page,
+  listings,
 }) => {
   const title = uniqueTitle()
-  await page.goto("/event/new")
-  await page.fill("#title", title)
-  await page.fill("#organizer", "E2E Organizer")
-  await page.fill("#start", FUTURE_START)
-  await page.fill("#end", FUTURE_END)
-  await page.fill("#description", "Automated E2E test event — safe to delete.")
+  let firstOptionText: string | null = null
+  await listings.createEvent(title, async () => {
+    // The linked location type makes the map location dropdown visible.
+    await page.click('input[name="location_type"][value="linked"]')
+    await page.locator("#linked-location-section").waitFor({ state: "visible" })
 
-  // The linked location type makes the map location dropdown visible.
-  await page.click('input[name="location_type"][value="linked"]')
-  await page.locator("#linked-location-section").waitFor({ state: "visible" })
-
-  // Select the first true location. The option at index 0 is the empty placeholder.
-  const locationSelect = page.locator('select[name="map_location_id"]')
-  const firstOptionText = await locationSelect.locator("option").nth(1).textContent()
-  await locationSelect.selectOption({ index: 1 })
-
-  await page.click('button[type="submit"]')
-  await page.waitForURL(/\/event\/[a-z0-9-]+$/)
+    // Select the first true location. The option at index 0 is the empty placeholder.
+    const locationSelect = page.locator('select[name="map_location_id"]')
+    firstOptionText = await locationSelect.locator("option").nth(1).textContent()
+    await locationSelect.selectOption({ index: 1 })
+  })
 
   await expect(page.getByRole("heading", { level: 1 })).toContainText(title)
   // The label of an option has the format "Location Name · City". Use only the name.
   const locationName = (firstOptionText ?? "").split(" · ")[0].trim()
   await expect(page.locator("body")).toContainText(locationName)
-
-  await deleteEvent(page)
 })
 
-test("create event with custom location — custom name appears on detail page", async ({ page }) => {
+test("create event with custom location — custom name appears on detail page", async ({
+  page,
+  listings,
+}) => {
   const title = uniqueTitle()
-  await page.goto("/event/new")
-  await page.fill("#title", title)
-  await page.fill("#organizer", "E2E Organizer")
-  await page.fill("#start", FUTURE_START)
-  await page.fill("#end", FUTURE_END)
-  await page.fill("#description", "Automated E2E test event — safe to delete.")
+  await listings.createEvent(title, async () => {
+    // The custom location type makes the custom fields visible.
+    await page.click('input[name="location_type"][value="custom"]')
+    await page.locator("#custom-location-section").waitFor({ state: "visible" })
 
-  // The custom location type makes the custom fields visible.
-  await page.click('input[name="location_type"][value="custom"]')
-  await page.locator("#custom-location-section").waitFor({ state: "visible" })
-
-  await page.fill('input[name="custom_location_name"]', "E2E Test Venue")
-  await page.fill('input[name="custom_location_address"]', "Teststraße 1")
-  await page.fill('input[name="custom_location_city"]', "Bamberg")
-
-  await page.click('button[type="submit"]')
-  await page.waitForURL(/\/event\/[a-z0-9-]+$/)
+    await page.fill('input[name="custom_location_name"]', "E2E Test Venue")
+    await page.fill('input[name="custom_location_address"]', "Teststraße 1")
+    await page.fill('input[name="custom_location_city"]', "Bamberg")
+  })
 
   await expect(page.getByRole("heading", { level: 1 })).toContainText(title)
   await expect(page.locator("body")).toContainText("E2E Test Venue")
-
-  await deleteEvent(page)
 })
 
-test("created event appears on the /events listing page", async ({ page }) => {
+test("created event appears on the /events listing page", async ({ page, listings }) => {
   const title = uniqueTitle()
-  const eventUrl = await createEvent(page, title)
+  await listings.createEvent(title)
 
   await page.goto("/events")
   await goToLastEventsPage(page)
   await expect(page.locator("body")).toContainText(title)
-
-  await page.goto(eventUrl)
-  await deleteEvent(page)
 })
