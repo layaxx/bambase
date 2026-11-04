@@ -12,6 +12,7 @@ const t = useTranslations(Astro.locals.locale)
 const { slug } = Astro.params
 const me = Astro.locals.user
 const event = slug ? await fetchEvent(slug, me?.id) : null
+if (!event) Astro.response.status = 404
 const isOwner = !!(me && event?.ownerId === me.id)
 
 const deleteResult = Astro.getActionResult(actions.events.delete)

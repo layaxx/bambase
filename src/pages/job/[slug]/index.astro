@@ -28,6 +28,7 @@ const me = Astro.locals.user
 const isModerator = me ? await canModerateJobOffers(me.role) : false
 const { slug } = Astro.params
 const job = slug ? await fetchJobOffer(slug, { userId: me?.id, isModerator }) : null
+if (!job) Astro.response.status = 404
 const isOwner = !!(me && job?.ownerId === me.id)
 
 const hasReports = (job?.reports?.length ?? 0) >= REPORT_WARNING_THRESHOLD
