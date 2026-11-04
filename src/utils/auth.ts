@@ -6,7 +6,7 @@ import { defaultStatements } from "better-auth/plugins/admin/access"
 import prisma from "./prisma"
 import { sendMail } from "./mail"
 
-const statement = {
+export const statement = {
   ...defaultStatements,
   jobOffer: ["moderate"],
   event: ["moderate"],
@@ -31,6 +31,13 @@ const adminRole = ac.newRole({
   studentGroup: ["manage"],
   system: ["view"],
 })
+
+export const roles = {
+  user: userRole,
+  jobModerator: jobModeratorRole,
+  eventModerator: eventModeratorRole,
+  admin: adminRole,
+}
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
@@ -71,12 +78,7 @@ export const auth = betterAuth({
   plugins: [
     admin({
       ac,
-      roles: {
-        user: userRole,
-        jobModerator: jobModeratorRole,
-        eventModerator: eventModeratorRole,
-        admin: adminRole,
-      },
+      roles,
     }),
   ],
 })
