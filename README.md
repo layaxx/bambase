@@ -26,7 +26,7 @@ Frontend and backend are a single Astro application — there is no separate API
 
 ### Prerequisites
 
-- Node.js 22+ and [Yarn](https://yarnpkg.com/)
+- Node.js 26+ (see `.nvmrc`) and [Yarn](https://yarnpkg.com/) 1.x (Node 26 no longer bundles corepack: `npm i -g corepack && corepack enable`)
 - Docker and Docker Compose (recommended for the local database)
 
 ### Setup
