@@ -14,6 +14,7 @@ export const statement = {
   studentGroup: ["manage"],
   system: ["view"],
 } as const
+export type Statement = typeof statement
 
 const ac = createAccessControl(statement)
 
@@ -31,6 +32,7 @@ export const roles = {
   eventModerator: eventModeratorRole,
   admin: adminRole,
 }
+export type Role = keyof typeof roles
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {

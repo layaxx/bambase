@@ -1,9 +1,14 @@
 import type { AstroGlobal } from "astro"
-import { auth, roles, statement } from "./auth"
+import { auth, roles, type Statement, type Role } from "./auth"
 
-type Role = keyof typeof roles
+type Resource = keyof Statement
+type Action<R extends Resource> = Statement[R][number]
+
+/** Actions to check per resource, e.g. `{ user: ["list", "ban"] }`. */
+type Permissions = { [R in Resource]?: Action<R>[] }
+
+// Non-empty tuple so `z.enum(USER_ROLES)` accepts it.
 export const USER_ROLES = Object.keys(roles) as [Role, ...Role[]]
-type Permissions = { [K in keyof typeof statement]?: (typeof statement)[K][number][] }
 
 async function hasPermission(
   role: string | null | undefined,
