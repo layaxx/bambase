@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test"
+import { expect, login, test } from "./fixtures"
 
 /**
  * /admin/student-groups needs the "studentGroup:manage" permission from the better-auth
@@ -6,14 +6,6 @@ import { expect, test, type Page } from "@playwright/test"
  * change between the seed user, who is not a manager, and the seeded admin@example.com
  * account.
  */
-
-async function login(page: Page, email: string, password: string) {
-  await page.goto("/login")
-  await page.fill('[name="identifier"]', email)
-  await page.fill('[name="password"]', password)
-  await page.click('button[type="submit"]')
-  await page.waitForURL("/")
-}
 
 function uniqueName() {
   return `E2E Admin Test Group ${Date.now()}`

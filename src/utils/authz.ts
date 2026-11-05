@@ -1,35 +1,14 @@
 import type { AstroGlobal } from "astro"
-import { auth } from "./auth"
+import { auth, roles, type Statement, type Role } from "./auth"
 
-type ConfiguredRole = "user" | "jobModerator" | "eventModerator" | "admin"
-export const USER_ROLES = [
-  "user",
-  "jobModerator",
-  "eventModerator",
-  "admin",
-] as const satisfies readonly ConfiguredRole[]
-type UserAction =
-  | "create"
-  | "list"
-  | "set-role"
-  | "ban"
-  | "impersonate"
-  | "impersonate-admins"
-  | "delete"
-  | "set-password"
-  | "set-email"
-  | "get"
-  | "update"
-type SessionAction = "list" | "revoke" | "delete"
-type Permissions = {
-  jobOffer?: "moderate"[]
-  event?: "moderate"[]
-  location?: "manage"[]
-  studentGroup?: "manage"[]
-  user?: UserAction[]
-  session?: SessionAction[]
-  system?: "view"[]
-}
+type Resource = keyof Statement
+type Action<R extends Resource> = Statement[R][number]
+
+/** Actions to check per resource, e.g. `{ user: ["list", "ban"] }`. */
+type Permissions = { [R in Resource]?: Action<R>[] }
+
+// Non-empty tuple so `z.enum(USER_ROLES)` accepts it.
+export const USER_ROLES = Object.keys(roles) as [Role, ...Role[]]
 
 async function hasPermission(
   role: string | null | undefined,
@@ -37,7 +16,7 @@ async function hasPermission(
 ): Promise<boolean> {
   const result = await auth.api.userHasPermission({
     body: {
-      role: (role ?? "user") as ConfiguredRole,
+      role: (role ?? "user") as Role,
       permissions,
     },
   })

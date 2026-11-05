@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { fetchLocations, fetchLocationForAdmin, fetchAllLocationsForAdmin } from "./locations"
-import { baseLogger } from "@/utils/logger"
 
 const mockFindMany = vi.hoisted(() => vi.fn())
 const mockFindFirst = vi.hoisted(() => vi.fn())
@@ -9,10 +8,6 @@ vi.mock("../prisma", () => ({
   default: {
     location: { findMany: mockFindMany, findFirst: mockFindFirst },
   },
-}))
-
-vi.mock("./cache", () => ({
-  withCache: (_key: string, fn: () => Promise<unknown>) => fn(),
 }))
 
 beforeEach(() => {
@@ -75,22 +70,19 @@ describe("fetchLocations", () => {
 
     const result = await fetchLocations()
 
-    expect(result).toEqual({
-      data: [
-        {
-          id: "loc-1",
-          slug: "audimax",
-          name: "Audimax",
-          description: undefined,
-          lat: 49.8988,
-          lon: 10.9028,
-          category: "university",
-          external_url: undefined,
-          address: undefined,
-        },
-      ],
-      apiDown: false,
-    })
+    expect(result).toEqual([
+      {
+        id: "loc-1",
+        slug: "audimax",
+        name: "Audimax",
+        description: undefined,
+        lat: 49.8988,
+        lon: 10.9028,
+        category: "university",
+        external_url: undefined,
+        address: undefined,
+      },
+    ])
   })
 
   it("builds an address object when at least one address field is present", async () => {
@@ -100,7 +92,7 @@ describe("fetchLocations", () => {
 
     const result = await fetchLocations()
 
-    expect(result.data[0].address).toEqual({
+    expect(result[0].address).toEqual({
       street: "Feldkirchenstraße",
       streetNumber: "21",
       city: undefined,
@@ -113,21 +105,7 @@ describe("fetchLocations", () => {
 
     const result = await fetchLocations()
 
-    expect(result).toEqual({ data: [], apiDown: false })
-  })
-
-  it("logs an error and returns an empty array when the API response is unexpected", async () => {
-    const consoleSpy = vi.spyOn(baseLogger, "error").mockImplementation(() => {})
-    mockFindMany.mockResolvedValue(null)
-
-    const result = await fetchLocations()
-
-    expect(result).toEqual({ data: [], apiDown: true })
-    expect(consoleSpy).toHaveBeenCalledWith(
-      { err: expect.any(TypeError), operation: "Error fetching locations" },
-      "data query failed"
-    )
-    consoleSpy.mockRestore()
+    expect(result).toEqual([])
   })
 })
 
@@ -145,7 +123,7 @@ describe("fetchLocationForAdmin", () => {
 
     const result = await fetchLocationForAdmin("missing")
 
-    expect(result).toEqual({ data: null, apiDown: false })
+    expect(result).toEqual(null)
   })
 
   it("maps the found row to a MapLocation", async () => {
@@ -153,17 +131,7 @@ describe("fetchLocationForAdmin", () => {
 
     const result = await fetchLocationForAdmin("audimax")
 
-    expect(result.data).toMatchObject({ id: "loc-1", slug: "audimax", name: "Audimax" })
-  })
-
-  it("logs an error and returns apiDown when the lookup throws", async () => {
-    const consoleSpy = vi.spyOn(baseLogger, "error").mockImplementation(() => {})
-    mockFindFirst.mockRejectedValue(new Error("db error"))
-
-    const result = await fetchLocationForAdmin("audimax")
-
-    expect(result).toEqual({ data: null, apiDown: true })
-    consoleSpy.mockRestore()
+    expect(result).toMatchObject({ id: "loc-1", slug: "audimax", name: "Audimax" })
   })
 })
 
@@ -182,15 +150,5 @@ describe("fetchAllLocationsForAdmin", () => {
     await fetchAllLocationsForAdmin(10)
 
     expect(mockFindMany).toHaveBeenCalledWith(expect.objectContaining({ take: 10 }))
-  })
-
-  it("logs an error and returns an empty array when the query throws", async () => {
-    const consoleSpy = vi.spyOn(baseLogger, "error").mockImplementation(() => {})
-    mockFindMany.mockRejectedValue(new Error("db error"))
-
-    const result = await fetchAllLocationsForAdmin()
-
-    expect(result).toEqual({ data: [], apiDown: true })
-    consoleSpy.mockRestore()
   })
 })

@@ -1,8 +1,6 @@
-import { expect, test, type Page } from "@playwright/test"
+import { type Page } from "@playwright/test"
 import { AUTH_FILE } from "../../playwright.config"
-
-// A test that creates a job must also delete it at the end, thus the shared database
-// stays clean.
+import { expect, test } from "./fixtures"
 
 test.use({ storageState: AUTH_FILE })
 
@@ -16,55 +14,32 @@ function uniqueTitle() {
   return `E2E Test Job ${Date.now()}`
 }
 
-async function createJob(page: Page, title: string): Promise<string> {
-  await page.goto("/job/new")
-  await page.fill("#title", title)
-  await page.fill("#company", "E2E Corp")
-  await page.fill("#location", "Bamberg")
-  await page.fill("#working_hours", "20")
-  await page.fill("#description", "Automated E2E test job — safe to delete.")
-  await page.fill("#contact_name", "Test Contact")
-  await page.click('button[type="submit"]')
-  await page.waitForURL(/\/job\/[a-z0-9-]+\?submitted$/)
-  return page.url().split("?")[0]
-}
-
-async function deleteJob(page: Page) {
-  await page.getByRole("button", { name: "Löschen" }).click()
-  await page.getByRole("dialog").getByRole("button", { name: "Löschen" }).click()
-  await expect(page).toHaveURL("/account/jobs")
-}
-
 // ─── Tests ─────────────────────────────────────────────────────────────────
 
-test("create job with required fields and redirect to detail page", async ({ page }) => {
+test("create job with required fields and redirect to detail page", async ({ page, listings }) => {
   const title = uniqueTitle()
-  await createJob(page, title)
+  await listings.createJob(title)
 
   await expect(page.getByRole("heading", { level: 1 })).toContainText(title)
   await expect(page).toHaveURL(/\/job\/[a-z0-9-]+\?submitted$/)
   await expect(page.getByText("Angebot erfolgreich eingereicht")).toBeVisible()
   await expect(page.getByText("innerhalb weniger Tage")).toBeVisible()
   await expect(page.getByText(/Veröffentlicht am/)).toHaveCount(0)
-
-  await deleteJob(page)
 })
 
-test("job detail shows owner controls (Edit, Archive, Delete)", async ({ page }) => {
+test("job detail shows owner controls (Edit, Archive, Delete)", async ({ page, listings }) => {
   const title = uniqueTitle()
-  await createJob(page, title)
+  await listings.createJob(title)
 
   await expect(page.getByRole("link", { name: "Bearbeiten" })).toBeVisible()
   await expect(page.getByRole("button", { name: "Archivieren" })).toBeVisible()
   await expect(page.getByRole("button", { name: "Löschen" })).toBeVisible()
-
-  await deleteJob(page)
 })
 
-test("edit job title and verify updated title on detail page", async ({ page }) => {
+test("edit job title and verify updated title on detail page", async ({ page, listings }) => {
   const title = uniqueTitle()
   const updatedTitle = `${title} (updated)`
-  const jobUrl = await createJob(page, title)
+  const jobUrl = await listings.createJob(title)
 
   await page.getByRole("link", { name: "Bearbeiten" }).click()
   await expect(page).toHaveURL(/\/job\/.+\/edit$/)
@@ -81,13 +56,11 @@ test("edit job title and verify updated title on detail page", async ({ page }) 
   await expect(page).toHaveURL(jobUrl)
 
   await expect(page.getByRole("heading", { level: 1 })).toContainText(updatedTitle)
-
-  await deleteJob(page)
 })
 
-test("archive job redirects to same page and shows status alert", async ({ page }) => {
+test("archive job redirects to same page and shows status alert", async ({ page, listings }) => {
   const title = uniqueTitle()
-  const jobUrl = await createJob(page, title)
+  const jobUrl = await listings.createJob(title)
 
   // The page shows the archive button for a submitted job and for a published job.
   const archiveBtn = page.getByRole("button", { name: "Archivieren" })
@@ -104,15 +77,14 @@ test("archive job redirects to same page and shows status alert", async ({ page 
   // An archived job cannot be edited, not even through the URL.
   await page.goto(`${jobUrl}/edit`)
   await expect(page).toHaveURL(jobUrl)
-
-  await deleteJob(page)
 })
 
 test("archive job from My Job Listings keeps the search and marks it archived", async ({
   page,
+  listings,
 }) => {
   const title = uniqueTitle()
-  const jobUrl = await createJob(page, title)
+  await listings.createJob(title)
 
   const listUrl = `/account/jobs?${new URLSearchParams({ search: title })}`
   await page.goto(listUrl)
@@ -124,14 +96,14 @@ test("archive job from My Job Listings keeps the search and marks it archived", 
   await expect(row).toContainText("Archiviert")
   await expect(row.getByRole("button", { name: "Archivieren" })).toHaveCount(0)
   await expect(row.getByRole("link", { name: "Bearbeiten" })).toHaveCount(0)
-
-  await page.goto(jobUrl)
-  await deleteJob(page)
 })
 
-test("delete job redirects to /account/jobs and removes it from the list", async ({ page }) => {
+test("delete job redirects to /account/jobs and removes it from the list", async ({
+  page,
+  listings,
+}) => {
   const title = uniqueTitle()
-  await createJob(page, title)
+  await listings.createJob(title)
 
   await page.getByRole("button", { name: "Löschen" }).click()
   await page.getByRole("dialog").getByRole("button", { name: "Löschen" }).click()
@@ -156,15 +128,15 @@ test("no owner controls shown for seed non-owner authenticated user", async ({ p
   await expect(page.getByRole("button", { name: "Archivieren" })).not.toBeVisible()
 })
 
-test("created job (not yet published) does not appear on the /jobs listing", async ({ page }) => {
+test("created job (not yet published) does not appear on the /jobs listing", async ({
+  page,
+  listings,
+}) => {
   const title = uniqueTitle()
-  const jobUrl = await createJob(page, title)
+  await listings.createJob(title)
 
   await page.goto("/jobs")
   await expect(page.locator("body")).not.toContainText(title)
-
-  await page.goto(jobUrl)
-  await deleteJob(page)
 })
 
 test("job draft is cleared when navigating away without submitting", async ({ page }) => {

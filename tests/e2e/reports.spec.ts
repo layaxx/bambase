@@ -18,8 +18,8 @@ import { expect, login, moderate, test } from "./fixtures"
 
 const UNOWNED_JOB_URL = "/job/werkstudent-in-softwareentwicklung-feki-de-e-v"
 const UNOWNED_EVENT_URL = "/event/ersti-party"
-// Part of t.reports.warningHint. Not .alert-warning, because the "In Prüfung" alert and
-// ApiDownBanner use that class too.
+// Part of t.reports.warningHint. Not .alert-warning, because the "In Prüfung" alert uses that
+// class too.
 const WARNING_HINT = "Dieser Inhalt wurde mehrfach gemeldet"
 
 // ─── Anonymous visitor ──────────────────────────────────────────────────────

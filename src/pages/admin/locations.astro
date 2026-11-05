@@ -16,7 +16,7 @@ if (deleteResult?.data !== undefined && !deleteResult.error) {
   return Astro.redirect(Astro.url.pathname)
 }
 
-const { data: locations } = await fetchAllLocationsForAdmin()
+const locations = await fetchAllLocationsForAdmin()
 ---
 
 <PageLayout title={t.admin.locationsTitle}>

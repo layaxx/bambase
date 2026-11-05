@@ -1,6 +1,4 @@
 import prisma from "../prisma"
-import { withCache } from "./cache"
-import { apiResult, type ApiResult } from "./types"
 import type { StudentGroupModel } from "@/generated/prisma/models"
 
 export type StudentGroup = {
@@ -27,31 +25,23 @@ function toStudentGroup(row: StudentGroupModel): StudentGroup {
   }
 }
 
-export function fetchStudentGroups(limit = 200): Promise<ApiResult<StudentGroup[]>> {
-  return apiResult("Error fetching student groups", [], async () => {
-    const groups = await withCache(`student-groups:${limit}`, () =>
-      prisma.studentGroup.findMany({
-        orderBy: { name: "asc" },
-        take: limit,
-      })
-    )
-    return groups.map(toStudentGroup)
+export async function fetchStudentGroups(limit = 200): Promise<StudentGroup[]> {
+  const groups = await prisma.studentGroup.findMany({
+    orderBy: { name: "asc" },
+    take: limit,
   })
+  return groups.map(toStudentGroup)
 }
 
-export function fetchStudentGroupForAdmin(slug: string): Promise<ApiResult<StudentGroup | null>> {
-  return apiResult("Error fetching student group for admin", null, async () => {
-    const row = await prisma.studentGroup.findFirst({ where: { slug } })
-    return row && toStudentGroup(row)
-  })
+export async function fetchStudentGroupForAdmin(slug: string): Promise<StudentGroup | null> {
+  const row = await prisma.studentGroup.findFirst({ where: { slug } })
+  return row && toStudentGroup(row)
 }
 
-export function fetchAllStudentGroupsForAdmin(limit = 500): Promise<ApiResult<StudentGroup[]>> {
-  return apiResult("Error fetching student groups for admin", [], async () => {
-    const rows = await prisma.studentGroup.findMany({
-      orderBy: { name: "asc" },
-      take: limit,
-    })
-    return rows.map(toStudentGroup)
+export async function fetchAllStudentGroupsForAdmin(limit = 500): Promise<StudentGroup[]> {
+  const rows = await prisma.studentGroup.findMany({
+    orderBy: { name: "asc" },
+    take: limit,
   })
+  return rows.map(toStudentGroup)
 }

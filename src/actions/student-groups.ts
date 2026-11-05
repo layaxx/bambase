@@ -1,6 +1,5 @@
 import { defineAction } from "astro:actions"
 import { z } from "astro/zod"
-import { invalidateCacheByPrefix } from "@/utils/api/cache"
 import { createWithUniqueSlug } from "@/utils/slugify"
 import { canManageStudentGroups } from "@/utils/authz"
 import { requirePermission, mutationError } from "@/utils/action-guards"
@@ -36,7 +35,6 @@ export const studentGroups = {
         )
       }
 
-      invalidateCacheByPrefix("student-groups:")
       return {}
     },
   }),
@@ -69,7 +67,6 @@ export const studentGroups = {
         )
       }
 
-      invalidateCacheByPrefix("student-groups:")
       return { slug: updated.slug }
     },
   }),
@@ -99,7 +96,6 @@ export const studentGroups = {
         throw mutationError(error, "Student group create failed", "Erstellen fehlgeschlagen.")
       }
 
-      invalidateCacheByPrefix("student-groups:")
       return { slug: created.slug }
     },
   }),

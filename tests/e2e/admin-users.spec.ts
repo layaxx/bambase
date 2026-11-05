@@ -1,18 +1,10 @@
-import { expect, test, type Page } from "@playwright/test"
+import { expect, login, test } from "./fixtures"
 
 /**
  * /admin/users needs the "admin" role from the better-auth `admin` plugin, because a
  * moderator has no `user` permission. The tests ban and unban "clean@example.com", because
  * no other spec makes an assertion about that account.
  */
-
-async function login(page: Page, email: string, password: string) {
-  await page.goto("/login")
-  await page.fill('[name="identifier"]', email)
-  await page.fill('[name="password"]', password)
-  await page.click('button[type="submit"]')
-  await page.waitForURL("/")
-}
 
 test("non-admin visiting /admin/users is redirected away", async ({ page }) => {
   await login(page, "seed@example.com", "Seed1234!")

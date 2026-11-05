@@ -1,8 +1,6 @@
 import prisma from "../prisma"
 import type { Prisma } from "@/generated/prisma/client"
-import { withCache } from "./cache"
 import { findPage } from "../pagination"
-import { apiResult, type ApiResult } from "./types"
 import { toMapLocation, type MapLocation } from "./locations"
 import { EventCategory } from "@/generated/prisma/enums"
 import type { EventModel, LocationModel } from "@/generated/prisma/models"
@@ -93,8 +91,6 @@ export type EventPage = {
   pageCount: number
 }
 
-const EMPTY_PAGE: EventPage = { events: [], total: 0, page: 1, pageCount: 1 }
-
 async function findEventPage(
   where: Prisma.EventWhereInput,
   orderBy: Prisma.EventOrderByWithRelationInput,
@@ -110,7 +106,7 @@ async function findEventPage(
   return { events: rows.map((row) => toEvent(row)), ...rest }
 }
 
-export function fetchEventsPaginated(filter: EventsFilter = {}): Promise<ApiResult<EventPage>> {
+export function fetchEventsPaginated(filter: EventsFilter = {}): Promise<EventPage> {
   const { category, dateFilter = "upcoming", page = 1, pageSize = 15 } = filter
 
   const now = new Date()
@@ -124,82 +120,64 @@ export function fetchEventsPaginated(filter: EventsFilter = {}): Promise<ApiResu
   if (dateFilter === "week") where.start = { lte: new Date(now.getTime() + 7 * 86_400_000) }
   else if (dateFilter === "month") where.start = { lte: new Date(now.getTime() + 31 * 86_400_000) }
 
-  const key = `events:paginated:${JSON.stringify({ category, dateFilter, page, pageSize })}`
-  return apiResult("Error fetching events (paginated)", EMPTY_PAGE, () =>
-    withCache(key, () => findEventPage(where, { start: "asc" }, page, pageSize))
-  )
+  return findEventPage(where, { start: "asc" }, page, pageSize)
 }
 
-export function fetchOngoingOrUpcomingEvents(limit = 100): Promise<ApiResult<Event[]>> {
-  return apiResult("Error fetching events", [], async () => {
-    const now = new Date()
-    const endOfToday = new Date(now)
-    endOfToday.setHours(23, 59, 59, 999)
+export async function fetchOngoingOrUpcomingEvents(limit = 100): Promise<Event[]> {
+  const now = new Date()
+  const endOfToday = new Date(now)
+  endOfToday.setHours(23, 59, 59, 999)
 
-    const rows = await withCache(`events:ongoing-or-upcoming:${limit}`, () =>
-      prisma.event.findMany({
-        where: {
-          hidden: false,
-          OR: [
-            { start: { gte: now, lte: endOfToday } },
-            { start: { lte: now }, end: { gte: now } },
-          ],
-        },
-        orderBy: { start: "asc" },
-        take: limit,
-      })
-    )
-    return rows.map((row) => toEvent(row))
+  const rows = await prisma.event.findMany({
+    where: {
+      hidden: false,
+      OR: [{ start: { gte: now, lte: endOfToday } }, { start: { lte: now }, end: { gte: now } }],
+    },
+    orderBy: { start: "asc" },
+    take: limit,
   })
+  return rows.map((row) => toEvent(row))
 }
 
 /** Fetches the events that did not end, together with their map location, for the map page. */
-export function fetchUpcomingMapEvents(limit = 200): Promise<ApiResult<Event[]>> {
-  return apiResult("Error fetching upcoming events", [], async () => {
-    const rows = await withCache(`events:upcoming-map:${limit}`, () =>
-      prisma.event.findMany({
-        where: { end: { gte: new Date() }, mapLocationId: { not: null }, hidden: false },
-        include: { mapLocation: true },
-        orderBy: { start: "asc" },
-        take: limit,
-      })
-    )
-    return rows.map((row) => toEvent(row, { mapLocation: row.mapLocation }))
+export async function fetchUpcomingMapEvents(limit = 200): Promise<Event[]> {
+  const rows = await prisma.event.findMany({
+    where: { end: { gte: new Date() }, mapLocationId: { not: null }, hidden: false },
+    include: { mapLocation: true },
+    orderBy: { start: "asc" },
+    take: limit,
   })
+  return rows.map((row) => toEvent(row, { mapLocation: row.mapLocation }))
 }
 
 /** Fetches a published event. With `viewerId`, the viewer's own unpublished events are found too. */
-export function fetchEvent(slug: string, viewerId?: string): Promise<ApiResult<Event | null>> {
-  return apiResult("Error fetching event", null, async () => {
-    const row = await prisma.event.findFirst({
-      where: viewerId
-        ? { slug, OR: [{ hidden: false }, { ownerId: viewerId }] }
-        : { slug, hidden: false },
-      include: {
-        reports: { where: { reviewStatus: { not: "dismissed" } }, select: { id: true } },
-        mapLocation: true,
-      },
-    })
-    return row && toEvent(row, { reports: row.reports, mapLocation: row.mapLocation })
+export async function fetchEvent(slug: string, viewerId?: string): Promise<Event | null> {
+  const row = await prisma.event.findFirst({
+    where: viewerId
+      ? { slug, OR: [{ hidden: false }, { ownerId: viewerId }] }
+      : { slug, hidden: false },
+    include: {
+      reports: { where: { reviewStatus: { not: "dismissed" } }, select: { id: true } },
+      mapLocation: true,
+    },
   })
+  return row && toEvent(row, { reports: row.reports, mapLocation: row.mapLocation })
 }
 
 /** Fetches the slugs of all published events, past and future, for the sitemap. */
-export function fetchAllPublishedEventSlugs(limit = 500): Promise<ApiResult<string[]>> {
-  return apiResult("Error fetching event slugs for sitemap", [], async () => {
-    const rows = await prisma.event.findMany({
-      where: { hidden: false },
-      select: { slug: true },
-      take: limit,
-    })
-    return rows.map((row) => row.slug)
+export async function fetchAllPublishedEventSlugs(limit = 500): Promise<string[]> {
+  const rows = await prisma.event.findMany({
+    where: { hidden: false },
+    select: { slug: true },
+    take: limit,
   })
+  return rows.map((row) => row.slug)
 }
 
 export function fetchMyEvents(
   ownerId: string,
   { page = 1, pageSize = 20, search }: { page?: number; pageSize?: number; search?: string } = {}
-): Promise<ApiResult<EventPage>> {
+): Promise<EventPage> {
   const where: Prisma.EventWhereInput = { ownerId }
   if (search) {
     where.OR = [
@@ -207,29 +185,23 @@ export function fetchMyEvents(
       { organizer: { contains: search, mode: "insensitive" } },
     ]
   }
-  return apiResult("Error fetching own events", EMPTY_PAGE, () =>
-    findEventPage(where, { start: "desc" }, page, pageSize)
-  )
+  return findEventPage(where, { start: "desc" }, page, pageSize)
 }
 
 /** Fetches one event for the admin editor, also if the event is hidden. */
-export function fetchEventForAdmin(slug: string): Promise<ApiResult<Event | null>> {
-  return apiResult("Error fetching event for admin", null, async () => {
-    const row = await prisma.event.findFirst({
-      where: { slug },
-      include: { mapLocation: true },
-    })
-    return row && toEvent(row, { mapLocation: row.mapLocation })
+export async function fetchEventForAdmin(slug: string): Promise<Event | null> {
+  const row = await prisma.event.findFirst({
+    where: { slug },
+    include: { mapLocation: true },
   })
+  return row && toEvent(row, { mapLocation: row.mapLocation })
 }
 
 /** Fetches all events for the admin overview, also the hidden events. */
-export function fetchAllEventsForAdmin(limit = 100): Promise<ApiResult<Event[]>> {
-  return apiResult("Error fetching events for admin", [], async () => {
-    const rows = await prisma.event.findMany({
-      orderBy: { start: "desc" },
-      take: limit,
-    })
-    return rows.map((row) => toEvent(row))
+export async function fetchAllEventsForAdmin(limit = 100): Promise<Event[]> {
+  const rows = await prisma.event.findMany({
+    orderBy: { start: "desc" },
+    take: limit,
   })
+  return rows.map((row) => toEvent(row))
 }

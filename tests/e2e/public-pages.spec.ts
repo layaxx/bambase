@@ -21,7 +21,8 @@ test.describe("Homepage", () => {
 
 test.describe("Job detail — not found", () => {
   test("visiting a non-existent job slug shows not-found content", async ({ page }) => {
-    await page.goto("/job/not-a-real-slug")
+    const response = await page.goto("/job/not-a-real-slug")
+    expect(response?.status()).toBe(404)
     await expect(page.locator("body")).not.toContainText("500")
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible()
     await expect(page.getByRole("link", { name: "Alle Jobs" })).toBeVisible()
@@ -30,7 +31,8 @@ test.describe("Job detail — not found", () => {
 
 test.describe("Event detail — not found", () => {
   test("visiting a non-existent event slug shows not-found content", async ({ page }) => {
-    await page.goto("/event/this-slug-does-not-exist")
+    const response = await page.goto("/event/this-slug-does-not-exist")
+    expect(response?.status()).toBe(404)
     await expect(page.locator("body")).not.toContainText("500")
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible()
     await expect(page.getByRole("link", { name: "Alle Veranstaltungen" })).toBeVisible()

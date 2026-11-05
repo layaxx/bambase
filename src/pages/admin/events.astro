@@ -9,7 +9,7 @@ const t = useTranslations(Astro.locals.locale)
 const guard = await requireRole(Astro, canModerateEvents, "/admin/events")
 if (guard instanceof Response) return guard
 
-const { data: events } = await fetchAllEventsForAdmin()
+const events = await fetchAllEventsForAdmin()
 ---
 
 <PageLayout title={t.admin.eventsTitle}>

@@ -21,8 +21,8 @@ const [isEventModerator, isJobModerator] = await Promise.all([
 ])
 
 const [eventCount, jobCount] = await Promise.all([
-  isEventModerator ? countOpenReportCases("event").then(({ data }) => data) : 0,
-  isJobModerator ? countOpenReportCases("job").then(({ data }) => data) : 0,
+  isEventModerator ? countOpenReportCases("event") : 0,
+  isJobModerator ? countOpenReportCases("job") : 0,
 ])
 
 const sections = [

@@ -1,6 +1,5 @@
 import prisma from "../prisma"
 import type { Prisma } from "@/generated/prisma/client"
-import { apiResult, type ApiResult } from "./types"
 import { ReportReason } from "@/generated/prisma/enums"
 import type { ReportReviewStatus } from "@/generated/prisma/enums"
 
@@ -104,8 +103,6 @@ export type ReportGroupPage = {
   pageCount: number
 }
 
-const EMPTY_PAGE: ReportGroupPage = { groups: [], total: 0, page: 1, pageCount: 1 }
-
 function groupKey(row: Pick<ReportRow, "eventId" | "jobOfferId" | "id">): string {
   if (row.eventId) return `event:${row.eventId}`
   if (row.jobOfferId) return `job:${row.jobOfferId}`
@@ -122,73 +119,69 @@ function resolveCaseStatus(group: Pick<ReportGroup, "target" | "openCount">): "o
  * with `resolveCaseStatus`: a case is open if the target is published and has a report that is
  * not dismissed.
  */
-export function countOpenReportCases(targetType: "event" | "job"): Promise<ApiResult<number>> {
+export function countOpenReportCases(targetType: "event" | "job"): Promise<number> {
   const reports = { some: { reviewStatus: "open" as const } }
-  return apiResult("Error counting open report cases", 0, () =>
-    targetType === "event"
-      ? prisma.event.count({ where: { hidden: false, reports } })
-      : prisma.jobOffer.count({ where: { onlineStatus: "published", reports } })
-  )
+  return targetType === "event"
+    ? prisma.event.count({ where: { hidden: false, reports } })
+    : prisma.jobOffer.count({ where: { onlineStatus: "published", reports } })
 }
 
 /**
  * Fetches the reports for the admin moderation queue. The reports are grouped by target and
  * sorted with the most-reported targets first, because those most probably need a decision.
  */
-export function fetchReportGroupsForAdmin(
+export async function fetchReportGroupsForAdmin(
   filter: ReportsFilter = {}
-): Promise<ApiResult<ReportGroupPage>> {
+): Promise<ReportGroupPage> {
   const { caseStatus, targetType, page = 1, pageSize = 20 } = filter
 
-  return apiResult("Error fetching reports for admin", EMPTY_PAGE, async () => {
-    const rows = await prisma.report.findMany({
-      where:
-        targetType === "event"
-          ? { eventId: { not: null } }
-          : targetType === "job"
-            ? { jobOfferId: { not: null } }
-            : {},
-      include: REPORT_INCLUDE,
-      orderBy: { createdAt: "desc" },
-    })
-
-    const groupsByKey = new Map<string, ReportGroup>()
-    for (const row of rows) {
-      const report = toReport(row)
-      const key = groupKey(row)
-      let group = groupsByKey.get(key)
-      if (!group) {
-        group = {
-          key,
-          target: report.target,
-          reports: [],
-          totalCount: 0,
-          openCount: 0,
-          dismissedCount: 0,
-          latestCreatedAt: report.createdAt,
-          caseStatus: "open",
-        }
-        groupsByKey.set(key, group)
-      }
-      group.reports.push(report)
-      group.totalCount += 1
-      if (report.reviewStatus === "dismissed") group.dismissedCount += 1
-      else group.openCount += 1
-    }
-
-    let groups = Array.from(groupsByKey.values())
-    for (const group of groups) group.caseStatus = resolveCaseStatus(group)
-
-    if (caseStatus) groups = groups.filter((g) => g.caseStatus === caseStatus)
-
-    groups.sort(
-      (a, b) => b.totalCount - a.totalCount || (a.latestCreatedAt < b.latestCreatedAt ? 1 : -1)
-    )
-
-    const total = groups.length
-    const pageCount = Math.max(1, Math.ceil(total / pageSize))
-    const paged = groups.slice((page - 1) * pageSize, (page - 1) * pageSize + pageSize)
-
-    return { groups: paged, total, page, pageCount }
+  const rows = await prisma.report.findMany({
+    where:
+      targetType === "event"
+        ? { eventId: { not: null } }
+        : targetType === "job"
+          ? { jobOfferId: { not: null } }
+          : {},
+    include: REPORT_INCLUDE,
+    orderBy: { createdAt: "desc" },
   })
+
+  const groupsByKey = new Map<string, ReportGroup>()
+  for (const row of rows) {
+    const report = toReport(row)
+    const key = groupKey(row)
+    let group = groupsByKey.get(key)
+    if (!group) {
+      group = {
+        key,
+        target: report.target,
+        reports: [],
+        totalCount: 0,
+        openCount: 0,
+        dismissedCount: 0,
+        latestCreatedAt: report.createdAt,
+        caseStatus: "open",
+      }
+      groupsByKey.set(key, group)
+    }
+    group.reports.push(report)
+    group.totalCount += 1
+    if (report.reviewStatus === "dismissed") group.dismissedCount += 1
+    else group.openCount += 1
+  }
+
+  let groups = Array.from(groupsByKey.values())
+  for (const group of groups) group.caseStatus = resolveCaseStatus(group)
+
+  if (caseStatus) groups = groups.filter((g) => g.caseStatus === caseStatus)
+
+  groups.sort(
+    (a, b) => b.totalCount - a.totalCount || (a.latestCreatedAt < b.latestCreatedAt ? 1 : -1)
+  )
+
+  const total = groups.length
+  const pageCount = Math.max(1, Math.ceil(total / pageSize))
+  const paged = groups.slice((page - 1) * pageSize, (page - 1) * pageSize + pageSize)
+
+  return { groups: paged, total, page, pageCount }
 }

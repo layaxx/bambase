@@ -7,11 +7,7 @@ export const GET: APIRoute = async ({ url }) => {
     ? (raw as MapLocation["category"])
     : undefined
 
-  const { data: locations, apiDown } = await fetchLocations(category)
-
-  if (apiDown) {
-    return new Response(null, { status: 503 })
-  }
+  const locations = await fetchLocations(category)
 
   return new Response(JSON.stringify(locations), {
     headers: { "Content-Type": "application/json" },

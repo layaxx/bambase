@@ -1,9 +1,8 @@
 ---
 import { actions } from "astro:actions"
 import PageLayout from "@/layouts/PageLayout.astro"
-import { fetchJobOffer, type JobOffer } from "@/utils/api/job-offers"
+import { fetchJobOffer } from "@/utils/api/job-offers"
 import { REPORT_WARNING_THRESHOLD } from "@/utils/api/reports"
-import ApiDownBanner from "@/components/ApiDownBanner.astro"
 import { JOB_STATUS_ALERT_VARIANT, canArchiveJob, canEditJob } from "@/utils/job-status"
 import { canModerateJobOffers } from "@/utils/authz"
 import { useTranslations } from "@/i18n/translations"
@@ -28,11 +27,8 @@ const t = useTranslations(Astro.locals.locale)
 const me = Astro.locals.user
 const isModerator = me ? await canModerateJobOffers(me.role) : false
 const { slug } = Astro.params
-const jobResult = slug
-  ? await fetchJobOffer(slug, { userId: me?.id, isModerator })
-  : { data: null as JobOffer | null, apiDown: false }
-const job = jobResult.data
-const apiDown = jobResult.apiDown
+const job = slug ? await fetchJobOffer(slug, { userId: me?.id, isModerator }) : null
+if (!job) Astro.response.status = 404
 const isOwner = !!(me && job?.ownerId === me.id)
 
 const hasReports = (job?.reports?.length ?? 0) >= REPORT_WARNING_THRESHOLD
@@ -78,9 +74,7 @@ const ogImage =
 ---
 
 <PageLayout description={description} ogImage={ogImage} title={job?.title ?? t.jobs.pageTitle}>
-  {apiDown ? (
-    <ApiDownBanner />
-  ) : !job ? (
+  {!job ? (
     <div class="text-center py-20">
       <h1 class="text-3xl font-bold mb-4">{t.jobs.notFound.headline}</h1>
       <p class="text-base-content/70">{t.jobs.notFound.description}</p>

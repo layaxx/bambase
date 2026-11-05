@@ -27,8 +27,10 @@ const errorMessage = isInputError(actionError)
   ? Object.values(actionError.fields).flat()[0]
   : actionError?.message
 
-const { data: jobs } = await fetchSubmittedJobOffers()
-const { data: recentlyModerated } = await fetchRecentlyModeratedJobOffers()
+const [jobs, recentlyModerated] = await Promise.all([
+  fetchSubmittedJobOffers(),
+  fetchRecentlyModeratedJobOffers(),
+])
 
 const statusLabel: Record<string, string> = {
   published: t.auth.statusPublished,

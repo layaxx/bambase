@@ -17,7 +17,7 @@ const guard = await requireRole(
 if (guard instanceof Response) return guard
 
 const { slug } = Astro.params
-const { data: group } = slug ? await fetchStudentGroupForAdmin(slug) : { data: null }
+const group = slug ? await fetchStudentGroupForAdmin(slug) : null
 if (!group) return Astro.redirect("/admin/student-groups")
 
 const result = Astro.getActionResult(actions.studentGroups.update)

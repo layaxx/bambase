@@ -1,7 +1,6 @@
 import { defineAction, ActionError } from "astro:actions"
 import { z } from "astro/zod"
 import { EVENT_CATEGORIES } from "@/utils/api/events"
-import { invalidateCacheByPrefix } from "@/utils/api/cache"
 import { createWithUniqueSlug } from "@/utils/slugify"
 import { canModerateEvents } from "@/utils/authz"
 import { requireUserId, assertOwnerOrPermission, mutationError } from "@/utils/action-guards"
@@ -87,7 +86,6 @@ export const events = {
       }
 
       getLogger().info({ eventId: id }, "event deleted")
-      invalidateCacheByPrefix("events:")
       return {}
     },
   }),
@@ -131,7 +129,6 @@ export const events = {
       }
 
       getLogger().info({ eventId: id, withReason: Boolean(reason) }, "event unpublished")
-      invalidateCacheByPrefix("events:")
       return {}
     },
   }),
@@ -183,7 +180,6 @@ export const events = {
       }
 
       getLogger().info({ eventId: id }, "event published")
-      invalidateCacheByPrefix("events:")
       return {}
     },
   }),
@@ -227,7 +223,6 @@ export const events = {
         throw mutationError(error, "Event update failed", "Aktualisierung fehlgeschlagen.")
       }
 
-      invalidateCacheByPrefix("events:")
       return { slug: updated.slug }
     },
   }),
@@ -260,7 +255,6 @@ export const events = {
         throw mutationError(error, "Event create failed", "Einreichung fehlgeschlagen.")
       }
 
-      invalidateCacheByPrefix("events:")
       return { slug: created.slug }
     },
   }),

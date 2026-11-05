@@ -1,14 +1,10 @@
 ---
 import IconBase from "./IconBase.astro"
 
-interface Props {
-  class?: string
-}
-
-const { class: className } = Astro.props
+type Props = { class?: string }
 ---
 
-<IconBase class:list={className}>
+<IconBase {...Astro.props}>
   <circle cx="12" cy="12" r="10"></circle>
   <polyline points="12 6 12 12 16 14"></polyline>
 </IconBase>

@@ -1,8 +1,6 @@
 ---
-import { fetchMensaMeals } from "@/utils/api/mensa"
-import ApiDownBanner from "./ApiDownBanner.astro"
-import { getRelevantDay } from "@/utils/mensa"
-import dayjs from "dayjs"
+import type { MensaMeal } from "@/utils/api/mensa"
+import { isoDay } from "@/utils/dates"
 import { useTranslations } from "@/i18n/translations"
 import IconUtensils from "./icons/IconUtensils.astro"
 import IconArrowRight from "./icons/IconArrowRight.astro"
@@ -10,11 +8,16 @@ import MealBadge from "./mensa/MealBadge.astro"
 
 const t = useTranslations(Astro.locals.locale)
 
-const now = dayjs()
-const relevantDay = getRelevantDay(now)
-const isToday = relevantDay.isSame(now, "day")
-const relevantDayId = relevantDay.format("YYYY-MM-DD")
-const relevantDayFormatted = relevantDay.toDate().toLocaleDateString(t.mensa.dateLocale, {
+interface Props {
+  /** The day whose meals `meals` holds, see getRelevantDay. */
+  day: Date
+  meals: MensaMeal[]
+}
+const { day: relevantDay, meals } = Astro.props
+
+const isToday = isoDay(relevantDay) === isoDay(new Date())
+const relevantDayId = isoDay(relevantDay)
+const relevantDayFormatted = relevantDay.toLocaleDateString(t.mensa.dateLocale, {
   day: "numeric",
   month: "long",
 })
@@ -24,8 +27,6 @@ const locations = [
   { id: "austrasse", label: "Austraße" },
   { id: "erba", label: "Erba" },
 ] as const
-
-const { data: meals, apiDown } = await fetchMensaMeals(relevantDay)
 
 const mealsByLocation = Object.fromEntries(
   locations.map((loc) => [loc.id, meals.filter((m) => m.location === loc.label)])
@@ -54,8 +55,6 @@ const mealsByLocation = Object.fromEntries(
       <IconArrowRight class="h-4 w-4" />
     </a>
   </div>
-
-  {apiDown && <ApiDownBanner />}
 
   <div class="rounded-xl border border-base-300 bg-base-100 p-4 sm:p-6">
     <div class="mb-4 flex gap-1 rounded-lg bg-base-200 p-1" role="tablist">

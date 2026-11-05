@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test"
+import { expect, login, test } from "./fixtures"
 
 /**
  * /admin/events needs the "event:moderate" permission from the better-auth `admin` plugin.
@@ -8,31 +8,8 @@ import { expect, test, type Page } from "@playwright/test"
  * and the seeded admin@example.com account, who is the moderator.
  */
 
-async function login(page: Page, email: string, password: string) {
-  await page.goto("/login")
-  await page.fill('[name="identifier"]', email)
-  await page.fill('[name="password"]', password)
-  await page.click('button[type="submit"]')
-  await page.waitForURL("/")
-}
-
 function uniqueTitle() {
   return `E2E Admin Test Event ${Date.now()}`
-}
-
-const FUTURE_START = "2099-12-01T18:00"
-const FUTURE_END = "2099-12-01T20:00"
-
-async function createEvent(page: Page, title: string): Promise<string> {
-  await page.goto("/event/new")
-  await page.fill("#title", title)
-  await page.fill("#organizer", "E2E Organizer")
-  await page.fill("#start", FUTURE_START)
-  await page.fill("#end", FUTURE_END)
-  await page.fill("#description", "Automated E2E test event — safe to delete.")
-  await page.click('button[type="submit"]')
-  await page.waitForURL(/\/event\/[a-z0-9-]+$/)
-  return page.url()
 }
 
 test("non-moderator visiting /admin/events is redirected away", async ({ page }) => {
@@ -46,11 +23,11 @@ test("unauthenticated visitor is redirected to login", async ({ page }) => {
   await expect(page).toHaveURL(/\/login\?redirect=\/admin\/events/)
 })
 
-test("moderator can edit another user's event", async ({ page, browser }) => {
+test("moderator can edit another user's event", async ({ page, browser, listings }) => {
   await login(page, "seed@example.com", "Seed1234!")
   const title = uniqueTitle()
   const updatedTitle = `${title} (moderated)`
-  const eventUrl = await createEvent(page, title)
+  const eventUrl = await listings.createEvent(title)
 
   const adminContext = await browser.newContext()
   const adminPage = await adminContext.newPage()
@@ -73,8 +50,4 @@ test("moderator can edit another user's event", async ({ page, browser }) => {
   // A change to the title does not change the slug, and thus does not change the URL.
   await page.goto(eventUrl)
   await expect(page.getByRole("heading", { level: 1 })).toContainText(updatedTitle)
-
-  await page.getByRole("button", { name: "Löschen" }).click()
-  await page.getByRole("dialog").getByRole("button", { name: "Löschen" }).click()
-  await expect(page).toHaveURL("/account/events")
 })

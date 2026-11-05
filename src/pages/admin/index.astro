@@ -36,13 +36,10 @@ const [
   canViewSystemStatus(user.role),
 ])
 
-const openReports = (targetType: "event" | "job") =>
-  countOpenReportCases(targetType).then(({ data }) => data)
-
 const [submittedJobs, openEventReports, openJobReports] = await Promise.all([
-  isJobModerator ? countSubmittedJobOffers().then(({ data }) => data) : 0,
-  isEventModerator ? openReports("event") : 0,
-  isJobModerator ? openReports("job") : 0,
+  isJobModerator ? countSubmittedJobOffers() : 0,
+  isEventModerator ? countOpenReportCases("event") : 0,
+  isJobModerator ? countOpenReportCases("job") : 0,
 ])
 
 const sections = [

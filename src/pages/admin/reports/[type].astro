@@ -52,15 +52,18 @@ const statusFilter: "open" | "resolved" | "all" =
 
 const currentPage = parsePageParam(Astro.url)
 
-const { data, apiDown } = await fetchReportGroupsForAdmin({
+const {
+  groups,
+  page: actualPage,
+  pageCount,
+} = await fetchReportGroupsForAdmin({
   caseStatus: statusFilter === "all" ? undefined : statusFilter,
   targetType: config.kind,
   page: currentPage,
   pageSize: PAGE_SIZE,
 })
-const { groups, page: actualPage, pageCount } = data
 const lastPage = lastPageRedirect(Astro.url, actualPage, pageCount)
-if (!apiDown && lastPage) return Astro.redirect(lastPage)
+if (lastPage) return Astro.redirect(lastPage)
 ---
 
 <PageLayout title={config.title}>
@@ -68,7 +71,6 @@ if (!apiDown && lastPage) return Astro.redirect(lastPage)
 
   <ReportGroupList
     actualPage={actualPage}
-    apiDown={apiDown}
     groups={groups}
     kind={config.kind}
     pageCount={pageCount}

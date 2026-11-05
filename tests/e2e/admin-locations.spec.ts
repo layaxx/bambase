@@ -1,18 +1,10 @@
-import { expect, test, type Page } from "@playwright/test"
+import { expect, login, test } from "./fixtures"
 
 /**
  * /admin/locations needs the "location:manage" permission from the better-auth `admin`
  * plugin, which the "admin" role has. Each test logs in inline, because it must change
  * between the seed user, who is not a manager, and the seeded admin@example.com account.
  */
-
-async function login(page: Page, email: string, password: string) {
-  await page.goto("/login")
-  await page.fill('[name="identifier"]', email)
-  await page.fill('[name="password"]', password)
-  await page.click('button[type="submit"]')
-  await page.waitForURL("/")
-}
 
 function uniqueName() {
   return `E2E Admin Test Location ${Date.now()}`

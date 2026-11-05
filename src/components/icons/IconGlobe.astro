@@ -1,14 +1,10 @@
 ---
 import IconBase from "./IconBase.astro"
 
-interface Props {
-  class?: string
-}
-
-const { class: className } = Astro.props
+type Props = { class?: string }
 ---
 
-<IconBase class:list={className}>
+<IconBase {...Astro.props}>
   <circle cx="12" cy="12" r="10"></circle>
   <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
   <path d="M2 12h20"></path>

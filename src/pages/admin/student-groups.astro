@@ -16,7 +16,7 @@ if (deleteResult?.data !== undefined && !deleteResult.error) {
   return Astro.redirect(Astro.url.pathname)
 }
 
-const { data: groups } = await fetchAllStudentGroupsForAdmin()
+const groups = await fetchAllStudentGroupsForAdmin()
 ---
 
 <PageLayout title={t.admin.studentGroupsTitle}>

@@ -4,9 +4,14 @@ import { expect, test as base, type Page } from "@playwright/test"
  * `listings` creates jobs and events as the user of `page`, and deletes each one after the
  * test, also after a failure. `page` must still belong to that user when the test ends.
  */
+/** The start and end of each event that `createEvent` makes, in datetime-local format. */
+export const EVENT_START = "2099-12-01T18:00"
+export const EVENT_END = "2099-12-01T20:00"
+
 type Listings = {
   createJob(title: string): Promise<string>
-  createEvent(title: string): Promise<string>
+  /** `fill` sets more fields before the submit. */
+  createEvent(title: string, fill?: () => Promise<void>): Promise<string>
 }
 
 /** Registers the listing for the cleanup as soon as the redirect commits, before the load. */
@@ -42,6 +47,8 @@ export async function moderate(adminPage: Page, title: string, reason?: string) 
 
 async function deleteListing(page: Page, url: string) {
   await page.goto(url)
+  // A test that deletes its own listing leaves a not-found page here.
+  if (await page.getByRole("heading", { name: /nicht gefunden/i }).isVisible()) return
   await page.getByRole("button", { name: "Löschen" }).click()
   await page.getByRole("dialog").getByRole("button", { name: "Löschen" }).click()
   await expect(page).toHaveURL(/\/account\/(jobs|events)$/)
@@ -63,15 +70,16 @@ export const test = base.extend<{ listings: Listings }>({
           await page.click('button[type="submit"]')
           return waitForListing(page, urls, /\/job\/[a-z0-9-]+\?submitted$/)
         },
-        async createEvent(title) {
+        async createEvent(title, fill) {
           await page.goto("/event/new")
           await page.fill("#title", title)
           await page.fill("#organizer", "E2E Organizer")
-          await page.fill("#start", "2099-12-01T18:00")
-          await page.fill("#end", "2099-12-01T20:00")
+          await page.fill("#start", EVENT_START)
+          await page.fill("#end", EVENT_END)
           await page.fill("#description", "Automated E2E test event — safe to delete.")
+          await fill?.()
           await page.click('button[type="submit"]')
-          return waitForListing(page, urls, /\/event\/[a-z0-9-]+$/)
+          return waitForListing(page, urls, /\/event\/(?!new$)[a-z0-9-]+$/)
         },
       })
 

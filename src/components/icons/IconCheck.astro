@@ -1,12 +1,9 @@
 ---
-interface Props {
-  class?: string
-}
-const { class: className } = Astro.props
+type Props = { class?: string }
 ---
 
 <svg
-  class:list={className}
+  class:list={Astro.props.class}
   fill="none"
   stroke="currentColor"
   stroke-linecap="round"

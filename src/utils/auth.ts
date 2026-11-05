@@ -6,7 +6,7 @@ import { defaultStatements } from "better-auth/plugins/admin/access"
 import prisma from "./prisma"
 import { sendMail } from "./mail"
 
-const statement = {
+export const statement = {
   ...defaultStatements,
   jobOffer: ["moderate"],
   event: ["moderate"],
@@ -14,6 +14,7 @@ const statement = {
   studentGroup: ["manage"],
   system: ["view"],
 } as const
+export type Statement = typeof statement
 
 const ac = createAccessControl(statement)
 
@@ -23,14 +24,15 @@ const userRole = ac.newRole({})
 // moderation for their own target type, and for no other type.
 const jobModeratorRole = ac.newRole({ jobOffer: ["moderate"] })
 const eventModeratorRole = ac.newRole({ event: ["moderate"] })
-const adminRole = ac.newRole({
-  ...defaultStatements,
-  jobOffer: ["moderate"],
-  event: ["moderate"],
-  location: ["manage"],
-  studentGroup: ["manage"],
-  system: ["view"],
-})
+const adminRole = ac.newRole(statement)
+
+export const roles = {
+  user: userRole,
+  jobModerator: jobModeratorRole,
+  eventModerator: eventModeratorRole,
+  admin: adminRole,
+}
+export type Role = keyof typeof roles
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
@@ -71,12 +73,7 @@ export const auth = betterAuth({
   plugins: [
     admin({
       ac,
-      roles: {
-        user: userRole,
-        jobModerator: jobModeratorRole,
-        eventModerator: eventModeratorRole,
-        admin: adminRole,
-      },
+      roles,
     }),
   ],
 })

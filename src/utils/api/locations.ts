@@ -1,6 +1,4 @@
 import prisma from "../prisma"
-import { withCache } from "./cache"
-import { apiResult, type ApiResult } from "./types"
 import { LocationCategory } from "@/generated/prisma/enums"
 import type { LocationModel } from "@/generated/prisma/models"
 
@@ -50,34 +48,24 @@ export function toMapLocation(row: LocationModel): MapLocation {
   }
 }
 
-export function fetchLocations(
-  category?: MapLocation["category"]
-): Promise<ApiResult<MapLocation[]>> {
-  return apiResult("Error fetching locations", [], async () => {
-    const rows = await withCache(`locations:${category ?? "all"}`, () =>
-      prisma.location.findMany({
-        where: category ? { category } : undefined,
-        orderBy: { name: "asc" },
-        take: 500,
-      })
-    )
-    return rows.map(toMapLocation)
+export async function fetchLocations(category?: MapLocation["category"]): Promise<MapLocation[]> {
+  const rows = await prisma.location.findMany({
+    where: category ? { category } : undefined,
+    orderBy: { name: "asc" },
+    take: 500,
   })
+  return rows.map(toMapLocation)
 }
 
-export function fetchLocationForAdmin(slug: string): Promise<ApiResult<MapLocation | null>> {
-  return apiResult("Error fetching location for admin", null, async () => {
-    const row = await prisma.location.findFirst({ where: { slug } })
-    return row && toMapLocation(row)
-  })
+export async function fetchLocationForAdmin(slug: string): Promise<MapLocation | null> {
+  const row = await prisma.location.findFirst({ where: { slug } })
+  return row && toMapLocation(row)
 }
 
-export function fetchAllLocationsForAdmin(limit = 500): Promise<ApiResult<MapLocation[]>> {
-  return apiResult("Error fetching locations for admin", [], async () => {
-    const rows = await prisma.location.findMany({
-      orderBy: { name: "asc" },
-      take: limit,
-    })
-    return rows.map(toMapLocation)
+export async function fetchAllLocationsForAdmin(limit = 500): Promise<MapLocation[]> {
+  const rows = await prisma.location.findMany({
+    orderBy: { name: "asc" },
+    take: limit,
   })
+  return rows.map(toMapLocation)
 }
