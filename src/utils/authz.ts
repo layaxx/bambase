@@ -1,5 +1,5 @@
 import type { AstroGlobal } from "astro"
-import { auth, roles, type statement } from "./auth"
+import { auth, roles, statement } from "./auth"
 
 type Role = keyof typeof roles
 export const USER_ROLES = Object.keys(roles) as [Role, ...Role[]]
