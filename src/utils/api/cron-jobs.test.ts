@@ -1,21 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { fetchCronJobStatuses } from "./cron-jobs"
 
-const mockFindMany = vi.hoisted(() => vi.fn())
+const mockFindFirst = vi.hoisted(() => vi.fn())
 
 vi.mock("../prisma", () => ({
   default: {
-    cronJobRun: { findMany: mockFindMany },
+    cronJobRun: { findFirst: mockFindFirst },
   },
 }))
 
 beforeEach(() => {
-  mockFindMany.mockReset()
+  mockFindFirst.mockReset()
 })
 
 describe("fetchCronJobStatuses", () => {
   it("returns every registered job, with null lastRun for jobs that never ran", async () => {
-    mockFindMany.mockResolvedValue([])
+    mockFindFirst.mockResolvedValue(null)
 
     const result = await fetchCronJobStatuses()
     expect(result).toEqual([
@@ -28,16 +28,10 @@ describe("fetchCronJobStatuses", () => {
   it("attaches the most recent run to its matching job", async () => {
     const startedAt = new Date("2026-08-16T02:00:00Z")
     const finishedAt = new Date("2026-08-16T02:00:05Z")
-    mockFindMany.mockResolvedValue([
-      {
-        jobName: "event-sync",
-        status: "error",
-        startedAt,
-        finishedAt,
-        durationMs: 5000,
-        error: "network error",
-      },
-    ])
+    const run = { status: "error", startedAt, finishedAt, durationMs: 5000, error: "network error" }
+    mockFindFirst.mockImplementation(async ({ where }) =>
+      where.jobName === "event-sync" ? run : null
+    )
 
     const result = await fetchCronJobStatuses()
 
@@ -51,16 +45,14 @@ describe("fetchCronJobStatuses", () => {
     expect(result.find((job) => job.key === "mensa-sync")?.lastRun).toBeNull()
   })
 
-  it("requests only the most recent run per job", async () => {
-    mockFindMany.mockResolvedValue([])
+  it("reads only the latest run of each job, never the whole history", async () => {
+    mockFindFirst.mockResolvedValue(null)
 
     await fetchCronJobStatuses()
 
-    expect(mockFindMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        orderBy: { startedAt: "desc" },
-        distinct: ["jobName"],
-      })
+    expect(mockFindFirst).toHaveBeenCalledTimes(3)
+    expect(mockFindFirst).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { jobName: "mensa-sync" }, orderBy: { startedAt: "desc" } })
     )
   })
 })
