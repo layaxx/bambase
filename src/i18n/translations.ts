@@ -103,6 +103,8 @@ const de = {
     dateLocale: "de-DE",
     vegan: "Vegan",
     vegetarian: "Vegetarisch",
+    sourceNoteBefore: "Automatisch vom",
+    sourceNoteAfter: "übernommen. Alle Angaben ohne Gewähr.",
   },
   jobs: {
     notFound: {
@@ -698,6 +700,8 @@ const en: typeof de = {
     dateLocale: "en-US",
     vegan: "Vegan",
     vegetarian: "Vegetarian",
+    sourceNoteBefore: "Data from",
+    sourceNoteAfter: "is imported automatically and may be inaccurate.",
   },
   jobs: {
     notFound: {
