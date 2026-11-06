@@ -4,7 +4,7 @@
   "type": "module",
   "version": "0.0.1",
   "engines": {
-    "node": ">=22.23.4"
+    "node": ">=26.13.0"
   },
   "author": {
     "name": "Yannick Lang",
@@ -52,7 +52,7 @@
     "@tailwindcss/vite": "^4.3.3",
     "@types/he": "^1.2.3",
     "@types/leaflet": "^1.9.22",
-    "@types/node": "^22.20.5",
+    "@types/node": "^26.6.6",
     "eslint": "^10.13.0",
     "eslint-plugin-astro": "^3.2.1",
     "eslint-plugin-jsx-a11y": "^6.10.2",

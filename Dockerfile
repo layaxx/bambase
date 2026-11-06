@@ -1,5 +1,5 @@
-FROM node:22-alpine AS base
-RUN corepack enable && corepack prepare yarn@1.22.22 --activate
+FROM node:26-alpine AS base
+RUN npm install -g corepack@0.36 && corepack enable
 WORKDIR /app
 
 FROM base AS deps
@@ -16,7 +16,7 @@ RUN npx prisma generate
 RUN yarn build
 
 # Production image
-FROM node:22-alpine AS runner
+FROM node:26-alpine AS runner
 WORKDIR /app
 
 # The date helpers use the server's local time (Mensa closing hour, today, event inputs).
