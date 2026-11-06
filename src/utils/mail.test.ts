@@ -136,14 +136,14 @@ describe("checkMailgun", () => {
   it("reports not configured without calling Mailgun", async () => {
     delete process.env.MAILGUN_API_KEY
     const { checkMailgun } = await importMail()
-    expect(await checkMailgun()).toEqual({ configured: false, ok: false })
+    expect(await checkMailgun()).toEqual({ ok: false, detail: "not configured" })
     expect(fetch).not.toHaveBeenCalled()
   })
 
   it("is ok only for an active domain", async () => {
     const { checkMailgun } = await importMail()
     vi.mocked(fetch).mockResolvedValue(Response.json({ domain: { state: "unverified" } }))
-    expect(await checkMailgun()).toEqual({ configured: true, ok: false, detail: "unverified" })
+    expect(await checkMailgun()).toEqual({ ok: false, detail: "unverified" })
     expect(fetch).toHaveBeenCalledWith(
       "https://api.eu.mailgun.net/v3/domains/mail.example.com",
       expect.anything()
@@ -153,14 +153,14 @@ describe("checkMailgun", () => {
   it("reports a rejected key", async () => {
     const { checkMailgun } = await importMail()
     vi.mocked(fetch).mockResolvedValue(new Response("Forbidden", { status: 401 }))
-    expect(await checkMailgun()).toEqual({ configured: true, ok: false, detail: "HTTP 401" })
+    expect(await checkMailgun()).toEqual({ ok: false, detail: "HTTP 401" })
   })
 
   it("reports unknown when Mailgun does not answer", async () => {
     const { checkMailgun, baseLogger } = await importMail()
     vi.spyOn(baseLogger, "warn").mockImplementation(() => {})
     vi.mocked(fetch).mockRejectedValue(new Error("timeout"))
-    expect(await checkMailgun()).toEqual({ configured: true, ok: null, detail: "unreachable" })
+    expect(await checkMailgun()).toEqual({ ok: null, detail: "unreachable" })
   })
 
   it("calls Mailgun at most once per 5 minutes", async () => {
@@ -170,7 +170,7 @@ describe("checkMailgun", () => {
 
     await Promise.all([checkMailgun(), checkMailgun()])
     vi.setSystemTime(Date.now() + 4 * 60 * 1000)
-    expect(await checkMailgun()).toEqual({ configured: true, ok: true, detail: "active" })
+    expect(await checkMailgun()).toEqual({ ok: true, detail: "active" })
     expect(fetch).toHaveBeenCalledTimes(1)
 
     vi.setSystemTime(Date.now() + 2 * 60 * 1000)

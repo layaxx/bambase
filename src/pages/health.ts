@@ -11,32 +11,17 @@ const CRON_STALE_MS = 26 * 60 * 60 * 1000
 const ageSeconds = (date: Date | undefined) =>
   date ? Math.round((Date.now() - date.getTime()) / 1000) : null
 
-function httpStatus(status: "ok" | "degraded" | "down"): number {
-  switch (status) {
-    case "ok":
-      return 200
-    case "degraded":
-      return 207
-    case "down":
-      return 503
-    default:
-      return 500
-  }
-}
+const HTTP_STATUS = { ok: 200, degraded: 207, down: 503 } as const
 
 async function collectDetails() {
-  const [unreviewedJobs, openReports, cronJobs] = await Promise.all([
+  const [unreviewedJobOffers, openReports, cronJobs] = await Promise.all([
     prisma.jobOffer.count({ where: { onlineStatus: "submitted" } }),
     prisma.report.count({ where: { reviewStatus: "open" } }),
-
     fetchCronJobStatuses(),
   ])
 
   return {
-    moderation: {
-      unreviewedJobOffers: unreviewedJobs,
-      openReports,
-    },
+    moderation: { unreviewedJobOffers, openReports },
     cron: cronJobs.map(({ key, lastRun }) => ({
       job: key,
       lastStatus: lastRun?.status ?? null,
@@ -90,7 +75,7 @@ export const GET: APIRoute = async ({ locals }) => {
   }
 
   return new Response(JSON.stringify(body), {
-    status: httpStatus(status),
+    status: HTTP_STATUS[status],
     headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
   })
 }

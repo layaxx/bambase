@@ -65,7 +65,7 @@ export async function sendMail(message: MailMessage): Promise<void> {
 }
 
 /** `ok: null` means Mailgun did not answer, so the state of the key and domain is unknown. */
-export type MailStatus = { configured: boolean; ok: boolean | null; detail?: string }
+export type MailStatus = { ok: boolean | null; detail?: string }
 
 const PROBE_TTL_MS = 5 * 60 * 1000
 let probe: { at: number; result: Promise<MailStatus> } | undefined
@@ -77,12 +77,12 @@ async function probeMailgun(): Promise<MailStatus> {
       signal: AbortSignal.timeout(3000),
     })
     // 401: bad or send-only key. 404: unknown domain, or a domain in the US region.
-    if (!response.ok) return { configured: true, ok: false, detail: `HTTP ${response.status}` }
+    if (!response.ok) return { ok: false, detail: `HTTP ${response.status}` }
     const { domain } = (await response.json()) as { domain?: { state?: string } }
-    return { configured: true, ok: domain?.state === "active", detail: domain?.state }
+    return { ok: domain?.state === "active", detail: domain?.state }
   } catch (err) {
     getLogger().warn({ err }, "mailgun probe failed")
-    return { configured: true, ok: null, detail: "unreachable" }
+    return { ok: null, detail: "unreachable" }
   }
 }
 
@@ -92,7 +92,8 @@ async function probeMailgun(): Promise<MailStatus> {
  * 5 minutes. Caching the promise also lets concurrent polls share one call.
  */
 export function checkMailgun(): Promise<MailStatus> {
-  if (!MAILGUN_API_KEY || !MAILGUN_DOMAIN) return Promise.resolve({ configured: false, ok: false })
+  if (!MAILGUN_API_KEY || !MAILGUN_DOMAIN)
+    return Promise.resolve({ ok: false, detail: "not configured" })
   if (!probe || Date.now() - probe.at >= PROBE_TTL_MS) {
     probe = { at: Date.now(), result: probeMailgun() }
   }
