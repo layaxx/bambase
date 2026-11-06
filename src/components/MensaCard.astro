@@ -5,6 +5,7 @@ import { useTranslations } from "@/i18n/translations"
 import IconUtensils from "./icons/IconUtensils.astro"
 import IconArrowRight from "./icons/IconArrowRight.astro"
 import MealBadge from "./mensa/MealBadge.astro"
+import MensaSourceNote from "./mensa/MensaSourceNote.astro"
 
 const t = useTranslations(Astro.locals.locale)
 
@@ -111,6 +112,8 @@ const mealsByLocation = Object.fromEntries(
         )}
       </ul>
     ))}
+
+    <MensaSourceNote class="mt-4" />
   </div>
 </section>
 

@@ -1,0 +1,22 @@
+---
+import IconExternalLink from "@/components/icons/IconExternalLink.astro"
+import { useTranslations } from "@/i18n/translations"
+
+type Props = { class?: string }
+
+const t = useTranslations(Astro.locals.locale)
+---
+
+<p class:list={["text-xs text-base-content/70", Astro.props.class]}>
+  {t.mensa.sourceNoteBefore}{" "}
+  <a
+    class="link inline-flex items-center gap-0.5"
+    href="https://www.swerk-wue.de/bamberg/essen-trinken/mensen-speiseplaene"
+    rel="noopener noreferrer"
+    target="_blank"
+  >
+    Studierendenwerk Würzburg
+    <IconExternalLink class="h-3 w-3" />
+  </a>{" "}
+  {t.mensa.sourceNoteAfter}
+</p>
