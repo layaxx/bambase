@@ -14,6 +14,7 @@ describe("getRelevantDay", () => {
     it("returns today on a Monday morning", () => {
       const now = new Date("2026-04-13T09:00:00")
       expect(isoDay(getRelevantDay(now))).toBe("2026-04-13")
+      expect(getRelevantDay(now)).not.toBe(now)
     })
 
     it("returns today one minute before closing (14:59)", () => {

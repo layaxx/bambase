@@ -5,6 +5,9 @@ const MAILGUN_DOMAIN = process.env.MAILGUN_DOMAIN ?? import.meta.env.MAILGUN_DOM
 
 export const HELP_EMAIL = "support@bambase.de"
 
+const MAILGUN_API = "https://api.eu.mailgun.net/v3"
+const authHeader = () => `Basic ${btoa(`api:${MAILGUN_API_KEY}`)}`
+
 type MailMessage = {
   to: string
   subject: string
@@ -39,12 +42,10 @@ export async function sendMail(message: MailMessage): Promise<void> {
     text: message.text,
   })
 
-  const api_url = `https://api.eu.mailgun.net/v3/${MAILGUN_DOMAIN}/messages`
-
-  const response = await fetch(api_url, {
+  const response = await fetch(`${MAILGUN_API}/${MAILGUN_DOMAIN}/messages`, {
     method: "POST",
     headers: {
-      Authorization: `Basic ${btoa(`api:${MAILGUN_API_KEY}`)}`,
+      Authorization: authHeader(),
       "Content-Type": "application/x-www-form-urlencoded",
     },
     body,
@@ -61,4 +62,40 @@ export async function sendMail(message: MailMessage): Promise<void> {
 
   const { id } = (await response.json().catch(() => ({}))) as { id?: string }
   getLogger().info({ subject: message.subject, mailgunId: id }, "email sent")
+}
+
+/** `ok: null` means Mailgun did not answer, so the state of the key and domain is unknown. */
+export type MailStatus = { ok: boolean | null; detail?: string }
+
+const PROBE_TTL_MS = 5 * 60 * 1000
+let probe: { at: number; result: Promise<MailStatus> } | undefined
+
+async function probeMailgun(): Promise<MailStatus> {
+  try {
+    const response = await fetch(`${MAILGUN_API}/domains/${MAILGUN_DOMAIN}`, {
+      headers: { Authorization: authHeader() },
+      signal: AbortSignal.timeout(3000),
+    })
+    // 401: bad or send-only key. 404: unknown domain, or a domain in the US region.
+    if (!response.ok) return { ok: false, detail: `HTTP ${response.status}` }
+    const { domain } = (await response.json()) as { domain?: { state?: string } }
+    return { ok: domain?.state === "active", detail: domain?.state }
+  } catch (err) {
+    getLogger().warn({ err }, "mailgun probe failed")
+    return { ok: null, detail: "unreachable" }
+  }
+}
+
+/**
+ * Checks that the API key can read MAILGUN_DOMAIN and that the domain is active. Sends nothing.
+ * The result is cached for 5 minutes, so a frequent health poll costs one Mailgun call per
+ * 5 minutes. Caching the promise also lets concurrent polls share one call.
+ */
+export function checkMailgun(): Promise<MailStatus> {
+  if (!MAILGUN_API_KEY || !MAILGUN_DOMAIN)
+    return Promise.resolve({ ok: false, detail: "not configured" })
+  if (!probe || Date.now() - probe.at >= PROBE_TTL_MS) {
+    probe = { at: Date.now(), result: probeMailgun() }
+  }
+  return probe.result
 }

@@ -15,7 +15,7 @@ export function getRelevantDay(now: Date): Date {
   const dow = now.getDay() // 0 = Sunday, 6 = Saturday
 
   if (dow >= 1 && dow <= 5) {
-    if (now.getHours() < MENSA_CLOSING_HOUR) return now
+    if (now.getHours() < MENSA_CLOSING_HOUR) return new Date(now)
     return addDays(now, dow === 5 ? 3 : 1) // Friday → Monday, else +1
   }
 

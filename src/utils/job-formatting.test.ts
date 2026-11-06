@@ -57,6 +57,7 @@ describe("formatRelativeDate", () => {
     vi.useFakeTimers({ now: new Date("2026-04-15T12:00:00Z") })
     expect(formatRelativeDate(new Date(Date.now() + 200), "de")).toBe("vor 1 Sekunde")
     expect(formatRelativeDate(new Date(Date.now() - 200), "de")).toBe("vor 1 Sekunde")
+    expect(formatRelativeDate(new Date(Date.now() + 2000), "de")).toBe("vor 1 Sekunde")
   })
 
   it("returns an empty string for an invalid date", () => {
