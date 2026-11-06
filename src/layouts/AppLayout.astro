@@ -18,9 +18,9 @@ const canonicalUrl = `${Astro.url.origin}${Astro.url.pathname}`
 <!doctype html>
 <html lang={Astro.locals.locale}>
   <head>
+    <meta charset="UTF-8" />
     <Font cssVariable="--font-inter" preload />
     <Font cssVariable="--font-archivo" preload />
-    <meta charset="UTF-8" />
     <meta content="width=device-width, initial-scale=1" name="viewport" />
     <meta content={Astro.generator} name="generator" />
     <title>{seoTitle}</title>
