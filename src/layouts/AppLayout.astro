@@ -4,6 +4,8 @@ import { Font } from "astro:assets"
 import Header from "@/components/Header.astro"
 import Footer from "@/components/Footer.astro"
 import CookieBanner from "@/components/CookieBanner.astro"
+import { useTranslations } from "@/i18n/translations"
+import { parsePageParam } from "@/utils/pagination"
 
 interface Props {
   title?: string
@@ -11,8 +13,12 @@ interface Props {
   ogImage?: string
 }
 const { title, description, ogImage } = Astro.props
-const seoTitle = title ? `${title} – BamBase.de` : "BamBase.de"
-const canonicalUrl = `${Astro.url.origin}${Astro.url.pathname}`
+const t = useTranslations(Astro.locals.locale)
+// Page 2+ of a list is its own page for search engines; other params (filters, search) are not.
+const page = parsePageParam(Astro.url)
+const pageSuffix = page > 1 ? ` – ${t.ui.pageNumber(page)}` : ""
+const seoTitle = title ? `${title}${pageSuffix} – BamBase.de` : "BamBase.de"
+const canonicalUrl = `${Astro.url.origin}${Astro.url.pathname}${page > 1 ? `?page=${page}` : ""}`
 ---
 
 <!doctype html>

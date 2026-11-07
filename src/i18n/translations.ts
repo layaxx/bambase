@@ -117,6 +117,9 @@ const de = {
     showAll: "Alle anzeigen",
     pageTitle: "Stellenangebote",
     pageSubtitle: "Aktuelle Jobs und Praktika für Studierende in Bamberg.",
+    metaTitle: "Studentenjobs & Praktika in Bamberg",
+    metaDescription:
+      "Nebenjobs, Werkstudentenstellen, Praktika, HiWi-Stellen und Abschlussarbeiten für Studierende in Bamberg. Nach Bereich, Stellenart und Arbeitsort filtern.",
     noJobs: "Zurzeit keine Stellenangebote verfügbar.",
     workingHours: (h: number) => `${h} Std./Woche`,
     postedOn: (date: string) => `Veröffentlicht am ${date}`,
@@ -404,6 +407,7 @@ const de = {
   },
   ui: {
     cancel: "Abbrechen",
+    pageNumber: (page: number) => `Seite ${page}`,
   },
   cookieBanner: {
     text: "Diese Website verwendet ausschließlich technisch notwendige Cookies für Anmeldung und Spracheinstellungen. Weitere Informationen findest du in unserer ",
@@ -714,6 +718,9 @@ const en: typeof de = {
     showAll: "Show all",
     pageTitle: "Job Listings",
     pageSubtitle: "Recent jobs and internships for students in Bamberg.",
+    metaTitle: "Student Jobs & Internships in Bamberg",
+    metaDescription:
+      "Part-time jobs, working student positions, internships, research assistant roles and theses for students in Bamberg. Filter by field, job type and work mode.",
     noJobs: "No job listings available at the moment.",
     workingHours: (h: number) => `${h} hrs/week`,
     postedOn: (date: string) => `Posted on ${date}`,
@@ -1000,6 +1007,7 @@ const en: typeof de = {
   },
   ui: {
     cancel: "Cancel",
+    pageNumber: (page: number) => `Page ${page}`,
   },
   cookieBanner: {
     text: "This website uses only essential cookies for authentication and language settings. For more information, see our ",
