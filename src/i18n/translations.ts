@@ -407,6 +407,7 @@ const de = {
   },
   ui: {
     cancel: "Abbrechen",
+    pageNumber: (page: number) => `Seite ${page}`,
   },
   cookieBanner: {
     text: "Diese Website verwendet ausschließlich technisch notwendige Cookies für Anmeldung und Spracheinstellungen. Weitere Informationen findest du in unserer ",
@@ -1006,6 +1007,7 @@ const en: typeof de = {
   },
   ui: {
     cancel: "Cancel",
+    pageNumber: (page: number) => `Page ${page}`,
   },
   cookieBanner: {
     text: "This website uses only essential cookies for authentication and language settings. For more information, see our ",
