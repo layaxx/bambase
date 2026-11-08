@@ -165,7 +165,11 @@ const statusLabel: Record<string, string> = {
         <div class="flex flex-col gap-3 rounded-xl border border-base-300 bg-base-100 p-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div class="flex items-center gap-2">
-              <h3 class="font-semibold leading-snug text-base-content">{job.title}</h3>
+              <h3 class="font-semibold leading-snug text-base-content">
+                <a class="link-hover" href={`/job/${job.slug}`}>
+                  {job.title}
+                </a>
+              </h3>
               <span
                 class:list={[
                   "badge badge-sm",
