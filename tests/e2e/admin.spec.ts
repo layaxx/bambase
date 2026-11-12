@@ -144,3 +144,26 @@ test("owner edit after a decision sends the job back to the queue", async ({
   await expect(adminPage.getByTestId("job-queue")).toContainText(resubmittedTitle)
   await adminContext.close()
 })
+
+test("moderator reviews a job on its admin page and moves on to the next", async ({
+  page,
+  browser,
+  listings,
+}) => {
+  await login(page, "seed@example.com", "Seed1234!")
+  const title = uniqueTitle()
+  const slug = (await listings.createJob(title)).split("/").pop()
+
+  const adminContext = await browser.newContext()
+  const adminPage = await adminContext.newPage()
+  await login(adminPage, "admin@example.com", "Admin1234!")
+  await adminPage.goto(`/admin/jobs/${slug}`)
+  const bar = adminPage.getByTestId("job-moderation")
+  await expect(bar.getByTestId("job-queue-count")).toContainText(/\d+ wartend/)
+  await bar.getByRole("button", { name: "Genehmigen" }).click()
+
+  await expect(adminPage).toHaveURL(`/admin/jobs/${slug}?moderated`)
+  await expect(adminPage.getByRole("alert").first()).toContainText("Entscheidung gespeichert.")
+  await expect(bar.getByRole("button", { name: "Genehmigen" })).toHaveCount(0)
+  await adminContext.close()
+})

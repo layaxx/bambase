@@ -46,6 +46,11 @@ const statusLabel: Record<string, string> = {
         {t.admin.pendingCount(jobs.length)}
       </span>
     )}
+    {jobs[0] && (
+      <a class="btn btn-primary btn-sm ml-auto" href={`/admin/jobs/${jobs[0].slug}`}>
+        {t.admin.startReviewQueue}
+      </a>
+    )}
   </div>
 
   {errorMessage && <Alert variant="error">{errorMessage}</Alert>}
@@ -107,7 +112,7 @@ const statusLabel: Record<string, string> = {
             <div class="flex min-w-0 flex-1 flex-col gap-3">
               <div>
                 <h2 class="font-semibold leading-snug text-base-content">
-                  <a class="link-hover" href={`/job/${job.slug}`}>
+                  <a class="link-hover" href={`/admin/jobs/${job.slug}`}>
                     {job.title}
                   </a>
                 </h2>
@@ -166,7 +171,7 @@ const statusLabel: Record<string, string> = {
           <div>
             <div class="flex items-center gap-2">
               <h3 class="font-semibold leading-snug text-base-content">
-                <a class="link-hover" href={`/job/${job.slug}`}>
+                <a class="link-hover" href={`/admin/jobs/${job.slug}`}>
                   {job.title}
                 </a>
               </h3>

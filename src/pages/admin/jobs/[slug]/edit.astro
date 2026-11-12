@@ -24,7 +24,8 @@ if (!job) return Astro.redirect("/admin/jobs")
 const result = Astro.getActionResult(actions.jobs.update)
 if (result?.data) return Astro.redirect("/admin/jobs")
 // A save that failed because the job was archived meanwhile renders its error and keeps the input.
-if (!canEditJob(job.online_status) && !result?.error) return Astro.redirect(`/job/${job.slug}`)
+if (!canEditJob(job.online_status) && !result?.error)
+  return Astro.redirect(`/admin/jobs/${job.slug}`)
 
 const inputErrors = isInputError(result?.error) ? result.error.fields : {}
 const generalError = result?.error && !isInputError(result.error) ? result.error.message : null

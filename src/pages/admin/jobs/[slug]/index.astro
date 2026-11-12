@@ -1,0 +1,106 @@
+---
+import { actions } from "astro:actions"
+import PageLayout from "@/layouts/PageLayout.astro"
+import { fetchJobOffer, fetchSubmittedJobOffers } from "@/utils/api/job-offers"
+import { canModerateJobOffers, requireRole } from "@/utils/authz"
+import { useTranslations } from "@/i18n/translations"
+import IconArrowLeft from "@/components/icons/IconArrowLeft.astro"
+import Alert from "@/components/Alert.astro"
+import JobStatusAlert from "@/components/jobs/JobStatusAlert.astro"
+import JobDetails from "@/components/jobs/JobDetails.astro"
+
+const t = useTranslations(Astro.locals.locale)
+
+const guard = await requireRole(Astro, canModerateJobOffers, `/admin/jobs/${Astro.params.slug}`)
+if (guard instanceof Response) return guard
+const { user } = guard
+
+const { slug } = Astro.params
+const job = slug ? await fetchJobOffer(slug, { userId: user.id, isModerator: true }) : null
+if (!job) return Astro.redirect("/admin/jobs")
+
+const approveResult = Astro.getActionResult(actions.jobs.approve)
+const rejectResult = Astro.getActionResult(actions.jobs.reject)
+if (
+  (approveResult?.data !== undefined && !approveResult.error) ||
+  (rejectResult?.data !== undefined && !rejectResult.error)
+) {
+  return Astro.redirect(`${Astro.url.pathname}?moderated`)
+}
+
+const actionError = approveResult?.error ?? rejectResult?.error
+const justModerated = Astro.url.searchParams.has("moderated")
+
+// ponytail: loads the whole queue to pick its head and count it, add findFirst/count helpers if the queue grows large
+const queue =
+  justModerated || job.online_status === "submitted" ? await fetchSubmittedJobOffers() : undefined
+const next = queue?.find((j) => j.id !== job.id)
+---
+
+<PageLayout title={job.title}>
+  <div class="mb-4 md:mb-6">
+    <a class="btn btn-ghost btn-sm gap-1 pl-0" href="/admin/jobs">
+      <IconArrowLeft class="h-4 w-4" />
+      {t.admin.jobsQueueTitle}
+    </a>
+  </div>
+
+  {job.online_status !== "archived" && (
+    <div
+      class="mb-4 flex flex-wrap items-center gap-2 rounded-xl bg-base-200 px-4 py-3"
+      data-testid="job-moderation"
+    >
+      {job.online_status !== "published" && (
+        <form action={actions.jobs.approve} method="POST">
+          <input name="id" type="hidden" value={job.id} />
+          <button class="btn btn-success btn-sm" type="submit">
+            {t.admin.approveJob}
+          </button>
+        </form>
+      )}
+      {job.online_status !== "rejected" && (
+        <form action={actions.jobs.reject} class="flex min-w-64 flex-1 gap-2" method="POST">
+          <input name="id" type="hidden" value={job.id} />
+          <input
+            aria-label={t.admin.rejectReasonPlaceholder}
+            class="input input-sm input-bordered min-w-0 flex-1"
+            maxlength="500"
+            name="reason"
+            placeholder={t.admin.rejectReasonPlaceholder}
+            required
+            type="text"
+          />
+          <button class="btn btn-outline btn-error btn-sm" type="submit">
+            {t.admin.rejectJob}
+          </button>
+        </form>
+      )}
+      <a class="btn btn-ghost btn-sm" href={`/admin/jobs/${job.slug}/edit`}>
+        {t.admin.editJob}
+      </a>
+      {queue && (
+        <span class="badge badge-error ml-auto whitespace-nowrap" data-testid="job-queue-count">
+          {t.admin.pendingCount(queue.length)}
+        </span>
+      )}
+    </div>
+  )}
+  {justModerated && (
+    <Alert variant="success">
+      {t.admin.moderationSaved}{" "}
+      {next ? (
+        <a class="link font-medium" href={`/admin/jobs/${next.slug}`}>
+          {t.admin.nextSubmittedJob}
+        </a>
+      ) : (
+        <a class="link font-medium" href="/admin/jobs">
+          {t.admin.noSubmittedJobs}
+        </a>
+      )}
+    </Alert>
+  )}
+  {actionError && <Alert variant="error">{actionError.message}</Alert>}
+  <JobStatusAlert job={job} />
+
+  <JobDetails job={job} />
+</PageLayout>
