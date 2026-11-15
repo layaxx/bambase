@@ -12,7 +12,12 @@ import ConfirmModal from "@/components/ConfirmModal.astro"
 import Alert from "@/components/Alert.astro"
 import EmptyState from "@/components/EmptyState.astro"
 import { fetchMyJobOffers } from "@/utils/api/job-offers"
-import { JOB_STATUS_BADGE_CLASS, canArchiveJob, canEditJob } from "@/utils/job-status"
+import {
+  JOB_STATUS_BADGE_CLASS,
+  canArchiveJob,
+  canEditJob,
+  jobStatusLabel,
+} from "@/utils/job-status"
 import { formatJobLocation, formatRelativeDate } from "@/utils/job-formatting"
 import { useTranslations } from "@/i18n/translations"
 
@@ -38,14 +43,6 @@ const lastPage = lastPageRedirect(Astro.url, currentPage, pageCount)
 if (!archiveResult?.error && lastPage) return Astro.redirect(lastPage)
 // No listings at all, as opposed to none matching the search.
 const hasNoJobs = total === 0 && !search
-
-const statusLabel: Record<string, string> = {
-  submitted: t.auth.statusSubmitted,
-  published: t.auth.statusPublished,
-  expired: t.auth.statusExpired,
-  rejected: t.auth.statusRejected,
-  archived: t.auth.statusArchived,
-}
 ---
 
 <PageLayout title={t.auth.myJobOffers}>
@@ -102,7 +99,7 @@ const statusLabel: Record<string, string> = {
                     JOB_STATUS_BADGE_CLASS[job.online_status] ?? "badge-neutral",
                   ]}
                 >
-                  {statusLabel[job.online_status] ?? job.online_status}
+                  {jobStatusLabel(t, job.online_status)}
                 </span>
                 {job.company} ·{" "}
                 <span class="max-sm:hidden">

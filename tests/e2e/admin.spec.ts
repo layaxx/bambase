@@ -145,25 +145,79 @@ test("owner edit after a decision sends the job back to the queue", async ({
   await adminContext.close()
 })
 
-test("moderator reviews a job on its admin page and moves on to the next", async ({
+test("moderator walks the review queue and moves on after a decision", async ({
+  page,
+  browser,
+  listings,
+}) => {
+  test.slow()
+  await login(page, "seed@example.com", "Seed1234!")
+  const first = (await listings.createJob(uniqueTitle())).split("/").pop()
+  // A second job makes sure that the queue goes on after the first. Other workers add, resubmit
+  // and decide jobs at the same time, thus each neighbour is read from the page, not assumed.
+  await listings.createJob(uniqueTitle())
+
+  const adminContext = await browser.newContext()
+  const adminPage = await adminContext.newPage()
+  await login(adminPage, "admin@example.com", "Admin1234!")
+  const bar = adminPage.getByTestId("job-moderation")
+  const href = async (name: string) =>
+    (await bar.getByRole("link", { name }).getAttribute("href")) ?? ""
+
+  await adminPage.goto(`/admin/jobs/${first}?queue`)
+  const next = await href("Nächste Stelle")
+  expect(next).toMatch(/^\/admin\/jobs\/[^/?]+\?queue$/)
+  await expect(bar.getByTestId("job-queue-count")).toHaveText(/^\d+ von \d+$/)
+  await expect(bar.getByTestId("job-status")).toHaveText("In Prüfung")
+  // The hint of the owner is not meant for the moderator.
+  await expect(adminPage.locator("body")).not.toContainText("nur für dich sichtbar")
+
+  // The shortcuts listen once the script of the page has loaded.
+  await adminPage.keyboard.press("ArrowRight")
+  await expect(adminPage).toHaveURL(next)
+  await adminPage.waitForLoadState()
+  const previous = await href("Vorherige Stelle")
+  await adminPage.keyboard.press("ArrowLeft")
+  await expect(adminPage).toHaveURL(previous)
+
+  // A decision from the queue moves on to another job.
+  await adminPage.goto(`/admin/jobs/${first}?queue`)
+  await bar.getByRole("button", { name: "Genehmigen" }).click()
+  await expect(adminPage).toHaveURL(/\/admin\/jobs\/[^/?]+\?queue&decided=published$/)
+  expect(adminPage.url()).not.toContain(`/admin/jobs/${first}?`)
+  await expect(adminPage.getByTestId("decision-toast")).toContainText("genehmigt")
+  await adminContext.close()
+})
+
+test("moderator rejects a job only with a reason from the popover", async ({
   page,
   browser,
   listings,
 }) => {
   await login(page, "seed@example.com", "Seed1234!")
-  const title = uniqueTitle()
-  const slug = (await listings.createJob(title)).split("/").pop()
+  const jobUrl = await listings.createJob(uniqueTitle())
+  const slug = jobUrl.split("/").pop()
 
   const adminContext = await browser.newContext()
   const adminPage = await adminContext.newPage()
   await login(adminPage, "admin@example.com", "Admin1234!")
   await adminPage.goto(`/admin/jobs/${slug}`)
   const bar = adminPage.getByTestId("job-moderation")
-  await expect(bar.getByTestId("job-queue-count")).toContainText(/\d+ wartend/)
-  await bar.getByRole("button", { name: "Genehmigen" }).click()
+  await bar.getByRole("button", { name: "Ablehnen" }).click()
 
-  await expect(adminPage).toHaveURL(`/admin/jobs/${slug}?moderated`)
-  await expect(adminPage.getByRole("alert").first()).toContainText("Entscheidung gespeichert.")
-  await expect(bar.getByRole("button", { name: "Genehmigen" })).toHaveCount(0)
+  const reason = adminPage.getByRole("textbox", { name: "Grund für die Ablehnung" })
+  const confirm = adminPage.getByRole("button", { name: "Ablehnung senden" })
+  await expect(reason).toBeFocused()
+  await expect(confirm).toBeDisabled()
+  await reason.fill("   ")
+  await expect(confirm).toBeDisabled()
+  await reason.fill("Bitte Stundenlohn angeben.")
+  await confirm.click()
+
+  // A decision outside of the queue stays on its job.
+  await expect(adminPage).toHaveURL(`/admin/jobs/${slug}?decided=rejected`)
+  await expect(adminPage.getByTestId("decision-toast")).toContainText("abgelehnt")
+  await page.goto(jobUrl)
+  await expect(page.getByRole("alert")).toContainText("Grund: Bitte Stundenlohn angeben.")
   await adminContext.close()
 })

@@ -4,7 +4,7 @@ import PageLayout from "@/layouts/PageLayout.astro"
 import Alert from "@/components/Alert.astro"
 import { fetchSubmittedJobOffers, fetchRecentlyModeratedJobOffers } from "@/utils/api/job-offers"
 import { canModerateJobOffers, requireRole } from "@/utils/authz"
-import { JOB_STATUS_BADGE_CLASS } from "@/utils/job-status"
+import { JOB_STATUS_BADGE_CLASS, jobStatusLabel } from "@/utils/job-status"
 import { useTranslations } from "@/i18n/translations"
 import { formatLongDate } from "@/utils/event-formatting"
 
@@ -31,11 +31,6 @@ const [jobs, recentlyModerated] = await Promise.all([
   fetchSubmittedJobOffers(),
   fetchRecentlyModeratedJobOffers(),
 ])
-
-const statusLabel: Record<string, string> = {
-  published: t.auth.statusPublished,
-  rejected: t.auth.statusRejected,
-}
 ---
 
 <PageLayout title={t.admin.jobsQueueTitle}>
@@ -47,7 +42,7 @@ const statusLabel: Record<string, string> = {
       </span>
     )}
     {jobs[0] && (
-      <a class="btn btn-primary btn-sm ml-auto" href={`/admin/jobs/${jobs[0].slug}`}>
+      <a class="btn btn-primary btn-sm ml-auto" href={`/admin/jobs/${jobs[0].slug}?queue`}>
         {t.admin.startReviewQueue}
       </a>
     )}
@@ -112,7 +107,7 @@ const statusLabel: Record<string, string> = {
             <div class="flex min-w-0 flex-1 flex-col gap-3">
               <div>
                 <h2 class="font-semibold leading-snug text-base-content">
-                  <a class="link-hover" href={`/admin/jobs/${job.slug}`}>
+                  <a class="link-hover" href={`/admin/jobs/${job.slug}?queue`}>
                     {job.title}
                   </a>
                 </h2>
@@ -181,7 +176,7 @@ const statusLabel: Record<string, string> = {
                   JOB_STATUS_BADGE_CLASS[job.online_status] ?? "badge-neutral",
                 ]}
               >
-                {statusLabel[job.online_status] ?? job.online_status}
+                {jobStatusLabel(t, job.online_status)}
               </span>
             </div>
             <p class="text-sm text-base-content/70">

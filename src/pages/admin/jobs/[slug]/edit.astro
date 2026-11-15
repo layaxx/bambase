@@ -22,7 +22,7 @@ const { slug } = Astro.params
 const job = slug ? await fetchJobOffer(slug, { userId: user.id, isModerator: true }) : null
 if (!job) return Astro.redirect("/admin/jobs")
 const result = Astro.getActionResult(actions.jobs.update)
-if (result?.data) return Astro.redirect("/admin/jobs")
+if (result?.data) return Astro.redirect(`/admin/jobs/${result.data.slug}`)
 // A save that failed because the job was archived meanwhile renders its error and keeps the input.
 if (!canEditJob(job.online_status) && !result?.error)
   return Astro.redirect(`/admin/jobs/${job.slug}`)
@@ -33,9 +33,9 @@ const generalError = result?.error && !isInputError(result.error) ? result.error
 
 <PageLayout title={t.jobs.editTitle}>
   <div class="mb-6">
-    <a class="btn btn-ghost btn-sm gap-1 pl-0" href="/admin/jobs">
+    <a class="btn btn-ghost btn-sm gap-1 pl-0" href={`/admin/jobs/${job.slug}`}>
       <IconArrowLeft class="h-4 w-4" />
-      {t.admin.jobsQueueTitle}
+      {job.title}
     </a>
   </div>
 
@@ -51,7 +51,7 @@ const generalError = result?.error && !isInputError(result.error) ? result.error
 
   <JobForm
     action={actions.jobs.update}
-    cancelHref="/admin/jobs"
+    cancelHref={`/admin/jobs/${job.slug}`}
     id={job.id}
     initialValues={{
       title: job.title,

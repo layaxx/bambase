@@ -1,13 +1,22 @@
 ---
-import { actions } from "astro:actions"
+import { actions, isInputError } from "astro:actions"
 import PageLayout from "@/layouts/PageLayout.astro"
-import { fetchJobOffer, fetchSubmittedJobOffers } from "@/utils/api/job-offers"
+import { fetchJobOffer, fetchNextInQueue, fetchQueueNeighbours } from "@/utils/api/job-offers"
 import { canModerateJobOffers, requireRole } from "@/utils/authz"
 import { useTranslations } from "@/i18n/translations"
 import IconArrowLeft from "@/components/icons/IconArrowLeft.astro"
+import IconArrowRight from "@/components/icons/IconArrowRight.astro"
+import IconPencil from "@/components/icons/IconPencil.astro"
+import IconExternalLink from "@/components/icons/IconExternalLink.astro"
 import Alert from "@/components/Alert.astro"
-import JobStatusAlert from "@/components/jobs/JobStatusAlert.astro"
 import JobDetails from "@/components/jobs/JobDetails.astro"
+import JobStatusAlert from "@/components/jobs/JobStatusAlert.astro"
+import {
+  JOB_STATUS_BADGE_CLASS,
+  MODERATABLE_FROM,
+  canEditJob,
+  jobStatusLabel,
+} from "@/utils/job-status"
 
 const t = useTranslations(Astro.locals.locale)
 
@@ -19,88 +28,266 @@ const { slug } = Astro.params
 const job = slug ? await fetchJobOffer(slug, { userId: user.id, isModerator: true }) : null
 if (!job) return Astro.redirect("/admin/jobs")
 
-const approveResult = Astro.getActionResult(actions.jobs.approve)
-const rejectResult = Astro.getActionResult(actions.jobs.reject)
-if (
-  (approveResult?.data !== undefined && !approveResult.error) ||
-  (rejectResult?.data !== undefined && !rejectResult.error)
-) {
-  return Astro.redirect(`${Astro.url.pathname}?moderated`)
+// The links of the queue carry `?queue`. Only then does a decision move on to the next job, else
+// it stays on its job, e.g. when the moderator came from a report or the public page.
+const fromQueue = Astro.url.searchParams.has("queue")
+const queryPrefix = fromQueue ? "queue&" : ""
+
+const approved = Astro.getActionResult(actions.jobs.approve)
+const decision = approved ?? Astro.getActionResult(actions.jobs.reject)
+if (decision?.data) {
+  const outcome = approved?.data ? "published" : "rejected"
+  const target = fromQueue ? await fetchNextInQueue(job) : null
+  const path = target ? `/admin/jobs/${target.slug}` : Astro.url.pathname
+  return Astro.redirect(`${path}?${queryPrefix}decided=${outcome}`)
 }
 
-const actionError = approveResult?.error ?? rejectResult?.error
-const justModerated = Astro.url.searchParams.has("moderated")
+/** The URL of a form action that keeps the queue flag, whatever the format of the action. */
+function formAction(action: string): string {
+  const url = new URL(action, Astro.url)
+  if (fromQueue) url.searchParams.set("queue", "")
+  return url.pathname + url.search
+}
 
-// ponytail: loads the whole queue to pick its head and count it, add findFirst/count helpers if the queue grows large
-const queue =
-  justModerated || job.online_status === "submitted" ? await fetchSubmittedJobOffers() : undefined
-const next = queue?.find((j) => j.id !== job.id)
+const queue = await fetchQueueNeighbours(job)
+
+const errorMessage = isInputError(decision?.error)
+  ? Object.values(decision.error.fields).flat()[0]
+  : decision?.error?.message
+const decided = Astro.url.searchParams.get("decided")
+
+const canApprove = MODERATABLE_FROM.published.includes(job.online_status)
+const canReject = MODERATABLE_FROM.rejected.includes(job.online_status)
+const inQueue = job.online_status === "submitted"
 ---
 
 <PageLayout title={job.title}>
-  <div class="mb-4 md:mb-6">
+  <div class="mb-2">
     <a class="btn btn-ghost btn-sm gap-1 pl-0" href="/admin/jobs">
       <IconArrowLeft class="h-4 w-4" />
       {t.admin.jobsQueueTitle}
     </a>
   </div>
 
-  {job.online_status !== "archived" && (
-    <div
-      class="mb-4 flex flex-wrap items-center gap-2 rounded-xl bg-base-200 px-4 py-3"
-      data-testid="job-moderation"
+  <div
+    class="sticky top-[calc(var(--header-height)+1px)] z-40 -mx-4 mb-4 flex flex-wrap items-center gap-2 border-b border-base-300 bg-base-100/95 px-4 py-2 backdrop-blur"
+    data-testid="job-moderation"
+  >
+    <span
+      class:list={[
+        "badge badge-sm whitespace-nowrap",
+        JOB_STATUS_BADGE_CLASS[job.online_status],
+      ]}
+      data-testid="job-status"
     >
-      {job.online_status !== "published" && (
-        <form action={actions.jobs.approve} method="POST">
-          <input name="id" type="hidden" value={job.id} />
-          <button class="btn btn-success btn-sm" type="submit">
-            {t.admin.approveJob}
-          </button>
-        </form>
-      )}
-      {job.online_status !== "rejected" && (
-        <form action={actions.jobs.reject} class="flex min-w-64 flex-1 gap-2" method="POST">
-          <input name="id" type="hidden" value={job.id} />
-          <input
-            aria-label={t.admin.rejectReasonPlaceholder}
-            class="input input-sm input-bordered min-w-0 flex-1"
-            maxlength="500"
-            name="reason"
-            placeholder={t.admin.rejectReasonPlaceholder}
-            required
-            type="text"
-          />
-          <button class="btn btn-outline btn-error btn-sm" type="submit">
-            {t.admin.rejectJob}
-          </button>
-        </form>
-      )}
-      <a class="btn btn-ghost btn-sm" href={`/admin/jobs/${job.slug}/edit`}>
+      {jobStatusLabel(t, job.online_status)}
+    </span>
+    {canApprove && (
+      <form action={formAction(actions.jobs.approve)} data-moderation method="POST">
+        <input name="id" type="hidden" value={job.id} />
+        {/* No key shortcut: an approval mails the owner and cannot be undone. */}
+        <button class="btn btn-success btn-sm" type="submit">
+          {t.admin.approveJob}
+        </button>
+      </form>
+    )}
+    {canReject && (
+      <>
+        <button
+          class="btn btn-outline btn-error btn-sm"
+          id="reject-trigger"
+          popovertarget="reject-popover"
+          type="button"
+        >
+          {t.admin.rejectJob}
+        </button>
+        <div
+          aria-labelledby="reject-reason-label"
+          class="reject-popover w-80 max-w-[calc(100vw-2rem)] rounded-box border border-base-300 bg-base-100 p-4 shadow-lg"
+          id="reject-popover"
+          popover
+          role="dialog"
+        >
+          <form
+            action={formAction(actions.jobs.reject)}
+            class="flex flex-col gap-2"
+            data-moderation
+            method="POST"
+          >
+            <input name="id" type="hidden" value={job.id} />
+            <label class="text-sm font-semibold" for="reject-reason" id="reject-reason-label">
+              {t.admin.rejectReasonPlaceholder}
+            </label>
+            <textarea
+              aria-describedby="reject-reason-hint"
+              class="textarea textarea-sm w-full"
+              id="reject-reason"
+              maxlength="500"
+              name="reason"
+              required
+              rows="3"
+            ></textarea>
+            <p class="text-xs text-base-content/70" id="reject-reason-hint">
+              {t.admin.rejectReasonHint}
+            </p>
+            <div class="flex justify-end gap-2">
+              <button class="btn btn-ghost btn-sm" popovertarget="reject-popover" type="button">
+                {t.ui.cancel}
+              </button>
+              <button class="btn btn-error btn-sm" type="submit">
+                {t.admin.confirmReject}
+              </button>
+            </div>
+          </form>
+        </div>
+      </>
+    )}
+    {canEditJob(job.online_status) && (
+      <a class="btn btn-ghost btn-sm gap-1" href={`/admin/jobs/${job.slug}/edit`}>
+        <IconPencil class="h-4 w-4" />
         {t.admin.editJob}
       </a>
-      {queue && (
-        <span class="badge badge-error ml-auto whitespace-nowrap" data-testid="job-queue-count">
-          {t.admin.pendingCount(queue.length)}
+    )}
+    <a class="btn btn-ghost btn-sm gap-1" href={`/job/${job.slug}`}>
+      <IconExternalLink class="h-4 w-4" />
+      {t.admin.viewPublicJob}
+    </a>
+    <nav aria-label={t.admin.jobsQueueTitle} class="ml-auto flex items-center gap-1">
+      <a
+        aria-disabled={queue.previous ? undefined : "true"}
+        aria-keyshortcuts="ArrowLeft"
+        class:list={["btn btn-ghost btn-sm gap-1", { "btn-disabled": !queue.previous }]}
+        data-shortcut="previous"
+        href={queue.previous ? `/admin/jobs/${queue.previous.slug}?queue` : undefined}
+      >
+        <IconArrowLeft class="h-4 w-4" />
+        <span class="sr-only sm:not-sr-only">{t.admin.previousSubmittedJob}</span>
+      </a>
+      {queue.count > 0 && (
+        <span
+          class="px-1 text-sm whitespace-nowrap text-base-content/70 tabular-nums"
+          data-testid="job-queue-count"
+        >
+          {inQueue
+            ? t.admin.queuePosition(queue.position, queue.count)
+            : t.admin.pendingCount(queue.count)}
         </span>
       )}
-    </div>
-  )}
-  {justModerated && (
-    <Alert variant="success">
-      {t.admin.moderationSaved}{" "}
-      {next ? (
-        <a class="link font-medium" href={`/admin/jobs/${next.slug}`}>
-          {t.admin.nextSubmittedJob}
-        </a>
-      ) : (
-        <a class="link font-medium" href="/admin/jobs">
-          {t.admin.noSubmittedJobs}
-        </a>
-      )}
-    </Alert>
-  )}
-  {actionError && <Alert variant="error">{actionError.message}</Alert>}
-  <JobStatusAlert job={job} />
+      <a
+        aria-disabled={queue.next ? undefined : "true"}
+        aria-keyshortcuts="ArrowRight"
+        class:list={["btn btn-ghost btn-sm gap-1", { "btn-disabled": !queue.next }]}
+        data-shortcut="next"
+        href={queue.next ? `/admin/jobs/${queue.next.slug}?queue` : undefined}
+      >
+        <span class="sr-only sm:not-sr-only">{t.admin.nextSubmittedJob}</span>
+        <IconArrowRight class="h-4 w-4" />
+      </a>
+    </nav>
+  </div>
+
+  {errorMessage && <Alert variant="error">{errorMessage}</Alert>}
+  <JobStatusAlert isOwner={false} job={job} />
 
   <JobDetails job={job} />
+
+  {(decided === "published" || decided === "rejected") && (
+    <div class="toast toast-end z-60 decision-toast" data-testid="decision-toast" role="status">
+      <div class="alert alert-success shadow-lg">
+        <span data-decision-message>
+          {decided === "published" ? t.admin.approvedToast : t.admin.rejectedToast}
+          {queue.count === 0 && (
+            <>
+              {" "}
+              <a class="link font-medium" href="/admin/jobs">
+                {t.admin.noSubmittedJobs}
+              </a>
+            </>
+          )}
+        </span>
+      </div>
+    </div>
+  )}
 </PageLayout>
+
+<style>
+  /* Opens the popover under its button. Without anchor positioning, it stays centered. */
+  @supports (anchor-name: --a) {
+    #reject-trigger {
+      anchor-name: --reject-anchor;
+    }
+    .reject-popover {
+      position-anchor: --reject-anchor;
+      inset: auto;
+      top: anchor(bottom);
+      left: anchor(left);
+      margin: 0.5rem 0 0;
+      position-try-fallbacks: flip-inline;
+    }
+  }
+
+  /* The toast hides after a while, but stays while the pointer or the focus is on it. */
+  .decision-toast {
+    animation: decision-toast-hide 6s step-end forwards;
+  }
+  .decision-toast:hover,
+  .decision-toast:focus-within {
+    animation-play-state: paused;
+  }
+  @keyframes decision-toast-hide {
+    to {
+      visibility: hidden;
+    }
+  }
+</style>
+
+<script>
+  import { disableSubmitOnSubmit } from "@/utils/form-draft"
+
+  document.querySelectorAll<HTMLFormElement>("form[data-moderation]").forEach(disableSubmitOnSubmit)
+
+  const reason = document.querySelector<HTMLTextAreaElement>("#reject-reason")
+  const confirmReject = reason?.form?.querySelector<HTMLButtonElement>('[type="submit"]')
+  if (reason && confirmReject) {
+    // Without a reason the rejection cannot be sent, thus the button waits for one. Once sent,
+    // the button stays disabled (see disableSubmitOnSubmit), whatever is typed meanwhile.
+    const update = () => {
+      if (!confirmReject.classList.contains("loading"))
+        confirmReject.disabled = !reason.value.trim()
+    }
+    update()
+    reason.addEventListener("input", update)
+    document.querySelector("#reject-popover")?.addEventListener("toggle", (event) => {
+      if ((event as ToggleEvent).newState === "open") reason.focus()
+    })
+  }
+
+  // A live region announces only a change, but the toast is in the page from the start. Thus its
+  // text is put back in a moment after the load, which screen readers then read out.
+  const toast = document.querySelector("[data-decision-message]")
+  if (toast) {
+    const message = toast.innerHTML
+    toast.innerHTML = ""
+    setTimeout(() => (toast.innerHTML = message), 100)
+  }
+
+  const shortcuts: Record<string, string> = {
+    ArrowLeft: "previous",
+    ArrowRight: "next",
+  }
+  document.addEventListener("keydown", (event) => {
+    if (event.defaultPrevented || event.repeat) return
+    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return
+    const target = event.target as HTMLElement
+    if (target.isContentEditable || target.closest("input, textarea, select")) return
+    // `:popover-open` is an invalid selector where popovers are unsupported, so it would throw.
+    const open =
+      "togglePopover" in HTMLElement.prototype ? ":popover-open, dialog[open]" : "dialog[open]"
+    if (document.querySelector(open)) return
+    const name = shortcuts[event.key]
+    const control = name && document.querySelector<HTMLElement>(`[data-shortcut="${name}"][href]`)
+    if (!control) return
+    event.preventDefault()
+    control.click()
+  })
+</script>

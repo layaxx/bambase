@@ -41,6 +41,7 @@ const mockFindUnique = vi.hoisted(() => vi.fn())
 const mockCreate = vi.hoisted(() => vi.fn())
 const mockUpdate = vi.hoisted(() => vi.fn())
 const mockDelete = vi.hoisted(() => vi.fn())
+const mockUpdateMany = vi.hoisted(() => vi.fn())
 
 vi.mock("@/utils/prisma", () => ({
   default: {
@@ -48,8 +49,10 @@ vi.mock("@/utils/prisma", () => ({
       findUnique: mockFindUnique,
       create: mockCreate,
       update: mockUpdate,
+      updateMany: mockUpdateMany,
       delete: mockDelete,
     },
+    $transaction: (operations: Promise<unknown>[]) => Promise.all(operations),
   },
 }))
 
@@ -89,6 +92,7 @@ beforeEach(() => {
   mockFindUnique.mockReset()
   mockCreate.mockReset()
   mockUpdate.mockReset()
+  mockUpdateMany.mockReset()
   mockDelete.mockReset()
   mockCanModerateJobOffers.mockReset()
   mockSendMail.mockReset()
@@ -133,17 +137,14 @@ describe("jobs.create", () => {
     expect(mockCreate.mock.calls[0][0].data.ownerId).toBe("user-1")
   })
 
-  it("sets offlineAfter to roughly 30 days from now", async () => {
+  it("leaves offlineAfter unset until the first approval", async () => {
     await jobs.create(
       baseInput,
       // @ts-expect-error - needed because of mocked defineAction function
       makeContext("user-1")
     )
 
-    const offlineAfter: Date = mockCreate.mock.calls[0][0].data.offlineAfter
-    const expected = Date.now() + 30 * 24 * 60 * 60 * 1000
-    expect(offlineAfter.getTime()).toBeGreaterThan(expected - 5000)
-    expect(offlineAfter.getTime()).toBeLessThanOrEqual(expected + 5000)
+    expect(mockCreate.mock.calls[0][0].data.offlineAfter).toBeUndefined()
   })
 
   it("retries with a discriminated slug when the create hits the unique index", async () => {
@@ -633,10 +634,21 @@ describe("jobs.approve", () => {
     )
 
     expect(mockUpdate).toHaveBeenCalledWith({
-      where: { id: "job-1", onlineStatus: { not: "archived" } },
+      where: { id: "job-1", onlineStatus: { in: ["submitted", "rejected", "expired"] } },
       data: { onlineStatus: "published", rejectionReason: null },
       select: expect.any(Object),
     })
+    // Only a first approval or an expired offer gets a new lifetime.
+    expect(mockUpdateMany).toHaveBeenCalledWith({
+      where: {
+        id: "job-1",
+        onlineStatus: { in: ["submitted", "rejected", "expired"] },
+        OR: [{ offlineAfter: null }, { onlineStatus: "expired" }],
+      },
+      data: { offlineAfter: expect.any(Date) },
+    })
+    const offlineAfter: Date = mockUpdateMany.mock.calls[0][0].data.offlineAfter
+    expect(offlineAfter.getTime()).toBeGreaterThan(Date.now() + 29 * 24 * 60 * 60 * 1000)
     expect(result).toEqual({})
   })
 
@@ -652,7 +664,9 @@ describe("jobs.approve", () => {
 
     expect(mockUpdate).toHaveBeenCalledTimes(2)
     expect(mockUpdate).toHaveBeenLastCalledWith(
-      expect.objectContaining({ where: { id: "job-2", onlineStatus: { not: "archived" } } })
+      expect.objectContaining({
+        where: { id: "job-2", onlineStatus: { in: ["submitted", "rejected", "expired"] } },
+      })
     )
   })
 
@@ -669,7 +683,7 @@ describe("jobs.approve", () => {
       )
     ).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" })
   })
-  it("tells the moderator to reload when the offer was archived meanwhile", async () => {
+  it("tells the moderator to reload when the offer was decided or archived meanwhile", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {})
     mockCanModerateJobOffers.mockResolvedValue(true)
     mockUpdate.mockRejectedValue(
@@ -741,7 +755,7 @@ describe("jobs.reject", () => {
     )
 
     expect(mockUpdate).toHaveBeenCalledWith({
-      where: { id: "job-1", onlineStatus: { not: "archived" } },
+      where: { id: "job-1", onlineStatus: { in: ["submitted", "published"] } },
       data: { onlineStatus: "rejected", rejectionReason: "Doesn't meet posting guidelines" },
       select: expect.any(Object),
     })

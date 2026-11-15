@@ -1,41 +1,37 @@
 ---
 import type { JobOffer } from "@/utils/api/job-offers"
-import { JOB_STATUS_ALERT_VARIANT } from "@/utils/job-status"
+import { JOB_STATUS_ALERT_VARIANT, jobStatusLabel } from "@/utils/job-status"
 import { REPORT_WARNING_THRESHOLD } from "@/utils/api/reports"
 import { useTranslations } from "@/i18n/translations"
 import Alert from "@/components/Alert.astro"
 
 interface Props {
   job: JobOffer
+  /** The hints speak to the owner, thus a moderator sees only the status and the reason. */
+  isOwner: boolean
 }
 
-const { job } = Astro.props
+const { job, isOwner } = Astro.props
 const t = useTranslations(Astro.locals.locale)
 const hasReports = (job.reports?.length ?? 0) >= REPORT_WARNING_THRESHOLD
-
-const statusLabel: Record<string, string> = {
-  submitted: t.auth.statusSubmitted,
-  expired: t.auth.statusExpired,
-  rejected: t.auth.statusRejected,
-  archived: t.auth.statusArchived,
-}
 ---
 
 {job.online_status !== "published" && (
   <Alert variant={JOB_STATUS_ALERT_VARIANT[job.online_status] ?? "neutral"}>
-    {statusLabel[job.online_status] ?? job.online_status} – {t.jobs.notPublishedHint}
-    {job.online_status === "submitted" && (
+    {jobStatusLabel(t, job.online_status)}
+    {isOwner && <> – {t.jobs.notPublishedHint}</>}
+    {isOwner && job.online_status === "submitted" && (
       <>
         <br /> {t.jobs.submittedReviewHint}
       </>
     )}
-    {job.online_status === "rejected" && (
+    {job.online_status === "rejected" && job.rejection_reason && (
       <>
-        {job.rejection_reason && (
-          <>
-            <br /> {t.jobs.rejectionReasonLabel(job.rejection_reason)}
-          </>
-        )}
+        <br /> {t.jobs.rejectionReasonLabel(job.rejection_reason)}
+      </>
+    )}
+    {isOwner && job.online_status === "rejected" && (
+      <>
         <br /> {t.jobs.rejectedResubmitHint}
       </>
     )}

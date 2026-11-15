@@ -1,5 +1,6 @@
 import { JobOnlineStatus } from "@/generated/prisma/enums"
 import type { JobType } from "./api/job-offers"
+import type { useTranslations } from "@/i18n/translations"
 
 export type JobStatus = JobOnlineStatus
 
@@ -28,6 +29,30 @@ export const JOB_STATUS_BADGE_CLASS: Record<JobStatus, string> = {
   expired: "badge-neutral",
   rejected: "badge-error",
   archived: "badge-info",
+}
+
+export function jobStatusLabel(
+  t: Pick<ReturnType<typeof useTranslations>, "auth">,
+  status: JobStatus
+): string {
+  const labels: Record<JobStatus, string> = {
+    submitted: t.auth.statusSubmitted,
+    published: t.auth.statusPublished,
+    expired: t.auth.statusExpired,
+    rejected: t.auth.statusRejected,
+    archived: t.auth.statusArchived,
+  }
+  return labels[status]
+}
+
+/**
+ * The statuses each moderation decision applies to. Deciding the same twice would mail the owner
+ * twice, and an archived offer is final. An approval starts a new lifetime, thus an expired offer
+ * can be published again.
+ */
+export const MODERATABLE_FROM: Record<"published" | "rejected", JobStatus[]> = {
+  published: [JobOnlineStatus.submitted, JobOnlineStatus.rejected, JobOnlineStatus.expired],
+  rejected: [JobOnlineStatus.submitted, JobOnlineStatus.published],
 }
 
 /** Only listings that are live or still under review can be archived. */

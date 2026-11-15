@@ -6,6 +6,7 @@
 }
 
 :root {
+  --header-height: 4rem; /* without the 1px border of the header */
   --color-primary: var(--color-blue-700);
   --color-primary-content: oklch(1 0 0);
   --color-info: var(--color-purple-800);

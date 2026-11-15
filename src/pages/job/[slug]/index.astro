@@ -65,19 +65,21 @@ const ogImage =
           <IconArrowLeft class="h-4 w-4" />
           {t.jobs.backToJobs}
         </a>
-        <div class="flex flex-wrap items-center gap-2 max-sm:w-full">
-          {isModerator && (
-            <a class="btn btn-outline btn-sm" href={`/admin/jobs/${job.slug}`}>
-              {t.admin.moderateJob}
-            </a>
-          )}
-          {isOwner && <JobOwnerActions job={job} />}
-        </div>
+        {(isModerator || isOwner) && (
+          <div class="flex flex-wrap items-center gap-2 max-sm:w-full">
+            {isModerator && (
+              <a class="btn btn-outline btn-sm" href={`/admin/jobs/${job.slug}`}>
+                {t.admin.moderateJob}
+              </a>
+            )}
+            {isOwner && <JobOwnerActions job={job} />}
+          </div>
+        )}
       </div>
 
       {justSubmitted && <Alert variant="success">{t.jobs.submitSuccess}</Alert>}
       {actionError && <Alert variant="error">{actionError.message}</Alert>}
-      <JobStatusAlert job={job} />
+      <JobStatusAlert isOwner={isOwner} job={job} />
       {reported === "success" && <Alert variant="success">{t.reports.successMessage}</Alert>}
       {reported === "error" && <Alert variant="error">{t.reports.errorMessage}</Alert>}
 

@@ -3,7 +3,12 @@ import { z } from "astro/zod"
 import { JOB_TYPES, JOB_FIELDS, WORK_MODES } from "@/utils/api/job-offers"
 import { createWithUniqueSlug } from "@/utils/slugify"
 import { canModerateJobOffers } from "@/utils/authz"
-import { ARCHIVABLE_STATUSES, canArchiveJob, canEditJob } from "@/utils/job-status"
+import {
+  ARCHIVABLE_STATUSES,
+  MODERATABLE_FROM,
+  canArchiveJob,
+  canEditJob,
+} from "@/utils/job-status"
 import {
   requireUserId,
   requirePermission,
@@ -17,6 +22,7 @@ import { getLogger } from "@/utils/logger"
 import { notifyJobOwner } from "@/utils/job-notifications"
 
 const JOB_OFFER_LIFETIME_DAYS = 30
+const lifetimeEnd = () => new Date(Date.now() + JOB_OFFER_LIFETIME_DAYS * 24 * 60 * 60 * 1000)
 
 /**
  * The statuses on which a moderator already made a decision. An edit by the owner must thus
@@ -46,9 +52,10 @@ async function moderate(
   const verb = status === "published" ? "approve" : "reject"
   let job
   try {
-    // Archiving is final, thus a stale moderation queue must not publish an archived offer again.
-    job = await prisma.jobOffer.update({
-      where: { id, onlineStatus: { not: JobOnlineStatus.archived } },
+    // A stale page or a second moderator must not decide again, thus the status guards the write.
+    const where = { id, onlineStatus: { in: MODERATABLE_FROM[status] } }
+    const decide = prisma.jobOffer.update({
+      where,
       data: { onlineStatus: status, rejectionReason: reason },
       select: {
         slug: true,
@@ -57,13 +64,32 @@ async function moderate(
         owner: { select: { id: true, email: true } },
       },
     })
+    // The lifetime starts at the first approval, so that the time in the queue does not count.
+    // An expired offer gets a new one, else it would expire again on the next cron run. Any
+    // other offer keeps its end: a re-approval after an owner edit must not extend it, else an
+    // owner could keep a listing online forever.
+    job =
+      status === "published"
+        ? (
+            await prisma.$transaction([
+              prisma.jobOffer.updateMany({
+                where: {
+                  ...where,
+                  OR: [{ offlineAfter: null }, { onlineStatus: JobOnlineStatus.expired }],
+                },
+                data: { offlineAfter: lifetimeEnd() },
+              }),
+              decide,
+            ])
+          )[1]
+        : await decide
   } catch (error) {
     const failMessage =
       status === "published" ? "Genehmigen fehlgeschlagen." : "Ablehnen fehlgeschlagen."
     return mutationError(error, `Job ${verb} failed`, failMessage, STALE_MESSAGE)
   }
 
-  getLogger().info({ jobOfferId: id }, `job ${verb}d`)
+  getLogger().info({ jobOfferId: id }, `job ${status}`)
   // A moderator who decides on an own offer needs no mail about it.
   const to = job.owner && job.owner.id !== context.locals.user?.id ? job.owner.email : undefined
   await notifyJobOwner(to, job, status, context.url.origin)
@@ -340,7 +366,6 @@ export const jobs = {
               contactMail: input.contact_mail || null,
               contactPhone: input.contact_phone || null,
               ownerId: userId,
-              offlineAfter: new Date(Date.now() + JOB_OFFER_LIFETIME_DAYS * 24 * 60 * 60 * 1000),
             },
           })
         )
