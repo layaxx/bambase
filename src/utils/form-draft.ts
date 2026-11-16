@@ -1,10 +1,6 @@
 type FormField = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | RadioNodeList
 
 /**
- * Disables the submit button after the user submits a form. A slow request or a double click
- * can thus not send the form two times.
- */
-/**
  * Disables each submit button of the form once it is sent, so that a double click sends nothing
  * twice. `form.elements` also holds the buttons outside of the form that point at it via `form=`.
  * The clicked button shows the spinner.

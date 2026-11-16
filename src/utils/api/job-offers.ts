@@ -185,13 +185,16 @@ function queueSide(job: QueueJob, side: "before" | "after"): Prisma.JobOfferWher
   }
 }
 
+const SLUG = { slug: true }
+const findNextInQueue = (job: QueueJob) =>
+  prisma.jobOffer.findFirst({ where: queueSide(job, "after"), orderBy: QUEUE_ORDER, select: SLUG })
+
 /**
  * Where an offer stands in the review queue: the 1-based position (only for a submitted offer) and
  * the offers right before and after it. The neighbours come from the offer itself, thus they also
  * hold once the offer has left the queue.
  */
 export async function fetchQueueNeighbours(job: QueueJob) {
-  const select = { slug: true }
   const [count, ahead, previous, next] = await Promise.all([
     countSubmittedJobOffers(),
     job.online_status === "submitted"
@@ -200,26 +203,21 @@ export async function fetchQueueNeighbours(job: QueueJob) {
     prisma.jobOffer.findFirst({
       where: queueSide(job, "before"),
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-      select,
+      select: SLUG,
     }),
-    prisma.jobOffer.findFirst({ where: queueSide(job, "after"), orderBy: QUEUE_ORDER, select }),
+    findNextInQueue(job),
   ])
   return { count, position: ahead + 1, previous, next }
 }
 
 /** The offer to review after this one: the next in the queue or, past its end, the head. */
 export async function fetchNextInQueue(job: QueueJob) {
-  const select = { slug: true }
   return (
-    (await prisma.jobOffer.findFirst({
-      where: queueSide(job, "after"),
-      orderBy: QUEUE_ORDER,
-      select,
-    })) ??
+    (await findNextInQueue(job)) ??
     (await prisma.jobOffer.findFirst({
       where: { onlineStatus: JobOnlineStatus.submitted, id: { not: job.id } },
       orderBy: QUEUE_ORDER,
-      select,
+      select: SLUG,
     }))
   )
 }

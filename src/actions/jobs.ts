@@ -22,7 +22,6 @@ import { getLogger } from "@/utils/logger"
 import { notifyJobOwner } from "@/utils/job-notifications"
 
 const JOB_OFFER_LIFETIME_DAYS = 30
-const lifetimeEnd = () => new Date(Date.now() + JOB_OFFER_LIFETIME_DAYS * 24 * 60 * 60 * 1000)
 
 /**
  * The statuses on which a moderator already made a decision. An edit by the owner must thus
@@ -81,7 +80,7 @@ async function moderate(
                   ...where,
                   OR: [{ offlineAfter: null }, { onlineStatus: JobOnlineStatus.expired }],
                 },
-                data: { offlineAfter: lifetimeEnd() },
+                data: { offlineAfter: new Date(Date.now() + JOB_OFFER_LIFETIME_DAYS * 864e5) },
               }),
               decide,
             ])

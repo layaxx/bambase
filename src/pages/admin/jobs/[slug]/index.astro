@@ -43,12 +43,8 @@ if (decision?.data) {
   return Astro.redirect(`${path}?${queryPrefix}decided=${outcome}`)
 }
 
-/** The URL of a form action that keeps the queue flag, whatever the format of the action. */
-function formAction(action: string): string {
-  const url = new URL(action, Astro.url)
-  if (fromQueue) url.searchParams.set("queue", "")
-  return url.pathname + url.search
-}
+// An action URL is `?_action=…`, thus the queue flag is appended.
+const queueSuffix = fromQueue ? "&queue" : ""
 
 const queue = await fetchQueueNeighbours(job)
 
@@ -81,7 +77,7 @@ const inQueue = job.online_status === "submitted"
       {jobStatusLabel(t, job.online_status)}
     </span>
     {canApprove && (
-      <form action={formAction(actions.jobs.approve)} data-moderation method="POST">
+      <form action={actions.jobs.approve + queueSuffix} data-moderation method="POST">
         <input name="id" type="hidden" value={job.id} />
         {/* No key shortcut: an approval mails the owner and cannot be undone. */}
         <button class="btn btn-success btn-sm" type="submit">
@@ -90,7 +86,11 @@ const inQueue = job.online_status === "submitted"
       </form>
     )}
     {canReject && (
-      <RejectPopover action={formAction(actions.jobs.reject)} id="reject-popover" jobId={job.id} />
+      <RejectPopover
+        action={actions.jobs.reject + queueSuffix}
+        id="reject-popover"
+        jobId={job.id}
+      />
     )}
     {canEditJob(job.online_status) && (
       <a class="btn btn-ghost btn-sm gap-1" href={`/admin/jobs/${job.slug}/edit`}>
@@ -107,7 +107,6 @@ const inQueue = job.online_status === "submitted"
         aria-disabled={queue.previous ? undefined : "true"}
         aria-keyshortcuts="ArrowLeft"
         class:list={["btn btn-ghost btn-sm gap-1", { "btn-disabled": !queue.previous }]}
-        data-shortcut="previous"
         href={queue.previous ? `/admin/jobs/${queue.previous.slug}?queue` : undefined}
       >
         <IconArrowLeft class="h-4 w-4" />
@@ -127,7 +126,6 @@ const inQueue = job.online_status === "submitted"
         aria-disabled={queue.next ? undefined : "true"}
         aria-keyshortcuts="ArrowRight"
         class:list={["btn btn-ghost btn-sm gap-1", { "btn-disabled": !queue.next }]}
-        data-shortcut="next"
         href={queue.next ? `/admin/jobs/${queue.next.slug}?queue` : undefined}
       >
         <span class="sr-only sm:not-sr-only">{t.admin.nextSubmittedJob}</span>
@@ -194,21 +192,15 @@ const inQueue = job.online_status === "submitted"
     history.replaceState(history.state, "", location.pathname + search + location.hash)
   }
 
-  const shortcuts: Record<string, string> = {
-    ArrowLeft: "previous",
-    ArrowRight: "next",
-  }
   document.addEventListener("keydown", (event) => {
     if (event.defaultPrevented || event.repeat) return
     if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return
     const target = event.target as HTMLElement
     if (target.isContentEditable || target.closest("input, textarea, select")) return
-    // `:popover-open` is an invalid selector where popovers are unsupported, so it would throw.
-    const open =
-      "togglePopover" in HTMLElement.prototype ? ":popover-open, dialog[open]" : "dialog[open]"
-    if (document.querySelector(open)) return
-    const name = shortcuts[event.key]
-    const control = name && document.querySelector<HTMLElement>(`[data-shortcut="${name}"][href]`)
+    if (document.querySelector(":popover-open, dialog[open]")) return
+    const control = document.querySelector<HTMLElement>(
+      `[aria-keyshortcuts="${CSS.escape(event.key)}"][href]`
+    )
     if (!control) return
     event.preventDefault()
     control.click()
