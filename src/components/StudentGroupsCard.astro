@@ -11,7 +11,7 @@ interface Props {
 }
 const { groups } = Astro.props
 
-const LIMIT = 5
+const LIMIT = 4
 ---
 
 <section id="groups">
@@ -27,36 +27,33 @@ const LIMIT = 5
     </div>
   </div>
 
-  <!-- Original grid: article (col-span-2) + sidebar (col-start-3, row-span-2) + groups (auto-placed) -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="main-grid">
-    <article class="md:col-span-2">
+  <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+    <div class="md:col-span-2">
       <p class="text-sm text-base-content/70 mb-4">{t.groups.description}</p>
-      <div>
-        <select class="select select-bordered select-sm w-auto" id="sort-select">
-          <option value="random">{t.groups.sortRandom}</option>
-          <option value="name">{t.groups.sortByName}</option>
-        </select>
+      <select class="select select-bordered select-sm mb-6 w-auto" id="sort-select">
+        <option value="random">{t.groups.sortRandom}</option>
+        <option value="name">{t.groups.sortByName}</option>
+      </select>
+
+      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2" id="main-grid">
+        {groups.map((group, i) => (
+          <div data-group data-group-name={group.name} hidden={i >= LIMIT}>
+            <StudentGroup group={group} />
+          </div>
+        ))}
       </div>
-    </article>
+
+      <button class="btn btn-soft btn-sm mt-4" id="show-all-btn">
+        {t.groups.showAll(groups.length)}
+      </button>
+    </div>
 
     <Sidebar />
-
-    {groups.map((group, i) => (
-      <div data-group data-group-name={group.name} hidden={i >= LIMIT}>
-        <StudentGroup group={group} />
-      </div>
-    ))}
-  </div>
-
-  <div class="mt-4">
-    <button class="btn btn-soft btn-sm" id="show-all-btn">
-      {t.groups.showAll}
-    </button>
   </div>
 </section>
 
 <script
-  define:vars={{ LIMIT, showAllText: t.groups.showAll, showLessText: t.groups.showLess }}
+  define:vars={{ LIMIT, showAllText: t.groups.showAll(groups.length), showLessText: t.groups.showLess }}
   is:inline
 >
   const grid = document.getElementById("main-grid")

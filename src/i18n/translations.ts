@@ -324,7 +324,7 @@ const de = {
       "Viele Veranstaltungen, Aktivitäten und Angebote sind nur durch das ehrenamtliche Engagement von Kommilitonen möglich. Werde auch du aktiv und engagiere dich in einer der zahlreichen Gruppen, Vereine oder Initiativen an der Universität Bamberg. Hier findest du eine Übersicht über die verschiedenen Möglichkeiten, dich einzubringen und das Campus-Leben mitzugestalten.",
     sortRandom: "Zufällige Reihenfolge",
     sortByName: "Sortieren nach Name",
-    showAll: "Alle Gruppen anzeigen",
+    showAll: (n: number) => `Alle ${n} Gruppen anzeigen`,
     showLess: "Weniger Gruppen anzeigen",
     sidebarAboutTitle: "Über BamBase",
     sidebarAboutText:
@@ -335,6 +335,8 @@ const de = {
       { name: "FS WIAI", role: "Hosting" },
       { name: "Ehemalige Feki.de-Mitglieder", role: "Entwicklung" },
     ],
+    sidebarAboutGroups:
+      "Deine Gruppe fehlt oder ihre Infos sind veraltet? Melde dich bei uns, dann tragen wir sie ein.",
     sidebarJoinTitle: "Mitmachen",
     sidebarJoinMail: "Schreib uns",
     sidebarJoinCode: "Code auf GitHub",
@@ -934,7 +936,7 @@ const en: typeof de = {
       "Many events, activities and services are only possible through the voluntary commitment of fellow students. Get involved and join one of the many groups, associations or initiatives at the University of Bamberg. Here you will find an overview of the various ways to contribute and help shape campus life.",
     sortRandom: "Random order",
     sortByName: "Sort by name",
-    showAll: "Show all groups",
+    showAll: (n: number) => `Show all ${n} groups`,
     showLess: "Show fewer groups",
     sidebarAboutTitle: "About BamBase",
     sidebarAboutText:
@@ -945,6 +947,8 @@ const en: typeof de = {
       { name: "FS WIAI", role: "Hosting" },
       { name: "Former Feki.de members", role: "Development" },
     ],
+    sidebarAboutGroups:
+      "Is your group missing or out of date? Get in touch and we'll add it.",
     sidebarJoinTitle: "Get involved",
     sidebarJoinMail: "Write to us",
     sidebarJoinCode: "Code on GitHub",

@@ -11,10 +11,11 @@ const heading = "font-semibold text-base-content"
 const small = "text-xs text-base-content/70"
 ---
 
-<aside class="flex flex-col gap-5 self-start rounded-xl border border-base-300 bg-base-100 p-4 text-sm text-base-content max-md:order-first md:row-span-2 md:col-start-3">
+<aside class="flex flex-col gap-5 border-base-300 text-sm text-base-content max-md:border-t max-md:pt-6 md:border-l md:pl-6">
   <div>
     <h3 class:list={[heading, "mb-2"]}>{t.groups.sidebarAboutTitle}</h3>
     <p>{t.groups.sidebarAboutText}</p>
+    <p class="mt-2">{t.groups.sidebarAboutGroups}</p>
   </div>
 
   <div>
