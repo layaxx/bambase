@@ -1,36 +1,57 @@
 ---
 import { useTranslations } from "@/i18n/translations"
 import { HELP_EMAIL } from "@/utils/mail"
+import IconGitHub from "./icons/IconGitHub.astro"
+import IconMail from "./icons/IconMail.astro"
 
 const t = useTranslations(Astro.locals.locale)
 const joinSubject = encodeURIComponent(`BamBase: ${t.groups.sidebarJoinSubject}`)
+// Three text styles only: heading, body, small/muted.
+const heading = "font-semibold text-base-content"
+const small = "text-xs text-base-content/70"
 ---
 
-<aside class="flex flex-col gap-4 max-md:order-first md:row-span-2 md:col-start-3">
-  <div class="rounded-xl border border-base-300 bg-base-100 overflow-hidden">
-    <h3 class="bg-base-200 px-4 py-3 font-semibold text-base-content">
-      {t.groups.sidebarAboutTitle}
-    </h3>
-    <p class="p-4 text-sm text-base-content/70">{t.groups.sidebarAboutText}</p>
+<aside class="flex flex-col gap-5 self-start rounded-xl border border-base-300 bg-base-100 p-4 text-sm text-base-content max-md:order-first md:row-span-2 md:col-start-3">
+  <div>
+    <h3 class:list={[heading, "mb-2"]}>{t.groups.sidebarAboutTitle}</h3>
+    <p>{t.groups.sidebarAboutText}</p>
   </div>
 
-  <div class="rounded-xl border border-base-300 bg-base-100 overflow-hidden">
-    <h3 class="bg-base-200 px-4 py-3 font-semibold text-base-content">
-      {t.groups.sidebarResponsibleTitle}
-    </h3>
-    <ul class="flex flex-col gap-2 p-4 text-sm">
+  <div>
+    <h4 class:list={[small, "mb-2"]}>{t.groups.sidebarResponsibleTitle}</h4>
+    <dl class="flex flex-col gap-1.5">
       {t.groups.sidebarResponsible.map(({ name, role }) => (
-        <li class="flex justify-between gap-2">
-          <span class="text-base-content">{name}</span>
-          <span class="text-base-content/70">{role}</span>
-        </li>
+        <div class="flex items-baseline justify-between gap-2">
+          <dt>{name}</dt>
+          <dd class:list={small}>{role}</dd>
+        </div>
       ))}
-    </ul>
-    <p class="border-t border-base-300 px-4 py-3 text-sm text-base-content/70">
-      {t.groups.sidebarJoinHint}{" "}
-      <a class="link link-primary" href={`mailto:${HELP_EMAIL}?subject=${joinSubject}`}>
-        {t.groups.sidebarJoinLink}
-      </a>
-    </p>
+    </dl>
   </div>
+
+  <div>
+    <h4 class:list={[small, "mb-2"]}>{t.groups.sidebarJoinTitle}</h4>
+    <div class="flex flex-wrap gap-2">
+      <a class="btn btn-sm btn-outline" href={`mailto:${HELP_EMAIL}?subject=${joinSubject}`}>
+        <IconMail class="h-3.5 w-3.5" />
+        {t.groups.sidebarJoinMail}
+      </a>
+      <a
+        class="btn btn-sm btn-ghost"
+        href="https://github.com/layaxx/bambase"
+        rel="noopener noreferrer"
+        target="_blank"
+      >
+        <IconGitHub class="h-3.5 w-3.5" />
+        {t.groups.sidebarJoinCode}
+      </a>
+    </div>
+  </div>
+
+  <p class:list={small}>
+    {t.groups.sidebarFekiHint}{" "}
+    <a class="link link-primary" href="/jobs/faq#feki">
+      {t.groups.sidebarFekiLink}
+    </a>
+  </p>
 </aside>
