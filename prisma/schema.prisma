@@ -96,21 +96,22 @@ enum CronJobStatus {
 }
 
 model User {
-  id            String     @id
-  name          String
-  email         String
-  emailVerified Boolean
-  image         String?
-  createdAt     DateTime
-  updatedAt     DateTime
-  role          String?
-  banned        Boolean?   @default(false)
-  banReason     String?
-  banExpires    DateTime?
-  sessions      Session[]
-  accounts      Account[]
-  events        Event[]
-  jobOffers     JobOffer[]
+  id                 String     @id
+  name               String
+  email              String
+  emailVerified      Boolean
+  image              String?
+  createdAt          DateTime
+  updatedAt          DateTime
+  role               String?
+  banned             Boolean?   @default(false)
+  banReason          String?
+  banExpires         DateTime?
+  sessions           Session[]
+  accounts           Account[]
+  events             Event[]
+  jobOffers          JobOffer[] @relation("JobOfferOwner")
+  moderatedJobOffers JobOffer[] @relation("JobOfferModerator")
 
   @@unique([email])
   @@map("user")
@@ -269,9 +270,13 @@ model JobOffer {
   contactMail     String?
   contactPhone    String?
   ownerId         String?
-  owner           User?           @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  owner           User?           @relation("JobOfferOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  /// The moderator of the last decision. Null for decisions made before it was recorded.
+  moderatedById   String?
+  moderatedBy     User?           @relation("JobOfferModerator", fields: [moderatedById], references: [id], onDelete: SetNull)
   reports         Report[]
-  offlineAfter    DateTime
+  /// Null until the first approval, which starts the lifetime.
+  offlineAfter    DateTime?
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
 

@@ -30,6 +30,8 @@ export type JobOffer = {
     phone?: string
   }
   ownerId?: string | null
+  /** The name of the moderator of the last decision, if known. */
+  moderatedBy?: string
   reports?: { id: string }[]
   createdAt: string
   updatedAt: string
@@ -51,7 +53,10 @@ export type JobOfferPage = {
   pageCount: number
 }
 
-function toJobOffer(row: JobOfferModel, extra?: { reports?: { id: string }[] }): JobOffer {
+function toJobOffer(
+  row: JobOfferModel,
+  extra?: { reports?: { id: string }[]; moderatedBy?: { name: string } | null }
+): JobOffer {
   return {
     id: row.id,
     slug: row.slug,
@@ -72,6 +77,7 @@ function toJobOffer(row: JobOfferModel, extra?: { reports?: { id: string }[] }):
       phone: row.contactPhone ?? undefined,
     },
     ownerId: row.ownerId,
+    moderatedBy: extra?.moderatedBy?.name,
     reports: extra?.reports,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
@@ -150,10 +156,15 @@ export function fetchMyJobOffers(
   return findJobPage({ ownerId, ...searchWhere(search) }, page, pageSize)
 }
 
+/** The order of the review queue. The id breaks ties, so the order is the same on each request. */
+const QUEUE_ORDER = [
+  { createdAt: "asc" },
+  { id: "asc" },
+] satisfies Prisma.JobOfferOrderByWithRelationInput[]
 export async function fetchSubmittedJobOffers(): Promise<JobOffer[]> {
   const rows = await prisma.jobOffer.findMany({
     where: { onlineStatus: "submitted" },
-    orderBy: { createdAt: "asc" },
+    orderBy: QUEUE_ORDER,
   })
   return rows.map((row) => toJobOffer(row))
 }
@@ -162,11 +173,72 @@ export function countSubmittedJobOffers(): Promise<number> {
   return prisma.jobOffer.count({ where: { onlineStatus: "submitted" } })
 }
 
-export async function fetchRecentlyModeratedJobOffers(limit = 10): Promise<JobOffer[]> {
-  const rows = await prisma.jobOffer.findMany({
-    where: { onlineStatus: { in: [JobOnlineStatus.published, JobOnlineStatus.rejected] } },
-    orderBy: { updatedAt: "desc" },
-    take: limit,
-  })
-  return rows.map((row) => toJobOffer(row))
+type QueueJob = Pick<JobOffer, "id" | "createdAt" | "online_status">
+
+/** The submitted offers before or after an offer, in the order of the queue. */
+function queueSide(job: QueueJob, side: "before" | "after"): Prisma.JobOfferWhereInput {
+  const createdAt = new Date(job.createdAt)
+  const op = side === "before" ? "lt" : "gt"
+  return {
+    onlineStatus: JobOnlineStatus.submitted,
+    OR: [{ createdAt: { [op]: createdAt } }, { createdAt, id: { [op]: job.id } }],
+  }
+}
+
+const SLUG = { slug: true }
+const findNextInQueue = (job: QueueJob) =>
+  prisma.jobOffer.findFirst({ where: queueSide(job, "after"), orderBy: QUEUE_ORDER, select: SLUG })
+
+/**
+ * Where an offer stands in the review queue: the 1-based position (only for a submitted offer) and
+ * the offers right before and after it. The neighbours come from the offer itself, thus they also
+ * hold once the offer has left the queue.
+ */
+export async function fetchQueueNeighbours(job: QueueJob) {
+  const [count, ahead, previous, next] = await Promise.all([
+    countSubmittedJobOffers(),
+    job.online_status === "submitted"
+      ? prisma.jobOffer.count({ where: queueSide(job, "before") })
+      : 0,
+    prisma.jobOffer.findFirst({
+      where: queueSide(job, "before"),
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      select: SLUG,
+    }),
+    findNextInQueue(job),
+  ])
+  return { count, position: ahead + 1, previous, next }
+}
+
+/** The offer to review after this one: the next in the queue or, past its end, the head. */
+export async function fetchNextInQueue(job: QueueJob) {
+  return (
+    (await findNextInQueue(job)) ??
+    (await prisma.jobOffer.findFirst({
+      where: { onlineStatus: JobOnlineStatus.submitted, id: { not: job.id } },
+      orderBy: QUEUE_ORDER,
+      select: SLUG,
+    }))
+  )
+}
+
+/** The published and rejected offers, the latest decision first. */
+export async function fetchModeratedJobOffers(
+  page: number,
+  pageSize: number
+): Promise<JobOfferPage> {
+  const where = { onlineStatus: { in: [JobOnlineStatus.published, JobOnlineStatus.rejected] } }
+  const { rows, ...rest } = await findPage(
+    page,
+    pageSize,
+    (window) =>
+      prisma.jobOffer.findMany({
+        where,
+        orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
+        include: { moderatedBy: { select: { name: true } } },
+        ...window,
+      }),
+    () => prisma.jobOffer.count({ where })
+  )
+  return { jobs: rows.map((row) => toJobOffer(row, row)), ...rest }
 }

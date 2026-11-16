@@ -1,0 +1,120 @@
+---
+import type { JobOffer } from "@/utils/api/job-offers"
+import { useTranslations } from "@/i18n/translations"
+import IconStore from "@/components/icons/IconStore.astro"
+import IconMapPin from "@/components/icons/IconMapPin.astro"
+import IconClock from "@/components/icons/IconClock.astro"
+import IconCalendar from "@/components/icons/IconCalendar.astro"
+import IconExternalLink from "@/components/icons/IconExternalLink.astro"
+import ReportModal from "@/components/ReportModal.astro"
+import JobTypeBadge from "@/components/jobs/JobTypeBadge.astro"
+import { formatJobLocation } from "@/utils/job-formatting"
+import { formatLongDate } from "@/utils/event-formatting"
+
+interface Props {
+  job: JobOffer
+  showReport?: boolean
+}
+
+const { job, showReport = false } = Astro.props
+const t = useTranslations(Astro.locals.locale)
+
+// createdAt is only a meaningful "posted on" date once the listing has gone live.
+const showPostedOn = job.online_status !== "submitted" && job.online_status !== "rejected"
+const toExternalUrl = (url: string) => (/^https?:\/\//i.test(url) ? url : `https://${url}`)
+---
+
+<div class="grid gap-8 lg:grid-cols-3">
+  <div class="lg:col-span-2">
+    <div class="mb-2 flex items-center gap-2 text-base-content/70">
+      <IconStore class="h-4 w-4" />
+      <span class="text-sm font-medium">{job.company}</span>
+    </div>
+    <h1 class="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">{job.title}</h1>
+
+    <div class="mb-4 flex flex-wrap gap-2">
+      <a href={`/jobs?type=${job.job_type}`}>
+        <JobTypeBadge jobType={job.job_type} />
+      </a>
+      <a href={`/jobs?field=${job.field}`}>
+        <span class="badge badge-ghost">{t.jobs.jobFields[job.field]}</span>
+      </a>
+    </div>
+
+    <div class="mb-6 flex flex-wrap gap-4 text-sm text-base-content/70">
+      <div class="flex items-center gap-1.5">
+        <IconMapPin class="h-4 w-4 shrink-0" />
+        {formatJobLocation(job, {
+          remote: t.jobs.workModes.remote,
+          hybrid: t.jobs.workModes.hybrid,
+        })}
+      </div>
+      <div class="flex items-center gap-1.5">
+        <IconClock class="h-4 w-4 shrink-0" />
+        {t.jobs.workingHours(job.working_hours)}
+      </div>
+      {showPostedOn && (
+        <div class="flex items-center gap-1.5">
+          <IconCalendar class="h-4 w-4 shrink-0" />
+          {t.jobs.postedOn(formatLongDate(job.createdAt, t.auth.dateLocale))}
+        </div>
+      )}
+    </div>
+
+    <div class="prose prose-sm max-w-none text-base-content/70">
+      <p class="whitespace-pre-wrap">{job.description}</p>
+    </div>
+  </div>
+
+  <aside class="flex flex-col gap-4">
+    <div class="rounded-xl border border-base-300 bg-base-100 p-5">
+      <h2 class="mb-4 font-semibold">{t.jobs.contactTitle}</h2>
+      <dl class="flex flex-col gap-3 text-sm">
+        {job.contact.name && (
+          <div>
+            <dt class="text-base-content/70">Name</dt>
+            <dd class="font-medium">{job.contact.name}</dd>
+          </div>
+        )}
+        {job.contact.mail && (
+          <div>
+            <dt class="text-base-content/70">E-Mail</dt>
+            <dd>
+              <a class="link link-primary break-all" href={`mailto:${job.contact.mail}`}>
+                {job.contact.mail}
+              </a>
+            </dd>
+          </div>
+        )}
+        {job.contact.phone && (
+          <div>
+            <dt class="text-base-content/70">Tel.</dt>
+            <dd>
+              <a class="link link-primary" href={`tel:${job.contact.phone}`}>
+                {job.contact.phone}
+              </a>
+            </dd>
+          </div>
+        )}
+      </dl>
+    </div>
+
+    {job.external_url && (
+      <a
+        class="btn btn-primary w-full"
+        href={toExternalUrl(job.external_url)}
+        rel="noopener noreferrer"
+        target="_blank"
+      >
+        {t.jobs.applyExternal}
+        <IconExternalLink class="h-4 w-4" />
+      </a>
+    )}
+
+    {showReport && (
+      <div class="flex justify-end">
+        <ReportModal targetId={job.id} targetType="job" />
+      </div>
+    )}
+  </aside>
+</div>

@@ -1,0 +1,93 @@
+---
+import { useTranslations } from "@/i18n/translations"
+
+interface Props {
+  /** Unique on the page. Names the popover, its trigger (`${id}-trigger`) and its fields. */
+  id: string
+  action: string
+  /** The offer to reject. Without it, the ids come from fields linked by `formId`. */
+  jobId?: string
+  /** The id of the form, for fields and buttons outside of it, e.g. the checkboxes of a bulk bar. */
+  formId?: string
+}
+
+const { id, action, jobId, formId } = Astro.props
+const t = useTranslations(Astro.locals.locale)
+const anchor = `--${id}`
+---
+
+<button
+  class="btn btn-outline btn-error btn-sm"
+  id={`${id}-trigger`}
+  popovertarget={id}
+  style={`anchor-name: ${anchor}`}
+  type="button"
+>
+  {t.admin.rejectJob}
+</button>
+<div
+  aria-labelledby={`${id}-label`}
+  class="reject-popover w-80 max-w-[calc(100vw-2rem)] rounded-box border border-base-300 bg-base-100 p-4 shadow-lg"
+  id={id}
+  popover
+  role="dialog"
+  style={`position-anchor: ${anchor}`}
+>
+  <form action={action} class="flex flex-col gap-2" data-moderation id={formId} method="POST">
+    {jobId && <input name="id" type="hidden" value={jobId} />}
+    <label class="text-sm font-semibold" for={`${id}-reason`} id={`${id}-label`}>
+      {t.admin.rejectReasonPlaceholder}
+    </label>
+    <textarea
+      aria-describedby={`${id}-hint`}
+      class="textarea textarea-sm w-full"
+      id={`${id}-reason`}
+      maxlength="500"
+      name="reason"
+      required
+      rows="3"
+    ></textarea>
+    <p class="text-xs text-base-content/70" id={`${id}-hint`}>
+      {t.admin.rejectReasonHint}
+    </p>
+    <div class="flex justify-end gap-2">
+      <button class="btn btn-ghost btn-sm" popovertarget={id} type="button">
+        {t.ui.cancel}
+      </button>
+      <button class="btn btn-error btn-sm" data-confirm-reject type="submit">
+        {t.admin.confirmReject}
+      </button>
+    </div>
+  </form>
+</div>
+
+<style>
+  /* Opens the popover under its button. Without anchor positioning, it stays centered. */
+  @supports (anchor-name: --a) {
+    .reject-popover {
+      inset: auto;
+      top: anchor(bottom);
+      left: anchor(left);
+      margin: 0.5rem 0 0;
+      position-try-fallbacks: flip-inline;
+    }
+  }
+</style>
+
+<script>
+  for (const popover of document.querySelectorAll<HTMLElement>(".reject-popover")) {
+    const reason = popover.querySelector("textarea")
+    const confirm = popover.querySelector<HTMLButtonElement>("[data-confirm-reject]")
+    if (!reason || !confirm) continue
+    // Without a reason the rejection cannot be sent, thus the button waits for one. Once sent,
+    // the button stays disabled (see disableSubmitOnSubmit), whatever is typed meanwhile.
+    const update = () => {
+      if (!confirm.classList.contains("loading")) confirm.disabled = !reason.value.trim()
+    }
+    update()
+    reason.addEventListener("input", update)
+    popover.addEventListener("toggle", (event) => {
+      if ((event as ToggleEvent).newState === "open") reason.focus()
+    })
+  }
+</script>

@@ -37,8 +37,10 @@ export async function moderate(adminPage: Page, title: string, reason?: string) 
   const jobCard = adminPage.getByTestId("job-queue").locator(".rounded-xl", { hasText: title })
   await expect(jobCard).toBeVisible()
   if (reason !== undefined) {
-    await jobCard.getByRole("textbox", { name: "Grund für die Ablehnung" }).fill(reason)
     await jobCard.getByRole("button", { name: "Ablehnen" }).click()
+    // The popover renders in the top layer, but stays in the DOM of its card.
+    await jobCard.getByRole("textbox", { name: "Grund für die Ablehnung" }).fill(reason)
+    await jobCard.getByRole("button", { name: "Ablehnung senden" }).click()
   } else {
     await jobCard.getByRole("button", { name: "Genehmigen" }).click()
   }

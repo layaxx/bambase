@@ -4,6 +4,9 @@ import {
   fetchJobOffersPaginated,
   fetchJobOffer,
   fetchMyJobOffers,
+  fetchNextInQueue,
+  fetchQueueNeighbours,
+  fetchSubmittedJobOffers,
 } from "./job-offers"
 
 const mockFindMany = vi.hoisted(() => vi.fn())
@@ -279,5 +282,106 @@ describe("fetchMyJobOffers", () => {
     const result = await fetchMyJobOffers("user-42")
 
     expect(result).toEqual({ jobs: [mappedSampleJob], total: 45, page: 1, pageCount: 3 })
+  })
+})
+
+describe("review queue", () => {
+  // An in-memory job_offer table for the where/orderBy subset the queue uses, so that the tests
+  // check the resulting order rather than restate the query. Unknown operators throw.
+  type Row = ReturnType<typeof makeRow>
+  type Query = { where?: Record<string, unknown>; orderBy?: Record<string, "asc" | "desc">[] }
+  let rows: Row[]
+
+  const val = (x: unknown) => (x instanceof Date ? x.getTime() : x) as number | string
+  function matches(row: Row, where: Record<string, unknown>): boolean {
+    return Object.entries(where).every(([key, cond]) => {
+      if (key === "OR") return (cond as Record<string, unknown>[]).some((w) => matches(row, w))
+      const v = val(row[key as keyof Row])
+      if (!cond || typeof cond !== "object" || cond instanceof Date) return v === val(cond)
+      return Object.entries(cond).every(([op, x]) => {
+        if (op === "lt") return v < val(x)
+        if (op === "gt") return v > val(x)
+        if (op === "not") return v !== val(x)
+        throw new Error(`unsupported operator ${op}`)
+      })
+    })
+  }
+  function query({ where = {}, orderBy = [] }: Query): Row[] {
+    return rows
+      .filter((row) => matches(row, where))
+      .sort((a, b) => {
+        for (const order of orderBy) {
+          const [key, dir] = Object.entries(order)[0]
+          const [x, y] = [val(a[key as keyof Row]), val(b[key as keyof Row])]
+          if (x !== y) return (x < y ? -1 : 1) * (dir === "asc" ? 1 : -1)
+        }
+        return 0
+      })
+  }
+
+  const at = (day: number) => new Date(`2026-11-0${day}T10:00:00Z`)
+  const row = (id: string, day: number, onlineStatus = "submitted") =>
+    makeRow({ id, slug: id, createdAt: at(day), onlineStatus })
+  const queueJob = (r: Row) => ({
+    id: r.id,
+    createdAt: r.createdAt.toISOString(),
+    online_status: r.onlineStatus as "submitted",
+  })
+  function byId(id: string): Row {
+    const found = rows.find((r) => r.id === id)
+    if (!found) throw new Error(`no row ${id}`)
+    return found
+  }
+
+  beforeEach(() => {
+    // Queue order: a, b, c, d. b and c share createdAt, thus the id decides. Shuffled on purpose.
+    rows = [row("d", 3), row("c", 2), row("x", 1, "published"), row("a", 1), row("b", 2)]
+    mockFindMany.mockImplementation(async (q: Query) => query(q))
+    mockFindFirst.mockImplementation(async (q: Query) => query(q)[0] ?? null)
+    mockCount.mockImplementation(async (q: Query) => query(q).length)
+  })
+
+  it("lists the submitted offers oldest first, with the id breaking ties", async () => {
+    const jobs = await fetchSubmittedJobOffers()
+    expect(jobs.map((j) => j.id)).toEqual(["a", "b", "c", "d"])
+  })
+
+  it.each([
+    ["a", 1, null, "b"],
+    ["b", 2, "a", "c"],
+    ["c", 3, "b", "d"],
+    ["d", 4, "c", null],
+  ])("places %s at position %i between %s and %s", async (id, position, previous, next) => {
+    const queue = await fetchQueueNeighbours(queueJob(byId(id)))
+    expect(queue).toEqual({
+      count: 4,
+      position,
+      previous: previous && expect.objectContaining({ slug: previous }),
+      next: next && expect.objectContaining({ slug: next }),
+    })
+  })
+
+  it("keeps the neighbours of an offer that has left the queue", async () => {
+    byId("b").onlineStatus = "published"
+    const queue = await fetchQueueNeighbours(queueJob(byId("b")))
+    expect(queue.count).toBe(3)
+    expect(queue.previous?.slug).toBe("a")
+    expect(queue.next?.slug).toBe("c")
+  })
+
+  it("moves on to the next offer after a decision", async () => {
+    byId("b").onlineStatus = "rejected"
+    expect((await fetchNextInQueue(queueJob(byId("b"))))?.slug).toBe("c")
+  })
+
+  it("wraps around to the head of the queue past its end", async () => {
+    byId("d").onlineStatus = "published"
+    expect((await fetchNextInQueue(queueJob(byId("d"))))?.slug).toBe("a")
+  })
+
+  it("returns null once the queue holds no other offer", async () => {
+    for (const r of rows) r.onlineStatus = "published"
+    byId("c").onlineStatus = "submitted"
+    expect(await fetchNextInQueue(queueJob(byId("c")))).toBeNull()
   })
 })

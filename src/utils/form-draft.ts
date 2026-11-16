@@ -1,16 +1,18 @@
 type FormField = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | RadioNodeList
 
 /**
- * Disables the submit button after the user submits a form. A slow request or a double click
- * can thus not send the form two times.
+ * Disables each submit button of the form once it is sent, so that a double click sends nothing
+ * twice. `form.elements` also holds the buttons outside of the form that point at it via `form=`.
+ * The clicked button shows the spinner.
  */
 export function disableSubmitOnSubmit(form: HTMLFormElement): void {
-  const submitBtn = form.querySelector<HTMLButtonElement>('[type="submit"]')
-  form.addEventListener("submit", () => {
-    if (submitBtn) {
-      submitBtn.disabled = true
-      submitBtn.classList.add("loading")
-    }
+  form.addEventListener("submit", (event) => {
+    const buttons = [...form.elements].filter(
+      (el): el is HTMLButtonElement => el instanceof HTMLButtonElement && el.type === "submit"
+    )
+    for (const button of buttons) button.disabled = true
+    const submitter = event.submitter instanceof HTMLButtonElement ? event.submitter : buttons[0]
+    submitter?.classList.add("loading")
   })
 }
 
