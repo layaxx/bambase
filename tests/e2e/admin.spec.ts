@@ -97,19 +97,38 @@ test("moderator sees what waits and rejects several jobs at once", async ({
 
   await adminPage.goto("/admin/jobs")
   await expect(adminPage.getByTestId("job-queue-count")).toContainText(/\d+ wartend/)
-  await expect(adminPage.locator(".rounded-xl", { hasText: titleA })).toContainText(
-    "Eingereicht am"
-  )
+  const card = adminPage.getByTestId("job-queue").locator(".rounded-xl", { hasText: titleA })
+  await expect(card).toContainText("Eingereicht am")
+  await expect(card).toContainText(/vor \d+ \w+/)
+  await expect(card.getByRole("link", { name: titleA })).toHaveAttribute("href", /\?queue$/)
+
+  const bulk = adminPage.getByTestId("bulk-bar")
+  const bulkReject = bulk.getByRole("button", { name: "Ablehnen" })
+  await expect(bulk).not.toContainText("ausgewählt")
+  await expect(bulk.getByRole("button", { name: "Genehmigen" })).toBeDisabled()
+  await expect(bulkReject).toBeDisabled()
+
   await adminPage.getByRole("checkbox", { name: `${titleA} auswählen` }).check()
   await adminPage.getByRole("checkbox", { name: `${titleB} auswählen` }).check()
-  const bulk = adminPage.locator("#bulk-moderation")
+  await expect(bulk).toContainText("2 ausgewählt")
+  await bulkReject.click()
   const reason = bulk.getByRole("textbox", { name: "Grund für die Ablehnung" })
+  const confirm = bulk.getByRole("button", { name: "Ablehnung senden" })
+  await expect(reason).toBeFocused()
+  await expect(confirm).toBeDisabled()
   await reason.fill("Testeintrag")
-  // Enter submits via the first submit button of the form, which must be Ablehnen.
-  await reason.press("Enter")
+  await confirm.click()
 
   await expect(adminPage.getByTestId("job-queue")).not.toContainText(titleA)
   await expect(adminPage.getByTestId("job-queue")).not.toContainText(titleB)
+  // One reason for all, and the decision names its moderator.
+  const decided = (title: string) =>
+    adminPage.getByTestId("recent-decisions").locator(".rounded-xl", { hasText: title })
+  const outcome = /Abgelehnt[\s\S]*Grund: Testeintrag[\s\S]*Entschieden am .+ von /
+  await expect(decided(titleA)).toContainText(outcome)
+  await expect(decided(titleB)).toContainText(outcome)
+  await adminPage.goto("/admin/jobs?history")
+  await expect(adminPage.getByTestId("recent-decisions")).toContainText(titleA)
   await adminContext.close()
 })
 
@@ -183,9 +202,12 @@ test("moderator walks the review queue and moves on after a decision", async ({
   // A decision from the queue moves on to another job.
   await adminPage.goto(`/admin/jobs/${first}?queue`)
   await bar.getByRole("button", { name: "Genehmigen" }).click()
-  await expect(adminPage).toHaveURL(/\/admin\/jobs\/[^/?]+\?queue&decided=published$/)
-  expect(adminPage.url()).not.toContain(`/admin/jobs/${first}?`)
   await expect(adminPage.getByTestId("decision-toast")).toContainText("genehmigt")
+  // Once shown, the toast leaves the URL, so that a reload does not show it again.
+  await expect(adminPage).toHaveURL(/\/admin\/jobs\/[^/?]+\?queue$/)
+  expect(adminPage.url()).not.toContain(`/admin/jobs/${first}?`)
+  await adminPage.reload()
+  await expect(adminPage.getByTestId("decision-toast")).toHaveCount(0)
   await adminContext.close()
 })
 
@@ -215,8 +237,8 @@ test("moderator rejects a job only with a reason from the popover", async ({
   await confirm.click()
 
   // A decision outside of the queue stays on its job.
-  await expect(adminPage).toHaveURL(`/admin/jobs/${slug}?decided=rejected`)
   await expect(adminPage.getByTestId("decision-toast")).toContainText("abgelehnt")
+  await expect(adminPage).toHaveURL(`/admin/jobs/${slug}`)
   await page.goto(jobUrl)
   await expect(page.getByRole("alert")).toContainText("Grund: Bitte Stundenlohn angeben.")
   await adminContext.close()

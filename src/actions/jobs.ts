@@ -56,7 +56,11 @@ async function moderate(
     const where = { id, onlineStatus: { in: MODERATABLE_FROM[status] } }
     const decide = prisma.jobOffer.update({
       where,
-      data: { onlineStatus: status, rejectionReason: reason },
+      data: {
+        onlineStatus: status,
+        rejectionReason: reason,
+        moderatedById: context.locals.user?.id,
+      },
       select: {
         slug: true,
         title: true,

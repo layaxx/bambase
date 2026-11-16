@@ -30,6 +30,8 @@ export type JobOffer = {
     phone?: string
   }
   ownerId?: string | null
+  /** The name of the moderator of the last decision, if known. */
+  moderatedBy?: string
   reports?: { id: string }[]
   createdAt: string
   updatedAt: string
@@ -51,7 +53,10 @@ export type JobOfferPage = {
   pageCount: number
 }
 
-function toJobOffer(row: JobOfferModel, extra?: { reports?: { id: string }[] }): JobOffer {
+function toJobOffer(
+  row: JobOfferModel,
+  extra?: { reports?: { id: string }[]; moderatedBy?: { name: string } | null }
+): JobOffer {
   return {
     id: row.id,
     slug: row.slug,
@@ -72,6 +77,7 @@ function toJobOffer(row: JobOfferModel, extra?: { reports?: { id: string }[] }):
       phone: row.contactPhone ?? undefined,
     },
     ownerId: row.ownerId,
+    moderatedBy: extra?.moderatedBy?.name,
     reports: extra?.reports,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
@@ -218,11 +224,23 @@ export async function fetchNextInQueue(job: QueueJob) {
   )
 }
 
-export async function fetchRecentlyModeratedJobOffers(limit = 10): Promise<JobOffer[]> {
-  const rows = await prisma.jobOffer.findMany({
-    where: { onlineStatus: { in: [JobOnlineStatus.published, JobOnlineStatus.rejected] } },
-    orderBy: { updatedAt: "desc" },
-    take: limit,
-  })
-  return rows.map((row) => toJobOffer(row))
+/** The published and rejected offers, the latest decision first. */
+export async function fetchModeratedJobOffers(
+  page: number,
+  pageSize: number
+): Promise<JobOfferPage> {
+  const where = { onlineStatus: { in: [JobOnlineStatus.published, JobOnlineStatus.rejected] } }
+  const { rows, ...rest } = await findPage(
+    page,
+    pageSize,
+    (window) =>
+      prisma.jobOffer.findMany({
+        where,
+        orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
+        include: { moderatedBy: { select: { name: true } } },
+        ...window,
+      }),
+    () => prisma.jobOffer.count({ where })
+  )
+  return { jobs: rows.map((row) => toJobOffer(row, row)), ...rest }
 }

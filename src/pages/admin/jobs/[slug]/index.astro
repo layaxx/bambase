@@ -11,6 +11,7 @@ import IconExternalLink from "@/components/icons/IconExternalLink.astro"
 import Alert from "@/components/Alert.astro"
 import JobDetails from "@/components/jobs/JobDetails.astro"
 import JobStatusAlert from "@/components/jobs/JobStatusAlert.astro"
+import RejectPopover from "@/components/jobs/RejectPopover.astro"
 import {
   JOB_STATUS_BADGE_CLASS,
   MODERATABLE_FROM,
@@ -74,10 +75,7 @@ const inQueue = job.online_status === "submitted"
     data-testid="job-moderation"
   >
     <span
-      class:list={[
-        "badge badge-sm whitespace-nowrap",
-        JOB_STATUS_BADGE_CLASS[job.online_status],
-      ]}
+      class:list={["badge badge-sm whitespace-nowrap", JOB_STATUS_BADGE_CLASS[job.online_status]]}
       data-testid="job-status"
     >
       {jobStatusLabel(t, job.online_status)}
@@ -92,55 +90,7 @@ const inQueue = job.online_status === "submitted"
       </form>
     )}
     {canReject && (
-      <>
-        <button
-          class="btn btn-outline btn-error btn-sm"
-          id="reject-trigger"
-          popovertarget="reject-popover"
-          type="button"
-        >
-          {t.admin.rejectJob}
-        </button>
-        <div
-          aria-labelledby="reject-reason-label"
-          class="reject-popover w-80 max-w-[calc(100vw-2rem)] rounded-box border border-base-300 bg-base-100 p-4 shadow-lg"
-          id="reject-popover"
-          popover
-          role="dialog"
-        >
-          <form
-            action={formAction(actions.jobs.reject)}
-            class="flex flex-col gap-2"
-            data-moderation
-            method="POST"
-          >
-            <input name="id" type="hidden" value={job.id} />
-            <label class="text-sm font-semibold" for="reject-reason" id="reject-reason-label">
-              {t.admin.rejectReasonPlaceholder}
-            </label>
-            <textarea
-              aria-describedby="reject-reason-hint"
-              class="textarea textarea-sm w-full"
-              id="reject-reason"
-              maxlength="500"
-              name="reason"
-              required
-              rows="3"
-            ></textarea>
-            <p class="text-xs text-base-content/70" id="reject-reason-hint">
-              {t.admin.rejectReasonHint}
-            </p>
-            <div class="flex justify-end gap-2">
-              <button class="btn btn-ghost btn-sm" popovertarget="reject-popover" type="button">
-                {t.ui.cancel}
-              </button>
-              <button class="btn btn-error btn-sm" type="submit">
-                {t.admin.confirmReject}
-              </button>
-            </div>
-          </form>
-        </div>
-      </>
+      <RejectPopover action={formAction(actions.jobs.reject)} id="reject-popover" jobId={job.id} />
     )}
     {canEditJob(job.online_status) && (
       <a class="btn btn-ghost btn-sm gap-1" href={`/admin/jobs/${job.slug}/edit`}>
@@ -211,21 +161,6 @@ const inQueue = job.online_status === "submitted"
 </PageLayout>
 
 <style>
-  /* Opens the popover under its button. Without anchor positioning, it stays centered. */
-  @supports (anchor-name: --a) {
-    #reject-trigger {
-      anchor-name: --reject-anchor;
-    }
-    .reject-popover {
-      position-anchor: --reject-anchor;
-      inset: auto;
-      top: anchor(bottom);
-      left: anchor(left);
-      margin: 0.5rem 0 0;
-      position-try-fallbacks: flip-inline;
-    }
-  }
-
   /* The toast hides after a while, but stays while the pointer or the focus is on it. */
   .decision-toast {
     animation: decision-toast-hide 6s step-end forwards;
@@ -246,22 +181,6 @@ const inQueue = job.online_status === "submitted"
 
   document.querySelectorAll<HTMLFormElement>("form[data-moderation]").forEach(disableSubmitOnSubmit)
 
-  const reason = document.querySelector<HTMLTextAreaElement>("#reject-reason")
-  const confirmReject = reason?.form?.querySelector<HTMLButtonElement>('[type="submit"]')
-  if (reason && confirmReject) {
-    // Without a reason the rejection cannot be sent, thus the button waits for one. Once sent,
-    // the button stays disabled (see disableSubmitOnSubmit), whatever is typed meanwhile.
-    const update = () => {
-      if (!confirmReject.classList.contains("loading"))
-        confirmReject.disabled = !reason.value.trim()
-    }
-    update()
-    reason.addEventListener("input", update)
-    document.querySelector("#reject-popover")?.addEventListener("toggle", (event) => {
-      if ((event as ToggleEvent).newState === "open") reason.focus()
-    })
-  }
-
   // A live region announces only a change, but the toast is in the page from the start. Thus its
   // text is put back in a moment after the load, which screen readers then read out.
   const toast = document.querySelector("[data-decision-message]")
@@ -269,6 +188,10 @@ const inQueue = job.online_status === "submitted"
     const message = toast.innerHTML
     toast.innerHTML = ""
     setTimeout(() => (toast.innerHTML = message), 100)
+    // The toast is for this one visit, thus a reload or a later visit of this entry shows none.
+    // A string replace, as URLSearchParams would turn the bare `?queue` into `?queue=`.
+    const search = location.search.replace(/[?&]decided=[^&]*/, "").replace(/^&/, "?")
+    history.replaceState(history.state, "", location.pathname + search + location.hash)
   }
 
   const shortcuts: Record<string, string> = {

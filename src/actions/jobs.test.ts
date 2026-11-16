@@ -635,7 +635,7 @@ describe("jobs.approve", () => {
 
     expect(mockUpdate).toHaveBeenCalledWith({
       where: { id: "job-1", onlineStatus: { in: ["submitted", "rejected", "expired"] } },
-      data: { onlineStatus: "published", rejectionReason: null },
+      data: { onlineStatus: "published", rejectionReason: null, moderatedById: "moderator-1" },
       select: expect.any(Object),
     })
     // Only a first approval or an expired offer gets a new lifetime.
@@ -756,7 +756,11 @@ describe("jobs.reject", () => {
 
     expect(mockUpdate).toHaveBeenCalledWith({
       where: { id: "job-1", onlineStatus: { in: ["submitted", "published"] } },
-      data: { onlineStatus: "rejected", rejectionReason: "Doesn't meet posting guidelines" },
+      data: {
+        onlineStatus: "rejected",
+        rejectionReason: "Doesn't meet posting guidelines",
+        moderatedById: "moderator-1",
+      },
       select: expect.any(Object),
     })
     expect(result).toEqual({})

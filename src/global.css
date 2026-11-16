@@ -48,6 +48,11 @@
   --color-accent-content: oklch(0.15 0.02 180);
 }
 
+/* A soft badge shows its colour as text. Orange-400 on its light tint is about 2:1, below AA. */
+:root:not([data-theme="dark"]) .badge.badge-soft.badge-warning {
+  color: var(--color-orange-800);
+}
+
 .logo-font {
   font-family: var(--font-archivo);
 }

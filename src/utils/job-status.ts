@@ -23,12 +23,13 @@ export const JOB_TYPE_BADGE_CLASS: Record<JobType, string> = {
   other: "badge-ghost",
 }
 
+/** Tinted pills: a light background with dark text, so that they don't look like buttons. */
 export const JOB_STATUS_BADGE_CLASS: Record<JobStatus, string> = {
-  submitted: "badge-warning",
-  published: "badge-success",
-  expired: "badge-neutral",
-  rejected: "badge-error",
-  archived: "badge-info",
+  submitted: "badge-soft badge-warning",
+  published: "badge-soft badge-success",
+  expired: "badge-soft badge-neutral",
+  rejected: "badge-soft badge-error",
+  archived: "badge-soft badge-info",
 }
 
 export function jobStatusLabel(

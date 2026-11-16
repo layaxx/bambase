@@ -2,11 +2,19 @@
 import { actions, isInputError } from "astro:actions"
 import PageLayout from "@/layouts/PageLayout.astro"
 import Alert from "@/components/Alert.astro"
-import { fetchSubmittedJobOffers, fetchRecentlyModeratedJobOffers } from "@/utils/api/job-offers"
+import EmptyState from "@/components/EmptyState.astro"
+import Pagination from "@/components/Pagination.astro"
+import IconCheck from "@/components/icons/IconCheck.astro"
+import IconPencil from "@/components/icons/IconPencil.astro"
+import JobTypeBadge from "@/components/jobs/JobTypeBadge.astro"
+import RejectPopover from "@/components/jobs/RejectPopover.astro"
+import { fetchSubmittedJobOffers, fetchModeratedJobOffers } from "@/utils/api/job-offers"
 import { canModerateJobOffers, requireRole } from "@/utils/authz"
 import { JOB_STATUS_BADGE_CLASS, jobStatusLabel } from "@/utils/job-status"
 import { useTranslations } from "@/i18n/translations"
 import { formatLongDate } from "@/utils/event-formatting"
+import { formatRelativeDate } from "@/utils/job-formatting"
+import { lastPageRedirect, parsePageParam } from "@/utils/pagination"
 
 const t = useTranslations(Astro.locals.locale)
 
@@ -27,17 +35,35 @@ const errorMessage = isInputError(actionError)
   ? Object.values(actionError.fields).flat()[0]
   : actionError?.message
 
-const [jobs, recentlyModerated] = await Promise.all([
+// `?history` lists all decisions in pages, else the latest few are shown below the queue.
+const showAllDecisions = Astro.url.searchParams.has("history")
+const decisionsPage = showAllDecisions ? parsePageParam(Astro.url) : 1
+
+const [jobs, decisions] = await Promise.all([
   fetchSubmittedJobOffers(),
-  fetchRecentlyModeratedJobOffers(),
+  fetchModeratedJobOffers(decisionsPage, showAllDecisions ? 20 : 5),
 ])
+// Both lists share one card: the text on the left, the actions on the right from `sm` on. The
+// title underlines while the pointer is anywhere on the card.
+const CARD = "group flex gap-3 rounded-xl border border-base-300 bg-base-100 p-4"
+const CARD_BODY =
+  "flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+const TITLE_LINK = "link-hover group-hover:underline focus-visible:underline"
+
+if (showAllDecisions) {
+  const redirect = lastPageRedirect(Astro.url, decisionsPage, decisions.pageCount)
+  if (redirect) return Astro.redirect(redirect)
+}
 ---
 
 <PageLayout title={t.admin.jobsQueueTitle}>
   <div class="mb-6 flex flex-wrap items-center gap-3">
     <h1 class="text-3xl font-bold tracking-tight sm:text-4xl">{t.admin.jobsQueueTitle}</h1>
     {jobs.length > 0 && (
-      <span class="badge badge-error whitespace-nowrap" data-testid="job-queue-count">
+      <span
+        class:list={["badge whitespace-nowrap", JOB_STATUS_BADGE_CLASS.submitted]}
+        data-testid="job-queue-count"
+      >
         {t.admin.pendingCount(jobs.length)}
       </span>
     )}
@@ -51,51 +77,42 @@ const [jobs, recentlyModerated] = await Promise.all([
   {errorMessage && <Alert variant="error">{errorMessage}</Alert>}
 
   {jobs.length === 0 ? (
-    <p
-      class="rounded-xl border border-base-300 bg-base-100 p-6 text-base-content/70"
-      data-testid="job-queue"
-    >
-      {t.admin.noSubmittedJobs}
-    </p>
+    <div data-testid="job-queue">
+      <EmptyState badge="badge-success" icon={IconCheck} text={t.admin.noSubmittedJobs} />
+    </div>
   ) : (
     <>
-      <form
-        action={actions.jobs.reject}
-        class="mb-3 flex flex-wrap items-center gap-2 rounded-xl bg-base-200 px-4 py-3"
-        id="bulk-moderation"
-        method="POST"
+      <div
+        class="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl bg-base-200 px-4 py-3"
+        data-testid="bulk-bar"
       >
-        <label class="mr-2 flex cursor-pointer items-center gap-3 text-sm font-medium">
+        <label class="flex cursor-pointer items-center gap-3 text-sm font-medium">
           <input class="checkbox checkbox-sm" id="select-all-jobs" type="checkbox" />
           {t.admin.selectAll}
         </label>
-        <span class="text-sm font-medium text-base-content/70">{t.admin.bulkActionsLabel}</span>
-        <div class="flex min-w-64 flex-1 gap-2">
-          <input
-            aria-label={t.admin.rejectReasonPlaceholder}
-            class="input input-sm input-bordered min-w-0 flex-1"
-            maxlength="500"
-            name="reason"
-            placeholder={t.admin.rejectReasonPlaceholder}
-            required
-            type="text"
-          />
-          <button class="btn btn-outline btn-error btn-sm" type="submit">
-            {t.admin.rejectJob}
+        <span
+          aria-live="polite"
+          class="text-sm text-base-content/70 tabular-nums"
+          data-selected-count
+          data-template={t.admin.selectedCount("{n}")}
+        ></span>
+        <div class="ml-auto flex flex-wrap gap-2">
+          <button
+            class="btn btn-outline btn-success btn-sm"
+            data-bulk-action
+            form="bulk-moderation"
+            formaction={actions.jobs.approve}
+            formnovalidate
+            type="submit"
+          >
+            {t.admin.approveJob}
           </button>
+          <RejectPopover action={actions.jobs.reject} formId="bulk-moderation" id="bulk-reject" />
         </div>
-        <button
-          class="btn btn-success btn-sm"
-          formaction={actions.jobs.approve}
-          formnovalidate
-          type="submit"
-        >
-          {t.admin.approveJob}
-        </button>
-      </form>
+      </div>
       <div class="flex flex-col gap-3" data-testid="job-queue">
         {jobs.map((job) => (
-          <div class="flex gap-3 rounded-xl border border-base-300 bg-base-100 p-4">
+          <div class:list={CARD}>
             <input
               aria-label={t.admin.selectJob(job.title)}
               class="checkbox checkbox-sm mt-0.5"
@@ -104,42 +121,42 @@ const [jobs, recentlyModerated] = await Promise.all([
               type="checkbox"
               value={job.id}
             />
-            <div class="flex min-w-0 flex-1 flex-col gap-3">
-              <div>
+            <div class:list={CARD_BODY}>
+              <div class="flex min-w-0 flex-col gap-1">
                 <h2 class="font-semibold leading-snug text-base-content">
-                  <a class="link-hover" href={`/admin/jobs/${job.slug}?queue`}>
+                  <a class:list={TITLE_LINK} href={`/admin/jobs/${job.slug}?queue`}>
                     {job.title}
                   </a>
                 </h2>
+                <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-base-content/70">
+                  <span>
+                    {job.company} · {job.location}
+                  </span>
+                  <JobTypeBadge isSmall jobType={job.job_type} />
+                  <span class="badge badge-ghost badge-sm">{t.jobs.jobFields[job.field]}</span>
+                </div>
                 <p class="text-sm text-base-content/70">
-                  {job.company} · {job.location} ·{" "}
-                  {t.admin.submittedOn(formatLongDate(job.createdAt, t.auth.dateLocale))}
+                  {t.admin.submittedOn(formatLongDate(job.createdAt, t.auth.dateLocale))} ·{" "}
+                  <time datetime={job.createdAt}>
+                    {formatRelativeDate(job.createdAt, t.auth.dateLocale)}
+                  </time>
                 </p>
-                <p class="mt-1 line-clamp-2 text-sm text-base-content/70">{job.description}</p>
+                <p class="line-clamp-1 text-sm text-base-content/70">{job.description}</p>
               </div>
-              <div class="flex flex-wrap items-center gap-2">
-                <form action={actions.jobs.approve} method="POST">
+              <div class="flex flex-wrap items-center gap-2 sm:shrink-0">
+                <form action={actions.jobs.approve} data-moderation method="POST">
                   <input name="id" type="hidden" value={job.id} />
-                  <button class="btn btn-success btn-sm" type="submit">
+                  <button class="btn btn-outline btn-success btn-sm" type="submit">
                     {t.admin.approveJob}
                   </button>
                 </form>
-                <form action={actions.jobs.reject} class="flex min-w-64 flex-1 gap-2" method="POST">
-                  <input name="id" type="hidden" value={job.id} />
-                  <input
-                    aria-label={t.admin.rejectReasonPlaceholder}
-                    class="input input-sm input-bordered min-w-0 flex-1"
-                    maxlength="500"
-                    name="reason"
-                    placeholder={t.admin.rejectReasonPlaceholder}
-                    required
-                    type="text"
-                  />
-                  <button class="btn btn-outline btn-error btn-sm" type="submit">
-                    {t.admin.rejectJob}
-                  </button>
-                </form>
-                <a class="btn btn-ghost btn-sm" href={`/admin/jobs/${job.slug}/edit`}>
+                <RejectPopover
+                  action={actions.jobs.reject}
+                  id={`reject-${job.id}`}
+                  jobId={job.id}
+                />
+                <a class="btn btn-ghost btn-sm gap-1" href={`/admin/jobs/${job.slug}/edit`}>
+                  <IconPencil class="h-4 w-4" />
                   {t.admin.editJob}
                 </a>
               </div>
@@ -150,9 +167,16 @@ const [jobs, recentlyModerated] = await Promise.all([
     </>
   )}
 
-  <h2 class="text-2xl font-bold tracking-tight mt-12 mb-6">{t.admin.recentDecisionsTitle}</h2>
+  <div class="mt-12 mb-6 flex items-baseline justify-between gap-3" id="decisions">
+    <h2 class="text-2xl font-bold tracking-tight">{t.admin.recentDecisionsTitle}</h2>
+    {!showAllDecisions && decisions.total > decisions.jobs.length && (
+      <a class="link text-sm" href="/admin/jobs?history#decisions">
+        {t.admin.showAllDecisions}
+      </a>
+    )}
+  </div>
 
-  {recentlyModerated.length === 0 ? (
+  {decisions.jobs.length === 0 ? (
     <p
       class="rounded-xl border border-base-300 bg-base-100 p-6 text-base-content/70"
       data-testid="recent-decisions"
@@ -161,19 +185,19 @@ const [jobs, recentlyModerated] = await Promise.all([
     </p>
   ) : (
     <div class="flex flex-col gap-3" data-testid="recent-decisions">
-      {recentlyModerated.map((job) => (
-        <div class="flex flex-col gap-3 rounded-xl border border-base-300 bg-base-100 p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
+      {decisions.jobs.map((job) => (
+        <div class:list={[CARD, CARD_BODY]}>
+          <div class="min-w-0">
             <div class="flex items-center gap-2">
               <h3 class="font-semibold leading-snug text-base-content">
-                <a class="link-hover" href={`/admin/jobs/${job.slug}`}>
+                <a class:list={TITLE_LINK} href={`/admin/jobs/${job.slug}`}>
                   {job.title}
                 </a>
               </h3>
               <span
                 class:list={[
-                  "badge badge-sm",
-                  JOB_STATUS_BADGE_CLASS[job.online_status] ?? "badge-neutral",
+                  "badge badge-sm whitespace-nowrap",
+                  JOB_STATUS_BADGE_CLASS[job.online_status],
                 ]}
               >
                 {jobStatusLabel(t, job.online_status)}
@@ -187,35 +211,66 @@ const [jobs, recentlyModerated] = await Promise.all([
                 {t.jobs.rejectionReasonLabel(job.rejection_reason)}
               </p>
             )}
-            <p class="text-xs text-base-content/40">
-              {t.admin.decidedAt(formatLongDate(job.updatedAt, t.auth.dateLocale))}
+            <p class="text-sm text-base-content/70">
+              {t.admin.decidedAt(formatLongDate(job.updatedAt, t.auth.dateLocale), job.moderatedBy)}
             </p>
           </div>
-          <a class="btn btn-outline btn-sm" href={`/admin/jobs/${job.slug}/edit`}>
+          <a
+            class="btn btn-ghost btn-sm gap-1 self-start sm:shrink-0 sm:self-auto"
+            href={`/admin/jobs/${job.slug}/edit`}
+          >
+            <IconPencil class="h-4 w-4" />
             {t.admin.editJob}
           </a>
         </div>
       ))}
     </div>
   )}
+
+  {showAllDecisions && (
+    <Pagination
+      nextLabel={t.jobs.paginationNext}
+      page={decisions.page}
+      pageCount={decisions.pageCount}
+      prevLabel={t.jobs.paginationPrev}
+    />
+  )}
 </PageLayout>
 
 <script>
+  import { disableSubmitOnSubmit } from "@/utils/form-draft"
+
+  document.querySelectorAll<HTMLFormElement>("form[data-moderation]").forEach(disableSubmitOnSubmit)
+
   const all = document.querySelector<HTMLInputElement>("#select-all-jobs")
+  const count = document.querySelector<HTMLElement>("[data-selected-count]")
+  const bulkActions = document.querySelectorAll<HTMLButtonElement>(
+    "[data-bulk-action], #bulk-reject-trigger"
+  )
   const boxes = [
     ...document.querySelectorAll<HTMLInputElement>('input[form="bulk-moderation"][name="id"]'),
   ]
 
-  all?.addEventListener("change", () => {
-    for (const box of boxes) box.checked = all.checked
-  })
-
-  for (const box of boxes) {
-    box.addEventListener("change", () => {
-      if (!all) return
-      const checked = boxes.filter((b) => b.checked).length
+  // The bulk actions wait for a selection, and the bar tells how many jobs they would decide.
+  function update() {
+    const checked = boxes.filter((b) => b.checked).length
+    if (all) {
       all.checked = checked === boxes.length
       all.indeterminate = checked > 0 && checked < boxes.length
-    })
+    }
+    // Empty rather than hidden, so that the live region announces each change.
+    if (count)
+      count.textContent = checked
+        ? (count.dataset.template ?? "").replace("{n}", String(checked))
+        : ""
+    for (const button of bulkActions) button.disabled = checked === 0
   }
+
+  all?.addEventListener("change", () => {
+    for (const box of boxes) box.checked = all.checked
+    update()
+  })
+  for (const box of boxes) box.addEventListener("change", update)
+  // The browser may restore checked boxes on back navigation.
+  update()
 </script>
