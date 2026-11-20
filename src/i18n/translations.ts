@@ -947,8 +947,7 @@ const en: typeof de = {
       { name: "FS WIAI", role: "Hosting" },
       { name: "Former Feki.de members", role: "Development" },
     ],
-    sidebarAboutGroups:
-      "Is your group missing or out of date? Get in touch and we'll add it.",
+    sidebarAboutGroups: "Is your group missing or out of date? Get in touch and we'll add it.",
     sidebarJoinTitle: "Get involved",
     sidebarJoinMail: "Write to us",
     sidebarJoinCode: "Code on GitHub",

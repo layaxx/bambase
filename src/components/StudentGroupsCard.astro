@@ -53,7 +53,11 @@ const LIMIT = 4
 </section>
 
 <script
-  define:vars={{ LIMIT, showAllText: t.groups.showAll(groups.length), showLessText: t.groups.showLess }}
+  define:vars={{
+    LIMIT,
+    showAllText: t.groups.showAll(groups.length),
+    showLessText: t.groups.showLess,
+  }}
   is:inline
 >
   const grid = document.getElementById("main-grid")
